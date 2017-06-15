@@ -29,7 +29,7 @@ pifs_status_t flash_erase_all(void)
     block_address_t i;
     pifs_status_t ret = PIFS_SUCCESS;
 
-    for (i = PIFS_FLASH_BLOCK_START; i < PIFS_FLASH_BLOCK_NUM; i++)
+    for (i = PIFS_FLASH_BLOCK_RESERVED_NUM; i < PIFS_FLASH_BLOCK_NUM; i++)
     {
         ret = flash_erase(i);
         /* TODO mark bad blocks */
@@ -45,7 +45,7 @@ pifs_status_t flash_test_erase_program(void)
     page_address_t pa;
 
     printf("Testing erase and program... ");
-    ba = PIFS_FLASH_BLOCK_START;
+    ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
     ret = flash_erase(ba);
     PIFS_ASSERT(ret == PIFS_SUCCESS);
 
@@ -96,7 +96,7 @@ pifs_status_t flash_test_random_write(void)
     printf("Done.\r\n");
     
     printf("Testing random data write... ");
-    for (ba = PIFS_FLASH_BLOCK_START; ba < PIFS_FLASH_BLOCK_NUM; ba++)
+    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM; ba++)
     {
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
@@ -140,7 +140,7 @@ pifs_status_t flash_test_pattern(void)
     printf("Done.\r\n");
     
     printf("Testing pattern write... ");
-    for (ba = PIFS_FLASH_BLOCK_START; ba < PIFS_FLASH_BLOCK_NUM; ba++)
+    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM; ba++)
     {
         pattern = pattern_arr[ba & ((sizeof(pattern_arr) / sizeof(pattern_arr[0])) - 1)];
         printf("Pattern: 0x%08X\r\n", pattern);
@@ -174,7 +174,7 @@ pifs_status_t flash_test_addressable(void)
     printf("Done.\r\n");
 
     printf("Testing whole memory area is addressable... ");
-    for (ba = PIFS_FLASH_BLOCK_START; ba < PIFS_FLASH_BLOCK_NUM; ba++)
+    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM; ba++)
     {
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
@@ -184,7 +184,7 @@ pifs_status_t flash_test_addressable(void)
         }
     }
     
-    for (ba = PIFS_FLASH_BLOCK_START; ba < PIFS_FLASH_BLOCK_NUM; ba++)
+    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM; ba++)
     {
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {

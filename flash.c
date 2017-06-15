@@ -27,7 +27,7 @@
 #define FLASH_ERROR_MSG(...)
 #endif
 
-#define FLASH_EMU_FILENAME      "flash.bin"
+#define FLASH_EMU_FILENAME      "flash.bin" /**< Name of memory file */
 
 static FILE * flash_file = NULL;
 static uint8_t flash_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE] = { 0 };
@@ -35,17 +35,26 @@ static uint8_t flash_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE] = { 0 };
 pifs_status_t flash_init(void)
 {
     pifs_status_t ret = PIFS_FLASH_INIT_ERROR;
+    block_address_t ba;
 
     flash_file = fopen(FLASH_EMU_FILENAME, "rb+");
     if (flash_file)
     {
+        /* Memory file already exists */
         ret = PIFS_SUCCESS;
     }
     else
     {
+        /* Memory file has not created yet */
         flash_file = fopen(FLASH_EMU_FILENAME, "wb+");
         if (flash_file)
         {
+            /* Erase whole memory */
+            for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM; ba++)
+            {
+                ret = flash_erase(ba);
+            }
+
             ret = PIFS_SUCCESS;
         }
     }
@@ -78,7 +87,7 @@ pifs_status_t flash_read(block_address_t a_block_address, page_address_t a_page_
     size_t read_count = 0;
 
     PIFS_ASSERT(flash_file);
-    if (offset >= ( PIFS_FLASH_BLOCK_START * PIFS_FLASH_BLOCK_SIZE_BYTE )
+    if (offset >= ( PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE )
             && offset < PIFS_FLASH_SIZE_BYTE)
     {
         PIFS_ASSERT(fseek(flash_file, offset, SEEK_SET) == 0);
@@ -109,7 +118,7 @@ pifs_status_t flash_write(block_address_t a_block_address, page_address_t a_page
     uint8_t * buf8 = (uint8_t*) a_buf;
     
     PIFS_ASSERT(flash_file);
-    if (offset >= ( PIFS_FLASH_BLOCK_START * PIFS_FLASH_BLOCK_SIZE_BYTE )
+    if (offset >= ( PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE )
             && offset < PIFS_FLASH_SIZE_BYTE)
     {
         PIFS_ASSERT(fseek(flash_file, offset, SEEK_SET) == 0);
@@ -159,7 +168,7 @@ pifs_status_t flash_erase(block_address_t a_block_address)
     page_address_t i;
     
     PIFS_ASSERT(flash_file);
-    if (offset >= ( PIFS_FLASH_BLOCK_START * PIFS_FLASH_BLOCK_SIZE_BYTE )
+    if (offset >= ( PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE )
             && offset < PIFS_FLASH_SIZE_BYTE)
     {
         PIFS_ASSERT(fseek(flash_file, offset, SEEK_SET) == 0);

@@ -19,6 +19,7 @@
 object_id_t         latest_object_id = 0;
 block_address_t     mgmt_block_address = 0;
 page_address_t      mgmt_page_address = 0;
+bool_t              is_mgmt_found = FALSE;
 
 checksum_t calc_header_checksum(pifs_header_t * a_pifs_header)
 {
@@ -41,18 +42,19 @@ pifs_status_t pifs_init(void)
     block_address_t ba;
     page_address_t  pa;
     pifs_header_t   header;
-    bool_t          is_mgmt_found = FALSE;
     checksum_t      checksum;
 
+    is_mgmt_found = FALSE;
+
     printf("Maximum number of management pages: %i\r\n",
-            (PIFS_FLASH_BLOCK_NUM - PIFS_FLASH_BLOCK_START) * PIFS_MANAGEMENT_PAGES_MAX);
+            (PIFS_FLASH_BLOCK_NUM - PIFS_FLASH_BLOCK_RESERVED_NUM) * PIFS_MANAGEMENT_PAGES_MAX);
 
     ret = flash_init();
 
     if (ret == PIFS_SUCCESS)
     {
         /* Find latest management block */
-        for (ba = PIFS_FLASH_BLOCK_START; ba < PIFS_FLASH_BLOCK_NUM; ba++)
+        for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM; ba++)
         {
             for (pa = 0; pa < PIFS_MANAGEMENT_PAGES_MAX; pa++)
             {
@@ -70,6 +72,8 @@ pifs_status_t pifs_init(void)
                     {
                         printf("Checksum is valid\r\n");
                         is_mgmt_found = TRUE;
+                        mgmt_block_address = ba;
+                        mgmt_page_address = pa;
                     }
                     else
                     {
@@ -83,7 +87,7 @@ pifs_status_t pifs_init(void)
 
     if (!is_mgmt_found)
     {
-        ba = PIFS_FLASH_BLOCK_START;
+        ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
         pa = 0;
         printf("Creating managamenet block BA%i/PA%i\r\n", ba, pa);
         header.magic = PIFS_MAGIC;
@@ -109,3 +113,9 @@ pifs_status_t pifs_delete(void)
     return ret;
 }
 
+P_FILE * pifs_fopen(const char * filename, const char modes)
+{
+    P_FILE * file = NULL;
+
+    return file;
+}

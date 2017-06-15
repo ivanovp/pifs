@@ -11,14 +11,14 @@
 #define _INCLUDE_FLASH_CONFIG_H_
 
 /* Geometry of M25P40 */
-#define PIFS_FLASH_BLOCK_NUM        8       /**< Number of blocks used by the file system */
-#define PIFS_FLASH_BLOCK_START      0       /**< Index of first block to use by the file system */
-#define PIFS_FLASH_PAGE_PER_BLOCK   256     /**< Number of pages in a block */
-#define PIFS_FLASH_PAGE_SIZE_BYTE   256     /**< Size of a page in bytes */
-#define PIFS_FLASH_PAGE_SIZE_SPARE  0       /**< Number of spare bytes in a page */
+#define PIFS_FLASH_BLOCK_NUM            8       /**< Number of blocks used by the file system */
+#define PIFS_FLASH_BLOCK_RESERVED_NUM   0       /**< Index of first block to use by the file system */
+#define PIFS_FLASH_PAGE_PER_BLOCK       256     /**< Number of pages in a block */
+#define PIFS_FLASH_PAGE_SIZE_BYTE       256     /**< Size of a page in bytes */
+#define PIFS_FLASH_PAGE_SIZE_SPARE      0       /**< Number of spare bytes in a page */
 
 /* Configuration of filesystem */
-#define PIFS_MANAGEMENT_PAGES_MAX   8       /**< Maximum number of management pages per block */
+#define PIFS_MANAGEMENT_PAGES_MAX       8       /**< Maximum number of management pages per block */
 
 #if PIFS_MANAGEMENT_PAGES_MAX >= PIFS_FLASH_PAGE_PER_BLOCK / 2
 #error PIFS_MANAGEMENT_PAGES_MAX is too big.

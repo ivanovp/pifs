@@ -22,9 +22,16 @@
 pifs_status_t pifs_test(void)
 {
     pifs_status_t ret = PIFS_FLASH_INIT_ERROR;
+    P_FILE * file;
 
     ret = pifs_init();
     PIFS_ASSERT(ret == PIFS_SUCCESS);
+
+    file = pifs_fopen("test.dat", "w");
+    if (file)
+    {
+        printf("File opened\r\n");
+    }
 
     ret = pifs_delete();
     PIFS_ASSERT(ret == PIFS_SUCCESS);

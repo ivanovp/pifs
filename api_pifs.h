@@ -21,8 +21,11 @@ typedef enum
     PIFS_FLASH_INIT_ERROR,
 } pifs_status_t;
 
+typedef void P_FILE;
+
 pifs_status_t pifs_init(void);
 pifs_status_t pifs_delete(void);
+P_FILE * pifs_fopen(const char * filename, const char modes);
 
 #ifdef __cplusplus
 }
