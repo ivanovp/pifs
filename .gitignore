@@ -1,0 +1,7 @@
+tags
+*.o
+*.d
+flash.bin
+flash_test
+pifs_test
+
