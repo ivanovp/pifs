@@ -26,12 +26,12 @@ uint8_t test_buf_r[PIFS_FLASH_PAGE_SIZE_BYTE];
 
 pifs_status_t flash_erase_all(void)
 {
-    block_address_t i;
+    pifs_block_address_t i;
     pifs_status_t ret = PIFS_SUCCESS;
 
     for (i = PIFS_FLASH_BLOCK_RESERVED_NUM; i < PIFS_FLASH_BLOCK_NUM; i++)
     {
-        ret = flash_erase(i);
+        ret = pifs_flash_erase(i);
         /* TODO mark bad blocks */
     }
 
@@ -41,22 +41,22 @@ pifs_status_t flash_erase_all(void)
 pifs_status_t flash_test_erase_program(void)
 {
     pifs_status_t ret;
-    block_address_t ba;
-    page_address_t pa;
+    pifs_block_address_t ba;
+    pifs_page_address_t pa;
 
     printf("Testing erase and program... ");
     ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
-    ret = flash_erase(ba);
+    ret = pifs_flash_erase(ba);
     PIFS_ASSERT(ret == PIFS_SUCCESS);
 
     for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
     {
         /* Program bit 0 (clear bit 0) */
         fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SIMPLE_BYTE, 0xFE);
-        ret = flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
+        ret = pifs_flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
         PIFS_ASSERT(ret == PIFS_SUCCESS);
 
-        ret = flash_read(ba, pa, 0, test_buf_r, sizeof(test_buf_r));
+        ret = pifs_flash_read(ba, pa, 0, test_buf_r, sizeof(test_buf_r));
         PIFS_ASSERT(ret == PIFS_SUCCESS);
 
         ret = compare_buffer(test_buf_w, sizeof(test_buf_w), test_buf_r);
@@ -64,10 +64,10 @@ pifs_status_t flash_test_erase_program(void)
 
         /* Program bit 3, 2, and 1 as well */
         fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SIMPLE_BYTE, 0xF0);
-        ret = flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
+        ret = pifs_flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
         PIFS_ASSERT(ret == PIFS_SUCCESS);
 
-        ret = flash_read(ba, pa, 0, test_buf_r, sizeof(test_buf_r));
+        ret = pifs_flash_read(ba, pa, 0, test_buf_r, sizeof(test_buf_r));
         PIFS_ASSERT(ret == PIFS_SUCCESS);
 
         ret = compare_buffer(test_buf_w, sizeof(test_buf_w), test_buf_r);
@@ -76,7 +76,7 @@ pifs_status_t flash_test_erase_program(void)
         /* Testing program error detection */
         /* Try to Un-program bit 0, which should not be possible */
         test_buf_w[PIFS_FLASH_PAGE_SIZE_BYTE - 1] = 0xF1;
-        ret = flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
+        ret = pifs_flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
         PIFS_ASSERT(ret == PIFS_ERROR);
     }
     printf("Done.\r\n");
@@ -87,8 +87,8 @@ pifs_status_t flash_test_erase_program(void)
 pifs_status_t flash_test_random_write(void)
 {
     pifs_status_t ret;
-    block_address_t ba;
-    page_address_t pa;
+    pifs_block_address_t ba;
+    pifs_page_address_t pa;
 
     printf("Erasing all blocks... ");
     ret = flash_erase_all();
@@ -101,10 +101,10 @@ pifs_status_t flash_test_random_write(void)
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
             fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_RANDOM, 0);
-            ret = flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
+            ret = pifs_flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
             PIFS_ASSERT(ret == PIFS_SUCCESS);
 
-            ret = flash_read(ba, pa, 0, test_buf_r, sizeof(test_buf_r));
+            ret = pifs_flash_read(ba, pa, 0, test_buf_r, sizeof(test_buf_r));
             PIFS_ASSERT(ret == PIFS_SUCCESS);
 
             ret = compare_buffer(test_buf_w, sizeof(test_buf_w), test_buf_r);
@@ -119,8 +119,8 @@ pifs_status_t flash_test_random_write(void)
 pifs_status_t flash_test_pattern(void)
 {
     pifs_status_t ret;
-    block_address_t ba;
-    page_address_t pa;
+    pifs_block_address_t ba;
+    pifs_page_address_t pa;
     uint32_t pattern;
     const uint32_t pattern_arr[8] =
     {
@@ -147,10 +147,10 @@ pifs_status_t flash_test_pattern(void)
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
             fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SIMPLE_DWORD, pattern);
-            ret = flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
+            ret = pifs_flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
             PIFS_ASSERT(ret == PIFS_SUCCESS);
 
-            ret = flash_read(ba, pa, 0, test_buf_r, sizeof(test_buf_r));
+            ret = pifs_flash_read(ba, pa, 0, test_buf_r, sizeof(test_buf_r));
             PIFS_ASSERT(ret == PIFS_SUCCESS);
 
             ret = compare_buffer(test_buf_w, sizeof(test_buf_w), test_buf_r);
@@ -165,8 +165,8 @@ pifs_status_t flash_test_pattern(void)
 pifs_status_t flash_test_addressable(void)
 {
     pifs_status_t ret;
-    block_address_t ba;
-    page_address_t pa;
+    pifs_block_address_t ba;
+    pifs_page_address_t pa;
 
     printf("Erasing all blocks... ");
     ret = flash_erase_all();
@@ -179,7 +179,7 @@ pifs_status_t flash_test_addressable(void)
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
             fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SEQUENCE_DWORD, ((uint32_t)ba << 16) | pa);
-            ret = flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
+            ret = pifs_flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
             PIFS_ASSERT(ret == PIFS_SUCCESS);
         }
     }
@@ -190,7 +190,7 @@ pifs_status_t flash_test_addressable(void)
         {
             fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SEQUENCE_DWORD, ((uint32_t)ba << 16) | pa);
             
-            ret = flash_read(ba, pa, 0, test_buf_r, sizeof(test_buf_r));
+            ret = pifs_flash_read(ba, pa, 0, test_buf_r, sizeof(test_buf_r));
             PIFS_ASSERT(ret == PIFS_SUCCESS);
 
             ret = compare_buffer(test_buf_w, sizeof(test_buf_w), test_buf_r);
@@ -206,12 +206,14 @@ pifs_status_t flash_test(void)
 {
     pifs_status_t ret = PIFS_FLASH_INIT_ERROR;
 
-    printf("Size of flash memory:   %i bytes\r\n", PIFS_FLASH_SIZE_BYTE);
-    printf("Number of blocks:       %i\r\n", PIFS_FLASH_BLOCK_NUM);
-    printf("Number of pages/block:  %i\r\n", PIFS_FLASH_PAGE_PER_BLOCK);
-    printf("Size of page:           %i byte\r\n", PIFS_FLASH_PAGE_SIZE_BYTE);
+    printf("Size of flash memory (full):        %i bytes\r\n", PIFS_FLASH_SIZE_FULL_BYTE);
+    printf("Size of flash memory (used by FS):  %i bytes\r\n", PIFS_FLASH_SIZE_FULL_BYTE);
+    printf("Number of blocks (full):            %i\r\n", PIFS_FLASH_BLOCK_NUM);
+    printf("Number of blocks (used by FS)):     %i\r\n", PIFS_FLASH_BLOCK_NUM - PIFS_FLASH_BLOCK_RESERVED_NUM);
+    printf("Number of pages/block:              %i\r\n", PIFS_FLASH_PAGE_PER_BLOCK);
+    printf("Size of page:                       %i byte\r\n", PIFS_FLASH_PAGE_SIZE_BYTE);
 
-    ret = flash_init();
+    ret = pifs_flash_init();
     PIFS_ASSERT(ret == PIFS_SUCCESS);
 
     ret = flash_test_erase_program();
@@ -219,7 +221,7 @@ pifs_status_t flash_test(void)
     ret = flash_test_addressable();
     ret = flash_test_pattern();
 
-    ret = flash_delete();
+    ret = pifs_flash_delete();
     PIFS_ASSERT(ret == PIFS_SUCCESS);
 
     return ret;

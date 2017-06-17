@@ -35,6 +35,7 @@ typedef enum
 
 void fill_buffer(void * a_buf, size_t a_buf_size, fill_type_t a_fill_type, uint32_t a_fill_arg);
 pifs_status_t compare_buffer(void * a_buf1, size_t a_buf_size, void * a_buf2);
+void print_buffer (const void *a_buf, size_t a_buf_size, uint32_t a_addr );
 
 #ifdef __cplusplus
 }

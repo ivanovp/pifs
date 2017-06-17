@@ -32,10 +32,10 @@
 static FILE * flash_file = NULL;
 static uint8_t flash_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE] = { 0 };
 
-pifs_status_t flash_init(void)
+pifs_status_t pifs_flash_init(void)
 {
     pifs_status_t ret = PIFS_FLASH_INIT_ERROR;
-    block_address_t ba;
+    pifs_block_address_t ba;
 
     flash_file = fopen(FLASH_EMU_FILENAME, "rb+");
     if (flash_file)
@@ -52,7 +52,7 @@ pifs_status_t flash_init(void)
             /* Erase whole memory */
             for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM; ba++)
             {
-                ret = flash_erase(ba);
+                ret = pifs_flash_erase(ba);
             }
 
             ret = PIFS_SUCCESS;
@@ -62,7 +62,7 @@ pifs_status_t flash_init(void)
     return ret;
 }
 
-pifs_status_t flash_delete(void)
+pifs_status_t pifs_flash_delete(void)
 {
     pifs_status_t ret = PIFS_ERROR;
 
@@ -78,7 +78,7 @@ pifs_status_t flash_delete(void)
     return ret;
 }
 
-pifs_status_t flash_read(block_address_t a_block_address, page_address_t a_page_address, page_offset_t a_page_offset, void * const a_buf, size_t a_buf_size)
+pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address, pifs_page_offset_t a_page_offset, void * const a_buf, size_t a_buf_size)
 {
     pifs_status_t ret = PIFS_ERROR;
     long int offset = a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE 
@@ -87,8 +87,8 @@ pifs_status_t flash_read(block_address_t a_block_address, page_address_t a_page_
     size_t read_count = 0;
 
     PIFS_ASSERT(flash_file);
-    if (offset >= ( PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE )
-            && offset < PIFS_FLASH_SIZE_BYTE)
+    if (offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
+            && offset + a_buf_size <= PIFS_FLASH_SIZE_FULL_BYTE)
     {
         PIFS_ASSERT(fseek(flash_file, offset, SEEK_SET) == 0);
         read_count = fread(a_buf, 1, a_buf_size, flash_file);
@@ -99,14 +99,14 @@ pifs_status_t flash_read(block_address_t a_block_address, page_address_t a_page_
     }
     else
     {
-        FLASH_ERROR_MSG("Trying to read out of flash area! BA%i/PA%i/OFS%i\r\n",
+        FLASH_ERROR_MSG("Trying to read from invalid flash adress! BA%i/PA%i/OFS%i\r\n",
                         a_block_address, a_page_address, a_page_offset);
     }
 
     return ret;
 }
 
-pifs_status_t flash_write(block_address_t a_block_address, page_address_t a_page_address, page_address_t a_page_offset, const void * a_buf, size_t a_buf_size)
+pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address, pifs_page_address_t a_page_offset, const void * a_buf, size_t a_buf_size)
 {
     pifs_status_t ret = PIFS_ERROR;
     long int offset = a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE 
@@ -114,12 +114,12 @@ pifs_status_t flash_write(block_address_t a_block_address, page_address_t a_page
         + a_page_offset;
     size_t write_count = 0;
     size_t read_count = 0;
-    page_offset_t i;
+    pifs_page_offset_t i;
     uint8_t * buf8 = (uint8_t*) a_buf;
     
     PIFS_ASSERT(flash_file);
-    if (offset >= ( PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE )
-            && offset < PIFS_FLASH_SIZE_BYTE)
+    if (offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
+            && offset + a_buf_size <= PIFS_FLASH_SIZE_FULL_BYTE)
     {
         PIFS_ASSERT(fseek(flash_file, offset, SEEK_SET) == 0);
         /* Check if write is possible */
@@ -153,23 +153,23 @@ pifs_status_t flash_write(block_address_t a_block_address, page_address_t a_page
     }
     else
     {
-        FLASH_ERROR_MSG("Trying to write out of flash area! BA%i/PA%i/OFS%i\r\n",
+        FLASH_ERROR_MSG("Trying to write to invalid flash address! BA%i/PA%i/OFS%i\r\n",
                         a_block_address, a_page_address, a_page_offset);
     }
 
     return ret;
 }
 
-pifs_status_t flash_erase(block_address_t a_block_address)
+pifs_status_t pifs_flash_erase(pifs_block_address_t a_block_address)
 {
     pifs_status_t ret = PIFS_ERROR;
     long int offset = a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE;
     size_t write_count = 0;
-    page_address_t i;
+    pifs_page_address_t i;
     
     PIFS_ASSERT(flash_file);
-    if (offset >= ( PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE )
-            && offset < PIFS_FLASH_SIZE_BYTE)
+    if (offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
+            && offset + PIFS_FLASH_BLOCK_SIZE_BYTE <= PIFS_FLASH_SIZE_FULL_BYTE)
     {
         PIFS_ASSERT(fseek(flash_file, offset, SEEK_SET) == 0);
         ret = PIFS_SUCCESS;
@@ -186,7 +186,7 @@ pifs_status_t flash_erase(block_address_t a_block_address)
     }
     else
     {
-        FLASH_ERROR_MSG("Trying to erase out of flash area! BA%i\r\n",
+        FLASH_ERROR_MSG("Trying to erase invalid flash address! BA%i\r\n",
                         a_block_address);
     }
 
