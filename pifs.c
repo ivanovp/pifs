@@ -747,7 +747,6 @@ P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
 {
     pifs_file_t   * file = &pifs.file[0];
     pifs_entry_t  * entry = &pifs.file[0].entry;
-    pifs_status_t   status;
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
     size_t               page_count_found = 0;
@@ -756,7 +755,8 @@ P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
     /* TODO check a_modes */
     if (pifs.is_header_found && strlen(a_filename))
     {
-        if (pifs_find_entry(a_filename, entry) == PIFS_SUCCESS)
+        file->status = pifs_find_entry(a_filename, entry);
+        if (file->status == PIFS_SUCCESS)
         {
             printf("Entry of %s found:\r\n", a_filename);
             print_buffer(entry, sizeof(pifs_entry_t), 0);
@@ -764,7 +764,8 @@ P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
         }
         else
         {
-            if (pifs_page_find_free(1, PIFS_PAGE_TYPE_DATA, &ba, &pa, &page_count_found) == PIFS_SUCCESS)
+            file->status = pifs_page_find_free(1, PIFS_PAGE_TYPE_DATA, &ba, &pa, &page_count_found);
+            if (file->status == PIFS_SUCCESS)
             {
                 printf("%lu free page found BA%i/PA%i\r\n", page_count_found, ba, pa);
             }
@@ -775,26 +776,26 @@ P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
             strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
             entry->object_id = 1;
             entry->attrib = PIFS_ATTRIB_ARCHIVE;
-            entry->address.block_address = 2;
-            entry->address.page_address = 8;
-            if (pifs_create_entry(entry) == PIFS_SUCCESS)
+            entry->address.block_address = ba;
+            entry->address.page_address = pa;
+            file->status = pifs_create_entry(entry);
+            if (file->status == PIFS_SUCCESS)
             {
                 PIFS_DEBUG_MSG("Entry created\r\n");
-                file->is_opened = TRUE;
+                file->status = pifs_page_mark(ba, pa, 1, TRUE);
+                if (file->status == PIFS_SUCCESS)
+                {
+                    file->is_opened = TRUE;
+                }
             }
             else
             {
                 printf("Cannot create entry!\r\n");
             }
         }
-//        pifs_page_mark(20, 0, 8, TRUE);
-//        pifs_page_mark(25, PIFS_FLASH_PAGE_PER_BLOCK - 1, 3, TRUE);
-//        pifs_page_mark(PIFS_FLASH_BLOCK_NUM_ALL - 1, PIFS_FLASH_PAGE_PER_BLOCK - 1, 1, TRUE);
-        /* This should generate an error */
-//        pifs_page_mark(PIFS_FLASH_BLOCK_NUM_ALL - 1, PIFS_FLASH_PAGE_PER_BLOCK - 1, 3, TRUE);
     }
 
-    return (P_FILE*) file;
+    return file->is_opened ? (P_FILE*) file : (P_FILE*) NULL;
 }
 
 size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE *a_file)
