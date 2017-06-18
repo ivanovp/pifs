@@ -243,7 +243,8 @@ pifs_status_t pifs_init(void)
     PIFS_NOTICE_MSG("Entry list size:                    %lu bytes, %lu pages\r\n", PIFS_ENTRY_LIST_SIZE_BYTE, PIFS_ENTRY_LIST_SIZE_PAGE);
     PIFS_NOTICE_MSG("Free space bitmap size:             %u bytes, %u pages\r\n", PIFS_FREE_SPACE_BITMAP_SIZE_BYTE, PIFS_FREE_SPACE_BITMAP_SIZE_PAGE);
     PIFS_NOTICE_MSG("Maximum number of management pages: %i\r\n",
-            (PIFS_FLASH_BLOCK_NUM_ALL - PIFS_FLASH_BLOCK_RESERVED_NUM) * PIFS_MANAGEMENT_PAGES_MAX);
+                    PIFS_FLASH_PAGE_PER_BLOCK
+                    + (PIFS_FLASH_BLOCK_NUM_FS - 1 ) * PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX);
     PIFS_NOTICE_MSG("\r\n");
 
     ret = pifs_flash_init();
@@ -253,7 +254,7 @@ pifs_status_t pifs_init(void)
         /* Find latest management block */
         for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL && !pifs.is_mgmt_found; ba++)
         {
-            for (pa = 0; pa < PIFS_MANAGEMENT_PAGES_MAX && !pifs.is_mgmt_found; pa++)
+            for (pa = 0; pa < PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX && !pifs.is_mgmt_found; pa++)
             {
                 pifs_flash_read(ba, pa, 0, &pifs.header, sizeof(pifs.header));
                 if (pifs.header.magic == PIFS_MAGIC

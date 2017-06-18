@@ -57,9 +57,9 @@
 #if PIFS_CHECKSUM_SIZE == 1
 typedef uint8_t pifs_checksum_t;
 #elif PIFS_CHECKSUM_SIZE == 2
-typedef uint16_t checksum_t;
+typedef uint16_t pifs_checksum_t;
 #elif PIFS_CHECKSUM_SIZE == 4
-typedef uint32_t checksum_t;
+typedef uint32_t pifs_checksum_t;
 #else
 #error PIFS_CHECKSUM_SIZE is invalid! Valid values are 1, 2 or 4.
 #endif
