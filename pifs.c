@@ -235,6 +235,13 @@ void pifs_header_init(pifs_block_address_t a_block_address,
     a_header->checksum = pifs_calc_header_checksum(a_header);
 }
 
+/**
+ * @brief pifs_header_write Write file system header.
+ * @param a_block_address Block address of header.
+ * @param a_page_address Page address of header.
+ * @param a_header Pointer to the header.
+ * @return PIFS_SUCCESS if header successfully written.
+ */
 pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                                 pifs_page_address_t a_page_address,
                                 pifs_header_t * a_header)
@@ -253,6 +260,9 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                              a_page_address,
                              PIFS_HEADER_SIZE_PAGE, TRUE);
     }
+    /* FIXME this may not be the right function to mark entry list and
+     * free space bitmap.
+     */
     if ( ret == PIFS_SUCCESS )
     {
         /* Mark entry list as used */
@@ -276,6 +286,7 @@ pifs_status_t pifs_init(void)
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
+    pifs_header_t        header;
     pifs_header_t        prev_header;
     pifs_checksum_t      checksum;
 
@@ -335,21 +346,21 @@ pifs_status_t pifs_init(void)
     if (ret == PIFS_SUCCESS)
     {
         /* Find latest management block */
-        for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL && !pifs.is_header_found; ba++)
+        for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
         {
-            for (pa = 0; pa < PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX && !pifs.is_header_found; pa++)
+            for (pa = 0; pa < PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX; pa++)
             {
-                pifs_flash_read(ba, pa, 0, &pifs.header, sizeof(pifs.header));
-                if (pifs.header.magic == PIFS_MAGIC
+                pifs_flash_read(ba, pa, 0, &header, sizeof(header));
+                if (header.magic == PIFS_MAGIC
         #if ENABLE_PIFS_VERSION
-                        && pifs.header.majorVersion == PIFS_MAJOR_VERSION
-                        && pifs.header.minorVersion == PIFS_MINOR_VERSION
+                        && header.majorVersion == PIFS_MAJOR_VERSION
+                        && header.minorVersion == PIFS_MINOR_VERSION
         #endif
                         )
                 {
                     PIFS_DEBUG_MSG("Management page found: BA%i/PA%i\r\n", ba, pa);
-                    checksum = pifs_calc_header_checksum(&pifs.header);
-                    if (checksum == pifs.header.checksum)
+                    checksum = pifs_calc_header_checksum(&header);
+                    if (checksum == header.checksum)
                     {
                         PIFS_DEBUG_MSG("Checksum is valid\r\n");
                         if (!pifs.is_header_found || prev_header.counter < pifs.header.counter)
@@ -357,7 +368,7 @@ pifs_status_t pifs_init(void)
                             pifs.is_header_found = TRUE;
                             pifs.header_address.block_address = ba;
                             pifs.header_address.page_address = pa;
-                            memcpy(&prev_header, &pifs.header, sizeof(prev_header));
+                            memcpy(&prev_header, &header, sizeof(prev_header));
                         }
                     }
                     else
@@ -369,8 +380,13 @@ pifs_status_t pifs_init(void)
             }
         }
 
-        if (!pifs.is_header_found)
+        if (pifs.is_header_found)
         {
+            memcpy(&pifs.header, &prev_header, sizeof(pifs.header));
+        }
+        else
+        {
+            /* No file system header found, so create brand new one */
 #if 1
             ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
 #else
@@ -437,29 +453,30 @@ pifs_status_t pifs_create_entry(const pifs_entry_t * a_entry)
     pifs_status_t        ret = PIFS_ERROR;
     pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
     pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
-    pifs_page_offset_t   po;
-    pifs_entry_t         entry;
     bool_t               created = FALSE;
+    pifs_entry_t       * entry = (pifs_entry_t*) pifs.page_buf;
+    size_t               i;
 
     while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !created)
     {
-        while (po < PIFS_FLASH_PAGE_SIZE_BYTE && !created)
+        ret = pifs_flash_read(ba, pa, 0, pifs.page_buf, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
+        for (i = 0; i < PIFS_ENTRY_PER_PAGE && !created; i++)
         {
-            ret = pifs_flash_read(ba, pa, po, &entry, sizeof(entry));
-            if (ret == PIFS_SUCCESS)
+            /* Check if this area is used */
+            if (pifs_is_buffer_erased(&entry[i], sizeof(entry)))
             {
-                /* Check if this area is used */
-                if (pifs_is_buffer_erased(&entry, sizeof(entry)))
+                /* Empty entry found */
+                ret = pifs_flash_write(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, a_entry, sizeof(pifs_entry_t));
+                if (ret == PIFS_SUCCESS)
                 {
-                    /* Empty entry found */
-                    ret = pifs_flash_write(ba, pa, po, a_entry, sizeof(pifs_entry_t));
-                    if (ret == PIFS_SUCCESS)
-                    {
-                        created = TRUE;
-                    }
+                    created = TRUE;
+                }
+                else
+                {
+                    PIFS_ERROR_MSG("Cannot create entry!");
+                    ret = PIFS_ERROR_FLASH_WRITE;
                 }
             }
-            po += sizeof(pifs_entry_t);
         }
         pa++;
     }
@@ -469,30 +486,32 @@ pifs_status_t pifs_create_entry(const pifs_entry_t * a_entry)
 
 pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a_entry)
 {
-    pifs_status_t        ret = PIFS_ERROR;
+    pifs_status_t        ret = PIFS_SUCCESS;
     pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
     pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
-    pifs_page_offset_t   po = 0;
     bool_t               found = FALSE;
+    pifs_entry_t       * entry = (pifs_entry_t*) pifs.page_buf;
+    size_t               i;
 
-    while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !found)
+    while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !found && ret == PIFS_SUCCESS)
     {
-        po = 0;
-        while (po < PIFS_FLASH_PAGE_SIZE_BYTE && !found)
+        ret = pifs_flash_read(ba, pa, 0, pifs.page_buf, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
+        for (i = 0; i < PIFS_ENTRY_PER_PAGE && !found; i++)
         {
-            ret = pifs_flash_read(ba, pa, po, a_entry, sizeof(pifs_entry_t));
-            if (ret == PIFS_SUCCESS)
+            /* Check if name matches */
+            if (strncmp((char*)entry->name, a_name, sizeof(entry->name)) == 0)
             {
-                /* Check if this area is used */
-                if (strncmp((char*)a_entry->name, a_name, sizeof(a_entry->name)) == 0)
-                {
-                    /* Entry found */
-                    found = TRUE;
-                }
+                /* Entry found */
+                memcpy(a_entry, entry, sizeof(pifs_entry_t));
+                found = TRUE;
             }
-            po += sizeof(pifs_entry_t);
         }
         pa++;
+    }
+
+    if (ret == PIFS_SUCCESS && !found)
+    {
+        ret = PIFS_ERROR_ENTRY_NOT_FOUND;
     }
 
     return ret;
@@ -501,15 +520,37 @@ pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a_entry)
 P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
 {
     P_FILE        * file = NULL;
-    pifs_entry_t    entry;
-    bool_t          entry_found = FALSE;
+    pifs_entry_t  * entry = &pifs.file[0].entry;
+    pifs_status_t   status;
 
     if (pifs.is_header_found && strlen(a_filename))
     {
-        entry_found = pifs_find_entry(a_filename, &entry);
-        pifs_page_mark(20, 0, 8, TRUE);
-        pifs_page_mark(25, PIFS_FLASH_PAGE_PER_BLOCK - 1, 3, TRUE);
-        pifs_page_mark(PIFS_FLASH_BLOCK_NUM_ALL - 1, PIFS_FLASH_PAGE_PER_BLOCK - 1, 1, TRUE);
+        strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
+        entry->object_id = 1;
+        entry->attrib = PIFS_ATTRIB_ARCHIVE;
+        entry->address.block_address = 2;
+        entry->address.page_address = 8;
+        if (pifs_create_entry(entry) == PIFS_SUCCESS)
+        {
+            PIFS_DEBUG_MSG("Entry created\r\n");
+            status = pifs_find_entry(a_filename, entry);
+            if (status == PIFS_SUCCESS)
+            {
+                printf("Entry of %s found:\r\n", entry->name);
+                print_buffer(entry, sizeof(pifs_entry_t), 0);
+            }
+            else
+            {
+                printf("Entry not found!\r\n");
+            }
+        }
+        else
+        {
+            printf("Cannot create entry!\r\n");
+        }
+//        pifs_page_mark(20, 0, 8, TRUE);
+//        pifs_page_mark(25, PIFS_FLASH_PAGE_PER_BLOCK - 1, 3, TRUE);
+//        pifs_page_mark(PIFS_FLASH_BLOCK_NUM_ALL - 1, PIFS_FLASH_PAGE_PER_BLOCK - 1, 1, TRUE);
         /* This should generate an error */
 //        pifs_page_mark(PIFS_FLASH_BLOCK_NUM_ALL - 1, PIFS_FLASH_PAGE_PER_BLOCK - 1, 3, TRUE);
     }

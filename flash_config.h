@@ -29,7 +29,7 @@
 #elif FLASH_TYPE == FLASH_TYPE_M25P80
 /* Geometry of M25P40 */
 #define PIFS_FLASH_BLOCK_NUM_ALL            16      /**< Number of blocks used by the file system */
-#define PIFS_FLASH_BLOCK_RESERVED_NUM       2       /**< Index of first block to use by the file system */
+#define PIFS_FLASH_BLOCK_RESERVED_NUM       0       /**< Index of first block to use by the file system */
 #define PIFS_FLASH_PAGE_PER_BLOCK           256     /**< Number of pages in a block */
 #define PIFS_FLASH_PAGE_SIZE_BYTE           256     /**< Size of a page in bytes */
 #define PIFS_FLASH_PAGE_SIZE_SPARE          0       /**< Number of spare bytes in a page */

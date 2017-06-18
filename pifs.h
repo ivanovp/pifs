@@ -123,6 +123,13 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_address_t          address;
 } pifs_entry_t;
 
+typedef struct
+{
+    bool_t                  is_used;
+    pifs_entry_t            entry;
+    pifs_status_t           status;
+} pifs_file_t;
+
 /**
  * Actual status of file system.
  */
@@ -133,6 +140,7 @@ typedef struct
     pifs_header_t           header;
     pifs_object_id_t        latest_object_id;
     uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];
+    pifs_file_t             file[PIFS_OPEN_FILE_NUM_MAX];
 } pifs_t;
 
 #endif /* _INCLUDE_PIFS_H_ */
