@@ -104,9 +104,6 @@ pifs_status_t pifs_flush(void)
 
     if (pifs.page_buf_is_dirty)
     {
-//        printf("Cache flush BA%i/PA%i!\r\n",
-//                           pifs.page_buf_address.block_address,
-//                           pifs.page_buf_address.page_address);
         ret = pifs_flash_write(pifs.page_buf_address.block_address,
                                pifs.page_buf_address.page_address,
                                0,
@@ -144,14 +141,8 @@ pifs_status_t pifs_read(pifs_block_address_t a_block_address, pifs_page_address_
     if (a_block_address == pifs.page_buf_address.block_address
             && a_page_address == pifs.page_buf_address.page_address)
     {
-//        printf("Cache hit read\r\n");
         if (a_buf)
         {
-//            pifs_page_offset_t i;
-//            for (i = a_page_offset; i < (a_page_offset + a_buf_size); i++)
-//            {
-//                ((uint8_t*)a_buf)[i] = pifs.page_buf[a_page_offset + i];
-//            }
             memcpy(a_buf, &pifs.page_buf[a_page_offset], a_buf_size);
         }
         ret = PIFS_SUCCESS;
@@ -170,11 +161,6 @@ pifs_status_t pifs_read(pifs_block_address_t a_block_address, pifs_page_address_
         {
             if (a_buf)
             {
-//                pifs_page_offset_t i;
-//                for (i = a_page_offset; i < (a_page_offset + a_buf_size); i++)
-//                {
-//                    ((uint8_t*)a_buf)[i] = pifs.page_buf[a_page_offset + i];
-//                }
                 memcpy(a_buf, &pifs.page_buf[a_page_offset], a_buf_size);
             }
             pifs.page_buf_address.block_address = a_block_address;
@@ -203,14 +189,8 @@ pifs_status_t pifs_write(pifs_block_address_t a_block_address, pifs_page_address
     if (a_block_address == pifs.page_buf_address.block_address
             && a_page_address == pifs.page_buf_address.page_address)
     {
-//        printf("Cache hit write\r\n");
         if (a_buf)
         {
-//            pifs_page_offset_t i;
-//            for (i = a_page_offset; i < (a_page_offset + a_buf_size); i++)
-//            {
-//                ((uint8_t*)a_buf)[i] = pifs.page_buf[a_page_offset + i];
-//            }
             memcpy(&pifs.page_buf[a_page_offset], a_buf, a_buf_size);
         }
         pifs.page_buf_is_dirty = TRUE;
@@ -231,11 +211,6 @@ pifs_status_t pifs_write(pifs_block_address_t a_block_address, pifs_page_address
 
             if (a_buf)
             {
-//                pifs_page_offset_t i;
-//                for (i = a_page_offset; i < (a_page_offset + a_buf_size); i++)
-//                {
-//                    ((uint8_t*)a_buf)[i] = pifs.page_buf[a_page_offset + i];
-//                }
                 memcpy(&pifs.page_buf[a_page_offset], a_buf, a_buf_size);
             }
             pifs.page_buf_address.block_address = a_block_address;
@@ -432,7 +407,7 @@ pifs_status_t pifs_page_find_free(size_t a_page_count_needed,
                     page_count_found = 0;
                 }
                 free_space_bitmap >>= 2;
-                bit_pos++;
+                bit_pos += 2;
             }
             po++;
             if (po == PIFS_FLASH_PAGE_SIZE_BYTE)
