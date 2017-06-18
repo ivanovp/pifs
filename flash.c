@@ -106,7 +106,7 @@ pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address, pifs_page_ad
     return ret;
 }
 
-pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address, pifs_page_address_t a_page_offset, const void * a_buf, size_t a_buf_size)
+pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address, pifs_page_address_t a_page_offset, const void * const a_buf, size_t a_buf_size)
 {
     pifs_status_t ret = PIFS_ERROR;
     long int offset = a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE 

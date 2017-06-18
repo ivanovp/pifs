@@ -87,7 +87,7 @@ typedef uint32_t pifs_object_id_t;
 pifs_status_t pifs_flash_init(void);
 pifs_status_t pifs_flash_delete(void);
 pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address, pifs_page_offset_t a_page_offset, void * const a_buf, size_t a_buf_size);
-pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address, pifs_page_address_t a_page_offset, const void * a_buf, size_t a_buf_size);
+pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address, pifs_page_address_t a_page_offset, const void * const a_buf, size_t a_buf_size);
 pifs_status_t pifs_flash_erase(pifs_block_address_t a_block_address);
 
 #ifdef __cplusplus

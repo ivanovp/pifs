@@ -15,16 +15,20 @@
 #include "api_pifs.h"
 #include "pifs.h"
 #include "pifs_debug.h"
+#include "buffer.h"
 
 #define PIFS_TEST_ERROR_MSG(...)    do { \
         fprintf(stderr, "%s ERROR: ", __FUNCTION__); \
         fprintf(stderr, __VA_ARGS__); \
     } while (0);
 
+uint8_t test_buf[1024];
+
 pifs_status_t pifs_test(void)
 {
     pifs_status_t ret = PIFS_ERROR_FLASH_INIT;
     P_FILE * file;
+    size_t   written_size;
 
     ret = pifs_init();
     PIFS_ASSERT(ret == PIFS_SUCCESS);
@@ -33,6 +37,8 @@ pifs_status_t pifs_test(void)
     if (file)
     {
         printf("File opened\r\n");
+        fill_buffer(test_buf, sizeof(test_buf), FILL_TYPE_SEQUENCE_WORD, 1);
+        written_size = pifs_fwrite(test_buf, 1, sizeof(test_buf), file);
     }
 
     ret = pifs_delete();
