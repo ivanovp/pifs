@@ -53,8 +53,8 @@
 #if (PIFS_DEBUG > 2)
 #define PIFS_NOTICE_MSG(...)    do { \
         fflush(stdout); \
-        fprintf(stderr, "%s ", __FUNCTION__); \
-        fprintf(stderr, __VA_ARGS__); \
+        printf("%s ", __FUNCTION__); \
+        printf(__VA_ARGS__); \
         fflush(stderr); \
     } while (0);
 #else

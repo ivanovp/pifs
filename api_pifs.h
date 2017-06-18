@@ -24,6 +24,7 @@ typedef enum
     PIFS_SUCCESS,
     PIFS_ERROR,
     PIFS_FLASH_INIT_ERROR,
+    PIFS_INTERNAL_ERROR,
 } pifs_status_t;
 
 typedef void P_FILE;
