@@ -80,12 +80,18 @@ typedef enum
     PIFS_PAGE_TYPE_DATA
 } pifs_page_type_t;
 
+/**
+ * Address in flash memory.
+ */
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
     pifs_block_address_t    block_address;
     pifs_page_address_t     page_address;
 } pifs_address_t;
 
+/**
+ * File system's header.
+ */
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
     uint32_t                magic;
@@ -101,20 +107,20 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_checksum_t         checksum;
 } pifs_header_t;
 
-typedef struct PIFS_PACKED_ATTRIBUTE
-{
-    uint8_t                 bitmap[PIFS_FREE_SPACE_BITMAP_SIZE_BYTE];
-} pifs_free_space_bitmap_t;
-
+/**
+ * File or directory entry.
+ */
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
     uint8_t                 name[PIFS_FILENAME_LEN_MAX];
     uint8_t                 attrib;
     pifs_object_id_t        object_id;
-    pifs_block_address_t    block_address;
-    pifs_page_address_t     page_address;
+    pifs_address_t          address;
 } pifs_entry_t;
 
+/**
+ * Actual status of file system.
+ */
 typedef struct
 {
     pifs_object_id_t        latest_object_id;
