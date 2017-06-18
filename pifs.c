@@ -66,7 +66,7 @@ void pifs_calc_free_space_pos(const pifs_address_t * a_free_space_bitmap_address
 
     /* Shift left by one (<< 1) due to two bits are stored in free space bitmap */
     bit_pos = ((a_block_address - PIFS_FLASH_BLOCK_RESERVED_NUM) * PIFS_FLASH_PAGE_PER_BLOCK + a_page_address) << 1;
-//    PIFS_NOTICE_MSG("BA%i/PA%i bit_pos: %i\r\n", a_block_address, a_page_address, bit_pos);
+//    PIFS_DEBUG_MSG("BA%i/PA%i bit_pos: %i\r\n", a_block_address, a_page_address, bit_pos);
     *a_free_space_block_address = a_free_space_bitmap_address->block_address + bit_pos / PIFS_FLASH_BLOCK_SIZE_BYTE;
     bit_pos %= PIFS_FLASH_BLOCK_SIZE_BYTE;
     *a_free_space_page_address = a_free_space_bitmap_address->page_address + bit_pos / PIFS_FLASH_PAGE_SIZE_BYTE;
@@ -116,13 +116,13 @@ pifs_status_t pifs_page_mark(pifs_block_address_t a_block_address,
         if (ret == PIFS_SUCCESS)
         {
 //            print_buffer(pifs.page_buf, sizeof(pifs.page_buf), 0);
-//            PIFS_NOTICE_MSG("-Free space byte:    0x%02X\r\n", pifs.page_buf[bit_pos / BYTE_BITS]);
+//            PIFS_DEBUG_MSG("-Free space byte:    0x%02X\r\n", pifs.page_buf[bit_pos / BYTE_BITS]);
             is_free_space = pifs.page_buf[bit_pos / BYTE_BITS] & (1u << (bit_pos % BYTE_BITS));
             is_to_be_released = pifs.page_buf[bit_pos / BYTE_BITS] & (1u << ((bit_pos % BYTE_BITS) + 1));
-//            PIFS_NOTICE_MSG("-Free space bit:     %i\r\n", is_free_space);
-//            PIFS_NOTICE_MSG("-Release space bit:  %i\r\n", is_to_be_released);
-//            PIFS_NOTICE_MSG("-Free space bit:     %i\r\n", (pifs.page_buf[bit_pos / BYTE_BITS] >> (bit_pos % BYTE_BITS)) & 1);
-//            PIFS_NOTICE_MSG("-Release space bit:  %i\r\n", (pifs.page_buf[bit_pos / BYTE_BITS] >> ((bit_pos % BYTE_BITS) + 1)) & 1);
+//            PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", is_free_space);
+//            PIFS_DEBUG_MSG("-Release space bit:  %i\r\n", is_to_be_released);
+//            PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", (pifs.page_buf[bit_pos / BYTE_BITS] >> (bit_pos % BYTE_BITS)) & 1);
+//            PIFS_DEBUG_MSG("-Release space bit:  %i\r\n", (pifs.page_buf[bit_pos / BYTE_BITS] >> ((bit_pos % BYTE_BITS) + 1)) & 1);
             if (a_mark_used)
             {
                 /* Mark page used */
@@ -162,9 +162,9 @@ pifs_status_t pifs_page_mark(pifs_block_address_t a_block_address,
                     ret = PIFS_ERROR_INTERNAL_ALLOCATION;
                 }
             }
-//            PIFS_NOTICE_MSG("+Free space byte:    0x%02X\r\n", pifs.page_buf[bit_pos / BYTE_BITS]);
-//            PIFS_NOTICE_MSG("+Free space bit:     %i\r\n", (pifs.page_buf[bit_pos / BYTE_BITS] >> (bit_pos % BYTE_BITS)) & 1);
-//            PIFS_NOTICE_MSG("+Release space bit:  %i\r\n", (pifs.page_buf[bit_pos / BYTE_BITS] >> ((bit_pos % BYTE_BITS) + 1)) & 1);
+//            PIFS_DEBUG_MSG("+Free space byte:    0x%02X\r\n", pifs.page_buf[bit_pos / BYTE_BITS]);
+//            PIFS_DEBUG_MSG("+Free space bit:     %i\r\n", (pifs.page_buf[bit_pos / BYTE_BITS] >> (bit_pos % BYTE_BITS)) & 1);
+//            PIFS_DEBUG_MSG("+Release space bit:  %i\r\n", (pifs.page_buf[bit_pos / BYTE_BITS] >> ((bit_pos % BYTE_BITS) + 1)) & 1);
         }
         a_page_count--;
         if (a_page_count > 0)
@@ -221,32 +221,32 @@ pifs_status_t pifs_init(void)
 
     pifs.is_mgmt_found = FALSE;
 
-    PIFS_NOTICE_MSG("Geometry of flash memory\r\n");
-    PIFS_NOTICE_MSG("------------------------\r\n");
-    PIFS_NOTICE_MSG("Size of flash memory (all):         %i bytes\r\n", PIFS_FLASH_SIZE_BYTE_ALL);
-    PIFS_NOTICE_MSG("Size of flash memory (used by FS):  %i bytes\r\n", PIFS_FLASH_SIZE_BYTE_FS);
-    PIFS_NOTICE_MSG("Size of block:                      %i bytes\r\n", PIFS_FLASH_BLOCK_SIZE_BYTE);
-    PIFS_NOTICE_MSG("Size of page:                       %i bytes\r\n", PIFS_FLASH_PAGE_SIZE_BYTE);
-    PIFS_NOTICE_MSG("Number of blocks (all):             %i\r\n", PIFS_FLASH_BLOCK_NUM_ALL);
-    PIFS_NOTICE_MSG("Number of blocks (used by FS)):     %i\r\n", PIFS_FLASH_BLOCK_NUM_FS);
-    PIFS_NOTICE_MSG("Number of pages/block:              %i\r\n", PIFS_FLASH_PAGE_PER_BLOCK);
-    PIFS_NOTICE_MSG("Number of pages (all):              %i\r\n", PIFS_FLASH_PAGE_NUM_ALL);
-    PIFS_NOTICE_MSG("Number of pages (used by FS)):      %i\r\n", PIFS_FLASH_PAGE_NUM_FS);
-    PIFS_NOTICE_MSG("\r\n");
-    PIFS_NOTICE_MSG("Geometry of file system\r\n");
-    PIFS_NOTICE_MSG("-----------------------\r\n");
-    PIFS_NOTICE_MSG("Block address size:                 %lu bytes\r\n", sizeof(pifs_block_address_t));
-    PIFS_NOTICE_MSG("Page address size:                  %lu bytes\r\n", sizeof(pifs_page_address_t));
-    PIFS_NOTICE_MSG("Object ID size:                     %lu bytes\r\n", sizeof(pifs_object_id_t));
-    PIFS_NOTICE_MSG("Header size:                        %lu bytes, %lu pages\r\n", PIFS_HEADER_SIZE_BYTE, PIFS_HEADER_SIZE_PAGE);
-    PIFS_NOTICE_MSG("Entry size:                         %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE);
-    PIFS_NOTICE_MSG("Entry size in a page:               %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE * PIFS_ENTRY_PER_PAGE);
-    PIFS_NOTICE_MSG("Entry list size:                    %lu bytes, %lu pages\r\n", PIFS_ENTRY_LIST_SIZE_BYTE, PIFS_ENTRY_LIST_SIZE_PAGE);
-    PIFS_NOTICE_MSG("Free space bitmap size:             %u bytes, %u pages\r\n", PIFS_FREE_SPACE_BITMAP_SIZE_BYTE, PIFS_FREE_SPACE_BITMAP_SIZE_PAGE);
-    PIFS_NOTICE_MSG("Maximum number of management pages: %i\r\n",
-                    PIFS_FLASH_PAGE_PER_BLOCK
-                    + (PIFS_FLASH_BLOCK_NUM_FS - 1 ) * PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX);
-    PIFS_NOTICE_MSG("\r\n");
+    PIFS_INFO_MSG("Geometry of flash memory\r\n");
+    PIFS_INFO_MSG("------------------------\r\n");
+    PIFS_INFO_MSG("Size of flash memory (all):         %i bytes\r\n", PIFS_FLASH_SIZE_BYTE_ALL);
+    PIFS_INFO_MSG("Size of flash memory (used by FS):  %i bytes\r\n", PIFS_FLASH_SIZE_BYTE_FS);
+    PIFS_INFO_MSG("Size of block:                      %i bytes\r\n", PIFS_FLASH_BLOCK_SIZE_BYTE);
+    PIFS_INFO_MSG("Size of page:                       %i bytes\r\n", PIFS_FLASH_PAGE_SIZE_BYTE);
+    PIFS_INFO_MSG("Number of blocks (all):             %i\r\n", PIFS_FLASH_BLOCK_NUM_ALL);
+    PIFS_INFO_MSG("Number of blocks (used by FS)):     %i\r\n", PIFS_FLASH_BLOCK_NUM_FS);
+    PIFS_INFO_MSG("Number of pages/block:              %i\r\n", PIFS_FLASH_PAGE_PER_BLOCK);
+    PIFS_INFO_MSG("Number of pages (all):              %i\r\n", PIFS_FLASH_PAGE_NUM_ALL);
+    PIFS_INFO_MSG("Number of pages (used by FS)):      %i\r\n", PIFS_FLASH_PAGE_NUM_FS);
+    PIFS_INFO_MSG("\r\n");
+    PIFS_INFO_MSG("Geometry of file system\r\n");
+    PIFS_INFO_MSG("-----------------------\r\n");
+    PIFS_INFO_MSG("Block address size:                 %lu bytes\r\n", sizeof(pifs_block_address_t));
+    PIFS_INFO_MSG("Page address size:                  %lu bytes\r\n", sizeof(pifs_page_address_t));
+    PIFS_INFO_MSG("Object ID size:                     %lu bytes\r\n", sizeof(pifs_object_id_t));
+    PIFS_INFO_MSG("Header size:                        %lu bytes, %lu pages\r\n", PIFS_HEADER_SIZE_BYTE, PIFS_HEADER_SIZE_PAGE);
+    PIFS_INFO_MSG("Entry size:                         %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE);
+    PIFS_INFO_MSG("Entry size in a page:               %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE * PIFS_ENTRY_PER_PAGE);
+    PIFS_INFO_MSG("Entry list size:                    %lu bytes, %lu pages\r\n", PIFS_ENTRY_LIST_SIZE_BYTE, PIFS_ENTRY_LIST_SIZE_PAGE);
+    PIFS_INFO_MSG("Free space bitmap size:             %u bytes, %u pages\r\n", PIFS_FREE_SPACE_BITMAP_SIZE_BYTE, PIFS_FREE_SPACE_BITMAP_SIZE_PAGE);
+    PIFS_INFO_MSG("Maximum number of management pages: %i\r\n",
+                   PIFS_FLASH_PAGE_PER_BLOCK
+                   + (PIFS_FLASH_BLOCK_NUM_FS - 1 ) * PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX);
+    PIFS_INFO_MSG("\r\n");
 
     if (PIFS_ENTRY_SIZE_BYTE > PIFS_FLASH_PAGE_SIZE_BYTE)
     {
@@ -287,11 +287,11 @@ pifs_status_t pifs_init(void)
         #endif
                         )
                 {
-                    PIFS_NOTICE_MSG("Management page found: BA%i/PA%i\r\n", ba, pa);
+                    PIFS_INFO_MSG("Management page found: BA%i/PA%i\r\n", ba, pa);
                     checksum = pifs_calc_header_checksum(&pifs.header);
                     if (checksum == pifs.header.checksum)
                     {
-                        PIFS_NOTICE_MSG("Checksum is valid\r\n");
+                        PIFS_INFO_MSG("Checksum is valid\r\n");
                         if (!pifs.is_mgmt_found || prev_header.counter < pifs.header.counter)
                         {
                             pifs.is_mgmt_found = TRUE;
@@ -302,7 +302,7 @@ pifs_status_t pifs_init(void)
                     }
                     else
                     {
-                        PIFS_ERROR_MSG("Checksum is invalid! Calculated: 0x%02X, read: 0x%02X\r\n",
+                        PIFS_WARNING_MSG("Checksum is invalid! Calculated: 0x%02X, read: 0x%02X\r\n",
                                        checksum, pifs.header.checksum);
                     }
                 }
@@ -318,7 +318,7 @@ pifs_status_t pifs_init(void)
             ba = PIFS_FLASH_BLOCK_RESERVED_NUM + rand() % (PIFS_FLASH_BLOCK_NUM_FS);
 #endif
             pa = 0;
-            PIFS_NOTICE_MSG("Creating managamenet block BA%i/PA%i\r\n", ba, pa);
+            PIFS_INFO_MSG("Creating managamenet block BA%i/PA%i\r\n", ba, pa);
             pifs.header.magic = PIFS_MAGIC;
 #if ENABLE_PIFS_VERSION
             pifs.header.majorVersion = PIFS_MAJOR_VERSION;
@@ -342,9 +342,7 @@ pifs_status_t pifs_init(void)
                 pifs.is_mgmt_found = TRUE;
                 pifs.mgmt_address.block_address = ba;
                 pifs.mgmt_address.page_address = pa;
-            }
-            if ( ret == PIFS_SUCCESS )
-            {
+
                 /* Mark file system header as used */
                 ret = pifs_page_mark(pifs.mgmt_address.block_address,
                                      pifs.mgmt_address.page_address,
@@ -360,21 +358,23 @@ pifs_status_t pifs_init(void)
             if ( ret == PIFS_SUCCESS )
             {
                 /* Mark free space bitmap as used */
-                pifs_page_mark(pifs.header.free_space_bitmap_address.block_address,
-                               pifs.header.free_space_bitmap_address.page_address,
-                               PIFS_FREE_SPACE_BITMAP_SIZE_PAGE, TRUE);
+                ret = pifs_page_mark(pifs.header.free_space_bitmap_address.block_address,
+                                     pifs.header.free_space_bitmap_address.page_address,
+                                     PIFS_FREE_SPACE_BITMAP_SIZE_PAGE, TRUE);
             }
         }
 
         if (pifs.is_mgmt_found)
         {
+#if PIFS_DEBUG_LEVEL >= 5
             print_buffer(&pifs.header, sizeof(pifs.header), 0);
-            PIFS_NOTICE_MSG("Counter: %i\r\n",
+#endif
+            PIFS_INFO_MSG("Counter: %i\r\n",
                             pifs.header.counter);
-            PIFS_NOTICE_MSG("Entry list at BA%i/PA%i\r\n",
+            PIFS_INFO_MSG("Entry list at BA%i/PA%i\r\n",
                             pifs.header.entry_list_address.block_address,
                             pifs.header.entry_list_address.page_address);
-            PIFS_NOTICE_MSG("Free space bitmap at BA%i/PA%i\r\n",
+            PIFS_INFO_MSG("Free space bitmap at BA%i/PA%i\r\n",
                             pifs.header.free_space_bitmap_address.block_address,
                             pifs.header.free_space_bitmap_address.page_address);
         }

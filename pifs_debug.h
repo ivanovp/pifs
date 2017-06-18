@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include "common.h"
 
-#define PIFS_DEBUG     3
+#define PIFS_DEBUG_LEVEL 4
 
 #define PIFS_ASSERT(expression) do {                                                    \
         if (!((expression)))                                                            \
@@ -28,7 +28,7 @@
         }                                                                               \
     } while (0);
 
-#if (PIFS_DEBUG > 0)
+#if (PIFS_DEBUG_LEVEL >= 1)
 #define PIFS_ERROR_MSG(...)    do { \
         fflush(stdout); \
         fprintf(stderr, "%s ERROR: ", __FUNCTION__); \
@@ -39,7 +39,7 @@
 #define PIFS_ERROR_MSG(...)
 #endif
 
-#if (PIFS_DEBUG > 1)
+#if (PIFS_DEBUG_LEVEL >= 2)
 #define PIFS_WARNING_MSG(...)    do { \
         fflush(stdout); \
         fprintf(stderr, "%s WARNING: ", __FUNCTION__); \
@@ -50,15 +50,34 @@
 #define PIFS_WARNING_MSG(...)
 #endif
 
-#if (PIFS_DEBUG > 2)
+#if (PIFS_DEBUG_LEVEL >= 3)
 #define PIFS_NOTICE_MSG(...)    do { \
-        fflush(stdout); \
         printf("%s ", __FUNCTION__); \
         printf(__VA_ARGS__); \
-        fflush(stderr); \
+        fflush(stdout); \
     } while (0);
 #else
 #define PIFS_NOTICE_MSG(...)
+#endif
+
+#if (PIFS_DEBUG_LEVEL >= 4)
+#define PIFS_INFO_MSG(...)    do { \
+        printf("%s ", __FUNCTION__); \
+        printf(__VA_ARGS__); \
+        fflush(stdout); \
+    } while (0);
+#else
+#define PIFS_INFO_MSG(...)
+#endif
+
+#if (PIFS_DEBUG_LEVEL >= 5)
+#define PIFS_DEBUG_MSG(...)    do { \
+        printf("%s ", __FUNCTION__); \
+        printf(__VA_ARGS__); \
+        fflush(stdout); \
+    } while (0);
+#else
+#define PIFS_DEBUG_MSG(...)
 #endif
 
 #endif /* _INCLUDE_PIFS_DEBUG_H_ */
