@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include "common.h"
 
-#define PIFS_DEBUG_LEVEL 4
+#define PIFS_DEBUG_LEVEL 5
 
 #define PIFS_ASSERT(expression) do {                                                    \
         if (!((expression)))                                                            \

@@ -24,7 +24,9 @@ static pifs_t pifs =
     .is_header_found = FALSE,
     .header = { 0 },
     .latest_object_id = 1,
-    .page_buf = { 0 }
+    .page_buf_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
+    .page_buf = { 0 },
+    .page_buf_is_dirty = FALSE
 };
 
 pifs_checksum_t pifs_calc_header_checksum(pifs_header_t * a_pifs_header)
@@ -45,6 +47,7 @@ pifs_checksum_t pifs_calc_header_checksum(pifs_header_t * a_pifs_header)
 /**
  * @brief pifs_calc_free_space_pos Calculate position of a page in free space
  * memory bitmap.
+ *
  * @param[in] a_free_space_bitmap_address   Start address of free space bitmap area.
  * @param[in] a_block_address   Block address of page to be calculated.
  * @param[in] a_page_address    Page address of page to be calculated.
@@ -57,9 +60,9 @@ void pifs_calc_free_space_pos(const pifs_address_t * a_free_space_bitmap_address
                               pifs_page_address_t a_page_address,
                               pifs_block_address_t * a_free_space_block_address,
                               pifs_page_address_t * a_free_space_page_address,
-                              uint32_t * a_free_space_bit_pos)
+                              pifs_bit_pos_t * a_free_space_bit_pos)
 {
-    uint32_t bit_pos;
+    pifs_bit_pos_t bit_pos;
 
     /* Shift left by one (<< 1) due to two bits are stored in free space bitmap */
     bit_pos = ((a_block_address - PIFS_FLASH_BLOCK_RESERVED_NUM) * PIFS_FLASH_PAGE_PER_BLOCK + a_page_address) << 1;
@@ -72,8 +75,204 @@ void pifs_calc_free_space_pos(const pifs_address_t * a_free_space_bitmap_address
 }
 
 /**
+ * @brief pifs_calc_address Calculate address from bit position in free space
+ * memory bitmap.
+ *
+ * @param[in] a_bit_pos         Bit position in free space memory map.
+ * @param[out] a_block_address  Block address of page to be calculated.
+ * @param[out] a_page_address   Page address of page to be calculated.
+ */
+void pifs_calc_address(pifs_bit_pos_t a_bit_pos,
+                       pifs_block_address_t * a_block_address,
+                       pifs_page_address_t * a_page_address)
+{
+    /* Shift right by one (>> 1) due to two bits are stored in free space bitmap */
+    a_bit_pos >>= 1;
+    *a_block_address = (a_bit_pos / PIFS_FLASH_PAGE_PER_BLOCK) + PIFS_FLASH_BLOCK_RESERVED_NUM;
+    a_bit_pos %= PIFS_FLASH_PAGE_PER_BLOCK;
+    *a_page_address = a_bit_pos;
+}
+
+/**
+ * @brief pifs_flush  Flush cache.
+ *
+ * @return PIFS_SUCCESS if data flush successfully.
+ */
+pifs_status_t pifs_flush(void)
+{
+    pifs_status_t ret = PIFS_SUCCESS;
+
+    if (pifs.page_buf_is_dirty)
+    {
+//        printf("Cache flush BA%i/PA%i!\r\n",
+//                           pifs.page_buf_address.block_address,
+//                           pifs.page_buf_address.page_address);
+        ret = pifs_flash_write(pifs.page_buf_address.block_address,
+                               pifs.page_buf_address.page_address,
+                               0,
+                               pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+        if (ret == PIFS_SUCCESS)
+        {
+            pifs.page_buf_is_dirty = FALSE;
+        }
+        else
+        {
+            PIFS_ERROR_MSG("Cannot flush buffer BA%i/PA%i\r\n",
+                           pifs.page_buf_address.block_address,
+                           pifs.page_buf_address.page_address);
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * @brief pifs_read  Cached read.
+ *
+ * @param a_block_address[in]   Block address of page to read.
+ * @param a_page_address[in]    Page address of page to read.
+ * @param a_page_offset[in]     Offset in page.
+ * @param a_buf[out]            Pointer to buffer to fill or NULL if
+ *                              pifs.page_buf is used.
+ * @param a_buf_size[in]        Size of buffer. Ignored if a_buf is NULL.
+ * @return PIFS_SUCCESS if data read successfully.
+ */
+pifs_status_t pifs_read(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address, pifs_page_offset_t a_page_offset, void * const a_buf, size_t a_buf_size)
+{
+    pifs_status_t ret = PIFS_ERROR;
+
+    if (a_block_address == pifs.page_buf_address.block_address
+            && a_page_address == pifs.page_buf_address.page_address)
+    {
+//        printf("Cache hit read\r\n");
+        if (a_buf)
+        {
+//            pifs_page_offset_t i;
+//            for (i = a_page_offset; i < (a_page_offset + a_buf_size); i++)
+//            {
+//                ((uint8_t*)a_buf)[i] = pifs.page_buf[a_page_offset + i];
+//            }
+            memcpy(a_buf, &pifs.page_buf[a_page_offset], a_buf_size);
+        }
+        ret = PIFS_SUCCESS;
+    }
+    else
+    {
+        ret = pifs_flush();
+
+        if (ret == PIFS_SUCCESS)
+        {
+            ret = pifs_flash_read(a_block_address, a_page_address, 0,
+                                  pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+        }
+
+        if (ret == PIFS_SUCCESS)
+        {
+            if (a_buf)
+            {
+//                pifs_page_offset_t i;
+//                for (i = a_page_offset; i < (a_page_offset + a_buf_size); i++)
+//                {
+//                    ((uint8_t*)a_buf)[i] = pifs.page_buf[a_page_offset + i];
+//                }
+                memcpy(a_buf, &pifs.page_buf[a_page_offset], a_buf_size);
+            }
+            pifs.page_buf_address.block_address = a_block_address;
+            pifs.page_buf_address.page_address = a_page_address;
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * @brief pifs_write  Cached write.
+ *
+ * @param a_block_address[in]   Block address of page to write.
+ * @param a_page_address[in]    Page address of page to write.
+ * @param a_page_offset[in]     Offset in page.
+ * @param a_buf[in]             Pointer to buffer to write or NULL if
+ *                              pifs.page_buf is directly written.
+ * @param a_buf_size[in]        Size of buffer. Ignored if a_buf is NULL.
+ * @return PIFS_SUCCESS if data write successfully.
+ */
+pifs_status_t pifs_write(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address, pifs_page_offset_t a_page_offset, void * const a_buf, size_t a_buf_size)
+{
+    pifs_status_t ret = PIFS_ERROR;
+
+    if (a_block_address == pifs.page_buf_address.block_address
+            && a_page_address == pifs.page_buf_address.page_address)
+    {
+//        printf("Cache hit write\r\n");
+        if (a_buf)
+        {
+//            pifs_page_offset_t i;
+//            for (i = a_page_offset; i < (a_page_offset + a_buf_size); i++)
+//            {
+//                ((uint8_t*)a_buf)[i] = pifs.page_buf[a_page_offset + i];
+//            }
+            memcpy(&pifs.page_buf[a_page_offset], a_buf, a_buf_size);
+        }
+        pifs.page_buf_is_dirty = TRUE;
+        ret = PIFS_SUCCESS;
+    }
+    else
+    {
+        ret = pifs_flush();
+
+        if (ret == PIFS_SUCCESS)
+        {
+            if (a_page_offset != 0 || a_buf_size != PIFS_FLASH_PAGE_SIZE_BYTE)
+            {
+                /* Only part of page is written */
+                ret = pifs_flash_read(a_block_address, a_page_address, 0,
+                                      pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+            }
+
+            if (a_buf)
+            {
+//                pifs_page_offset_t i;
+//                for (i = a_page_offset; i < (a_page_offset + a_buf_size); i++)
+//                {
+//                    ((uint8_t*)a_buf)[i] = pifs.page_buf[a_page_offset + i];
+//                }
+                memcpy(&pifs.page_buf[a_page_offset], a_buf, a_buf_size);
+            }
+            pifs.page_buf_address.block_address = a_block_address;
+            pifs.page_buf_address.page_address = a_page_address;
+            pifs.page_buf_is_dirty = TRUE;
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * @brief pifs_erase  Cached erase.
+ *
+ * @param a_block_address[in]   Block address of page to erase.
+ * @return PIFS_SUCCESS if data erased successfully.
+ */
+pifs_status_t pifs_erase(pifs_block_address_t a_block_address)
+{
+    pifs_status_t ret = PIFS_ERROR;
+
+    ret = pifs_flash_erase(a_block_address);
+
+    if (a_block_address == pifs.page_buf_address.block_address)
+    {
+        pifs.page_buf_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
+        pifs.page_buf_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
+        pifs.page_buf_is_dirty = FALSE;
+    }
+
+    return ret;
+}
+
+/**
  * @brief pifs_page_mark Mark page(s) as used (or to be released) in free space
  * memory bitmap.
+ *
  * @param a_block_address Block address of page(s).
  * @param a_page_address Page address of page(s).
  * @param a_page_count Number of pages.
@@ -81,35 +280,24 @@ void pifs_calc_free_space_pos(const pifs_address_t * a_free_space_bitmap_address
  * @return PIFS_SUCCESS: if page was successfully marked.
  */
 pifs_status_t pifs_page_mark(pifs_block_address_t a_block_address,
-                                    pifs_page_address_t a_page_address,
-                                    size_t a_page_count, bool_t a_mark_used)
+                             pifs_page_address_t a_page_address,
+                             size_t a_page_count, bool_t a_mark_used)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
-    uint32_t             bit_pos;
+    pifs_bit_pos_t       bit_pos;
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
-    pifs_block_address_t prev_ba = PIFS_BLOCK_ADDRESS_INVALID;
-    pifs_page_address_t  prev_pa = PIFS_PAGE_ADDRESS_INVALID;
     bool_t               is_free_space;
     bool_t               is_to_be_released;
+
+    PIFS_ASSERT(pifs.is_header_found);
 
     while (a_page_count > 0 && ret == PIFS_SUCCESS)
     {
         pifs_calc_free_space_pos(&pifs.header.free_space_bitmap_address,
                                  a_block_address, a_page_address, &ba, &pa, &bit_pos);
-        /* Check if page has not already read */
-        if (prev_ba != ba || prev_pa != pa)
-        {
-            if (prev_ba != PIFS_BLOCK_ADDRESS_INVALID && prev_pa != PIFS_PAGE_ADDRESS_INVALID)
-            {
-                /* Write new status */
-                ret = pifs_flash_write(prev_ba, prev_pa, 0, pifs.page_buf, sizeof(pifs.page_buf));
-            }
-            /* Read actual status of free space memory bitmap */
-            ret = pifs_flash_read(ba, pa, 0, pifs.page_buf, sizeof(pifs.page_buf));
-            prev_ba = ba;
-            prev_pa = pa;
-        }
+        /* Read actual status of free space memory bitmap (or cache) */
+        ret = pifs_read(ba, pa, 0, NULL, 0);
         if (ret == PIFS_SUCCESS)
         {
 //            print_buffer(pifs.page_buf, sizeof(pifs.page_buf), 0);
@@ -162,6 +350,8 @@ pifs_status_t pifs_page_mark(pifs_block_address_t a_block_address,
 //            PIFS_DEBUG_MSG("+Free space byte:    0x%02X\r\n", pifs.page_buf[bit_pos / BYTE_BITS]);
 //            PIFS_DEBUG_MSG("+Free space bit:     %i\r\n", (pifs.page_buf[bit_pos / BYTE_BITS] >> (bit_pos % BYTE_BITS)) & 1);
 //            PIFS_DEBUG_MSG("+Release space bit:  %i\r\n", (pifs.page_buf[bit_pos / BYTE_BITS] >> ((bit_pos % BYTE_BITS) + 1)) & 1);
+            /* Write new status to cache */
+            ret = pifs_write(ba, pa, 0, NULL, 0);
         }
         a_page_count--;
         if (a_page_count > 0)
@@ -180,8 +370,7 @@ pifs_status_t pifs_page_mark(pifs_block_address_t a_block_address,
         }
         else
         {
-            /* Write new status */
-            ret = pifs_flash_write(ba, pa, 0, pifs.page_buf, sizeof(pifs.page_buf));
+            ret = pifs_flush();
         }
     }
 
@@ -190,6 +379,7 @@ pifs_status_t pifs_page_mark(pifs_block_address_t a_block_address,
 
 /**
  * @brief pifs_page_find_free Find free page(s) in free space memory bitmap.
+ *
  * @param[in] a_page_count_needed Number of pages needed.
  * @param[in] a_page_type         Page type to find.
  * @param[out] a_block_address    Block address of page(s).
@@ -203,7 +393,64 @@ pifs_status_t pifs_page_find_free(size_t a_page_count_needed,
                                   pifs_page_address_t * a_page_address,
                                   size_t * a_page_count_found)
 {
-    pifs_status_t ret = PIFS_ERROR;
+    pifs_status_t           ret = PIFS_ERROR;
+    pifs_block_address_t    ba = pifs.header.free_space_bitmap_address.block_address;
+    pifs_page_address_t     pa = pifs.header.free_space_bitmap_address.page_address;
+    pifs_page_offset_t      po = 0;
+    size_t                  i;
+    size_t                  page_count_found = 0;
+    uint8_t                 free_space_bitmap = 0;
+    bool_t                  found = FALSE;
+    size_t                  byte_cntr = PIFS_FREE_SPACE_BITMAP_SIZE_BYTE;
+    pifs_bit_pos_t          bit_pos = 0;
+
+    PIFS_ASSERT(pifs.is_header_found);
+
+    do
+    {
+        printf("BA%i/PA%i ", ba, pa);
+        ret = pifs_read(ba, pa, po, &free_space_bitmap, sizeof(free_space_bitmap));
+        printf("%02X\r\n", free_space_bitmap);
+        if (ret == PIFS_SUCCESS)
+        {
+            for (i = 0; i < 4 && !found; i++)
+            {
+                if (free_space_bitmap & 1)
+                {
+                    page_count_found++;
+                    if (page_count_found == a_page_count_needed)
+                    {
+                        PIFS_NOTICE_MSG("Page count found, bit_pos: %i!\r\n", bit_pos);
+                        pifs_calc_address(bit_pos - page_count_found + 1,
+                                          a_block_address, a_page_address);
+                        *a_page_count_found = page_count_found;
+                        found = TRUE;
+                    }
+                }
+                else
+                {
+                    page_count_found = 0;
+                }
+                free_space_bitmap >>= 2;
+                bit_pos++;
+            }
+            po++;
+            if (po == PIFS_FLASH_PAGE_SIZE_BYTE)
+            {
+                po = 0;
+                pa++;
+                if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
+                {
+                    PIFS_ERROR_MSG("End of block. byte_cntr: %i\r\n", byte_cntr);
+                }
+            }
+        }
+    } while (byte_cntr-- > 0 && ret == PIFS_SUCCESS && !found);
+
+    if (ret == PIFS_SUCCESS && !found)
+    {
+        ret = PIFS_ERROR_NO_MORE_SPACE;
+    }
 
     return ret;
 }
@@ -220,7 +467,7 @@ void pifs_header_init(pifs_block_address_t a_block_address,
                       pifs_header_t * a_header)
 {
     /* FIXME use random block? */
-    PIFS_DEBUG_MSG("Creating managamenet block BA%i/PA%i\r\n", ba, pa);
+    PIFS_DEBUG_MSG("Creating managamenet block BA%i/PA%i\r\n", a_block_address, a_page_address);
     a_header->magic = PIFS_MAGIC;
 #if ENABLE_PIFS_VERSION
     a_header->majorVersion = PIFS_MAJOR_VERSION;
@@ -249,13 +496,17 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
 {
     pifs_status_t ret = PIFS_ERROR;
 
-    ret = pifs_flash_erase(a_block_address);
+    ret = pifs_erase(a_block_address);
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_flash_write(a_block_address, a_page_address, 0, a_header, sizeof(pifs_header_t));
+        ret = pifs_write(a_block_address, a_page_address, 0, a_header, sizeof(pifs_header_t));
     }
     if (ret == PIFS_SUCCESS)
     {
+        pifs.is_header_found = TRUE;
+        pifs.header_address.block_address = a_block_address;
+        pifs.header_address.page_address = a_page_address;
+
         /* Mark file system header as used */
         ret = pifs_page_mark(a_block_address,
                              a_page_address,
@@ -291,7 +542,12 @@ pifs_status_t pifs_init(void)
     pifs_header_t        prev_header;
     pifs_checksum_t      checksum;
 
+    pifs.header_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
+    pifs.header_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
     pifs.is_header_found = FALSE;
+    pifs.page_buf_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
+    pifs.page_buf_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
+    pifs.page_buf_is_dirty = FALSE;
 
     PIFS_INFO_MSG("Geometry of flash memory\r\n");
     PIFS_INFO_MSG("------------------------\r\n");
@@ -351,7 +607,7 @@ pifs_status_t pifs_init(void)
         {
             for (pa = 0; pa < PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX; pa++)
             {
-                pifs_flash_read(ba, pa, 0, &header, sizeof(header));
+                pifs_read(ba, pa, 0, &header, sizeof(header));
                 if (header.magic == PIFS_MAGIC
         #if ENABLE_PIFS_VERSION
                         && header.majorVersion == PIFS_MAJOR_VERSION
@@ -396,12 +652,6 @@ pifs_status_t pifs_init(void)
             pa = 0;
             pifs_header_init(ba, pa, &pifs.header);
             ret = pifs_header_write(ba, pa, &pifs.header);
-            if (ret == PIFS_SUCCESS)
-            {
-                pifs.is_header_found = TRUE;
-                pifs.header_address.block_address = ba;
-                pifs.header_address.page_address = pa;
-            }
         }
 
         if (pifs.is_header_found)
@@ -460,14 +710,14 @@ pifs_status_t pifs_create_entry(const pifs_entry_t * a_entry)
 
     while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !created)
     {
-        ret = pifs_flash_read(ba, pa, 0, pifs.page_buf, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
+        ret = pifs_read(ba, pa, 0, pifs.page_buf, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
         for (i = 0; i < PIFS_ENTRY_PER_PAGE && !created; i++)
         {
             /* Check if this area is used */
             if (pifs_is_buffer_erased(&entry[i], sizeof(entry)))
             {
                 /* Empty entry found */
-                ret = pifs_flash_write(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, a_entry, sizeof(pifs_entry_t));
+                ret = pifs_write(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, a_entry, sizeof(pifs_entry_t));
                 if (ret == PIFS_SUCCESS)
                 {
                     created = TRUE;
@@ -496,7 +746,7 @@ pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a_entry)
 
     while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !found && ret == PIFS_SUCCESS)
     {
-        ret = pifs_flash_read(ba, pa, 0, pifs.page_buf, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
+        ret = pifs_read(ba, pa, 0, pifs.page_buf, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
         for (i = 0; i < PIFS_ENTRY_PER_PAGE && !found; i++)
         {
             /* Check if name matches */
@@ -520,34 +770,47 @@ pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a_entry)
 
 P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
 {
-    P_FILE        * file = NULL;
+    pifs_file_t   * file = &pifs.file[0];
     pifs_entry_t  * entry = &pifs.file[0].entry;
     pifs_status_t   status;
+    pifs_block_address_t ba;
+    pifs_page_address_t  pa;
+    size_t               page_count_found = 0;
 
+    /* TODO check validity of filename */
+    /* TODO check a_modes */
     if (pifs.is_header_found && strlen(a_filename))
     {
-        strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
-        entry->object_id = 1;
-        entry->attrib = PIFS_ATTRIB_ARCHIVE;
-        entry->address.block_address = 2;
-        entry->address.page_address = 8;
-        if (pifs_create_entry(entry) == PIFS_SUCCESS)
+        if (pifs_find_entry(a_filename, entry) == PIFS_SUCCESS)
         {
-            PIFS_DEBUG_MSG("Entry created\r\n");
-            status = pifs_find_entry(a_filename, entry);
-            if (status == PIFS_SUCCESS)
-            {
-                printf("Entry of %s found:\r\n", entry->name);
-                print_buffer(entry, sizeof(pifs_entry_t), 0);
-            }
-            else
-            {
-                printf("Entry not found!\r\n");
-            }
+            printf("Entry of %s found:\r\n", a_filename);
+            print_buffer(entry, sizeof(pifs_entry_t), 0);
+            file->is_opened = TRUE;
         }
         else
         {
-            printf("Cannot create entry!\r\n");
+            if (pifs_page_find_free(1, PIFS_PAGE_TYPE_DATA, &ba, &pa, &page_count_found) == PIFS_SUCCESS)
+            {
+                printf("%lu free page found BA%i/PA%i\r\n", page_count_found, ba, pa);
+            }
+            else
+            {
+                printf("No free page found!\r\n");
+            }
+            strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
+            entry->object_id = 1;
+            entry->attrib = PIFS_ATTRIB_ARCHIVE;
+            entry->address.block_address = 2;
+            entry->address.page_address = 8;
+            if (pifs_create_entry(entry) == PIFS_SUCCESS)
+            {
+                PIFS_DEBUG_MSG("Entry created\r\n");
+                file->is_opened = TRUE;
+            }
+            else
+            {
+                printf("Cannot create entry!\r\n");
+            }
         }
 //        pifs_page_mark(20, 0, 8, TRUE);
 //        pifs_page_mark(25, PIFS_FLASH_PAGE_PER_BLOCK - 1, 3, TRUE);
@@ -556,7 +819,7 @@ P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
 //        pifs_page_mark(PIFS_FLASH_BLOCK_NUM_ALL - 1, PIFS_FLASH_PAGE_PER_BLOCK - 1, 3, TRUE);
     }
 
-    return file;
+    return (P_FILE*) file;
 }
 
 size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE *a_file)

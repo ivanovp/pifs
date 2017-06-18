@@ -72,6 +72,14 @@ typedef uint32_t pifs_checksum_t;
 #error PIFS_CHECKSUM_SIZE is invalid! Valid values are 1, 2 or 4.
 #endif
 
+#if PIFS_FLASH_PAGE_NUM_FS < 256
+typedef uint8_t pifs_bit_pos_t;
+#elif PIFS_FLASH_PAGE_NUM_FS < 65536
+typedef uint16_t pifs_bit_pos_t;
+#elif PIFS_FLASH_PAGE_NUM_FS < 4294967296l
+typedef uint32_t pifs_bit_pos_t;
+#endif
+
 typedef enum
 {
     /** Only management information stored in the block. */
@@ -143,7 +151,9 @@ typedef struct
     bool_t                  is_header_found;
     pifs_header_t           header;
     pifs_object_id_t        latest_object_id;
+    pifs_address_t          page_buf_address;                       /**< Address of page_buf */
     uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];    /**< Flash page buffer */
+    bool_t                  page_buf_is_dirty;
     pifs_file_t             file[PIFS_OPEN_FILE_NUM_MAX];           /**< Opened files */
 } pifs_t;
 
