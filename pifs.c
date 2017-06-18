@@ -23,8 +23,8 @@
 
 static pifs_t pifs =
 {
-    .mgmt_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
-    .is_mgmt_found = FALSE,
+    .header_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
+    .is_header_found = FALSE,
     .header = { 0 },
     .latest_object_id = 1,
     .page_buf = { 0 }
@@ -211,6 +211,66 @@ pifs_status_t pifs_page_find_free(size_t a_page_count_needed,
     return ret;
 }
 
+/**
+ * @brief pifs_header_init Initialize file system's header.
+ * @param a_header[out] Header to be initialized.
+ */
+void pifs_header_init(pifs_block_address_t a_block_address,
+                      pifs_page_address_t a_page_address,
+                      pifs_header_t * a_header)
+{
+    /* FIXME use random block? */
+    PIFS_DEBUG_MSG("Creating managamenet block BA%i/PA%i\r\n", ba, pa);
+    a_header->magic = PIFS_MAGIC;
+#if ENABLE_PIFS_VERSION
+    a_header->majorVersion = PIFS_MAJOR_VERSION;
+    a_header->minorVersion = PIFS_MINOR_VERSION;
+#endif
+    a_header->counter = 1;
+    a_header->block_type = PIFS_BLOCK_TYPE_MANAGEMENT;
+    a_header->entry_list_address.block_address = a_block_address;
+    a_header->entry_list_address.page_address = a_page_address + PIFS_HEADER_SIZE_PAGE;
+    a_header->free_space_bitmap_address.block_address = a_block_address;
+    a_header->free_space_bitmap_address.page_address = a_page_address + PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE;
+    a_header->checksum = pifs_calc_header_checksum(a_header);
+}
+
+pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
+                                pifs_page_address_t a_page_address,
+                                pifs_header_t * a_header)
+{
+    pifs_status_t ret = PIFS_ERROR;
+
+    ret = pifs_flash_erase(a_block_address);
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_flash_write(a_block_address, a_page_address, 0, &a_header, sizeof(a_header));
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        /* Mark file system header as used */
+        ret = pifs_page_mark(a_block_address,
+                             a_page_address,
+                             PIFS_HEADER_SIZE_PAGE, TRUE);
+    }
+    if ( ret == PIFS_SUCCESS )
+    {
+        /* Mark entry list as used */
+        ret = pifs_page_mark(a_header->entry_list_address.block_address,
+                             a_header->entry_list_address.page_address,
+                             PIFS_ENTRY_LIST_SIZE_PAGE, TRUE);
+    }
+    if ( ret == PIFS_SUCCESS )
+    {
+        /* Mark free space bitmap as used */
+        ret = pifs_page_mark(a_header->free_space_bitmap_address.block_address,
+                             a_header->free_space_bitmap_address.page_address,
+                             PIFS_FREE_SPACE_BITMAP_SIZE_PAGE, TRUE);
+    }
+
+    return ret;
+}
+
 pifs_status_t pifs_init(void)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
@@ -219,7 +279,7 @@ pifs_status_t pifs_init(void)
     pifs_header_t        prev_header;
     pifs_checksum_t      checksum;
 
-    pifs.is_mgmt_found = FALSE;
+    pifs.is_header_found = FALSE;
 
     PIFS_INFO_MSG("Geometry of flash memory\r\n");
     PIFS_INFO_MSG("------------------------\r\n");
@@ -275,9 +335,9 @@ pifs_status_t pifs_init(void)
     if (ret == PIFS_SUCCESS)
     {
         /* Find latest management block */
-        for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL && !pifs.is_mgmt_found; ba++)
+        for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL && !pifs.is_header_found; ba++)
         {
-            for (pa = 0; pa < PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX && !pifs.is_mgmt_found; pa++)
+            for (pa = 0; pa < PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX && !pifs.is_header_found; pa++)
             {
                 pifs_flash_read(ba, pa, 0, &pifs.header, sizeof(pifs.header));
                 if (pifs.header.magic == PIFS_MAGIC
@@ -287,16 +347,16 @@ pifs_status_t pifs_init(void)
         #endif
                         )
                 {
-                    PIFS_INFO_MSG("Management page found: BA%i/PA%i\r\n", ba, pa);
+                    PIFS_DEBUG_MSG("Management page found: BA%i/PA%i\r\n", ba, pa);
                     checksum = pifs_calc_header_checksum(&pifs.header);
                     if (checksum == pifs.header.checksum)
                     {
-                        PIFS_INFO_MSG("Checksum is valid\r\n");
-                        if (!pifs.is_mgmt_found || prev_header.counter < pifs.header.counter)
+                        PIFS_DEBUG_MSG("Checksum is valid\r\n");
+                        if (!pifs.is_header_found || prev_header.counter < pifs.header.counter)
                         {
-                            pifs.is_mgmt_found = TRUE;
-                            pifs.mgmt_address.block_address = ba;
-                            pifs.mgmt_address.page_address = pa;
+                            pifs.is_header_found = TRUE;
+                            pifs.header_address.block_address = ba;
+                            pifs.header_address.page_address = pa;
                             memcpy(&prev_header, &pifs.header, sizeof(prev_header));
                         }
                     }
@@ -309,62 +369,25 @@ pifs_status_t pifs_init(void)
             }
         }
 
-        if (!pifs.is_mgmt_found)
+        if (!pifs.is_header_found)
         {
-            /* FIXME use random block? */
 #if 1
             ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
 #else
             ba = PIFS_FLASH_BLOCK_RESERVED_NUM + rand() % (PIFS_FLASH_BLOCK_NUM_FS);
 #endif
             pa = 0;
-            PIFS_INFO_MSG("Creating managamenet block BA%i/PA%i\r\n", ba, pa);
-            pifs.header.magic = PIFS_MAGIC;
-#if ENABLE_PIFS_VERSION
-            pifs.header.majorVersion = PIFS_MAJOR_VERSION;
-            pifs.header.minorVersion = PIFS_MINOR_VERSION;
-#endif
-            pifs.header.counter = 1;
-            pifs.header.block_type = PIFS_BLOCK_TYPE_MANAGEMENT;
-            pifs.header.entry_list_address.block_address = ba;
-            pifs.header.entry_list_address.page_address = pa + PIFS_HEADER_SIZE_PAGE;
-            pifs.header.free_space_bitmap_address.block_address = ba;
-            pifs.header.free_space_bitmap_address.page_address = pa + PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE;
-            pifs.header.checksum = pifs_calc_header_checksum(&pifs.header);
-
-            ret = pifs_flash_erase(ba);
+            pifs_header_init(ba, pa, &pifs.header);
+            ret = pifs_header_write(ba, pa, &pifs.header);
             if (ret == PIFS_SUCCESS)
             {
-                ret = pifs_flash_write(ba, pa, 0, &pifs.header, sizeof(pifs.header));
-            }
-            if (ret == PIFS_SUCCESS)
-            {
-                pifs.is_mgmt_found = TRUE;
-                pifs.mgmt_address.block_address = ba;
-                pifs.mgmt_address.page_address = pa;
-
-                /* Mark file system header as used */
-                ret = pifs_page_mark(pifs.mgmt_address.block_address,
-                                     pifs.mgmt_address.page_address,
-                                     PIFS_HEADER_SIZE_PAGE, TRUE);
-            }
-            if ( ret == PIFS_SUCCESS )
-            {
-                /* Mark entry list as used */
-                ret = pifs_page_mark(pifs.header.entry_list_address.block_address,
-                                     pifs.header.entry_list_address.page_address,
-                                     PIFS_ENTRY_LIST_SIZE_PAGE, TRUE);
-            }
-            if ( ret == PIFS_SUCCESS )
-            {
-                /* Mark free space bitmap as used */
-                ret = pifs_page_mark(pifs.header.free_space_bitmap_address.block_address,
-                                     pifs.header.free_space_bitmap_address.page_address,
-                                     PIFS_FREE_SPACE_BITMAP_SIZE_PAGE, TRUE);
+                pifs.is_header_found = TRUE;
+                pifs.header_address.block_address = ba;
+                pifs.header_address.page_address = pa;
             }
         }
 
-        if (pifs.is_mgmt_found)
+        if (pifs.is_header_found)
         {
 #if PIFS_DEBUG_LEVEL >= 5
             print_buffer(&pifs.header, sizeof(pifs.header), 0);
@@ -481,7 +504,7 @@ P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
     pifs_entry_t    entry;
     bool_t          entry_found = FALSE;
 
-    if (pifs.is_mgmt_found && strlen(a_filename))
+    if (pifs.is_header_found && strlen(a_filename))
     {
         entry_found = pifs_find_entry(a_filename, &entry);
         pifs_page_mark(20, 0, 8, TRUE);
@@ -498,7 +521,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE *a
 {
     size_t written_size = 0;
 
-    if (pifs.is_mgmt_found && a_file)
+    if (pifs.is_header_found && a_file)
     {
     }
 
@@ -509,7 +532,7 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 {
     size_t read_size = 0;
 
-    if (pifs.is_mgmt_found && a_file)
+    if (pifs.is_header_found && a_file)
     {
     }
 
@@ -518,7 +541,7 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 
 int pifs_fclose(P_FILE * a_file)
 {
-    if (pifs.is_mgmt_found && a_file)
+    if (pifs.is_header_found && a_file)
     {
     }
 

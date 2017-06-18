@@ -128,8 +128,8 @@ typedef struct PIFS_PACKED_ATTRIBUTE
  */
 typedef struct
 {
-    pifs_address_t          mgmt_address;
-    bool_t                  is_mgmt_found;
+    pifs_address_t          header_address;
+    bool_t                  is_header_found;
     pifs_header_t           header;
     pifs_object_id_t        latest_object_id;
     uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];
