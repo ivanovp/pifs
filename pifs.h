@@ -48,7 +48,7 @@
 
 /** Size of free space bitmap in bytes.
  * Multiplied by two, because two bits are used per page */
-#define PIFS_FREE_SPACE_BITMAP_SIZE_BYTE    (2 * ((PIFS_FLASH_PAGE_FS_NUM + 7) / 8))
+#define PIFS_FREE_SPACE_BITMAP_SIZE_BYTE    (2 * ((PIFS_FLASH_PAGE_NUM_FS + 7) / 8))
 /** Size of free space bitmap in pages */
 #define PIFS_FREE_SPACE_BITMAP_SIZE_PAGE    ((PIFS_FREE_SPACE_BITMAP_SIZE_BYTE + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE)
 

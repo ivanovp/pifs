@@ -29,7 +29,7 @@ pifs_status_t flash_erase_all(void)
     pifs_block_address_t i;
     pifs_status_t ret = PIFS_SUCCESS;
 
-    for (i = PIFS_FLASH_BLOCK_RESERVED_NUM; i < PIFS_FLASH_BLOCK_NUM; i++)
+    for (i = PIFS_FLASH_BLOCK_RESERVED_NUM; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
     {
         ret = pifs_flash_erase(i);
         /* TODO mark bad blocks */
@@ -96,7 +96,7 @@ pifs_status_t flash_test_random_write(void)
     printf("Done.\r\n");
     
     printf("Testing random data write... ");
-    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM; ba++)
+    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
     {
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
@@ -140,7 +140,7 @@ pifs_status_t flash_test_pattern(void)
     printf("Done.\r\n");
     
     printf("Testing pattern write... ");
-    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM; ba++)
+    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
     {
         pattern = pattern_arr[ba & ((sizeof(pattern_arr) / sizeof(pattern_arr[0])) - 1)];
         printf("Pattern: 0x%08X\r\n", pattern);
@@ -174,7 +174,7 @@ pifs_status_t flash_test_addressable(void)
     printf("Done.\r\n");
 
     printf("Testing whole memory area is addressable... ");
-    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM; ba++)
+    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
     {
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
@@ -184,7 +184,7 @@ pifs_status_t flash_test_addressable(void)
         }
     }
     
-    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM; ba++)
+    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
     {
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
@@ -204,12 +204,12 @@ pifs_status_t flash_test_addressable(void)
 
 pifs_status_t flash_test(void)
 {
-    pifs_status_t ret = PIFS_FLASH_INIT_ERROR;
+    pifs_status_t ret = PIFS_ERROR_FLASH_INIT;
 
-    printf("Size of flash memory (full):        %i bytes\r\n", PIFS_FLASH_SIZE_FULL_BYTE);
-    printf("Size of flash memory (used by FS):  %i bytes\r\n", PIFS_FLASH_SIZE_FULL_BYTE);
-    printf("Number of blocks (full):            %i\r\n", PIFS_FLASH_BLOCK_NUM);
-    printf("Number of blocks (used by FS)):     %i\r\n", PIFS_FLASH_BLOCK_NUM - PIFS_FLASH_BLOCK_RESERVED_NUM);
+    printf("Size of flash memory (full):        %i bytes\r\n", PIFS_FLASH_SIZE_BYTE_ALL);
+    printf("Size of flash memory (used by FS):  %i bytes\r\n", PIFS_FLASH_SIZE_BYTE_ALL);
+    printf("Number of blocks (full):            %i\r\n", PIFS_FLASH_BLOCK_NUM_ALL);
+    printf("Number of blocks (used by FS)):     %i\r\n", PIFS_FLASH_BLOCK_NUM_ALL - PIFS_FLASH_BLOCK_RESERVED_NUM);
     printf("Number of pages/block:              %i\r\n", PIFS_FLASH_PAGE_PER_BLOCK);
     printf("Size of page:                       %i byte\r\n", PIFS_FLASH_PAGE_SIZE_BYTE);
 

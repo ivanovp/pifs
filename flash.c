@@ -34,7 +34,7 @@ static uint8_t flash_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE] = { 0 };
 
 pifs_status_t pifs_flash_init(void)
 {
-    pifs_status_t ret = PIFS_FLASH_INIT_ERROR;
+    pifs_status_t ret = PIFS_ERROR_FLASH_INIT;
     pifs_block_address_t ba;
 
     flash_file = fopen(FLASH_EMU_FILENAME, "rb+");
@@ -50,7 +50,7 @@ pifs_status_t pifs_flash_init(void)
         if (flash_file)
         {
             /* Erase whole memory */
-            for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM; ba++)
+            for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
             {
                 ret = pifs_flash_erase(ba);
             }
@@ -88,7 +88,7 @@ pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address, pifs_page_ad
 
     PIFS_ASSERT(flash_file);
     if (offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
-            && offset + a_buf_size <= PIFS_FLASH_SIZE_FULL_BYTE)
+            && (offset + a_buf_size) <= PIFS_FLASH_SIZE_BYTE_ALL)
     {
         PIFS_ASSERT(fseek(flash_file, offset, SEEK_SET) == 0);
         read_count = fread(a_buf, 1, a_buf_size, flash_file);
@@ -119,7 +119,7 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
     
     PIFS_ASSERT(flash_file);
     if (offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
-            && offset + a_buf_size <= PIFS_FLASH_SIZE_FULL_BYTE)
+            && (offset + a_buf_size) <= PIFS_FLASH_SIZE_BYTE_ALL)
     {
         PIFS_ASSERT(fseek(flash_file, offset, SEEK_SET) == 0);
         /* Check if write is possible */
@@ -169,7 +169,7 @@ pifs_status_t pifs_flash_erase(pifs_block_address_t a_block_address)
     
     PIFS_ASSERT(flash_file);
     if (offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
-            && offset + PIFS_FLASH_BLOCK_SIZE_BYTE <= PIFS_FLASH_SIZE_FULL_BYTE)
+            && (offset + PIFS_FLASH_BLOCK_SIZE_BYTE) <= PIFS_FLASH_SIZE_BYTE_ALL)
     {
         PIFS_ASSERT(fseek(flash_file, offset, SEEK_SET) == 0);
         ret = PIFS_SUCCESS;

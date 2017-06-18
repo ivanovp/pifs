@@ -8,6 +8,8 @@
  * Licence:     GPL
  */
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <string.h>
 
 #include "api_pifs.h"
@@ -21,7 +23,7 @@
 
 pifs_status_t pifs_test(void)
 {
-    pifs_status_t ret = PIFS_FLASH_INIT_ERROR;
+    pifs_status_t ret = PIFS_ERROR_FLASH_INIT;
     P_FILE * file;
 
     ret = pifs_init();
@@ -41,6 +43,7 @@ pifs_status_t pifs_test(void)
 
 int main(void)
 {
+    srand(time(0));
     pifs_test();
 
     return 0;

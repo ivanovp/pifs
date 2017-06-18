@@ -10,8 +10,8 @@
 #ifndef _INCLUDE_PIFS_CONFIG_H_
 #define _INCLUDE_PIFS_CONFIG_H_
 
-#define PIFS_OPEN_FILE_NUM_MAX      8       /**< Maximum length of file name */
-#define PIFS_FILENAME_LEN_MAX       4       /**< Maximum number of opened file */
+#define PIFS_OPEN_FILE_NUM_MAX      4       /**< Maximum number of opened file */
+#define PIFS_FILENAME_LEN_MAX       12      /**< Maximum length of file name */
 #define PIFS_OBJECT_NUM_MAX         254     /**< Maximum number of files and directories */
 #define PIFS_CHECKSUM_SIZE          1       /**< Number of checksum bytes. Range: 1, 2 or 4. */
 
