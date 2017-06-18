@@ -59,6 +59,9 @@
 
 #define PIFS_ERASED_VALUE       0xFFu
 
+/** Number of bits in a byte */
+#define BYTE_BITS   8
+
 #if PIFS_CHECKSUM_SIZE == 1
 typedef uint8_t pifs_checksum_t;
 #elif PIFS_CHECKSUM_SIZE == 2
@@ -126,6 +129,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 typedef struct
 {
     bool_t                  is_used;
+    bool_t                  is_opened;
     pifs_entry_t            entry;
     pifs_status_t           status;
 } pifs_file_t;
@@ -139,8 +143,8 @@ typedef struct
     bool_t                  is_header_found;
     pifs_header_t           header;
     pifs_object_id_t        latest_object_id;
-    uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];
-    pifs_file_t             file[PIFS_OPEN_FILE_NUM_MAX];
+    uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];    /**< Flash page buffer */
+    pifs_file_t             file[PIFS_OPEN_FILE_NUM_MAX];           /**< Opened files */
 } pifs_t;
 
 #endif /* _INCLUDE_PIFS_H_ */

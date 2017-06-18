@@ -18,7 +18,7 @@
 
 #if FLASH_TYPE == FLASH_TYPE_M25P40
 /* Geometry of M25P40 */
-#define PIFS_FLASH_BLOCK_NUM_ALL            8       /**< Number of blocks used by the file system */
+#define PIFS_FLASH_BLOCK_NUM_ALL            8       /**< Number of blocks in flash memory */
 #define PIFS_FLASH_BLOCK_RESERVED_NUM       0       /**< Index of first block to use by the file system */
 #define PIFS_FLASH_PAGE_PER_BLOCK           256     /**< Number of pages in a block */
 #define PIFS_FLASH_PAGE_SIZE_BYTE           256     /**< Size of a page in bytes */
@@ -28,7 +28,7 @@
 #define PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX  8       /**< Maximum number of management pages per block */
 #elif FLASH_TYPE == FLASH_TYPE_M25P80
 /* Geometry of M25P40 */
-#define PIFS_FLASH_BLOCK_NUM_ALL            16      /**< Number of blocks used by the file system */
+#define PIFS_FLASH_BLOCK_NUM_ALL            16      /**< Number of blocks in flash memory */
 #define PIFS_FLASH_BLOCK_RESERVED_NUM       0       /**< Index of first block to use by the file system */
 #define PIFS_FLASH_PAGE_PER_BLOCK           256     /**< Number of pages in a block */
 #define PIFS_FLASH_PAGE_SIZE_BYTE           256     /**< Size of a page in bytes */
@@ -38,7 +38,7 @@
 #define PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX  8       /**< Maximum number of management pages per block */
 #elif FLASH_TYPE == FLASH_TYPE_N25Q128A
 /* Geometry of N25Q128A */
-#define PIFS_FLASH_BLOCK_NUM_ALL            4096    /**< Number of blocks used by the file system */
+#define PIFS_FLASH_BLOCK_NUM_ALL            4096    /**< Number of blocks in flash memory */
 #define PIFS_FLASH_BLOCK_RESERVED_NUM       4       /**< Index of first block to use by the file system */
 #define PIFS_FLASH_PAGE_PER_BLOCK           16      /**< Number of pages in a block */
 #define PIFS_FLASH_PAGE_SIZE_BYTE           256     /**< Size of a page in bytes */

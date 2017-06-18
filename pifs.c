@@ -18,9 +18,6 @@
 #include "pifs_debug.h"
 #include "buffer.h" /* DEBUG */
 
-/** Number of bits in a byte */
-#define BYTE_BITS   8
-
 static pifs_t pifs =
 {
     .header_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
@@ -213,7 +210,10 @@ pifs_status_t pifs_page_find_free(size_t a_page_count_needed,
 
 /**
  * @brief pifs_header_init Initialize file system's header.
- * @param a_header[out] Header to be initialized.
+ *
+ * @param a_block_address[in]   Block address of header.
+ * @param a_page_address[in]    Page address of header.
+ * @param a_header[out]         Pointer to the header to be initialized.
  */
 void pifs_header_init(pifs_block_address_t a_block_address,
                       pifs_page_address_t a_page_address,
@@ -237,9 +237,10 @@ void pifs_header_init(pifs_block_address_t a_block_address,
 
 /**
  * @brief pifs_header_write Write file system header.
- * @param a_block_address Block address of header.
- * @param a_page_address Page address of header.
- * @param a_header Pointer to the header.
+ *
+ * @param a_block_address[in]   Block address of header.
+ * @param a_page_address[in]    Page address of header.
+ * @param a_header[in]          Pointer to the header.
  * @return PIFS_SUCCESS if header successfully written.
  */
 pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
