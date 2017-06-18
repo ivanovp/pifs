@@ -244,7 +244,7 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
     ret = pifs_flash_erase(a_block_address);
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_flash_write(a_block_address, a_page_address, 0, &a_header, sizeof(a_header));
+        ret = pifs_flash_write(a_block_address, a_page_address, 0, a_header, sizeof(pifs_header_t));
     }
     if (ret == PIFS_SUCCESS)
     {
