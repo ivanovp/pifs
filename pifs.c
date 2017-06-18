@@ -23,11 +23,10 @@
 
 static pifs_t pifs =
 {
-    .latest_object_id = 1,
-    .mgmt_block_address = PIFS_BLOCK_ADDRESS_INVALID,
-    .mgmt_page_address = PIFS_PAGE_ADDRESS_INVALID,
+    .mgmt_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
     .is_mgmt_found = FALSE,
-//    .header = { 0 },
+    .header = { 0 },
+    .latest_object_id = 1,
     .page_buf = { 0 }
 };
 
@@ -214,7 +213,7 @@ pifs_status_t pifs_page_find_free(size_t a_page_count_needed,
 
 pifs_status_t pifs_init(void)
 {
-    pifs_status_t        ret = PIFS_ERROR_FLASH_INIT;
+    pifs_status_t        ret = PIFS_SUCCESS;
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
     pifs_header_t        prev_header;
@@ -226,12 +225,13 @@ pifs_status_t pifs_init(void)
     PIFS_NOTICE_MSG("------------------------\r\n");
     PIFS_NOTICE_MSG("Size of flash memory (all):         %i bytes\r\n", PIFS_FLASH_SIZE_BYTE_ALL);
     PIFS_NOTICE_MSG("Size of flash memory (used by FS):  %i bytes\r\n", PIFS_FLASH_SIZE_BYTE_FS);
+    PIFS_NOTICE_MSG("Size of block:                      %i bytes\r\n", PIFS_FLASH_BLOCK_SIZE_BYTE);
+    PIFS_NOTICE_MSG("Size of page:                       %i bytes\r\n", PIFS_FLASH_PAGE_SIZE_BYTE);
     PIFS_NOTICE_MSG("Number of blocks (all):             %i\r\n", PIFS_FLASH_BLOCK_NUM_ALL);
     PIFS_NOTICE_MSG("Number of blocks (used by FS)):     %i\r\n", PIFS_FLASH_BLOCK_NUM_FS);
     PIFS_NOTICE_MSG("Number of pages/block:              %i\r\n", PIFS_FLASH_PAGE_PER_BLOCK);
     PIFS_NOTICE_MSG("Number of pages (all):              %i\r\n", PIFS_FLASH_PAGE_NUM_ALL);
     PIFS_NOTICE_MSG("Number of pages (used by FS)):      %i\r\n", PIFS_FLASH_PAGE_NUM_FS);
-    PIFS_NOTICE_MSG("Size of page:                       %i byte\r\n", PIFS_FLASH_PAGE_SIZE_BYTE);
     PIFS_NOTICE_MSG("\r\n");
     PIFS_NOTICE_MSG("Geometry of file system\r\n");
     PIFS_NOTICE_MSG("-----------------------\r\n");
@@ -239,7 +239,8 @@ pifs_status_t pifs_init(void)
     PIFS_NOTICE_MSG("Page address size:                  %lu bytes\r\n", sizeof(pifs_page_address_t));
     PIFS_NOTICE_MSG("Object ID size:                     %lu bytes\r\n", sizeof(pifs_object_id_t));
     PIFS_NOTICE_MSG("Header size:                        %lu bytes, %lu pages\r\n", PIFS_HEADER_SIZE_BYTE, PIFS_HEADER_SIZE_PAGE);
-    PIFS_NOTICE_MSG("Entry size:                         %lu bytes\r\n", sizeof(pifs_entry_t));
+    PIFS_NOTICE_MSG("Entry size:                         %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE);
+    PIFS_NOTICE_MSG("Entry size in a page:               %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE * PIFS_ENTRY_PER_PAGE);
     PIFS_NOTICE_MSG("Entry list size:                    %lu bytes, %lu pages\r\n", PIFS_ENTRY_LIST_SIZE_BYTE, PIFS_ENTRY_LIST_SIZE_PAGE);
     PIFS_NOTICE_MSG("Free space bitmap size:             %u bytes, %u pages\r\n", PIFS_FREE_SPACE_BITMAP_SIZE_BYTE, PIFS_FREE_SPACE_BITMAP_SIZE_PAGE);
     PIFS_NOTICE_MSG("Maximum number of management pages: %i\r\n",
@@ -247,7 +248,29 @@ pifs_status_t pifs_init(void)
                     + (PIFS_FLASH_BLOCK_NUM_FS - 1 ) * PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX);
     PIFS_NOTICE_MSG("\r\n");
 
-    ret = pifs_flash_init();
+    if (PIFS_ENTRY_SIZE_BYTE > PIFS_FLASH_PAGE_SIZE_BYTE)
+    {
+        PIFS_ERROR_MSG("Entry size is larger than flash page! Decrease PIFS_FILENAME_LEN_MAX!\r\n");
+        ret = PIFS_ERROR_CONFIGURATION;
+    }
+
+    if ((PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE ) > PIFS_FLASH_PAGE_PER_BLOCK)
+    {
+        PIFS_ERROR_MSG("Entry and free space bitmap is larger than a block! Decrease PIFS_FILENAME_LEN_MAX or PIFS_ENTRY_NUM_MAX!\r\n");
+        ret = PIFS_ERROR_CONFIGURATION;
+    }
+
+    if (((PIFS_FLASH_PAGE_SIZE_BYTE - (PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE)) / PIFS_ENTRY_PER_PAGE) > 0)
+    {
+        PIFS_NOTICE_MSG("PIFS_FILENAME_LEN_MAX can be increased by %lu with same entry list size.\r\n",
+                        (PIFS_FLASH_PAGE_SIZE_BYTE - (PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE)) / PIFS_ENTRY_PER_PAGE
+                        );
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_flash_init();
+    }
 
     if (ret == PIFS_SUCCESS)
     {
@@ -272,8 +295,8 @@ pifs_status_t pifs_init(void)
                         if (!pifs.is_mgmt_found || prev_header.counter < pifs.header.counter)
                         {
                             pifs.is_mgmt_found = TRUE;
-                            pifs.mgmt_block_address = ba;
-                            pifs.mgmt_page_address = pa;
+                            pifs.mgmt_address.block_address = ba;
+                            pifs.mgmt_address.page_address = pa;
                             memcpy(&prev_header, &pifs.header, sizeof(prev_header));
                         }
                     }
@@ -317,14 +340,14 @@ pifs_status_t pifs_init(void)
             if (ret == PIFS_SUCCESS)
             {
                 pifs.is_mgmt_found = TRUE;
-                pifs.mgmt_block_address = ba;
-                pifs.mgmt_page_address = pa;
+                pifs.mgmt_address.block_address = ba;
+                pifs.mgmt_address.page_address = pa;
             }
             if ( ret == PIFS_SUCCESS )
             {
                 /* Mark file system header as used */
-                ret = pifs_page_mark(pifs.mgmt_block_address,
-                                     pifs.mgmt_page_address,
+                ret = pifs_page_mark(pifs.mgmt_address.block_address,
+                                     pifs.mgmt_address.page_address,
                                      PIFS_HEADER_SIZE_PAGE, TRUE);
             }
             if ( ret == PIFS_SUCCESS )
@@ -389,16 +412,14 @@ bool_t pifs_is_buffer_erased(const void * a_buf, size_t a_buf_size)
 pifs_status_t pifs_create_entry(const pifs_entry_t * a_entry)
 {
     pifs_status_t        ret = PIFS_ERROR;
-    pifs_block_address_t ba = pifs.mgmt_block_address;
-    pifs_page_address_t  pa = pifs.mgmt_page_address;
+    pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
+    pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
     pifs_page_offset_t   po;
     pifs_entry_t         entry;
     bool_t               created = FALSE;
 
     while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !created)
     {
-        /* Skip file system's header */
-        po = sizeof(pifs_header_t);
         while (po < PIFS_FLASH_PAGE_SIZE_BYTE && !created)
         {
             ret = pifs_flash_read(ba, pa, po, &entry, sizeof(entry));
@@ -426,15 +447,14 @@ pifs_status_t pifs_create_entry(const pifs_entry_t * a_entry)
 pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a_entry)
 {
     pifs_status_t        ret = PIFS_ERROR;
-    pifs_block_address_t ba = pifs.mgmt_block_address;
-    pifs_page_address_t  pa = pifs.mgmt_page_address;
-    pifs_page_offset_t   po;
+    pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
+    pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
+    pifs_page_offset_t   po = 0;
     bool_t               found = FALSE;
 
     while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !found)
     {
-        /* Skip file system's header */
-        po = sizeof(pifs_header_t);
+        po = 0;
         while (po < PIFS_FLASH_PAGE_SIZE_BYTE && !found)
         {
             ret = pifs_flash_read(ba, pa, po, a_entry, sizeof(pifs_entry_t));
@@ -466,7 +486,9 @@ P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
         entry_found = pifs_find_entry(a_filename, &entry);
         pifs_page_mark(20, 0, 8, TRUE);
         pifs_page_mark(25, PIFS_FLASH_PAGE_PER_BLOCK - 1, 3, TRUE);
-        pifs_page_mark(PIFS_FLASH_BLOCK_NUM_ALL - 1, PIFS_FLASH_PAGE_PER_BLOCK - 1, 3, TRUE);
+        pifs_page_mark(PIFS_FLASH_BLOCK_NUM_ALL - 1, PIFS_FLASH_PAGE_PER_BLOCK - 1, 1, TRUE);
+        /* This should generate an error */
+//        pifs_page_mark(PIFS_FLASH_BLOCK_NUM_ALL - 1, PIFS_FLASH_PAGE_PER_BLOCK - 1, 3, TRUE);
     }
 
     return file;

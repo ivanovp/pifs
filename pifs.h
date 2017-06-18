@@ -41,10 +41,15 @@
 /** Size of file system's header in pages */
 #define PIFS_HEADER_SIZE_PAGE               ((PIFS_HEADER_SIZE_BYTE + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE)
 
-/** Size of entry list in bytes */
-#define PIFS_ENTRY_LIST_SIZE_BYTE           (PIFS_OBJECT_NUM_MAX * sizeof(pifs_entry_t))
+#define PIFS_ENTRY_SIZE_BYTE                (sizeof(pifs_entry_t))
+
+/** Number of entries can fit in one page */
+#define PIFS_ENTRY_PER_PAGE                 (PIFS_FLASH_PAGE_SIZE_BYTE / PIFS_ENTRY_SIZE_BYTE)
+
 /** Size of entry list in pages */
-#define PIFS_ENTRY_LIST_SIZE_PAGE           ((PIFS_ENTRY_LIST_SIZE_BYTE + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE)
+#define PIFS_ENTRY_LIST_SIZE_PAGE           ((PIFS_ENTRY_NUM_MAX + PIFS_ENTRY_PER_PAGE - 1) / PIFS_ENTRY_PER_PAGE)
+/** Size of entry list in bytes */
+#define PIFS_ENTRY_LIST_SIZE_BYTE           (PIFS_ENTRY_LIST_SIZE_PAGE * PIFS_FLASH_PAGE_SIZE_BYTE)
 
 /** Size of free space bitmap in bytes.
  * Multiplied by two, because two bits are used per page */
@@ -123,11 +128,10 @@ typedef struct PIFS_PACKED_ATTRIBUTE
  */
 typedef struct
 {
-    pifs_object_id_t        latest_object_id;
-    pifs_block_address_t    mgmt_block_address;
-    pifs_page_address_t     mgmt_page_address;
+    pifs_address_t          mgmt_address;
     bool_t                  is_mgmt_found;
     pifs_header_t           header;
+    pifs_object_id_t        latest_object_id;
     uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];
 } pifs_t;
 

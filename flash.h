@@ -58,7 +58,7 @@ typedef uint32_t pifs_page_offset_t;
 #error PIFS_FLASH_PAGE_SIZE_BYTE is too big!
 #endif
 
-#if (PIFS_OBJECT_NUM_MAX < 255)
+#if (PIFS_ENTRY_NUM_MAX < 255)
 typedef uint8_t pifs_object_id_t;
 #define OBJECT_ID_INVALID   (UINT8_MAX - 1u)
 #elif (PIFS_OBJECT_NUM_MAX < 65535)
@@ -71,11 +71,17 @@ typedef uint32_t pifs_object_id_t;
 #error PIFS_OBJECT_NUM_MAX is too big!
 #endif
 
+/** Number of blocks used by the file system */
 #define PIFS_FLASH_BLOCK_NUM_FS     (PIFS_FLASH_BLOCK_NUM_ALL - PIFS_FLASH_BLOCK_RESERVED_NUM)
+/** Size of a block in bytes */
 #define PIFS_FLASH_BLOCK_SIZE_BYTE  (PIFS_FLASH_PAGE_SIZE_BYTE * PIFS_FLASH_PAGE_PER_BLOCK)
+/** Size of the whole flash memory in bytes */
 #define PIFS_FLASH_SIZE_BYTE_ALL    (PIFS_FLASH_BLOCK_SIZE_BYTE * PIFS_FLASH_BLOCK_NUM_ALL)
+/** Size of the file system in bytes */
 #define PIFS_FLASH_SIZE_BYTE_FS     (PIFS_FLASH_BLOCK_SIZE_BYTE * PIFS_FLASH_BLOCK_NUM_FS)
+/** Number of all flash pages */
 #define PIFS_FLASH_PAGE_NUM_ALL     (PIFS_FLASH_BLOCK_NUM_ALL * PIFS_FLASH_PAGE_PER_BLOCK)
+/** Number of flash pages used by the file system */
 #define PIFS_FLASH_PAGE_NUM_FS      (PIFS_FLASH_BLOCK_NUM_FS * PIFS_FLASH_PAGE_PER_BLOCK)
 
 pifs_status_t pifs_flash_init(void);
