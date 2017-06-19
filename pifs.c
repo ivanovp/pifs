@@ -420,7 +420,7 @@ pifs_status_t pifs_find_page(size_t a_page_count_needed,
                 else
                 {
                     page_count_found = 0;
-                    bit_pos_start = bit_pos;
+                    bit_pos_start = bit_pos + 2;
                 }
                 free_space_bitmap >>= 2;
                 bit_pos += 2;
