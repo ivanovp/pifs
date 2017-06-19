@@ -57,8 +57,6 @@
 /** Size of free space bitmap in pages */
 #define PIFS_FREE_SPACE_BITMAP_SIZE_PAGE    ((PIFS_FREE_SPACE_BITMAP_SIZE_BYTE + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE)
 
-#define PIFS_ERASED_VALUE       0xFFu
-
 /** Number of bits in a byte */
 #define BYTE_BITS   8
 
@@ -131,7 +129,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     uint8_t                 name[PIFS_FILENAME_LEN_MAX];
     uint8_t                 attrib;
     pifs_object_id_t        object_id;
-    pifs_address_t          address;
+    pifs_address_t          file_descriptor_address;
 } pifs_entry_t;
 
 typedef struct

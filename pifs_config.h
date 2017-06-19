@@ -14,6 +14,7 @@
 #define PIFS_FILENAME_LEN_MAX       32      /**< Maximum length of file name */
 #define PIFS_ENTRY_NUM_MAX          254     /**< Maximum number of files and directories */
 #define PIFS_CHECKSUM_SIZE          4       /**< Number of checksum bytes. Range: 1, 2 or 4. */
+#define PIFS_FILE_DESCRIPTOR_PAGE   1       /**< Default number of file descriptor pages. Minimum: 1 */
 
 #define PIFS_PACKED_ATTRIBUTE    __attribute__((packed))
 

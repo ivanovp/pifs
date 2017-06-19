@@ -358,6 +358,9 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
 
 /**
  * @brief pifs_find_page Find free page(s) in free space memory bitmap.
+ * Note: Currently it finds exactly a_page_count_needed. It will not return
+ * less bytes. There should be an option to search with a_page_count_desired,
+ * a_page_count_minimum arguments.
  *
  * @param[in] a_page_count_needed Number of pages needed.
  * @param[in] a_page_type         Page type to find.
@@ -396,16 +399,16 @@ pifs_status_t pifs_find_page(size_t a_page_count_needed,
 
     do
     {
-        printf("BA%i/PA%i ", ba, pa);
+//        printf("BA%i/PA%i ", ba, pa);
         ret = pifs_read(ba, pa, po, &free_space_bitmap, sizeof(free_space_bitmap));
-        printf("%02X\r\n", free_space_bitmap);
+//        printf("%02X\r\n", free_space_bitmap);
         if (ret == PIFS_SUCCESS)
         {
             for (i = 0; i < (BYTE_BITS / 2) && !found; i++)
             {
                 if (free_space_bitmap & mask)
                 {
-                    printf("bit_pos: %i free!\r\n", bit_pos);
+//                    printf("bit_pos: %i free!\r\n", bit_pos);
                     page_count_found++;
                     if (page_count_found == a_page_count_needed)
                     {
@@ -679,7 +682,7 @@ bool_t pifs_is_buffer_erased(const void * a_buf, size_t a_buf_size)
 
     for (i = 0; i < a_buf_size && ret; i++)
     {
-        if (buf[i] != PIFS_ERASED_VALUE)
+        if (buf[i] != PIFS_FLASH_ERASED_VALUE)
         {
             ret = FALSE;
         }
@@ -724,6 +727,14 @@ pifs_status_t pifs_create_entry(const pifs_entry_t * a_entry)
     return ret;
 }
 
+/**
+ * @brief pifs_find_entry Find entry in entry list.
+ *
+ * @param a_name[in]    Pointer to name to find.
+ * @param a_entry[out]  Pointer to entry to fill. NULL: clear entry.
+ * @return PIFS_SUCCESS if entry found.
+ * PIFS_ERROR_ENTRY_NOT_FOUND if entry not found.
+ */
 pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a_entry)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
@@ -735,14 +746,24 @@ pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a_entry)
 
     while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !found && ret == PIFS_SUCCESS)
     {
-        ret = pifs_read(ba, pa, 0, pifs.page_buf, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
+        ret = pifs_read(ba, pa, 0, NULL, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
         for (i = 0; i < PIFS_ENTRY_PER_PAGE && !found; i++)
         {
             /* Check if name matches */
-            if (strncmp((char*)entry->name, a_name, sizeof(entry->name)) == 0)
+            if (strncmp((char*)entry[i].name, a_name, sizeof(entry[i].name)) == 0)
             {
                 /* Entry found */
-                memcpy(a_entry, entry, sizeof(pifs_entry_t));
+                if (a_entry)
+                {
+                    /* Copy entry */
+                    memcpy(a_entry, &entry[i], sizeof(pifs_entry_t));
+                }
+                else
+                {
+                    /* Clear entry */
+                    memset(&entry[i], PIFS_FLASH_PROGRAMMED_VALUE, sizeof(pifs_entry_t));
+                    ret = pifs_write(ba, pa, 0, NULL, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
+                }
                 found = TRUE;
             }
         }
@@ -778,34 +799,34 @@ P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
         }
         else
         {
-            file->status = pifs_find_page(1, PIFS_PAGE_TYPE_DATA, TRUE,
+            file->status = pifs_find_page(PIFS_FILE_DESCRIPTOR_PAGE, PIFS_PAGE_TYPE_DATA, TRUE,
                                           &ba, &pa, &page_count_found);
             if (file->status == PIFS_SUCCESS)
             {
-                printf("%lu free page found BA%i/PA%i\r\n", page_count_found, ba, pa);
-            }
-            else
-            {
-                printf("No free page found!\r\n");
-            }
-            strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
-            entry->object_id = 1;
-            entry->attrib = PIFS_ATTRIB_ARCHIVE;
-            entry->address.block_address = ba;
-            entry->address.page_address = pa;
-            file->status = pifs_create_entry(entry);
-            if (file->status == PIFS_SUCCESS)
-            {
-                PIFS_DEBUG_MSG("Entry created\r\n");
-                file->status = pifs_mark_page(ba, pa, 1, TRUE);
+                printf("Descriptor page: %lu free page found BA%i/PA%i\r\n", page_count_found, ba, pa);
+                strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
+                entry->object_id = pifs.latest_object_id++;
+                entry->attrib = PIFS_ATTRIB_ARCHIVE;
+                entry->file_descriptor_address.block_address = ba;
+                entry->file_descriptor_address.page_address = pa;
+                file->status = pifs_create_entry(entry);
                 if (file->status == PIFS_SUCCESS)
                 {
-                    file->is_opened = TRUE;
+                    PIFS_DEBUG_MSG("Entry created\r\n");
+                    file->status = pifs_mark_page(ba, pa, PIFS_FILE_DESCRIPTOR_PAGE, TRUE);
+                    if (file->status == PIFS_SUCCESS)
+                    {
+                        file->is_opened = TRUE;
+                    }
+                }
+                else
+                {
+                    printf("Cannot create entry!\r\n");
                 }
             }
             else
             {
-                printf("Cannot create entry!\r\n");
+                printf("No free page found!\r\n");
             }
         }
     }

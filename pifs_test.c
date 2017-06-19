@@ -22,7 +22,7 @@
         fprintf(stderr, __VA_ARGS__); \
     } while (0);
 
-uint8_t test_buf[7 * 256];
+uint8_t test_buf[3 * 256];
 
 pifs_status_t pifs_test(void)
 {
@@ -38,6 +38,22 @@ pifs_status_t pifs_test(void)
     {
         printf("File opened\r\n");
         fill_buffer(test_buf, sizeof(test_buf), FILL_TYPE_SEQUENCE_WORD, 1);
+        written_size = pifs_fwrite(test_buf, 1, sizeof(test_buf), file);
+    }
+
+    file = pifs_fopen("test2.dat", "w");
+    if (file)
+    {
+        printf("File opened\r\n");
+        fill_buffer(test_buf, sizeof(test_buf), FILL_TYPE_SEQUENCE_WORD, 2);
+        written_size = pifs_fwrite(test_buf, 1, sizeof(test_buf), file);
+    }
+
+    file = pifs_fopen("test.dat3", "w");
+    if (file)
+    {
+        printf("File opened\r\n");
+        fill_buffer(test_buf, sizeof(test_buf), FILL_TYPE_SEQUENCE_WORD, 3);
         written_size = pifs_fwrite(test_buf, 1, sizeof(test_buf), file);
     }
 

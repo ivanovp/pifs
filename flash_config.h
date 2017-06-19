@@ -48,6 +48,9 @@
 #define PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX  4       /**< Maximum number of management pages per block */
 #endif
 
+#define PIFS_FLASH_ERASED_VALUE       0xFFu
+#define PIFS_FLASH_PROGRAMMED_VALUE   0x00u
+
 #if PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX >= PIFS_FLASH_PAGE_PER_BLOCK / 2
 #error PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX is too big.
 #endif
