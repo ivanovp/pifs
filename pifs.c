@@ -409,7 +409,7 @@ pifs_status_t pifs_find_page(size_t a_page_count_needed,
                     page_count_found++;
                     if (page_count_found == a_page_count_needed)
                     {
-                        PIFS_NOTICE_MSG("Page count found, bit_pos_start: %i, bit_pos: %i!\r\n", bit_pos + 2 - page_count_found * 2);
+                        PIFS_NOTICE_MSG("Page count found, bit_pos_start: %i\r\n", bit_pos + 2 - page_count_found * 2);
                         pifs_calc_address(bit_pos + 2 - page_count_found * 2,
                                           a_block_address, a_page_address);
                         *a_page_count_found = page_count_found;
