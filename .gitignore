@@ -4,4 +4,4 @@ tags
 flash.bin
 flash_test
 pifs_test
-
+*.pro.user*

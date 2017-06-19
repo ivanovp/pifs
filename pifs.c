@@ -48,9 +48,9 @@ pifs_checksum_t pifs_calc_header_checksum(pifs_header_t * a_pifs_header)
  * @brief pifs_calc_free_space_pos Calculate position of a page in free space
  * memory bitmap.
  *
- * @param[in] a_free_space_bitmap_address   Start address of free space bitmap area.
- * @param[in] a_block_address   Block address of page to be calculated.
- * @param[in] a_page_address    Page address of page to be calculated.
+ * @param[in] a_free_space_bitmap_address Start address of free space bitmap area.
+ * @param[in] a_block_address             Block address of page to be calculated.
+ * @param[in] a_page_address              Page address of page to be calculated.
  * @param[out] a_free_space_block_address Block address of free space memory map.
  * @param[out] a_free_space_page_address  Page address of free space memory map.
  * @param[out] a_free_space_bit_pos       Bit position in free space memory map.
@@ -66,16 +66,18 @@ void pifs_calc_free_space_pos(const pifs_address_t * a_free_space_bitmap_address
 
     /* Shift left by one (<< 1) due to two bits are stored in free space bitmap */
     bit_pos = ((a_block_address - PIFS_FLASH_BLOCK_RESERVED_NUM) * PIFS_FLASH_PAGE_PER_BLOCK + a_page_address) << 1;
-//    PIFS_DEBUG_MSG("BA%i/PA%i bit_pos: %i\r\n", a_block_address, a_page_address, bit_pos);
-    *a_free_space_block_address = a_free_space_bitmap_address->block_address + bit_pos / PIFS_FLASH_BLOCK_SIZE_BYTE;
-    bit_pos %= PIFS_FLASH_BLOCK_SIZE_BYTE;
-    *a_free_space_page_address = a_free_space_bitmap_address->page_address + bit_pos / PIFS_FLASH_PAGE_SIZE_BYTE;
-    bit_pos %= PIFS_FLASH_PAGE_SIZE_BYTE;
+    PIFS_DEBUG_MSG("BA%i/PA%i bit_pos: %i\r\n", a_block_address, a_page_address, bit_pos);
+    *a_free_space_block_address = a_free_space_bitmap_address->block_address
+            + (bit_pos / BYTE_BITS / PIFS_FLASH_BLOCK_SIZE_BYTE);
+    bit_pos %= PIFS_FLASH_BLOCK_SIZE_BYTE * BYTE_BITS;
+    *a_free_space_page_address = a_free_space_bitmap_address->page_address
+            + (bit_pos / BYTE_BITS / PIFS_FLASH_PAGE_SIZE_BYTE);
+    bit_pos %= PIFS_FLASH_PAGE_SIZE_BYTE * BYTE_BITS;
     *a_free_space_bit_pos = bit_pos;
 }
 
 /**
- * @brief pifs_calc_address Calculate address from bit position in free space
+ * @brief pifs_calc_address Calculate address from bit position of free space
  * memory bitmap.
  *
  * @param[in] a_bit_pos         Bit position in free space memory map.
@@ -271,10 +273,12 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
     {
         pifs_calc_free_space_pos(&pifs.header.free_space_bitmap_address,
                                  a_block_address, a_page_address, &ba, &pa, &bit_pos);
+        PIFS_DEBUG_MSG("BA%i/PA%i/BITPOS%i\r\n", ba, pa, bit_pos);
         /* Read actual status of free space memory bitmap (or cache) */
         ret = pifs_read(ba, pa, 0, NULL, 0);
         if (ret == PIFS_SUCCESS)
         {
+            PIFS_ASSERT((bit_pos / BYTE_BITS) < PIFS_FLASH_PAGE_SIZE_BYTE);
 //            print_buffer(pifs.page_buf, sizeof(pifs.page_buf), 0);
 //            PIFS_DEBUG_MSG("-Free space byte:    0x%02X\r\n", pifs.page_buf[bit_pos / BYTE_BITS]);
             is_free_space = pifs.page_buf[bit_pos / BYTE_BITS] & (1u << (bit_pos % BYTE_BITS));
