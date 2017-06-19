@@ -384,7 +384,6 @@ pifs_status_t pifs_find_page(size_t a_page_count_needed,
     bool_t                  found = FALSE;
     size_t                  byte_cntr = PIFS_FREE_SPACE_BITMAP_SIZE_BYTE;
     pifs_bit_pos_t          bit_pos = 0;
-    pifs_bit_pos_t          bit_pos_start = 0;
     uint8_t                 mask = 1; /**< Mask for finding free page */
 
     PIFS_ASSERT(pifs.is_header_found);
@@ -410,8 +409,8 @@ pifs_status_t pifs_find_page(size_t a_page_count_needed,
                     page_count_found++;
                     if (page_count_found == a_page_count_needed)
                     {
-                        PIFS_NOTICE_MSG("Page count found, bit_pos_start: %i, bit_pos: %i!\r\n", bit_pos_start, bit_pos);
-                        pifs_calc_address(bit_pos_start,
+                        PIFS_NOTICE_MSG("Page count found, bit_pos_start: %i, bit_pos: %i!\r\n", bit_pos + 2 - page_count_found * 2);
+                        pifs_calc_address(bit_pos + 2 - page_count_found * 2,
                                           a_block_address, a_page_address);
                         *a_page_count_found = page_count_found;
                         found = TRUE;
@@ -420,7 +419,6 @@ pifs_status_t pifs_find_page(size_t a_page_count_needed,
                 else
                 {
                     page_count_found = 0;
-                    bit_pos_start = bit_pos + 2;
                 }
                 free_space_bitmap >>= 2;
                 bit_pos += 2;
