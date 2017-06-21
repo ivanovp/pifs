@@ -100,6 +100,17 @@ typedef uint16_t pifs_bit_pos_t;
 typedef uint32_t pifs_bit_pos_t;
 #endif
 
+#if PIFS_FLASH_PAGE_PER_BLOCK < 256
+typedef uint8_t pifs_page_count_t;
+#define PIFS_PAGE_COUNT_INVALID ( UINT8_MAX - 1 )
+#elif PIFS_FLASH_PAGE_PER_BLOCK < 65536
+typedef uint16_t pifs_page_count_t;
+#define PIFS_PAGE_COUNT_INVALID ( UINT16_MAX - 1 )
+#elif PIFS_FLASH_PAGE_PER_BLOCK < 4294967296l
+typedef uint32_t pifs_page_count_t;
+#define PIFS_PAGE_COUNT_INVALID ( UINT32_MAX - 1 )
+#endif
+
 typedef enum
 {
     /** Only management information stored in the block. */
@@ -169,7 +180,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
     pifs_address_t          address;
-    uint32_t                page_count;
+    pifs_page_count_t       page_count;
 } pifs_map_entry_t;
 
 typedef struct

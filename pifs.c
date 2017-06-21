@@ -85,25 +85,39 @@ pifs_checksum_t pifs_calc_header_checksum(pifs_header_t * a_pifs_header)
  * @param[out] a_free_space_page_address  Page address of free space memory map.
  * @param[out] a_free_space_bit_pos       Bit position in free space memory map.
  */
-void pifs_calc_free_space_pos(const pifs_address_t * a_free_space_bitmap_address,
+pifs_status_t pifs_calc_free_space_pos(const pifs_address_t * a_free_space_bitmap_address,
                               pifs_block_address_t a_block_address,
                               pifs_page_address_t a_page_address,
                               pifs_block_address_t * a_free_space_block_address,
                               pifs_page_address_t * a_free_space_page_address,
                               pifs_bit_pos_t * a_free_space_bit_pos)
 {
+    pifs_status_t  status = PIFS_ERROR_INTERNAL_RANGE;
     pifs_bit_pos_t bit_pos;
 
-    /* Shift left by one (<< 1) due to two bits are stored in free space bitmap */
-    bit_pos = ((a_block_address - PIFS_FLASH_BLOCK_RESERVED_NUM) * PIFS_FLASH_PAGE_PER_BLOCK + a_page_address) << 1;
-//    PIFS_DEBUG_MSG("BA%i/PA%i bit_pos: %i\r\n", a_block_address, a_page_address, bit_pos);
-    *a_free_space_block_address = a_free_space_bitmap_address->block_address
-            + (bit_pos / PIFS_BYTE_BITS / PIFS_FLASH_BLOCK_SIZE_BYTE);
-    bit_pos %= PIFS_FLASH_BLOCK_SIZE_BYTE * PIFS_BYTE_BITS;
-    *a_free_space_page_address = a_free_space_bitmap_address->page_address
-            + (bit_pos / PIFS_BYTE_BITS / PIFS_FLASH_PAGE_SIZE_BYTE);
-    bit_pos %= PIFS_FLASH_PAGE_SIZE_BYTE * PIFS_BYTE_BITS;
-    *a_free_space_bit_pos = bit_pos;
+    if (a_block_address < PIFS_BLOCK_ADDRESS_INVALID
+            && a_page_address < PIFS_PAGE_ADDRESS_INVALID)
+    {
+        /* Shift left by one (<< 1) due to two bits are stored in free space bitmap */
+        bit_pos = ((a_block_address - PIFS_FLASH_BLOCK_RESERVED_NUM) * PIFS_FLASH_PAGE_PER_BLOCK + a_page_address) << 1;
+        //PIFS_DEBUG_MSG("BA%i/PA%i bit_pos: %i\r\n", a_block_address, a_page_address, bit_pos);
+        *a_free_space_block_address = a_free_space_bitmap_address->block_address
+                + (bit_pos / PIFS_BYTE_BITS / PIFS_FLASH_BLOCK_SIZE_BYTE);
+        bit_pos %= PIFS_FLASH_BLOCK_SIZE_BYTE * PIFS_BYTE_BITS;
+        *a_free_space_page_address = a_free_space_bitmap_address->page_address
+                + (bit_pos / PIFS_BYTE_BITS / PIFS_FLASH_PAGE_SIZE_BYTE);
+        bit_pos %= PIFS_FLASH_PAGE_SIZE_BYTE * PIFS_BYTE_BITS;
+        *a_free_space_bit_pos = bit_pos;
+
+        status = PIFS_SUCCESS;
+    }
+    else
+    {
+        PIFS_FATAL_ERROR_MSG("Invalid address %s\r\n",
+                             ba_pa2str(a_block_address, a_page_address));
+    }
+
+    return status;
 }
 
 /**
@@ -289,10 +303,10 @@ pifs_status_t pifs_erase(pifs_block_address_t a_block_address)
  * @brief pifs_mark_page Mark page(s) as used (or to be released) in free space
  * memory bitmap.
  *
- * @param a_block_address Block address of page(s).
- * @param a_page_address Page address of page(s).
- * @param a_page_count Number of pages.
- * @param mark_used TRUE: Mark page used, FALSE: mark page to be released.
+ * @param a_block_address[in]   Block address of page(s).
+ * @param a_page_address[in]    Page address of page(s).
+ * @param a_page_count[in]      Number of pages.
+ * @param mark_used[in]         TRUE: Mark page used, FALSE: mark page to be released.
  * @return PIFS_SUCCESS: if page was successfully marked.
  */
 pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
@@ -304,28 +318,31 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
     pifs_block_address_t ba = PIFS_BLOCK_ADDRESS_INVALID;
     pifs_page_address_t  pa = PIFS_PAGE_ADDRESS_INVALID;
     bool_t               is_free_space;
-    bool_t               is_to_be_released;
+    bool_t               is_not_to_be_released;
 
     PIFS_ASSERT(pifs.is_header_found);
 
     while (a_page_count > 0 && ret == PIFS_SUCCESS)
     {
-        pifs_calc_free_space_pos(&pifs.header.free_space_bitmap_address,
+        ret = pifs_calc_free_space_pos(&pifs.header.free_space_bitmap_address,
                                  a_block_address, a_page_address, &ba, &pa, &bit_pos);
 //        PIFS_DEBUG_MSG("BA%i/PA%i/BITPOS%i\r\n", ba, pa, bit_pos);
-        /* Read actual status of free space memory bitmap (or cache) */
-        ret = pifs_read(ba, pa, 0, NULL, 0);
+        if (ret == PIFS_SUCCESS)
+        {
+            /* Read actual status of free space memory bitmap (or cache) */
+            ret = pifs_read(ba, pa, 0, NULL, 0);
+        }
         if (ret == PIFS_SUCCESS)
         {
             PIFS_ASSERT((bit_pos / PIFS_BYTE_BITS) < PIFS_FLASH_PAGE_SIZE_BYTE);
 //            print_buffer(pifs.page_buf, sizeof(pifs.page_buf), 0);
-//            PIFS_DEBUG_MSG("-Free space byte:    0x%02X\r\n", pifs.page_buf[bit_pos / BYTE_BITS]);
+//            PIFS_DEBUG_MSG("-Free space byte:    0x%02X\r\n", pifs.page_buf[bit_pos / PIFS_BYTE_BITS]);
             is_free_space = pifs.page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << (bit_pos % PIFS_BYTE_BITS));
-            is_to_be_released = pifs.page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << ((bit_pos % PIFS_BYTE_BITS) + 1));
+            is_not_to_be_released = pifs.page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << ((bit_pos % PIFS_BYTE_BITS) + 1));
 //            PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", is_free_space);
-//            PIFS_DEBUG_MSG("-Release space bit:  %i\r\n", is_to_be_released);
-//            PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", (pifs.page_buf[bit_pos / BYTE_BITS] >> (bit_pos % BYTE_BITS)) & 1);
-//            PIFS_DEBUG_MSG("-Release space bit:  %i\r\n", (pifs.page_buf[bit_pos / BYTE_BITS] >> ((bit_pos % BYTE_BITS) + 1)) & 1);
+//            PIFS_DEBUG_MSG("-Release space bit:  %i\r\n", is_not_to_be_released);
+//            PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", (pifs.page_buf[bit_pos / PIFS_BYTE_BITS] >> (bit_pos % PIFS_BYTE_BITS)) & 1);
+//            PIFS_DEBUG_MSG("-Release space bit:  %i\r\n", (pifs.page_buf[bit_pos / PIFS_BYTE_BITS] >> ((bit_pos % PIFS_BYTE_BITS) + 1)) & 1);
             if (a_mark_used)
             {
                 /* Mark page used */
@@ -337,7 +354,7 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                 else
                 {
                     /* The space has already allocated */
-                    PIFS_ERROR_MSG("Page has already allocated! %s\r\n", ba_pa2str(a_block_address, a_page_address));
+                    PIFS_FATAL_ERROR_MSG("Page has already allocated! %s\r\n", ba_pa2str(a_block_address, a_page_address));
                     ret = PIFS_ERROR_INTERNAL_ALLOCATION;
                 }
             }
@@ -346,7 +363,7 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                 /* Mark page to be released */
                 if (!is_free_space)
                 {
-                    if (!is_to_be_released)
+                    if (is_not_to_be_released)
                     {
                         /* Clear release bit */
                         pifs.page_buf[bit_pos / PIFS_BYTE_BITS] &= ~(1u << ((bit_pos % PIFS_BYTE_BITS) + 1));
@@ -354,20 +371,20 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                     else
                     {
                         /* The space has already marked to be released */
-                        PIFS_ERROR_MSG("Page has already marked to be released %s\r\n", ba_pa2str(a_block_address, a_page_address));
+                        PIFS_FATAL_ERROR_MSG("Page has already marked to be released %s\r\n", ba_pa2str(a_block_address, a_page_address));
                         ret = PIFS_ERROR_INTERNAL_ALLOCATION;
                     }
                 }
                 else
                 {
                     /* The space has not yet allocated */
-                    PIFS_ERROR_MSG("Page has not yet allocated! %s\r\n", ba_pa2str(a_block_address, a_page_address));
+                    PIFS_FATAL_ERROR_MSG("Page has not yet allocated! %s\r\n", ba_pa2str(a_block_address, a_page_address));
                     ret = PIFS_ERROR_INTERNAL_ALLOCATION;
                 }
             }
-//            PIFS_DEBUG_MSG("+Free space byte:    0x%02X\r\n", pifs.page_buf[bit_pos / BYTE_BITS]);
-//            PIFS_DEBUG_MSG("+Free space bit:     %i\r\n", (pifs.page_buf[bit_pos / BYTE_BITS] >> (bit_pos % BYTE_BITS)) & 1);
-//            PIFS_DEBUG_MSG("+Release space bit:  %i\r\n", (pifs.page_buf[bit_pos / BYTE_BITS] >> ((bit_pos % BYTE_BITS) + 1)) & 1);
+//            PIFS_DEBUG_MSG("+Free space byte:    0x%02X\r\n", pifs.page_buf[bit_pos / PIFS_BYTE_BITS]);
+//            PIFS_DEBUG_MSG("+Free space bit:     %i\r\n", (pifs.page_buf[bit_pos / PIFS_BYTE_BITS] >> (bit_pos % PIFS_BYTE_BITS)) & 1);
+//            PIFS_DEBUG_MSG("+Release space bit:  %i\r\n", (pifs.page_buf[bit_pos / PIFS_BYTE_BITS] >> ((bit_pos % PIFS_BYTE_BITS) + 1)) & 1);
             /* Write new status to cache */
             ret = pifs_write(ba, pa, 0, NULL, 0);
         }
@@ -381,7 +398,7 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                 a_block_address++;
                 if (a_block_address == PIFS_FLASH_BLOCK_NUM_ALL)
                 {
-                    PIFS_ERROR_MSG("Trying to mark invalid address! %s\r\n", ba_pa2str(a_block_address, a_page_address));
+                    PIFS_FATAL_ERROR_MSG("Trying to mark invalid address! %s\r\n", ba_pa2str(a_block_address, a_page_address));
                     ret = PIFS_ERROR_INTERNAL_RANGE;
                 }
             }
@@ -474,7 +491,7 @@ pifs_status_t pifs_find_page(size_t a_page_count_needed,
                 pa++;
                 if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
                 {
-                    PIFS_ERROR_MSG("End of block. byte_cntr: %lu\r\n", byte_cntr);
+                    PIFS_FATAL_ERROR_MSG("End of block. byte_cntr: %lu\r\n", byte_cntr);
                 }
             }
         }
@@ -908,7 +925,72 @@ void pifs_parse_open_mode(pifs_file_t * a_file, const char * a_modes)
     PIFS_DEBUG_MSG("file_shall_exist: %i\r\n", a_file->mode_file_shall_exist);
 }
 
-P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
+/**
+ * @brief pifs_find_file_pages Mark file map and file's pages to be released.
+ *
+ * @param a_file[in] Pointer of file structure.
+ * @return TRUE: if all pages were succesfully marked to be released.
+ */
+pifs_status_t pifs_find_file_pages(pifs_file_t * a_file)
+{
+    pifs_block_address_t    ba = a_file->entry.map_address.block_address;
+    pifs_page_address_t     pa = a_file->entry.map_address.page_address;
+    pifs_block_address_t    mba;
+    pifs_page_address_t     mpa;
+    pifs_page_count_t       page_count;
+    pifs_map_header_t       map_header;
+    pifs_map_entry_t        map_entry;
+    size_t                  i;
+    bool_t                  erased = FALSE;
+    pifs_page_offset_t      po = PIFS_MAP_HEADER_SIZE_BYTE;
+
+    PIFS_DEBUG_MSG("Searching in map entry at %s\r\n", ba_pa2str(ba, pa));
+    do
+    {
+        a_file->status = pifs_read(ba, pa, 0, &map_header, PIFS_MAP_HEADER_SIZE_BYTE);
+
+        if (a_file->status == PIFS_SUCCESS)
+        {
+            if (pifs_is_buffer_erased(&map_header, PIFS_MAP_HEADER_SIZE_BYTE))
+            {
+                PIFS_DEBUG_MSG("map is empty!\r\n");
+            }
+            for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !erased && a_file->status == PIFS_SUCCESS; i++)
+            {
+                a_file->status = pifs_read(ba, pa, po, &map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
+                if (pifs_is_buffer_erased(&map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
+                {
+                    erased = TRUE;
+                }
+                else
+                {
+                    /* Map entry found */
+                    mba = map_entry.address.block_address;
+                    mpa = map_entry.address.page_address;
+                    page_count = map_entry.page_count;
+                    if (page_count && page_count < PIFS_PAGE_COUNT_INVALID)
+                    {
+                        PIFS_DEBUG_MSG("Release map entry %i pages %s\r\n", page_count,
+                                       ba_pa2str(mba, mpa));
+                        /* Mark pages to be released */
+                        a_file->status = pifs_mark_page(mba, mpa, page_count, FALSE);
+                    }
+                }
+                po += PIFS_MAP_ENTRY_SIZE_BYTE;
+            }
+        }
+        /* Mark map page to be released */
+        /* FIXME If PIFS_MAP_PAGE_NUM > 1, this can cause error?! */
+        a_file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, FALSE);
+        /* Jump to the next map page */
+        ba = map_header.next_map_address.block_address;
+        pa = map_header.next_map_address.page_address;
+    } while (ba < PIFS_BLOCK_ADDRESS_INVALID && pa < PIFS_PAGE_ADDRESS_INVALID && a_file->status == PIFS_SUCCESS);
+
+    return a_file->status;
+}
+
+P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
 {
     pifs_file_t        * file = &pifs.file[0];
     pifs_entry_t       * entry = &pifs.file[0].entry;
@@ -917,7 +999,6 @@ P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
     size_t               page_count_found = 0;
 
     /* TODO check validity of filename */
-    /* TODO check a_modes */
     if (pifs.is_header_found && strlen(a_filename))
     {
         pifs_parse_open_mode(file, a_modes);
@@ -939,7 +1020,7 @@ P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
                     if (file->status == PIFS_SUCCESS)
                     {
                         /* Mark allocated pages to be released */
-//                        file->status = pifs_find_file_pages(file);
+                        file->status = pifs_find_file_pages(file);
                     }
                 }
                 else
@@ -1000,7 +1081,7 @@ P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
 pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
                                     pifs_block_address_t a_block_address,
                                     pifs_page_address_t a_page_address,
-                                    size_t a_page_count,
+                                    pifs_page_count_t a_page_count,
                                     pifs_block_address_t a_prev_map_block_address,
                                     pifs_page_address_t a_prev_map_page_address)
 {
@@ -1098,7 +1179,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                         ba++;
                         if (ba == PIFS_FLASH_BLOCK_NUM_ALL)
                         {
-                            PIFS_ERROR_MSG("Trying to write to invalid flash address! %s\r\n",
+                            PIFS_FATAL_ERROR_MSG("Trying to write to invalid flash address! %s\r\n",
                                            ba_pa2str(ba, pa));
                         }
                     }

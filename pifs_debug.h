@@ -39,6 +39,18 @@
 #define PIFS_ERROR_MSG(...)
 #endif
 
+#if (PIFS_DEBUG_LEVEL >= 1)
+#define PIFS_FATAL_ERROR_MSG(...)    do { \
+        fflush(stdout); \
+        fprintf(stderr, "%s FATAL_ERROR: ", __FUNCTION__); \
+        fprintf(stderr, __VA_ARGS__); \
+        fflush(stderr); \
+        exit(-1); \
+    } while (0);
+#else
+#define PIFS_FATAL_ERROR_MSG(...)
+#endif
+
 #if (PIFS_DEBUG_LEVEL >= 2)
 #define PIFS_WARNING_MSG(...)    do { \
         fflush(stdout); \
