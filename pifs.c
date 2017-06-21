@@ -850,7 +850,7 @@ P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
         {
             /* Order of steps to create a file: */
             /* #1 Find a free page for map of file */
-            /* #2 Create entry of file */
+            /* #2 Create entry of file, which contains the map's address */
             /* #3 Mark map page */
             file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_PAGE_TYPE_DATA, TRUE,
                                           &ba, &pa, &page_count_found);
@@ -896,6 +896,8 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
     pifs_page_address_t     pa = a_file->entry.map_address.page_address;
     pifs_map_header_t     * map_header = (pifs_map_header_t*) pifs.page_buf;
     pifs_map_entry_t      * map_entry = (pifs_map_entry_t*) (pifs.page_buf + PIFS_MAP_HEADER_SIZE_BYTE);
+    /* FIXME Use of this variable could be avoided... */
+    pifs_map_entry_t        map_entry_new;
     size_t                  i;
     bool_t                  is_written = FALSE;
 
@@ -917,11 +919,14 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
             if (pifs_is_buffer_erased(&map_entry[i], PIFS_MAP_ENTRY_SIZE_BYTE))
             {
                 /* Empty map entry found */
-                map_entry[i].address.block_address = a_block_address;
-                map_entry[i].address.page_address = a_page_address;
-                map_entry[i].page_count = page_count;
-                PIFS_DEBUG_MSG("Create map entry #%i for %s\r\n", i, ba_pa2str(a_block_address, a_page_address));
-                a_file->status = pifs_write(ba, pa, 0, &map_entry[i], PIFS_MAP_ENTRY_SIZE_BYTE);
+                map_entry_new.address.block_address = a_block_address;
+                map_entry_new.address.page_address = a_page_address;
+                map_entry_new.page_count = page_count;
+                PIFS_DEBUG_MSG("Create map entry #%lu for %s\r\n", i,
+                               ba_pa2str(a_block_address, a_page_address));
+                a_file->status = pifs_write(ba, pa, PIFS_MAP_HEADER_SIZE_BYTE
+                                            + i * PIFS_MAP_ENTRY_SIZE_BYTE,
+                                            &map_entry_new, PIFS_MAP_ENTRY_SIZE_BYTE);
                 is_written = TRUE;
             }
         }

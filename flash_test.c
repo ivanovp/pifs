@@ -77,7 +77,7 @@ pifs_status_t flash_test_erase_program(void)
         /* Try to Un-program bit 0, which should not be possible */
         test_buf_w[PIFS_FLASH_PAGE_SIZE_BYTE - 1] = 0xF1;
         ret = pifs_flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
-        PIFS_ASSERT(ret == PIFS_ERROR);
+        PIFS_ASSERT(ret == PIFS_ERROR_FLASH_WRITE);
     }
     printf("Done.\r\n");
 

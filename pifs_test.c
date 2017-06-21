@@ -22,7 +22,7 @@
         fprintf(stderr, __VA_ARGS__); \
     } while (0);
 
-uint8_t test_buf[3 * 256];
+uint8_t test_buf[1 * 256];
 
 pifs_status_t pifs_test(void)
 {
