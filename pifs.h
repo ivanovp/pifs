@@ -80,6 +80,8 @@
 
 #if PIFS_OPTIMIZE_FOR_RAM
 #define PIFS_BOOL_SIZE              : 1
+#else
+#define PIFS_BOOL_SIZE
 #endif
 
 #if PIFS_CHECKSUM_SIZE == 1

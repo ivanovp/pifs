@@ -414,19 +414,21 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
 
 /**
  * @brief pifs_find_page Find free page(s) in free space memory bitmap.
- * Note: Currently it finds exactly a_page_count_needed. It will not return
- * less bytes. There should be an option to search with a_page_count_desired,
- * a_page_count_minimum arguments.
+ * It tries to find 'a_page_count_desired' pages, but at least
+ * 'a_page_count_minimum'.
+ * FIXME there should be an option for maximum search time.
  *
- * @param[in] a_page_count_needed Number of pages needed.
- * @param[in] a_page_type         Page type to find.
- * @param[in] a_is_free           TRUE: find free page, FALSE: find to be released page.
- * @param[out] a_block_address    Block address of page(s).
- * @param[out] a_page_address     Page address of page(s).
- * @param[out] a_page_count_found Number of free pages found.
+ * @param[in] a_page_count_minimum Number of pages needed at least.
+ * @param[in] a_page_count_desired Number of pages needed.
+ * @param[in] a_page_type          Page type to find.
+ * @param[in] a_is_free            TRUE: find free page, FALSE: find to be released page.
+ * @param[out] a_block_address     Block address of page(s).
+ * @param[out] a_page_address      Page address of page(s).
+ * @param[out] a_page_count_found  Number of free pages found.
  * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
  */
-pifs_status_t pifs_find_page(size_t a_page_count_needed,
+pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
+                             pifs_page_count_t a_page_count_desired,
                              pifs_page_type_t a_page_type,
                              bool_t a_is_free,
                              pifs_block_address_t * a_block_address,
@@ -438,7 +440,7 @@ pifs_status_t pifs_find_page(size_t a_page_count_needed,
     pifs_page_address_t     pa = pifs.header.free_space_bitmap_address.page_address;
     pifs_page_offset_t      po = 0;
     size_t                  i;
-    size_t                  page_count_found = 0;
+    pifs_page_count_t       page_count_found = 0;
     uint8_t                 free_space_bitmap = 0;
     bool_t                  found = FALSE;
     size_t                  byte_cntr = PIFS_FREE_SPACE_BITMAP_SIZE_BYTE;
@@ -466,14 +468,18 @@ pifs_status_t pifs_find_page(size_t a_page_count_needed,
                 {
 //                    PIFS_DEBUG_MSG("bit_pos: %i free!\r\n", bit_pos);
                     page_count_found++;
-                    if (page_count_found == a_page_count_needed)
+                    if (page_count_found >= a_page_count_minimum)
                     {
                         pifs_calc_address(bit_pos + 2 - page_count_found * 2,
                                           a_block_address, a_page_address);
-                        PIFS_DEBUG_MSG("Free page count found, bit_pos: %lu, %s\r\n",
-                                        bit_pos + 2 - page_count_found * 2,
-                                        ba_pa2str(*a_block_address, *a_page_address));
+                        PIFS_DEBUG_MSG("%i page count found, bit_pos: %lu, %s\r\n",
+                                       page_count_found,
+                                       (size_t)bit_pos + 2 - page_count_found * 2,
+                                       ba_pa2str(*a_block_address, *a_page_address));
                         *a_page_count_found = page_count_found;
+                    }
+                    if (page_count_found == a_page_count_desired)
+                    {
                         found = TRUE;
                     }
                 }
@@ -1032,7 +1038,7 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
                 /* #1 Find a free page for map of file */
                 /* #2 Create entry of file, which contains the map's address */
                 /* #3 Mark map page */
-                file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_PAGE_TYPE_DATA, TRUE,
+                file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_PAGE_TYPE_DATA, TRUE,
                                               &ba, &pa, &page_count_found);
                 if (file->status == PIFS_SUCCESS)
                 {
@@ -1159,7 +1165,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
             {
                 page_needed_limited = PIFS_PAGE_COUNT_INVALID - 1;
             }
-            file->status = pifs_find_page(page_needed_limited, PIFS_PAGE_TYPE_DATA, TRUE,
+            file->status = pifs_find_page(1, page_needed_limited, PIFS_PAGE_TYPE_DATA, TRUE,
                                           &ba, &pa, &page_found);
             PIFS_DEBUG_MSG("%lu pages found. %s\r\n", page_found, ba_pa2str(ba, pa));
             if (file->status == PIFS_SUCCESS)
