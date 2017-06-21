@@ -80,7 +80,7 @@ pifs_status_t pifs_flash_delete(void)
 
 pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address, pifs_page_offset_t a_page_offset, void * const a_buf, size_t a_buf_size)
 {
-    pifs_status_t ret = PIFS_ERROR;
+    pifs_status_t ret = PIFS_ERROR_FLASH_READ;
     long int offset = a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE 
         + a_page_address * PIFS_FLASH_PAGE_SIZE_BYTE
         + a_page_offset;
@@ -108,7 +108,7 @@ pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address, pifs_page_ad
 
 pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address, pifs_page_address_t a_page_offset, const void * const a_buf, size_t a_buf_size)
 {
-    pifs_status_t ret = PIFS_ERROR;
+    pifs_status_t ret = PIFS_ERROR_FLASH_WRITE;
     long int offset = a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE 
         + a_page_address * PIFS_FLASH_PAGE_SIZE_BYTE
         + a_page_offset;
@@ -137,7 +137,7 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
                     FLASH_ERROR_MSG("Cannot program 0x%02X to 0x%02X. BA%i/PA%i/OFS%i\r\n",
                                     buf8[i], flash_page_buf[i],
                                     a_block_address, a_page_address, a_page_offset + i );
-                    ret = PIFS_ERROR;
+                    ret = PIFS_ERROR_FLASH_WRITE;
                 }
             }
         }
@@ -147,7 +147,7 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
             write_count = fwrite(a_buf, 1, a_buf_size, flash_file);
             if (write_count != a_buf_size)
             {
-                ret = PIFS_ERROR;
+                ret = PIFS_ERROR_FLASH_WRITE;
             }
         }
     }
@@ -162,7 +162,7 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
 
 pifs_status_t pifs_flash_erase(pifs_block_address_t a_block_address)
 {
-    pifs_status_t ret = PIFS_ERROR;
+    pifs_status_t ret = PIFS_ERROR_FLASH_ERASE;
     long int offset = a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE;
     size_t write_count = 0;
     pifs_page_address_t i;
@@ -179,7 +179,7 @@ pifs_status_t pifs_flash_erase(pifs_block_address_t a_block_address)
             write_count = fwrite(flash_page_buf, 1, sizeof(flash_page_buf), flash_file);
             if (write_count != sizeof(flash_page_buf))
             {
-                ret = PIFS_ERROR;
+                ret = PIFS_ERROR_FLASH_ERASE;
                 break;
             }
         }

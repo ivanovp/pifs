@@ -51,22 +51,14 @@ char * ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_t a_pag
 
     return str;
 }
-
-void pifs_print_address(pifs_address_t * a_address)
-{
-    printf("BA%i/PA%i @0x%X", a_address->block_address, a_address->page_address,
-           a_address->block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
-           + a_address->page_address * PIFS_FLASH_PAGE_SIZE_BYTE);
-}
-
-void pifs_print_ba_pa(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address)
-{
-    printf("BA%i/PA%i @0x%X", a_block_address, a_page_address,
-           a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
-           + a_page_address * PIFS_FLASH_PAGE_SIZE_BYTE);
-}
 #endif
 
+/**
+ * @brief pifs_calc_header_checksum Calculate checksum of the file system header.
+ *
+ * @param a_pifs_header[in] Pointer to the file system header.
+ * @return The calculated checksum.
+ */
 pifs_checksum_t pifs_calc_header_checksum(pifs_header_t * a_pifs_header)
 {
     uint8_t * ptr = (uint8_t*) a_pifs_header;
@@ -174,13 +166,18 @@ pifs_status_t pifs_flush(void)
  * @param a_buf_size[in]        Size of buffer. Ignored if a_buf is NULL.
  * @return PIFS_SUCCESS if data read successfully.
  */
-pifs_status_t pifs_read(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address, pifs_page_offset_t a_page_offset, void * const a_buf, size_t a_buf_size)
+pifs_status_t pifs_read(pifs_block_address_t a_block_address,
+                        pifs_page_address_t a_page_address,
+                        pifs_page_offset_t a_page_offset,
+                        void * const a_buf,
+                        size_t a_buf_size)
 {
     pifs_status_t ret = PIFS_ERROR;
 
     if (a_block_address == pifs.page_buf_address.block_address
             && a_page_address == pifs.page_buf_address.page_address)
     {
+        /* Cache hit */
         if (a_buf)
         {
             memcpy(a_buf, &pifs.page_buf[a_page_offset], a_buf_size);
@@ -189,6 +186,7 @@ pifs_status_t pifs_read(pifs_block_address_t a_block_address, pifs_page_address_
     }
     else
     {
+        /* Cache miss, first flush cache */
         ret = pifs_flush();
 
         if (ret == PIFS_SUCCESS)
@@ -229,6 +227,7 @@ pifs_status_t pifs_write(pifs_block_address_t a_block_address, pifs_page_address
     if (a_block_address == pifs.page_buf_address.block_address
             && a_page_address == pifs.page_buf_address.page_address)
     {
+        /* Cache hit */
         if (a_buf)
         {
             memcpy(&pifs.page_buf[a_page_offset], a_buf, a_buf_size);
@@ -238,6 +237,7 @@ pifs_status_t pifs_write(pifs_block_address_t a_block_address, pifs_page_address
     }
     else
     {
+        /* Cache miss, first flush cache */
         ret = pifs_flush();
 
         if (ret == PIFS_SUCCESS)
@@ -276,6 +276,7 @@ pifs_status_t pifs_erase(pifs_block_address_t a_block_address)
 
     if (a_block_address == pifs.page_buf_address.block_address)
     {
+        /* If the block was erased which contains the cached page, simply forget it */
         pifs.page_buf_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
         pifs.page_buf_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
         pifs.page_buf_is_dirty = FALSE;
@@ -565,6 +566,11 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
     return ret;
 }
 
+/**
+ * @brief pifs_init Initialize flash driver and file system.
+ *
+ * @return PIFS_SUCCESS if FS successfully initialized.
+ */
 pifs_status_t pifs_init(void)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
@@ -635,12 +641,12 @@ pifs_status_t pifs_init(void)
     if (ret == PIFS_SUCCESS)
     {
         /* Find latest management block */
-        for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
+        for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL && ret == PIFS_SUCCESS; ba++)
         {
-            for (pa = 0; pa < PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX; pa++)
+            for (pa = 0; pa < PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX && ret == PIFS_SUCCESS; pa++)
             {
-                pifs_read(ba, pa, 0, &header, sizeof(header));
-                if (header.magic == PIFS_MAGIC
+                ret = pifs_read(ba, pa, 0, &header, sizeof(header));
+                if (ret == PIFS_SUCCESS && header.magic == PIFS_MAGIC
         #if ENABLE_PIFS_VERSION
                         && header.majorVersion == PIFS_MAJOR_VERSION
                         && header.minorVersion == PIFS_MINOR_VERSION
