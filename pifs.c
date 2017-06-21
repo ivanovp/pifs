@@ -1140,6 +1140,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
     size_t               data_size = a_size * a_count;
     size_t               written_size = 0;
     size_t               page_needed = 0;
+    size_t               page_needed_limited = 0;
     size_t               page_found;
     size_t               page_found_start;
     size_t               chunk_size;
@@ -1153,7 +1154,12 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
         page_needed = (a_size * a_count + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
         do
         {
-            file->status = pifs_find_page(page_needed, PIFS_PAGE_TYPE_DATA, TRUE,
+            page_needed_limited = page_needed;
+            if (page_needed_limited >= PIFS_PAGE_COUNT_INVALID)
+            {
+                page_needed_limited = PIFS_PAGE_COUNT_INVALID - 1;
+            }
+            file->status = pifs_find_page(page_needed_limited, PIFS_PAGE_TYPE_DATA, TRUE,
                                           &ba, &pa, &page_found);
             PIFS_DEBUG_MSG("%lu pages found. %s\r\n", page_found, ba_pa2str(ba, pa));
             if (file->status == PIFS_SUCCESS)
