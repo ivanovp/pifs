@@ -746,11 +746,20 @@ pifs_status_t pifs_delete(void)
     return ret;
 }
 
+/**
+ * @brief pifs_is_buffer_erased Check if buffer is erased or contains
+ * programmed bytes.
+ *
+ * @param a_buf[in]         Pointer to buffer.
+ * @param a_buf_size[in]    Size of buffer.
+ * @return TRUE: if buffer is erased.
+ * FALSE: if buffer contains at least one programmed bit.
+ */
 bool_t pifs_is_buffer_erased(const void * a_buf, size_t a_buf_size)
 {
     uint8_t * buf = (uint8_t*) a_buf;
-    size_t i;
-    bool_t ret = TRUE;
+    size_t    i;
+    bool_t    ret = TRUE;
 
     for (i = 0; i < a_buf_size && ret; i++)
     {
@@ -763,9 +772,17 @@ bool_t pifs_is_buffer_erased(const void * a_buf, size_t a_buf_size)
     return ret;
 }
 
+/**
+ * @brief pifs_create_entry Add an item to the entry list.
+ *
+ * @param a_entry[in] Pointer to the entry to be added.
+ * @return PIFS_SUCCESS if entry successfully added.
+ * PIFS_ERROR_NO_MORE_SPACE if entry list is full.
+ * PIFS_ERROR_FLASH_WRITE if flash write failed.
+ */
 pifs_status_t pifs_create_entry(const pifs_entry_t * a_entry)
 {
-    pifs_status_t        ret = PIFS_ERROR;
+    pifs_status_t        ret = PIFS_ERROR_NO_MORE_SPACE;
     pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
     pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
     bool_t               created = FALSE;
