@@ -15,7 +15,8 @@
 #define PIFS_ENTRY_NUM_MAX          254     /**< Maximum number of files and directories */
 #define PIFS_CHECKSUM_SIZE          4       /**< Number of checksum bytes. Range: 1, 2 or 4. */
 #define PIFS_MAP_PAGE_NUM           1       /**< Default number of map pages. Minimum: 1 */
+#define PIFS_OPTIMIZE_FOR_RAM       1
 
-#define PIFS_PACKED_ATTRIBUTE    __attribute__((packed))
+#define PIFS_PACKED_ATTRIBUTE       __attribute__((packed))
 
 #endif /* _INCLUDE_PIFS_CONFIG_H_ */

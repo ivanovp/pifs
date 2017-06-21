@@ -76,7 +76,11 @@
 #define PIFS_FREE_SPACE_BITMAP_SIZE_PAGE    ((PIFS_FREE_SPACE_BITMAP_SIZE_BYTE + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE)
 
 /** Number of bits in a byte */
-#define BYTE_BITS   8
+#define PIFS_BYTE_BITS              8
+
+#if PIFS_OPTIMIZE_FOR_RAM
+#define PIFS_BOOL_SIZE              : 1
+#endif
 
 #if PIFS_CHECKSUM_SIZE == 1
 typedef uint8_t pifs_checksum_t;
@@ -170,8 +174,13 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 
 typedef struct
 {
-    bool_t                  is_used;
-    bool_t                  is_opened;
+    bool_t                  is_used PIFS_BOOL_SIZE;
+    bool_t                  is_opened PIFS_BOOL_SIZE;
+    bool_t                  mode_create_new_file PIFS_BOOL_SIZE;
+    bool_t                  mode_read PIFS_BOOL_SIZE;
+    bool_t                  mode_write PIFS_BOOL_SIZE;
+    bool_t                  mode_append PIFS_BOOL_SIZE;
+    bool_t                  mode_file_shall_exist PIFS_BOOL_SIZE;
     pifs_entry_t            entry;
     pifs_status_t           status;
 } pifs_file_t;

@@ -98,11 +98,11 @@ void pifs_calc_free_space_pos(const pifs_address_t * a_free_space_bitmap_address
     bit_pos = ((a_block_address - PIFS_FLASH_BLOCK_RESERVED_NUM) * PIFS_FLASH_PAGE_PER_BLOCK + a_page_address) << 1;
 //    PIFS_DEBUG_MSG("BA%i/PA%i bit_pos: %i\r\n", a_block_address, a_page_address, bit_pos);
     *a_free_space_block_address = a_free_space_bitmap_address->block_address
-            + (bit_pos / BYTE_BITS / PIFS_FLASH_BLOCK_SIZE_BYTE);
-    bit_pos %= PIFS_FLASH_BLOCK_SIZE_BYTE * BYTE_BITS;
+            + (bit_pos / PIFS_BYTE_BITS / PIFS_FLASH_BLOCK_SIZE_BYTE);
+    bit_pos %= PIFS_FLASH_BLOCK_SIZE_BYTE * PIFS_BYTE_BITS;
     *a_free_space_page_address = a_free_space_bitmap_address->page_address
-            + (bit_pos / BYTE_BITS / PIFS_FLASH_PAGE_SIZE_BYTE);
-    bit_pos %= PIFS_FLASH_PAGE_SIZE_BYTE * BYTE_BITS;
+            + (bit_pos / PIFS_BYTE_BITS / PIFS_FLASH_PAGE_SIZE_BYTE);
+    bit_pos %= PIFS_FLASH_PAGE_SIZE_BYTE * PIFS_BYTE_BITS;
     *a_free_space_bit_pos = bit_pos;
 }
 
@@ -317,11 +317,11 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
         ret = pifs_read(ba, pa, 0, NULL, 0);
         if (ret == PIFS_SUCCESS)
         {
-            PIFS_ASSERT((bit_pos / BYTE_BITS) < PIFS_FLASH_PAGE_SIZE_BYTE);
+            PIFS_ASSERT((bit_pos / PIFS_BYTE_BITS) < PIFS_FLASH_PAGE_SIZE_BYTE);
 //            print_buffer(pifs.page_buf, sizeof(pifs.page_buf), 0);
 //            PIFS_DEBUG_MSG("-Free space byte:    0x%02X\r\n", pifs.page_buf[bit_pos / BYTE_BITS]);
-            is_free_space = pifs.page_buf[bit_pos / BYTE_BITS] & (1u << (bit_pos % BYTE_BITS));
-            is_to_be_released = pifs.page_buf[bit_pos / BYTE_BITS] & (1u << ((bit_pos % BYTE_BITS) + 1));
+            is_free_space = pifs.page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << (bit_pos % PIFS_BYTE_BITS));
+            is_to_be_released = pifs.page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << ((bit_pos % PIFS_BYTE_BITS) + 1));
 //            PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", is_free_space);
 //            PIFS_DEBUG_MSG("-Release space bit:  %i\r\n", is_to_be_released);
 //            PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", (pifs.page_buf[bit_pos / BYTE_BITS] >> (bit_pos % BYTE_BITS)) & 1);
@@ -332,7 +332,7 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                 if (is_free_space)
                 {
                     /* Clear free bit */
-                    pifs.page_buf[bit_pos / BYTE_BITS] &= ~(1u << (bit_pos % BYTE_BITS));
+                    pifs.page_buf[bit_pos / PIFS_BYTE_BITS] &= ~(1u << (bit_pos % PIFS_BYTE_BITS));
                 }
                 else
                 {
@@ -349,7 +349,7 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                     if (!is_to_be_released)
                     {
                         /* Clear release bit */
-                        pifs.page_buf[bit_pos / BYTE_BITS] &= ~(1u << ((bit_pos % BYTE_BITS) + 1));
+                        pifs.page_buf[bit_pos / PIFS_BYTE_BITS] &= ~(1u << ((bit_pos % PIFS_BYTE_BITS) + 1));
                     }
                     else
                     {
@@ -438,16 +438,16 @@ pifs_status_t pifs_find_page(size_t a_page_count_needed,
 
     do
     {
-//        printf("BA%i/PA%i ", ba, pa);
+//        PIFS_DEBUG_MSG("BA%i/PA%i ", ba, pa);
         ret = pifs_read(ba, pa, po, &free_space_bitmap, sizeof(free_space_bitmap));
-//        printf("%02X\r\n", free_space_bitmap);
+//        PIFS_DEBUG_MSG("%02X\r\n", free_space_bitmap);
         if (ret == PIFS_SUCCESS)
         {
-            for (i = 0; i < (BYTE_BITS / 2) && !found; i++)
+            for (i = 0; i < (PIFS_BYTE_BITS / 2) && !found; i++)
             {
                 if (free_space_bitmap & mask)
                 {
-//                    printf("bit_pos: %i free!\r\n", bit_pos);
+//                    PIFS_DEBUG_MSG("bit_pos: %i free!\r\n", bit_pos);
                     page_count_found++;
                     if (page_count_found == a_page_count_needed)
                     {
@@ -827,6 +827,87 @@ pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a_entry)
     return ret;
 }
 
+/**
+ * @brief pifs_clear_entry Find entry in entry list and invalidate it.
+ *
+ * @param a_name[in]    Pointer to name to find.
+ * @return PIFS_SUCCESS if entry found and cleared.
+ * PIFS_ERROR_ENTRY_NOT_FOUND if entry not found.
+ */
+pifs_status_t pifs_clear_entry(const char * a_name)
+{
+    return pifs_find_entry(a_name, NULL);
+}
+
+/**
+ * @brief pifs_parse_open_mode Parse string of open mode.
+ *
+ * @param a_file[in]    Pointer to file's internal structure.
+ * @param a_modes[in]   String of mode.
+ */
+void pifs_parse_open_mode(pifs_file_t * a_file, const char * a_modes)
+{
+    uint8_t i;
+
+    /* Reset mode */
+    a_file->mode_create_new_file = FALSE;
+    a_file->mode_read = FALSE;
+    a_file->mode_write = FALSE;
+    a_file->mode_append = FALSE;
+    a_file->mode_file_shall_exist = FALSE;
+    for (i = 0; a_modes[i] && i < 4; i++)
+    {
+        switch (a_modes[i])
+        {
+            case 'r':
+                /* Read */
+                a_file->mode_read = TRUE;
+                a_file->mode_file_shall_exist = TRUE;
+                break;
+            case 'w':
+                /* Write */
+                a_file->mode_write = TRUE;
+                a_file->mode_create_new_file = TRUE;
+                break;
+            case '+':
+                if (a_file->mode_write)
+                {
+                    /* mode "w+" */
+                    a_file->mode_read = TRUE;
+                    a_file->mode_create_new_file = TRUE;
+                }
+                else if (a_file->mode_read)
+                {
+                    /* mode "r+" */
+                    a_file->mode_write = TRUE;
+                    a_file->mode_file_shall_exist = TRUE;
+                }
+                else if (a_file->mode_append)
+                {
+                    /* mode "a+" */
+                    a_file->mode_read = TRUE;
+                }
+                break;
+            case 'a':
+                a_file->mode_append = TRUE;
+                break;
+            case 'b':
+                /* Binary, all operations are binary! */
+                break;
+            default:
+                a_file->status = PIFS_ERROR_INVALID_OPEN_MODE;
+                PIFS_ERROR_MSG("Invalid open mode '%s'\r\n", a_modes);
+                break;
+        }
+    }
+
+    PIFS_DEBUG_MSG("create_new_file: %i\r\n", a_file->mode_create_new_file);
+    PIFS_DEBUG_MSG("read: %i\r\n", a_file->mode_read);
+    PIFS_DEBUG_MSG("write: %i\r\n", a_file->mode_write);
+    PIFS_DEBUG_MSG("append: %i\r\n", a_file->mode_append);
+    PIFS_DEBUG_MSG("file_shall_exist: %i\r\n", a_file->mode_file_shall_exist);
+}
+
 P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
 {
     pifs_file_t        * file = &pifs.file[0];
@@ -839,47 +920,66 @@ P_FILE * pifs_fopen(const char * a_filename, const char *a_modes)
     /* TODO check a_modes */
     if (pifs.is_header_found && strlen(a_filename))
     {
-        file->status = pifs_find_entry(a_filename, entry);
+        pifs_parse_open_mode(file, a_modes);
         if (file->status == PIFS_SUCCESS)
         {
-            printf("Entry of %s found:\r\n", a_filename);
-            print_buffer(entry, sizeof(pifs_entry_t), 0);
-            file->is_opened = TRUE;
-        }
-        else
-        {
-            /* Order of steps to create a file: */
-            /* #1 Find a free page for map of file */
-            /* #2 Create entry of file, which contains the map's address */
-            /* #3 Mark map page */
-            file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_PAGE_TYPE_DATA, TRUE,
-                                          &ba, &pa, &page_count_found);
-            if (file->status == PIFS_SUCCESS)
+            file->status = pifs_find_entry(a_filename, entry);
+            if (file->mode_file_shall_exist && file->status == PIFS_SUCCESS)
             {
-                printf("Map page: %lu free page found %s\r\n", page_count_found, ba_pa2str(ba, pa));
-                strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
-                entry->object_id = pifs.latest_object_id++;
-                entry->attrib = PIFS_ATTRIB_ARCHIVE;
-                entry->map_address.block_address = ba;
-                entry->map_address.page_address = pa;
-                file->status = pifs_create_entry(entry);
+                PIFS_DEBUG_MSG("Entry of %s found:\r\n", a_filename);
+                print_buffer(entry, sizeof(pifs_entry_t), 0);
+                file->is_opened = TRUE;
+            }
+            if (file->mode_create_new_file)
+            {
                 if (file->status == PIFS_SUCCESS)
                 {
-                    PIFS_DEBUG_MSG("Entry created\r\n");
-                    file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, TRUE);
+                    /* File already exist */
+                    file->status = pifs_clear_entry(a_filename);
                     if (file->status == PIFS_SUCCESS)
                     {
-                        file->is_opened = TRUE;
+                        /* Mark allocated pages to be released */
+//                        file->status = pifs_find_file_pages(file);
                     }
                 }
                 else
                 {
-                    printf("Cannot create entry!\r\n");
+                    /* File does not exists, no problem, we'll create it */
+                    file->status = PIFS_SUCCESS;
                 }
-            }
-            else
-            {
-                printf("No free page found!\r\n");
+                /* Order of steps to create a file: */
+                /* #1 Find a free page for map of file */
+                /* #2 Create entry of file, which contains the map's address */
+                /* #3 Mark map page */
+                file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_PAGE_TYPE_DATA, TRUE,
+                                              &ba, &pa, &page_count_found);
+                if (file->status == PIFS_SUCCESS)
+                {
+                    PIFS_DEBUG_MSG("Map page: %lu free page found %s\r\n", page_count_found, ba_pa2str(ba, pa));
+                    strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
+                    entry->object_id = pifs.latest_object_id++;
+                    entry->attrib = PIFS_ATTRIB_ARCHIVE;
+                    entry->map_address.block_address = ba;
+                    entry->map_address.page_address = pa;
+                    file->status = pifs_create_entry(entry);
+                    if (file->status == PIFS_SUCCESS)
+                    {
+                        PIFS_DEBUG_MSG("Entry created\r\n");
+                        file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, TRUE);
+                        if (file->status == PIFS_SUCCESS)
+                        {
+                            file->is_opened = TRUE;
+                        }
+                    }
+                    else
+                    {
+                        PIFS_DEBUG_MSG("Cannot create entry!\r\n");
+                    }
+                }
+                else
+                {
+                    PIFS_DEBUG_MSG("No free page found!\r\n");
+                }
             }
         }
     }
@@ -967,7 +1067,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
     pifs_page_address_t  pa = PIFS_PAGE_ADDRESS_INVALID;
     pifs_page_address_t  pa_start = PIFS_PAGE_ADDRESS_INVALID;
 
-    if (pifs.is_header_found && file && file->is_opened)
+    if (pifs.is_header_found && file && file->is_opened && file->mode_write)
     {
         page_needed = (a_size * a_count + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
         do
@@ -1027,9 +1127,10 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
 
 size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 {
-    size_t read_size = 0;
+    pifs_file_t * file = (pifs_file_t*) a_file;
+    size_t        read_size = 0;
 
-    if (pifs.is_header_found && a_file)
+    if (pifs.is_header_found && file && file->is_opened)
     {
     }
 
@@ -1038,8 +1139,12 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 
 int pifs_fclose(P_FILE * a_file)
 {
-    if (pifs.is_header_found && a_file)
+    pifs_file_t * file = (pifs_file_t*) a_file;
+
+    if (pifs.is_header_found && file && file->is_opened)
     {
+        pifs_flush();
+        file->is_opened = FALSE;
     }
 
     return 0;
