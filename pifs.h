@@ -36,11 +36,17 @@
 #define PIFS_ATTRIB_ARCHIVE     0x20u
 #define PIFS_ATTRIB_DELETED     0x80u
 
+/******************************************************************************/
+/*** FILE SYSTEM HEADER                                                     ***/
+/******************************************************************************/
 /** Size of file system's header in bytes */
 #define PIFS_HEADER_SIZE_BYTE               (sizeof(pifs_header_t))
 /** Size of file system's header in pages */
 #define PIFS_HEADER_SIZE_PAGE               ((PIFS_HEADER_SIZE_BYTE + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE)
 
+/******************************************************************************/
+/*** ENTRY LIST                                                             ***/
+/******************************************************************************/
 #define PIFS_ENTRY_SIZE_BYTE                (sizeof(pifs_entry_t))
 
 /** Number of entries can fit in one page */
@@ -51,6 +57,18 @@
 /** Size of entry list in bytes */
 #define PIFS_ENTRY_LIST_SIZE_BYTE           (PIFS_ENTRY_LIST_SIZE_PAGE * PIFS_FLASH_PAGE_SIZE_BYTE)
 
+/******************************************************************************/
+/*** MAP ENTRY                                                              ***/
+/******************************************************************************/
+#define PIFS_MAP_HEADER_SIZE_BYTE           (sizeof(pifs_map_header_t))
+#define PIFS_MAP_ENTRY_SIZE_BYTE            (sizeof(pifs_map_entry_t))
+
+#define PIFS_MAP_ENTRY_PER_PAGE             (PIFS_FLASH_PAGE_SIZE_BYTE / PIFS_MAP_ENTRY_SIZE_BYTE - PIFS_MAP_HEADER_SIZE_BYTE)
+
+
+/******************************************************************************/
+/*** FREE SPACE BITMAP                                                      ***/
+/******************************************************************************/
 /** Size of free space bitmap in bytes.
  * Multiplied by two, because two bits are used per page */
 #define PIFS_FREE_SPACE_BITMAP_SIZE_BYTE    (2 * ((PIFS_FLASH_PAGE_NUM_FS + 7) / 8))
@@ -129,8 +147,26 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     uint8_t                 name[PIFS_FILENAME_LEN_MAX];
     uint8_t                 attrib;
     pifs_object_id_t        object_id;
-    pifs_address_t          file_descriptor_address;
+    pifs_address_t          map_address;
 } pifs_entry_t;
+
+/**
+ * Map's header.
+ */
+typedef struct PIFS_PACKED_ATTRIBUTE
+{
+    pifs_address_t          prev_map_address;
+    pifs_address_t          next_map_address;
+} pifs_map_header_t;
+
+/**
+ * Map of file's page.
+ */
+typedef struct PIFS_PACKED_ATTRIBUTE
+{
+    pifs_address_t          address;
+    uint32_t                page_count;
+} pifs_map_entry_t;
 
 typedef struct
 {

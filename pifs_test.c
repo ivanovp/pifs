@@ -33,6 +33,8 @@ pifs_status_t pifs_test(void)
     ret = pifs_init();
     PIFS_ASSERT(ret == PIFS_SUCCESS);
 
+    printf("-------------------------------------------------\r\n");
+
     file = pifs_fopen("test.dat", "w");
     if (file)
     {
@@ -40,6 +42,8 @@ pifs_status_t pifs_test(void)
         fill_buffer(test_buf, sizeof(test_buf), FILL_TYPE_SEQUENCE_WORD, 1);
         written_size = pifs_fwrite(test_buf, 1, sizeof(test_buf), file);
     }
+
+    printf("-------------------------------------------------\r\n");
 
     file = pifs_fopen("test2.dat", "w");
     if (file)
@@ -49,7 +53,9 @@ pifs_status_t pifs_test(void)
         written_size = pifs_fwrite(test_buf, 1, sizeof(test_buf), file);
     }
 
-    file = pifs_fopen("test.dat3", "w");
+    printf("-------------------------------------------------\r\n");
+
+    file = pifs_fopen("test3.dat", "w");
     if (file)
     {
         printf("File opened\r\n");

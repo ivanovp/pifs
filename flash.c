@@ -99,7 +99,7 @@ pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address, pifs_page_ad
     }
     else
     {
-        FLASH_ERROR_MSG("Trying to read from invalid flash adress! BA%i/PA%i/OFS%i\r\n",
+        FLASH_ERROR_MSG("Trying to read from invalid flash address! BA%i/PA%i/OFS%i\r\n",
                         a_block_address, a_page_address, a_page_offset);
     }
 
