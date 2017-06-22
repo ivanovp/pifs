@@ -84,6 +84,9 @@
 #define PIFS_BOOL_SIZE
 #endif
 
+#define PIFS_MIN(a,b)               ((a) < (b) ? (a) : (b))
+#define PIFS_MAX(a,b)               ((a) > (b) ? (a) : (b))
+
 #if PIFS_CHECKSUM_SIZE == 1
 typedef uint8_t pifs_checksum_t;
 #elif PIFS_CHECKSUM_SIZE == 2
@@ -134,7 +137,7 @@ typedef enum
     PIFS_BLOCK_TYPE_MANAGEMENT = 1,
     /** Data and management information stored as well. */
     PIFS_BLOCK_TYPE_MIXED
-} pifs_block_type_t;
+} pifs_block_type_t PIFS_PACKED_ATTRIBUTE;
 
 typedef enum
 {
@@ -179,7 +182,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     uint8_t                 name[PIFS_FILENAME_LEN_MAX];
     uint8_t                 attrib;
     pifs_object_id_t        object_id;
-    pifs_address_t          map_address;
+    pifs_address_t          map_address;    /**< First map page's addres */
 } pifs_entry_t;
 
 /**
@@ -211,6 +214,16 @@ typedef struct
     bool_t                  mode_file_shall_exist PIFS_BOOL_SIZE;
     pifs_entry_t            entry;
     pifs_status_t           status;
+    pifs_map_header_t       map_header;
+    pifs_map_entry_t        map_entry;
+    pifs_address_t          map_address;
+    size_t                  map_entry_idx;
+    size_t                  read_pos;
+    size_t                  write_pos;
+    pifs_address_t          read_address;
+    pifs_address_t          read_entry_address;
+    pifs_address_t          write_address;
+    pifs_address_t          write_entry_address;
 } pifs_file_t;
 
 /**

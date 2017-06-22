@@ -961,8 +961,6 @@ pifs_status_t pifs_find_file_pages(pifs_file_t * a_file)
     pifs_block_address_t    mba;
     pifs_page_address_t     mpa;
     pifs_page_count_t       page_count;
-    pifs_map_header_t       map_header;
-    pifs_map_entry_t        map_entry;
     size_t                  i;
     bool_t                  erased = FALSE;
     pifs_page_offset_t      po = PIFS_MAP_HEADER_SIZE_BYTE;
@@ -970,27 +968,27 @@ pifs_status_t pifs_find_file_pages(pifs_file_t * a_file)
     PIFS_DEBUG_MSG("Searching in map entry at %s\r\n", ba_pa2str(ba, pa));
     do
     {
-        a_file->status = pifs_read(ba, pa, 0, &map_header, PIFS_MAP_HEADER_SIZE_BYTE);
+        a_file->status = pifs_read(ba, pa, 0, &a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE);
 
         if (a_file->status == PIFS_SUCCESS)
         {
-            if (pifs_is_buffer_erased(&map_header, PIFS_MAP_HEADER_SIZE_BYTE))
+            if (pifs_is_buffer_erased(&a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE))
             {
                 PIFS_DEBUG_MSG("map is empty!\r\n");
             }
             for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !erased && a_file->status == PIFS_SUCCESS; i++)
             {
-                a_file->status = pifs_read(ba, pa, po, &map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
-                if (pifs_is_buffer_erased(&map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
+                a_file->status = pifs_read(ba, pa, po, &a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
+                if (pifs_is_buffer_erased(&a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
                 {
                     erased = TRUE;
                 }
                 else
                 {
                     /* Map entry found */
-                    mba = map_entry.address.block_address;
-                    mpa = map_entry.address.page_address;
-                    page_count = map_entry.page_count;
+                    mba = a_file->map_entry.address.block_address;
+                    mpa = a_file->map_entry.address.page_address;
+                    page_count = a_file->map_entry.page_count;
                     if (page_count && page_count < PIFS_PAGE_COUNT_INVALID)
                     {
                         PIFS_DEBUG_MSG("Release map entry %i pages %s\r\n", page_count,
@@ -1006,8 +1004,8 @@ pifs_status_t pifs_find_file_pages(pifs_file_t * a_file)
         /* FIXME If PIFS_MAP_PAGE_NUM > 1, this can cause error?! */
         a_file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, FALSE);
         /* Jump to the next map page */
-        ba = map_header.next_map_address.block_address;
-        pa = map_header.next_map_address.page_address;
+        ba = a_file->map_header.next_map_address.block_address;
+        pa = a_file->map_header.next_map_address.page_address;
     } while (ba < PIFS_BLOCK_ADDRESS_INVALID && pa < PIFS_PAGE_ADDRESS_INVALID && a_file->status == PIFS_SUCCESS);
 
     return a_file->status;
@@ -1160,6 +1158,7 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
 size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 {
     pifs_file_t        * file = (pifs_file_t*) a_file;
+    uint8_t            * data = (uint8_t*) a_data;
     size_t               data_size = a_size * a_count;
     size_t               written_size = 0;
     size_t               page_needed = 0;
@@ -1200,7 +1199,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                     {
                         chunk_size = data_size;
                     }
-                    file->status = pifs_write(ba, pa, 0, a_data, chunk_size);
+                    file->status = pifs_write(ba, pa, 0, data, chunk_size);
                     pa++;
                     if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
                     {
@@ -1212,6 +1211,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                                            ba_pa2str(ba, pa));
                         }
                     }
+                    data += chunk_size;
                     data_size -= chunk_size;
                     written_size += chunk_size;
                     page_found--;
@@ -1235,13 +1235,90 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
     return written_size;
 }
 
+pifs_status_t pifs_read_first_map_entry(pifs_file_t * a_file)
+{
+    a_file->map_entry_idx = 0;
+    a_file->status = pifs_read(a_file->entry.map_address.block_address,
+                             a_file->entry.map_address.page_address,
+                             0, &a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE);
+    if (a_file->status == PIFS_SUCCESS)
+    {
+        a_file->map_address = a_file->entry.map_address;
+        a_file->status = pifs_read(a_file->entry.map_address.block_address,
+                                 a_file->entry.map_address.page_address,
+                                 PIFS_MAP_HEADER_SIZE_BYTE, &a_file->map_entry,
+                                 PIFS_MAP_ENTRY_SIZE_BYTE);
+    }
+
+    return a_file->status;
+}
+
+pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
+{
+    a_file->map_entry_idx++;
+    if (a_file->map_entry_idx >= PIFS_MAP_ENTRY_PER_PAGE)
+    {
+        a_file->map_entry_idx = 0;
+        a_file->map_address = a_file->map_header.next_map_address;
+        a_file->status = pifs_read(a_file->map_address.block_address,
+                                   a_file->map_address.page_address,
+                                   0, &a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE);
+    }
+    if (a_file->status == PIFS_SUCCESS)
+    {
+        a_file->status = pifs_read(a_file->map_address.block_address,
+                                   a_file->map_address.page_address,
+                                   PIFS_MAP_HEADER_SIZE_BYTE + a_file->map_entry_idx * PIFS_MAP_ENTRY_SIZE_BYTE,
+                                   &a_file->map_entry,
+                                   PIFS_MAP_ENTRY_SIZE_BYTE);
+    }
+
+    return a_file->status;
+}
+
 size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 {
-    pifs_file_t * file = (pifs_file_t*) a_file;
-    size_t        read_size = 0;
+    pifs_file_t        * file = (pifs_file_t*) a_file;
+    uint8_t *            data = (uint8_t*) a_data;
+    size_t               read_size = 0;
+    size_t               chunk_size = 0;
+    size_t               size = a_size * a_count;
+    size_t               page_count = 0;
 
-    if (pifs.is_header_found && file && file->is_opened)
+    if (pifs.is_header_found && file && file->is_opened && file->mode_read)
     {
+        page_count = (size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
+        pifs_read_first_map_entry(a_file); /* FIXME move to file open? */
+        while (page_count && file->status == PIFS_SUCCESS)
+        {
+            chunk_size = PIFS_MIN(size, PIFS_FLASH_PAGE_SIZE_BYTE);
+            file->status = pifs_read(file->map_entry.address.block_address,
+                                     file->map_entry.address.page_address,
+                                     0, data, chunk_size);
+            file->map_entry.page_count--;
+            if (file->map_entry.page_count)
+            {
+                file->map_entry.address.page_address++;
+                if (file->map_entry.address.page_address >= PIFS_FLASH_PAGE_PER_BLOCK)
+                {
+                    file->map_entry.address.page_address = 0;
+                    file->map_entry.address.block_address++;
+                    if (file->map_entry.address.block_address == PIFS_FLASH_BLOCK_NUM_ALL)
+                    {
+                        PIFS_FATAL_ERROR_MSG("Trying to read from invalid address! %s\r\n",
+                                             ba_pa2str(file->map_entry.address.block_address, file->map_entry.address.page_address));
+                    }
+                }
+            }
+            else
+            {
+                pifs_read_next_map_entry(a_file);
+            }
+            data += chunk_size;
+            read_size += chunk_size;
+            size -= chunk_size;
+            page_count--;
+        }
     }
 
     return read_size;
