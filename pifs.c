@@ -1015,6 +1015,105 @@ static pifs_status_t pifs_find_file_pages(pifs_file_t * a_file)
     return a_file->status;
 }
 
+static pifs_status_t pifs_read_first_map_entry(pifs_file_t * a_file)
+{
+    a_file->map_entry_idx = 0;
+    a_file->status = pifs_read(a_file->entry.first_map_address.block_address,
+                             a_file->entry.first_map_address.page_address,
+                             0, &a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE);
+    if (a_file->status == PIFS_SUCCESS)
+    {
+        a_file->actual_map_address = a_file->entry.first_map_address;
+        a_file->status = pifs_read(a_file->entry.first_map_address.block_address,
+                                 a_file->entry.first_map_address.page_address,
+                                 PIFS_MAP_HEADER_SIZE_BYTE, &a_file->map_entry,
+                                 PIFS_MAP_ENTRY_SIZE_BYTE);
+    }
+
+    return a_file->status;
+}
+
+static pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
+{
+    a_file->map_entry_idx++;
+    if (a_file->map_entry_idx >= PIFS_MAP_ENTRY_PER_PAGE)
+    {
+        a_file->map_entry_idx = 0;
+        a_file->actual_map_address = a_file->map_header.next_map_address;
+        if (a_file->actual_map_address.block_address < PIFS_BLOCK_ADDRESS_INVALID
+                && a_file->actual_map_address.page_address < PIFS_PAGE_ADDRESS_INVALID)
+        {
+            a_file->status = pifs_read(a_file->actual_map_address.block_address,
+                                       a_file->actual_map_address.page_address,
+                                       0, &a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE);
+        }
+        else
+        {
+            a_file->status = PIFS_ERROR_END_OF_FILE;
+        }
+    }
+    if (a_file->status == PIFS_SUCCESS)
+    {
+        a_file->status = pifs_read(a_file->actual_map_address.block_address,
+                                   a_file->actual_map_address.page_address,
+                                   PIFS_MAP_HEADER_SIZE_BYTE + a_file->map_entry_idx * PIFS_MAP_ENTRY_SIZE_BYTE,
+                                   &a_file->map_entry,
+                                   PIFS_MAP_ENTRY_SIZE_BYTE);
+    }
+
+    return a_file->status;
+}
+
+/**
+ * @brief pifs_append_map_entry Add an entry to the file's map.
+ * This function is called when file is growing and new space is needed.
+ *
+ * @param a_file[in]            Pointer to file to use.
+ * @param a_block_address[in]   Block address of new file pages to added.
+ * @param a_page_address[in]    Page address of new file pages to added.
+ * @param a_page_count[in]      Number of new file pages.
+ * @return PIFS_SUCCESS if entry was successfully written.
+ */
+static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
+                                    pifs_block_address_t a_block_address,
+                                    pifs_page_address_t a_page_address,
+                                    pifs_page_count_t a_page_count)
+{
+    pifs_block_address_t    ba = a_file->entry.first_map_address.block_address;
+    pifs_page_address_t     pa = a_file->entry.first_map_address.page_address;
+    bool_t                  is_written = FALSE;
+    bool_t                  empty_entry_found = FALSE;
+
+    do
+    {
+        if (pifs_is_buffer_erased(&a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
+        {
+            empty_entry_found = TRUE;
+        }
+        else
+        {
+            a_file->status = pifs_read_next_map_entry(a_file);
+        }
+    } while (!empty_entry_found && a_file->status == PIFS_SUCCESS);
+    if (empty_entry_found)
+    {
+        /* Empty map entry found */
+        a_file->map_entry.address.block_address = a_block_address;
+        a_file->map_entry.address.page_address = a_page_address;
+        a_file->map_entry.page_count = a_page_count;
+        PIFS_DEBUG_MSG("Create map entry #%lu for %s\r\n", a_file->map_entry_idx,
+                       ba_pa2str(a_block_address, a_page_address));
+        a_file->status = pifs_write(ba, pa, PIFS_MAP_HEADER_SIZE_BYTE
+                                    + a_file->map_entry_idx * PIFS_MAP_ENTRY_SIZE_BYTE,
+                                    &a_file->map_entry,
+                                    PIFS_MAP_ENTRY_SIZE_BYTE);
+        is_written = TRUE;
+    }
+
+    return a_file->status;
+}
+
+
 P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
 {
     pifs_file_t        * file = &pifs.file[0];
@@ -1028,10 +1127,8 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
     {
         file->write_pos = 0;
         file->read_pos = 0;
-        file->read_map_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
-        file->read_map_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
-        file->write_map_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
-        file->write_map_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
+        file->actual_map_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
+        file->actual_map_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
         pifs_parse_open_mode(file, a_modes);
         if (file->status == PIFS_SUCCESS)
         {
@@ -1093,80 +1190,11 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
                     PIFS_DEBUG_MSG("No free page found!\r\n");
                 }
             }
+            file->status = pifs_read_first_map_entry(file);
         }
     }
 
     return file->is_opened ? (P_FILE*) file : (P_FILE*) NULL;
-}
-
-/**
- * @brief pifs_append_map_entry Add an entry to the file's map.
- * This function is called when file is growing and new space is needed.
- *
- * @param a_file[in]            Pointer to file to use.
- * @param a_block_address[in]   Block address of new file pages to added.
- * @param a_page_address[in]    Page address of new file pages to added.
- * @param a_page_count[in]      Number of new file pages.
- * @return PIFS_SUCCESS if entry was successfully written.
- */
-static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
-                                    pifs_block_address_t a_block_address,
-                                    pifs_page_address_t a_page_address,
-                                    pifs_page_count_t a_page_count,
-                                    pifs_block_address_t a_prev_map_block_address,
-                                    pifs_page_address_t a_prev_map_page_address)
-{
-    pifs_block_address_t    ba = a_file->entry.first_map_address.block_address;
-    pifs_page_address_t     pa = a_file->entry.first_map_address.page_address;
-    size_t                  i;
-    bool_t                  is_written = FALSE;
-
-    if (a_file->write_map_address.block_address >= PIFS_BLOCK_ADDRESS_INVALID
-            || a_file->write_map_address.page_address >= PIFS_PAGE_ADDRESS_INVALID)
-    {
-        PIFS_DEBUG_MSG("Appending map entry at %s\r\n", ba_pa2str(ba, pa));
-        a_file->status = pifs_read(ba, pa, 0, &a_file->map_header,
-                                   PIFS_MAP_HEADER_SIZE_BYTE);
-
-        if (a_file->status == PIFS_SUCCESS)
-        {
-//            a_file->map_entry_address
-            if (pifs_is_buffer_erased(&a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE))
-            {
-                PIFS_DEBUG_MSG("map is empty!\r\n");
-                /* Writing address directly to page buffer */
-                a_file->map_header.prev_map_address.block_address = a_prev_map_block_address;
-                a_file->map_header.prev_map_address.page_address = a_prev_map_page_address;
-                /* Write new header to cache */
-                a_file->status = pifs_write(ba, pa, 0, &a_file->map_header,
-                                            PIFS_MAP_HEADER_SIZE_BYTE);
-            }
-            for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !is_written; i++)
-            {
-                if (pifs_is_buffer_erased(&a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
-                {
-                    a_file->map_entry_idx = i;
-                    /* Empty map entry found */
-                    a_file->map_entry.address.block_address = a_block_address;
-                    a_file->map_entry.address.page_address = a_page_address;
-                    a_file->map_entry.page_count = a_page_count;
-                    PIFS_DEBUG_MSG("Create map entry #%lu for %s\r\n", i,
-                                   ba_pa2str(a_block_address, a_page_address));
-                    a_file->status = pifs_write(ba, pa, PIFS_MAP_HEADER_SIZE_BYTE
-                                                + i * PIFS_MAP_ENTRY_SIZE_BYTE,
-                                                &a_file->map_entry,
-                                                PIFS_MAP_ENTRY_SIZE_BYTE);
-                    is_written = TRUE;
-                }
-            }
-            /* TODO if is_written == FALSE create new map page!!! */
-        }
-    }
-    else
-    {
-    }
-
-    return a_file->status;
 }
 
 size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
@@ -1239,8 +1267,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                 if (file->status == PIFS_SUCCESS)
                 {
                     /* Write pages to file map entry after successfully write */
-                    file->status = pifs_append_map_entry(file, ba_start, pa_start, page_found_start,
-                                                         PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID);
+                    file->status = pifs_append_map_entry(file, ba_start, pa_start, page_found_start);
                 }
             }
         } while (page_needed && file->status == PIFS_SUCCESS);
@@ -1248,47 +1275,6 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
     }
 
     return written_size;
-}
-
-static pifs_status_t pifs_read_first_map_entry(pifs_file_t * a_file)
-{
-    a_file->map_entry_idx = 0;
-    a_file->status = pifs_read(a_file->entry.first_map_address.block_address,
-                             a_file->entry.first_map_address.page_address,
-                             0, &a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE);
-    if (a_file->status == PIFS_SUCCESS)
-    {
-        a_file->read_map_address = a_file->entry.first_map_address;
-        a_file->status = pifs_read(a_file->entry.first_map_address.block_address,
-                                 a_file->entry.first_map_address.page_address,
-                                 PIFS_MAP_HEADER_SIZE_BYTE, &a_file->map_entry,
-                                 PIFS_MAP_ENTRY_SIZE_BYTE);
-    }
-
-    return a_file->status;
-}
-
-static pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
-{
-    a_file->map_entry_idx++;
-    if (a_file->map_entry_idx >= PIFS_MAP_ENTRY_PER_PAGE)
-    {
-        a_file->map_entry_idx = 0;
-        a_file->read_map_address = a_file->map_header.next_map_address;
-        a_file->status = pifs_read(a_file->read_map_address.block_address,
-                                   a_file->read_map_address.page_address,
-                                   0, &a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE);
-    }
-    if (a_file->status == PIFS_SUCCESS)
-    {
-        a_file->status = pifs_read(a_file->read_map_address.block_address,
-                                   a_file->read_map_address.page_address,
-                                   PIFS_MAP_HEADER_SIZE_BYTE + a_file->map_entry_idx * PIFS_MAP_ENTRY_SIZE_BYTE,
-                                   &a_file->map_entry,
-                                   PIFS_MAP_ENTRY_SIZE_BYTE);
-    }
-
-    return a_file->status;
 }
 
 size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
@@ -1303,7 +1289,6 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
     if (pifs.is_header_found && file && file->is_opened && file->mode_read)
     {
         page_count = (size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
-        pifs_read_first_map_entry(a_file); /* FIXME move to file open? */
         while (page_count && file->status == PIFS_SUCCESS)
         {
             chunk_size = PIFS_MIN(size, PIFS_FLASH_PAGE_SIZE_BYTE);
@@ -1327,8 +1312,9 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
             }
             else
             {
-                pifs_read_next_map_entry(a_file);
+                file->status = pifs_read_next_map_entry(a_file);
             }
+            file->read_pos += chunk_size;
             data += chunk_size;
             read_size += chunk_size;
             size -= chunk_size;

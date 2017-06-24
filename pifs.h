@@ -217,16 +217,12 @@ typedef struct
     bool_t                  mode_file_shall_exist PIFS_BOOL_SIZE;
     pifs_entry_t            entry;              /**< One element of entry list */
     pifs_status_t           status;             /**< Last file operation's result */
-    pifs_address_t          read_map_address;   /**< Actual map's address used for reading */
-    pifs_address_t          write_map_address;  /**< Actual map's address used for writing */
+    pifs_address_t          actual_map_address; /**< Actual map's address used for reading */
     pifs_map_header_t       map_header;         /**< Actual map's header */
     size_t                  map_entry_idx;      /**< Actual entry's index in the map */
     pifs_map_entry_t        map_entry;          /**< Actual entry in the map */
     size_t                  read_pos;
     size_t                  write_pos;
-    pifs_address_t          read_address;
-    pifs_address_t          write_address;
-    pifs_address_t          write_entry_address;
 } pifs_file_t;
 
 /**
