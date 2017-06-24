@@ -13,7 +13,7 @@
 #include <string.h>
 
 #include "api_pifs.h"
-//#include "pifs.h"
+#include "pifs.h"
 #include "pifs_debug.h"
 #include "buffer.h"
 
@@ -42,8 +42,9 @@ pifs_status_t pifs_test(void)
 {
     pifs_status_t ret = PIFS_ERROR_FLASH_INIT;
     P_FILE * file;
-    size_t   written_size;
-    size_t   read_size;
+    size_t   written_size = 0;
+    size_t   read_size = 0;
+    size_t   i = 0;
 
     ret = pifs_init();
     PIFS_ASSERT(ret == PIFS_SUCCESS);
@@ -56,7 +57,10 @@ pifs_status_t pifs_test(void)
         printf("File opened for writing\r\n");
         generate_buffer(1);
         print_buffer(test_buf_w, sizeof(test_buf_w), 0);
-        written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+        for (i = 0; i <= PIFS_MAP_ENTRY_PER_PAGE; i++)
+        {
+            written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+        }
     }
     pifs_fclose(file);
 #if 0

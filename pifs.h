@@ -63,7 +63,7 @@
 #define PIFS_MAP_HEADER_SIZE_BYTE           (sizeof(pifs_map_header_t))
 #define PIFS_MAP_ENTRY_SIZE_BYTE            (sizeof(pifs_map_entry_t))
 
-#define PIFS_MAP_ENTRY_PER_PAGE             (PIFS_FLASH_PAGE_SIZE_BYTE / PIFS_MAP_ENTRY_SIZE_BYTE - PIFS_MAP_HEADER_SIZE_BYTE)
+#define PIFS_MAP_ENTRY_PER_PAGE             ((PIFS_FLASH_PAGE_SIZE_BYTE - PIFS_MAP_HEADER_SIZE_BYTE) / PIFS_MAP_ENTRY_SIZE_BYTE)
 
 
 /******************************************************************************/
