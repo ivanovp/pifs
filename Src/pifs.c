@@ -188,7 +188,7 @@ static pifs_status_t pifs_flush(void)
         else
         {
             PIFS_ERROR_MSG("Cannot flush buffer %s\r\n",
-                           address2str(pifs.page_buf_address));
+                           address2str(&pifs.page_buf_address));
         }
     }
 
@@ -752,9 +752,9 @@ pifs_status_t pifs_init(void)
             PIFS_INFO_MSG("Counter: %i\r\n",
                             pifs.header.counter);
             PIFS_INFO_MSG("Entry list at %s\r\n",
-                          address2str(pifs.header.entry_list_address));
+                          address2str(&pifs.header.entry_list_address));
             PIFS_INFO_MSG("Free space bitmap at %s\r\n",
-                          address2str(pifs.header.free_space_bitmap_address));
+                          address2str(&pifs.header.free_space_bitmap_address));
         }
     }
 
@@ -1054,7 +1054,7 @@ static pifs_status_t pifs_read_first_map_entry(pifs_file_t * a_file)
     a_file->map_entry_idx = 0;
     a_file->actual_map_address = a_file->entry.first_map_address;
     PIFS_DEBUG_MSG("Map address %s\r\n",
-                   address2str(a_file->actual_map_address));
+                   address2str(&a_file->actual_map_address));
     a_file->status = pifs_read(a_file->entry.first_map_address.block_address,
                              a_file->entry.first_map_address.page_address,
                              0, &a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE);
@@ -1130,7 +1130,7 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
     pifs_page_count_t       page_count_found = 0;
 
     PIFS_DEBUG_MSG("Actual map address %s\r\n",
-                   address2str(a_file->actual_map_address));
+                   address2str(&a_file->actual_map_address));
     do
     {
         if (pifs_is_buffer_erased(&a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
@@ -1159,7 +1159,7 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
                                         &a_file->map_header,
                                         PIFS_MAP_HEADER_SIZE_BYTE);
             PIFS_DEBUG_MSG("### Map full, set jump address %s ###\r\n",
-                           address2str(a_file->actual_map_address));
+                           address2str(&a_file->actual_map_address));
             pifs_print_cache();
         }
         if (a_file->status == PIFS_SUCCESS)
@@ -1177,7 +1177,7 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
                                         &a_file->map_header,
                                         PIFS_MAP_HEADER_SIZE_BYTE);
             PIFS_DEBUG_MSG("### New map %s ###\r\n",
-                           address2str(a_file->actual_map_address));
+                           address2str(&a_file->actual_map_address));
             pifs_print_cache();
             a_file->map_entry_idx = 0;
             empty_entry_found = TRUE;
@@ -1206,6 +1206,7 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
 
 /**
  * @brief pifs_fopen Open file, works like fopen().
+ * Note: "a", "a+" not handled correctly.
  *
  * @param[in] a_filename    File name to open.
  * @param[in] a_modes       Open mode: "r", "r+", "w", "w+", "a" or "a+".
@@ -1213,6 +1214,7 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
  */
 P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
 {
+    /* TODO search first free element of pifs.file[] */
     pifs_file_t        * file = &pifs.file[0];
     pifs_entry_t       * entry = &pifs.file[0].entry;
     pifs_block_address_t ba = PIFS_BLOCK_ADDRESS_INVALID;
@@ -1423,7 +1425,7 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
                     if (file->map_entry.address.block_address == PIFS_FLASH_BLOCK_NUM_ALL)
                     {
                         PIFS_FATAL_ERROR_MSG("Trying to read from invalid address! %s\r\n",
-                                             address2str(file->map_entry.address));
+                                             address2str(&file->map_entry.address));
                     }
                 }
             }
