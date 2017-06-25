@@ -30,6 +30,11 @@ static pifs_t pifs =
 };
 
 #if PIFS_DEBUG_LEVEL >= 1
+/**
+ * @brief address2str Convert address to human readable string.
+ * @param a_address Address to convert.
+ * @return The created string.
+ */
 static char * address2str(pifs_address_t * a_address)
 {
     static char str[32];
@@ -41,6 +46,12 @@ static char * address2str(pifs_address_t * a_address)
     return str;
 }
 
+/**
+ * @brief ba_pa2str Convert adress to human readable string.
+ * @param a_block_address Block address.
+ * @param a_page_address Page address.
+ * @return The created string.
+ */
 static char * ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address)
 {
     static char str[32];
@@ -54,6 +65,9 @@ static char * ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_
 #endif
 
 #if PIFS_DEBUG_LEVEL >= 5
+/**
+ * @brief pifs_print_cache Print content of page buffer.
+ */
 static void pifs_print_cache(void)
 {
     print_buffer(pifs.page_buf, sizeof(pifs.page_buf),
@@ -172,8 +186,7 @@ static pifs_status_t pifs_flush(void)
         else
         {
             PIFS_ERROR_MSG("Cannot flush buffer %s\r\n",
-                           ba_pa2str(pifs.page_buf_address.block_address,
-                           pifs.page_buf_address.page_address));
+                           address2str(pifs.page_buf_address));
         }
     }
 
@@ -740,11 +753,9 @@ pifs_status_t pifs_init(void)
             PIFS_INFO_MSG("Counter: %i\r\n",
                             pifs.header.counter);
             PIFS_INFO_MSG("Entry list at %s\r\n",
-                          ba_pa2str(pifs.header.entry_list_address.block_address,
-                                    pifs.header.entry_list_address.page_address));
+                          address2str(pifs.header.entry_list_address));
             PIFS_INFO_MSG("Free space bitmap at %s\r\n",
-                          ba_pa2str(pifs.header.free_space_bitmap_address.block_address,
-                                    pifs.header.free_space_bitmap_address.page_address));
+                          address2str(pifs.header.free_space_bitmap_address));
         }
     }
 
@@ -1033,8 +1044,7 @@ static pifs_status_t pifs_read_first_map_entry(pifs_file_t * a_file)
     a_file->map_entry_idx = 0;
     a_file->actual_map_address = a_file->entry.first_map_address;
     PIFS_DEBUG_MSG("Map address %s\r\n",
-                   ba_pa2str(a_file->actual_map_address.block_address,
-                             a_file->actual_map_address.page_address));
+                   address2str(a_file->actual_map_address));
     a_file->status = pifs_read(a_file->entry.first_map_address.block_address,
                              a_file->entry.first_map_address.page_address,
                              0, &a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE);
@@ -1125,7 +1135,7 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
     pifs_page_count_t       page_count_found = 0;
 
     PIFS_DEBUG_MSG("Actual map address %s\r\n",
-                   ba_pa2str(a_file->actual_map_address.block_address, a_file->actual_map_address.page_address));
+                   address2str(a_file->actual_map_address));
     do
     {
         if (pifs_is_buffer_erased(&a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
@@ -1154,8 +1164,7 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
                                         &a_file->map_header,
                                         PIFS_MAP_HEADER_SIZE_BYTE);
             PIFS_DEBUG_MSG("### Map full, set jump address %s ###\r\n",
-                           ba_pa2str(a_file->actual_map_address.block_address,
-                                     a_file->actual_map_address.page_address));
+                           address2str(a_file->actual_map_address));
             pifs_print_cache();
         }
         if (a_file->status == PIFS_SUCCESS)
@@ -1173,8 +1182,7 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
                                         &a_file->map_header,
                                         PIFS_MAP_HEADER_SIZE_BYTE);
             PIFS_DEBUG_MSG("### New map %s ###\r\n",
-                           ba_pa2str(a_file->actual_map_address.block_address,
-                                     a_file->actual_map_address.page_address));
+                           address2str(a_file->actual_map_address));
             pifs_print_cache();
             a_file->map_entry_idx = 0;
             empty_entry_found = TRUE;
@@ -1396,7 +1404,7 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
                     if (file->map_entry.address.block_address == PIFS_FLASH_BLOCK_NUM_ALL)
                     {
                         PIFS_FATAL_ERROR_MSG("Trying to read from invalid address! %s\r\n",
-                                             ba_pa2str(file->map_entry.address.block_address, file->map_entry.address.page_address));
+                                             address2str(file->map_entry.address));
                     }
                 }
             }
