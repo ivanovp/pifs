@@ -120,13 +120,13 @@ typedef uint32_t pifs_bit_pos_t;
  */
 #if PIFS_PAGE_COUNT_SIZE == 1
 typedef uint8_t pifs_page_count_t;
-#define PIFS_PAGE_COUNT_INVALID ( UINT8_MAX - 1 )
+#define PIFS_PAGE_COUNT_INVALID (UINT8_MAX - 1)
 #elif PIFS_PAGE_COUNT_SIZE == 2
 typedef uint16_t pifs_page_count_t;
-#define PIFS_PAGE_COUNT_INVALID ( UINT16_MAX - 1 )
+#define PIFS_PAGE_COUNT_INVALID (UINT16_MAX - 1)
 #elif PIFS_PAGE_COUNT_SIZE == 4
 typedef uint32_t pifs_page_count_t;
-#define PIFS_PAGE_COUNT_INVALID ( UINT32_MAX - 1 )
+#define PIFS_PAGE_COUNT_INVALID (UINT32_MAX - 1)
 #else
 #error PIFS_PAGE_COUNT_SIZE is invalid! Valid values are 1, 2 or 4.
 #endif

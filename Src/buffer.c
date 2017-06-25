@@ -15,7 +15,7 @@
 #include "buffer.h"
 #include "pifs_debug.h"
 
-#define PRINT_BUF_COLUMNS ( 16 )
+#define PRINT_BUF_COLUMNS (16)
 
 void fill_buffer(void * a_buf, size_t a_buf_size, fill_type_t a_fill_type, uint32_t a_fill_arg)
 {
@@ -106,13 +106,13 @@ void print_hex_byte(uint8_t byte)
  * @param[in] buf_size  Length of buffer.
  * @param[in] address   Address of buffer
  */
-void print_buffer ( const void * a_buf, size_t a_buf_size, uint32_t a_addr )
+void print_buffer (const void * a_buf, size_t a_buf_size, uint32_t a_addr)
 {
     uint8_t * buf = (uint8_t*) a_buf;
     size_t  i, j, s;
 
     /* Extend buffer size to be dividable with PRINT_BUF_COLUMNS */
-    if ( a_buf_size % PRINT_BUF_COLUMNS == 0 )
+    if (a_buf_size % PRINT_BUF_COLUMNS == 0)
     {
         s = a_buf_size;
     }
@@ -121,64 +121,64 @@ void print_buffer ( const void * a_buf, size_t a_buf_size, uint32_t a_addr )
         s = a_buf_size + PRINT_BUF_COLUMNS - a_buf_size % PRINT_BUF_COLUMNS;
     }
 
-    print_hex_byte( a_addr >> 24 );
-    print_hex_byte( a_addr >> 16 );
-    print_hex_byte( a_addr >> 8 );
-    print_hex_byte( a_addr );
-    putchar( ' ' );
-    for ( i = 0 ; i < s ; i++, a_addr++ )
+    print_hex_byte(a_addr >> 24);
+    print_hex_byte(a_addr >> 16);
+    print_hex_byte(a_addr >> 8);
+    print_hex_byte(a_addr);
+    putchar(' ');
+    for (i = 0 ; i < s ; i++, a_addr++)
     {
         /* Print buffer in hexadecimal format */
-        if ( i < a_buf_size )
+        if (i < a_buf_size)
         {
-            print_hex_byte( buf[i] );
+            print_hex_byte(buf[i]);
         }
         else
         {
-            putchar( ' ' );
-            putchar( ' ' );
+            putchar(' ');
+            putchar(' ');
         }
 
-        putchar( ' ' );
-        if ( ( i + 1 ) % PRINT_BUF_COLUMNS == 0 )
+        putchar(' ');
+        if ((i + 1) % PRINT_BUF_COLUMNS == 0)
         {
             /* Print buffer in ASCII format */
-            putchar( ' ' );
-            putchar( ' ' );
-            for ( j = i - ( PRINT_BUF_COLUMNS - 1 ) ; j <= i ; j++ )
+            putchar(' ');
+            putchar(' ');
+            for (j = i - (PRINT_BUF_COLUMNS - 1) ; j <= i ; j++)
             {
-                if ( j < a_buf_size )
+                if (j < a_buf_size)
                 {
                     uint8_t  data = buf[j];
-                    if ( ( data >= 0x20 ) && ( data <= 0x7F ) )
+                    if ((data >= 0x20) && (data <= 0x7F))
                     {
-                        putchar( data );
+                        putchar(data);
                     }
                     else
                     {
-                        putchar( '.' );
+                        putchar('.');
                     }
                 }
                 else
                 {
-                    putchar( ' ' );
+                    putchar(' ');
                 }
             }
 
-            putchar( ASCII_CR );
-            putchar( ASCII_LF );
-            if ( j < a_buf_size )
+            putchar(ASCII_CR);
+            putchar(ASCII_LF);
+            if (j < a_buf_size)
             {
-                print_hex_byte( ( a_addr + 1 ) >> 24 );
-                print_hex_byte( ( a_addr + 1 ) >> 16 );
-                print_hex_byte( ( a_addr + 1 ) >> 8 );
-                print_hex_byte( ( a_addr + 1 ) );
-                putchar( ' ' );
+                print_hex_byte((a_addr + 1) >> 24);
+                print_hex_byte((a_addr + 1) >> 16);
+                print_hex_byte((a_addr + 1) >> 8);
+                print_hex_byte((a_addr + 1));
+                putchar(' ');
             }
         }
     }
 
-    putchar( ASCII_CR );
-    putchar( ASCII_LF );
+    putchar(ASCII_CR);
+    putchar(ASCII_LF);
 } /* print_buf */
 

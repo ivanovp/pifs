@@ -598,14 +598,14 @@ static pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
     /* FIXME this may not be the right function to mark entry list and
      * free space bitmap.
      */
-    if ( ret == PIFS_SUCCESS )
+    if (ret == PIFS_SUCCESS)
     {
         /* Mark entry list as used */
         ret = pifs_mark_page(a_header->entry_list_address.block_address,
                              a_header->entry_list_address.page_address,
                              PIFS_ENTRY_LIST_SIZE_PAGE, TRUE);
     }
-    if ( ret == PIFS_SUCCESS )
+    if (ret == PIFS_SUCCESS)
     {
         /* Mark free space bitmap as used */
         ret = pifs_mark_page(a_header->free_space_bitmap_address.block_address,
@@ -663,7 +663,7 @@ pifs_status_t pifs_init(void)
     PIFS_INFO_MSG("Map entry/page:                     %lu\r\n", PIFS_MAP_ENTRY_PER_PAGE);
     PIFS_INFO_MSG("Maximum number of management pages: %i\r\n",
                    PIFS_FLASH_PAGE_PER_BLOCK
-                   + (PIFS_FLASH_BLOCK_NUM_FS - 1 ) * PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX);
+                   + (PIFS_FLASH_BLOCK_NUM_FS - 1) * PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX);
     PIFS_INFO_MSG("\r\n");
 
     if (PIFS_ENTRY_SIZE_BYTE > PIFS_FLASH_PAGE_SIZE_BYTE)
@@ -672,7 +672,7 @@ pifs_status_t pifs_init(void)
         ret = PIFS_ERROR_CONFIGURATION;
     }
 
-    if ((PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE ) > PIFS_FLASH_PAGE_PER_BLOCK)
+    if ((PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE) > PIFS_FLASH_PAGE_PER_BLOCK)
     {
         PIFS_ERROR_MSG("Entry and free space bitmap is larger than a block! Decrease PIFS_FILENAME_LEN_MAX or PIFS_ENTRY_NUM_MAX!\r\n");
         ret = PIFS_ERROR_CONFIGURATION;
@@ -761,6 +761,11 @@ pifs_status_t pifs_init(void)
     return ret;
 }
 
+/**
+ * @brief pifs_delete Shut down file system.
+ *
+ * @return PIFS_SUCCESS if caches successfully flushed and flash I/F deleted.
+ */
 pifs_status_t pifs_delete(void)
 {
     pifs_status_t ret = PIFS_ERROR;
@@ -777,8 +782,8 @@ pifs_status_t pifs_delete(void)
  * @brief pifs_is_buffer_erased Check if buffer is erased or contains
  * programmed bytes.
  *
- * @param a_buf[in]         Pointer to buffer.
- * @param a_buf_size[in]    Size of buffer.
+ * @param[in] a_buf[in]         Pointer to buffer.
+ * @param[in] a_buf_size[in]    Size of buffer.
  * @return TRUE: if buffer is erased.
  * FALSE: if buffer contains at least one programmed bit.
  */
