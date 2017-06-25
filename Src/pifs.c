@@ -1119,9 +1119,9 @@ static pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
  * @return PIFS_SUCCESS if entry was successfully written.
  */
 static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
-                                    pifs_block_address_t a_block_address,
-                                    pifs_page_address_t a_page_address,
-                                    pifs_page_count_t a_page_count)
+                                           pifs_block_address_t a_block_address,
+                                           pifs_page_address_t a_page_address,
+                                           pifs_page_count_t a_page_count)
 {
     pifs_block_address_t    ba = a_file->entry.first_map_address.block_address;
     pifs_page_address_t     pa = a_file->entry.first_map_address.page_address;
@@ -1146,7 +1146,7 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
     {
         PIFS_DEBUG_MSG("End of file, new map will be created\r\n");
         a_file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_PAGE_TYPE_DATA, TRUE,
-                                      &ba, &pa, &page_count_found);
+                                        &ba, &pa, &page_count_found);
         if (a_file->status == PIFS_SUCCESS)
         {
             /* Set jump address for last map */
@@ -1204,7 +1204,13 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
     return a_file->status;
 }
 
-
+/**
+ * @brief pifs_fopen Open file, works like fopen().
+ *
+ * @param[in] a_filename    File name to open.
+ * @param[in] a_modes       Open mode: "r", "r+", "w", "w+", "a" or "a+".
+ * @return Pointer to file if file opened successfully.
+ */
 P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
 {
     pifs_file_t        * file = &pifs.file[0];
@@ -1290,6 +1296,15 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
     return file->is_opened ? (P_FILE*) file : (P_FILE*) NULL;
 }
 
+/**
+ * @brief pifs_fwrite Write to file. Works like fwrite().
+ *
+ * @param[in] a_data    Pointer to buffer to write.
+ * @param[in] a_size    Size of data element to write.
+ * @param[in] a_count   Number of data elements to write.
+ * @param[in] a_file    Pointer to file.
+ * @return Number of data elements written.
+ */
 size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 {
     pifs_file_t        * file = (pifs_file_t*) a_file;
@@ -1343,7 +1358,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                         if (ba == PIFS_FLASH_BLOCK_NUM_ALL)
                         {
                             PIFS_FATAL_ERROR_MSG("Trying to write to invalid flash address! %s\r\n",
-                                           ba_pa2str(ba, pa));
+                                                 ba_pa2str(ba, pa));
                         }
                     }
                     data += chunk_size;
@@ -1370,6 +1385,15 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
     return written_size;
 }
 
+/**
+ * @brief pifs_fread File read. Works like fread().
+ *
+ * @param[out] a_data   Pointer to buffer to read.
+ * @param[in] a_size    Size of data element to read.
+ * @param[in] a_count   Number of data elements to read.
+ * @param[in] a_file    Pointer to file.
+ * @return Number of data elements read.
+ */
 size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 {
     pifs_file_t        * file = (pifs_file_t*) a_file;
@@ -1418,16 +1442,23 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
     return read_size;
 }
 
+/**
+ * @brief pifs_fclose Close file. Works like fclose().
+ * @param a_file File to close.
+ * @return 0 if file close, PIFS_EOF if error occurred.
+ */
 int pifs_fclose(P_FILE * a_file)
 {
+    int ret = PIFS_EOF;
     pifs_file_t * file = (pifs_file_t*) a_file;
 
     if (pifs.is_header_found && file && file->is_opened)
     {
         pifs_flush();
         file->is_opened = FALSE;
+        ret = 0;
     }
 
-    return 0;
+    return ret;
 }
 

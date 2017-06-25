@@ -14,10 +14,12 @@
 extern "C" {
 #endif
 
-#define pfopen  pifs_open
-#define pfwrite pifs_write
-#define pfread  pifs_read
-#define pfclose pifs_close
+#define pfopen      pifs_open
+#define pfwrite     pifs_write
+#define pfread      pifs_read
+#define pfclose     pifs_close
+
+#define PIFS_EOF    (-1)
 
 typedef enum
 {
