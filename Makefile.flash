@@ -11,7 +11,7 @@ LD  = $(CROSS)g++
 OBJCOPY = $(CROSS)objcopy
 endif
 
-INCLUDE = -I.
+INCLUDE = -I./Inc
 
 # Options for compiler and linker as well
 COMMON_FLAGS =
@@ -30,9 +30,9 @@ LDFLAGS += -lpthread -lm
 
 # Set source files
 SRC_CPP =
-SRC_C = ./flash_test.c
-SRC_C += ./buffer.c
-SRC_C += ./flash.c
+SRC_C = ./Src/flash_test.c
+SRC_C += ./Src/buffer.c
+SRC_C += ./Src/flash.c
 SRC_S = 
 OBJ_CPP = $(patsubst %.cpp, %.o, $(SRC_CPP))
 OBJ_C   = $(patsubst %.c, %.o, $(SRC_C))

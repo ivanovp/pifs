@@ -3,20 +3,18 @@ CONFIG += console
 CONFIG -= qt
 
 include(other.pro)
-SOURCES += ./buffer.c \
-./flash.c \
-./flash_test.c \
-./pifs.c \
-./pifs_test.c
+SOURCES += ./Src/buffer.c \
+./Src/flash.c \
+./Src/flash_test.c \
+./Src/pifs.c \
+./Src/pifs_test.c
 
-HEADERS += ./api_pifs.h \
-./buffer.h \
-./common.h \
-./flash.h \
-./flash_config.h \
-./pifs.h \
-./pifs_config.h \
-./pifs_debug.h
-
-INCLUDEPATH += .
+HEADERS += ./Inc/api_pifs.h \
+./Inc/buffer.h \
+./Inc/common.h \
+./Inc/flash.h \
+./Inc/flash_config.h \
+./Inc/pifs.h \
+./Inc/pifs_config.h \
+./Inc/pifs_debug.h
 
