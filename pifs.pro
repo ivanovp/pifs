@@ -18,3 +18,7 @@ HEADERS += ./Inc/api_pifs.h \
 ./Inc/pifs_config.h \
 ./Inc/pifs_debug.h
 
+INCLUDEPATH += .
+INCLUDEPATH += ./Inc
+INCLUDEPATH += ./Src
+

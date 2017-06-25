@@ -165,8 +165,8 @@ void print_buffer ( const void * a_buf, size_t a_buf_size, uint32_t a_addr )
                 }
             }
 
-            putchar( CR );
-            putchar( LF );
+            putchar( ASCII_CR );
+            putchar( ASCII_LF );
             if ( j < a_buf_size )
             {
                 print_hex_byte( ( a_addr + 1 ) >> 24 );
@@ -178,7 +178,7 @@ void print_buffer ( const void * a_buf, size_t a_buf_size, uint32_t a_addr )
         }
     }
 
-    putchar( CR );
-    putchar( LF );
+    putchar( ASCII_CR );
+    putchar( ASCII_LF );
 } /* print_buf */
 

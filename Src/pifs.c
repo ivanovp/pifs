@@ -636,8 +636,8 @@ pifs_status_t pifs_init(void)
     PIFS_INFO_MSG("Entry size in a page:               %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE * PIFS_ENTRY_PER_PAGE);
     PIFS_INFO_MSG("Entry list size:                    %lu bytes, %lu pages\r\n", PIFS_ENTRY_LIST_SIZE_BYTE, PIFS_ENTRY_LIST_SIZE_PAGE);
     PIFS_INFO_MSG("Free space bitmap size:             %u bytes, %u pages\r\n", PIFS_FREE_SPACE_BITMAP_SIZE_BYTE, PIFS_FREE_SPACE_BITMAP_SIZE_PAGE);
-    PIFS_INFO_MSG("Map entry size:                     %u bytes\r\n", PIFS_MAP_ENTRY_SIZE_BYTE);
-    PIFS_INFO_MSG("Map entry/page:                     %u\r\n", PIFS_MAP_ENTRY_PER_PAGE);
+    PIFS_INFO_MSG("Map entry size:                     %lu bytes\r\n", PIFS_MAP_ENTRY_SIZE_BYTE);
+    PIFS_INFO_MSG("Map entry/page:                     %lu\r\n", PIFS_MAP_ENTRY_PER_PAGE);
     PIFS_INFO_MSG("Maximum number of management pages: %i\r\n",
                    PIFS_FLASH_PAGE_PER_BLOCK
                    + (PIFS_FLASH_BLOCK_NUM_FS - 1 ) * PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX);
@@ -1281,7 +1281,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
             }
             file->status = pifs_find_page(1, page_count_needed_limited, PIFS_PAGE_TYPE_DATA, TRUE,
                                           &ba, &pa, &page_count_found);
-            PIFS_DEBUG_MSG("%lu pages found. %s\r\n", page_count_found, ba_pa2str(ba, pa));
+            PIFS_DEBUG_MSG("%u pages found. %s\r\n", page_count_found, ba_pa2str(ba, pa));
             if (file->status == PIFS_SUCCESS)
             {
                 ba_start = ba;
