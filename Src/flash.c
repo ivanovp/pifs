@@ -135,7 +135,7 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
                 {
                     /* Error: cannot write data */
                     FLASH_ERROR_MSG("Cannot program 0x%02X to 0x%02X. BA%i/PA%i/OFS%i\r\n",
-                                    buf8[i], flash_page_buf[i],
+                                    flash_page_buf[i], buf8[i],
                                     a_block_address, a_page_address, a_page_offset + i );
                     ret = PIFS_ERROR_FLASH_WRITE;
                 }

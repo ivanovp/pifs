@@ -53,6 +53,17 @@ static char * ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_
 }
 #endif
 
+#if PIFS_DEBUG_LEVEL >= 5
+static void pifs_print_cache(void)
+{
+    print_buffer(pifs.page_buf, sizeof(pifs.page_buf),
+                 pifs.page_buf_address.block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
+                 + pifs.page_buf_address.page_address * PIFS_FLASH_PAGE_SIZE_BYTE);
+}
+#else
+#define pifs_print_cache()
+#endif
+
 /**
  * @brief pifs_calc_header_checksum Calculate checksum of the file system header.
  *
@@ -980,7 +991,7 @@ static pifs_status_t pifs_find_file_pages(pifs_file_t * a_file)
         {
             if (pifs_is_buffer_erased(&a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE))
             {
-                PIFS_DEBUG_MSG("map is empty!\r\n");
+                PIFS_DEBUG_MSG("map header is empty!\r\n");
             }
             for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !erased && a_file->status == PIFS_SUCCESS; i++)
             {
@@ -1142,12 +1153,30 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
                                         0,
                                         &a_file->map_header,
                                         PIFS_MAP_HEADER_SIZE_BYTE);
+            PIFS_DEBUG_MSG("### Map full, set jump address %s ###\r\n",
+                           ba_pa2str(a_file->actual_map_address.block_address,
+                                     a_file->actual_map_address.page_address));
+            pifs_print_cache();
         }
         if (a_file->status == PIFS_SUCCESS)
         {
+            /* Set jump address to previous map */
+            memset(&a_file->map_header, PIFS_FLASH_ERASED_VALUE, PIFS_MAP_HEADER_SIZE_BYTE);
+            a_file->map_header.prev_map_address.block_address = a_file->actual_map_address.block_address;
+            a_file->map_header.prev_map_address.page_address = a_file->actual_map_address.page_address;
             /* Update actual map's address */
             a_file->actual_map_address.block_address = ba;
             a_file->actual_map_address.page_address = pa;
+            a_file->status = pifs_write(a_file->actual_map_address.block_address,
+                                        a_file->actual_map_address.page_address,
+                                        0,
+                                        &a_file->map_header,
+                                        PIFS_MAP_HEADER_SIZE_BYTE);
+            PIFS_DEBUG_MSG("### New map %s ###\r\n",
+                           ba_pa2str(a_file->actual_map_address.block_address,
+                                     a_file->actual_map_address.page_address));
+            pifs_print_cache();
+            a_file->map_entry_idx = 0;
             empty_entry_found = TRUE;
         }
     }
@@ -1163,6 +1192,9 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
                                     + a_file->map_entry_idx * PIFS_MAP_ENTRY_SIZE_BYTE,
                                     &a_file->map_entry,
                                     PIFS_MAP_ENTRY_SIZE_BYTE);
+        PIFS_DEBUG_MSG("### New map entry %s ###\r\n",
+                       ba_pa2str(ba, pa));
+        pifs_print_cache();
         is_written = TRUE;
     }
 

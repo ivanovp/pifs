@@ -55,10 +55,10 @@ pifs_status_t pifs_test(void)
     if (file)
     {
         printf("File opened for writing\r\n");
-        generate_buffer(1);
-        print_buffer(test_buf_w, sizeof(test_buf_w), 0);
         for (i = 0; i <= PIFS_MAP_ENTRY_PER_PAGE; i++)
         {
+            generate_buffer(i);
+//            print_buffer(test_buf_w, sizeof(test_buf_w), 0);
             written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
         }
     }
@@ -92,10 +92,13 @@ pifs_status_t pifs_test(void)
     if (file)
     {
         printf("File opened for reading\r\n");
-//        generate_buffer(1);
-        read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
-        print_buffer(test_buf_r, sizeof(test_buf_r), 0);
-        check_buffers();
+        for (i = 0; i <= PIFS_MAP_ENTRY_PER_PAGE; i++)
+        {
+            generate_buffer(i);
+            read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
+//            print_buffer(test_buf_r, sizeof(test_buf_r), 0);
+            check_buffers();
+        }
     }
 
     ret = pifs_delete();
