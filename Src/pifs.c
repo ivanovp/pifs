@@ -32,7 +32,8 @@ static pifs_t pifs =
 #if PIFS_DEBUG_LEVEL >= 1
 /**
  * @brief address2str Convert address to human readable string.
- * @param a_address Address to convert.
+ *
+ * @param[in] a_address Address to convert.
  * @return The created string.
  */
 static char * address2str(pifs_address_t * a_address)
@@ -48,8 +49,9 @@ static char * address2str(pifs_address_t * a_address)
 
 /**
  * @brief ba_pa2str Convert adress to human readable string.
- * @param a_block_address Block address.
- * @param a_page_address Page address.
+ *
+ * @param[in] a_block_address Block address.
+ * @param[in] a_page_address Page address.
  * @return The created string.
  */
 static char * ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address)
@@ -81,7 +83,7 @@ static void pifs_print_cache(void)
 /**
  * @brief pifs_calc_header_checksum Calculate checksum of the file system header.
  *
- * @param a_pifs_header[in] Pointer to the file system header.
+ * @param[in] a_pifs_header Pointer to the file system header.
  * @return The calculated checksum.
  */
 static pifs_checksum_t pifs_calc_header_checksum(pifs_header_t * a_pifs_header)
@@ -485,16 +487,13 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
 
     do
     {
-//        PIFS_DEBUG_MSG("BA%i/PA%i ", ba, pa);
         ret = pifs_read(ba, pa, po, &free_space_bitmap, sizeof(free_space_bitmap));
-//        PIFS_DEBUG_MSG("%02X\r\n", free_space_bitmap);
         if (ret == PIFS_SUCCESS)
         {
             for (i = 0; i < (PIFS_BYTE_BITS / 2) && !found; i++)
             {
                 if (free_space_bitmap & mask)
                 {
-//                    PIFS_DEBUG_MSG("bit_pos: %i free!\r\n", bit_pos);
                     page_count_found++;
                     if (page_count_found >= a_page_count_minimum)
                     {
@@ -1039,6 +1038,12 @@ static pifs_status_t pifs_find_file_pages(pifs_file_t * a_file)
     return a_file->status;
 }
 
+/**
+ * @brief pifs_read_first_map_entry Read first map's first map entry.
+ *
+ * @param a_file[in] Pointer to opened file.
+ * @return PIFS_SUCCESS if entry is read and valid.
+ */
 static pifs_status_t pifs_read_first_map_entry(pifs_file_t * a_file)
 {
     a_file->map_entry_idx = 0;
@@ -1059,6 +1064,14 @@ static pifs_status_t pifs_read_first_map_entry(pifs_file_t * a_file)
     return a_file->status;
 }
 
+/**
+ * @brief pifs_read_next_map_entry Read next map entry.
+ * pifs_read_first_map_entry() shall be called before calling this function!
+ *
+ * @param a_file[in] Pointer to opened file.
+ * @return PIFS_SUCCESS if entry is read and valid.
+ * PIFS_ERROR_END_OF_FILE if end of file reached.
+ */
 static pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
 {
     a_file->map_entry_idx++;
@@ -1089,29 +1102,6 @@ static pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
 
     return a_file->status;
 }
-
-#if 0
-static pifs_status_t pifs_create_map(pifs_file_t * a_file,
-                                     pifs_block_address_t * a_block_address,
-                                     pifs_page_address_t * a_page_address)
-{
-    size_t page_count_found = 0;
-
-    file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_PAGE_TYPE_DATA, TRUE,
-                                  a_block_address, a_page_address, &page_count_found);
-    if (file->status == PIFS_SUCCESS)
-    {
-        PIFS_DEBUG_MSG("Map page: %lu free page found %s\r\n", page_count_found,
-                       ba_pa2str(*a_block_address, *a_page_address));
-        file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, TRUE);
-        if (file->status == PIFS_SUCCESS)
-        {
-        }
-    }
-
-    return file->status;
-}
-#endif
 
 /**
  * @brief pifs_append_map_entry Add an entry to the file's map.
