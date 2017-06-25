@@ -1044,10 +1044,10 @@ static pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
     if (a_file->map_entry_idx >= PIFS_MAP_ENTRY_PER_PAGE)
     {
         a_file->map_entry_idx = 0;
-        a_file->actual_map_address = a_file->map_header.next_map_address;
-        if (a_file->actual_map_address.block_address < PIFS_BLOCK_ADDRESS_INVALID
-                && a_file->actual_map_address.page_address < PIFS_PAGE_ADDRESS_INVALID)
+        if (a_file->map_header.next_map_address.block_address < PIFS_BLOCK_ADDRESS_INVALID
+                && a_file->map_header.next_map_address.page_address < PIFS_PAGE_ADDRESS_INVALID)
         {
+            a_file->actual_map_address = a_file->map_header.next_map_address;
             a_file->status = pifs_read(a_file->actual_map_address.block_address,
                                        a_file->actual_map_address.page_address,
                                        0, &a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE);
@@ -1113,6 +1113,8 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
     bool_t                  empty_entry_found = FALSE;
     pifs_page_count_t       page_count_found = 0;
 
+    PIFS_DEBUG_MSG("Actual map address %s\r\n",
+                   ba_pa2str(a_file->actual_map_address.block_address, a_file->actual_map_address.page_address));
     do
     {
         if (pifs_is_buffer_erased(&a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
