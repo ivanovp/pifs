@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-06-16 12:44:31 ivanovp {Time-stamp}
+ * Last modify: 2017-06-27 19:35:38 ivanovp {Time-stamp}
  * Licence:     GPL
  */
 #ifndef _INCLUDE_PIFS_H_
@@ -74,6 +74,16 @@
 #define PIFS_FREE_SPACE_BITMAP_SIZE_BYTE    (2 * ((PIFS_FLASH_PAGE_NUM_FS + 7) / 8))
 /** Size of free space bitmap in pages */
 #define PIFS_FREE_SPACE_BITMAP_SIZE_PAGE    ((PIFS_FREE_SPACE_BITMAP_SIZE_BYTE + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE)
+
+/******************************************************************************/
+/*** DELTA PAGES                                                            ***/
+/******************************************************************************/
+#define PIFS_DELTA_HEADER_SIZE_BYTE         (sizeof(pifs_delta_header_t))
+#define PIFS_DELTA_ENTRY_SIZE_BYTE          (sizeof(pifs_delta_entry_t))
+
+#define PIFS_DELTA_ENTRY_PER_PAGE           ((PIFS_FLASH_PAGE_SIZE_BYTE - PIFS_DELTA_HEADER_SIZE_BYTE) / PIFS_DELTA_ENTRY_SIZE_BYTE)
+
+/******************************************************************************/
 
 /** Number of bits in a byte */
 #define PIFS_BYTE_BITS              8
@@ -159,9 +169,11 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     uint8_t                 minorVersion;
 #endif
     uint32_t                counter;
+    pifs_block_address_t    management_blocks[PIFS_MANAGEMENT_BLOCKS];
+    pifs_block_address_t    next_management_blocks[PIFS_MANAGEMENT_BLOCKS];
     pifs_address_t          free_space_bitmap_address;
     pifs_address_t          entry_list_address;
-    pifs_block_address_t    management_blocks[PIFS_MANAGEMENT_BLOCKS];
+    pifs_address_t          delta_pages_address;
     /** Checksum shall be the last element! */
     pifs_checksum_t         checksum;
 } pifs_header_t;
@@ -194,6 +206,24 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_address_t          address;
     pifs_page_count_t       page_count;
 } pifs_map_entry_t;
+
+/**
+ * Delta pages' header.
+ */
+typedef struct PIFS_PACKED_ATTRIBUTE
+{
+    pifs_address_t          next_delta_address;
+} pifs_delta_header_t;
+
+/**
+ * Delta page.
+ */
+typedef struct PIFS_PACKED_ATTRIBUTE
+{
+    pifs_address_t          delta_address;
+    pifs_address_t          orig_address;
+    pifs_page_count_t       page_count;
+} pifs_delta_entry_t;
 
 /**
  *

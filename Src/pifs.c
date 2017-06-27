@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-06-16 13:10:56 ivanovp {Time-stamp}
+ * Last modify: 2017-06-27 19:40:40 ivanovp {Time-stamp}
  * Licence:     GPL
  */
 #include <stdio.h>
@@ -468,7 +468,8 @@ static bool_t pifs_is_block_type(pifs_block_address_t a_block_address, pifs_bloc
     for (i = 0; i < PIFS_MANAGEMENT_BLOCKS; i++)
 #endif
     {
-        if (pifs.header.management_blocks[i] == a_block_address)
+        if (pifs.header.management_blocks[i] == a_block_address 
+                || pifs.header.next_management_blocks[i] == a_block_address)
         {
             is_block_type = (a_block_type == PIFS_BLOCK_TYPE_MANAGEMENT);
         }
@@ -621,6 +622,19 @@ static void pifs_header_init(pifs_block_address_t a_block_address,
         }
 #endif
     }
+#if PIFS_MANAGEMENT_BLOCKS > 1
+    for (i = 0; i < PIFS_MANAGEMENT_BLOCKS; i++)
+#endif
+    {
+        a_header->next_management_blocks[i] = ba;
+#if PIFS_MANAGEMENT_BLOCKS > 1
+        ba++;
+        if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
+        {
+            ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
+        }
+#endif
+    }
     a_header->checksum = pifs_calc_header_checksum(a_header);
 }
 
@@ -720,9 +734,12 @@ pifs_status_t pifs_init(void)
     PIFS_INFO_MSG("Free space bitmap size:             %u bytes, %u pages\r\n", PIFS_FREE_SPACE_BITMAP_SIZE_BYTE, PIFS_FREE_SPACE_BITMAP_SIZE_PAGE);
     PIFS_INFO_MSG("Map entry size:                     %lu bytes\r\n", PIFS_MAP_ENTRY_SIZE_BYTE);
     PIFS_INFO_MSG("Map entry/page:                     %lu\r\n", PIFS_MAP_ENTRY_PER_PAGE);
-    PIFS_INFO_MSG("Maximum number of management pages: %i\r\n",
-                   PIFS_FLASH_PAGE_PER_BLOCK
-                   + (PIFS_FLASH_BLOCK_NUM_FS - 1) * PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX);
+    PIFS_INFO_MSG("Delta entry size:                   %lu bytes\r\n", PIFS_DELTA_ENTRY_SIZE_BYTE);
+    PIFS_INFO_MSG("Delta entry/page:                   %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE);
+    PIFS_INFO_MSG("Size of management area:            %i\r\n",
+                   PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_BLOCK_SIZE_BYTE);
+    PIFS_INFO_MSG("Number of management pages:         %i\r\n",
+                   PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_PAGE_PER_BLOCK);
     PIFS_INFO_MSG("\r\n");
 
     if (PIFS_ENTRY_SIZE_BYTE > PIFS_FLASH_PAGE_SIZE_BYTE)
@@ -754,34 +771,32 @@ pifs_status_t pifs_init(void)
         /* Find latest management block */
         for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL && ret == PIFS_SUCCESS; ba++)
         {
-            for (pa = 0; pa < PIFS_MANAGEMENT_PAGE_PER_BLOCK_MAX && ret == PIFS_SUCCESS; pa++)
+            pa = 0;
+            ret = pifs_read(ba, pa, 0, &header, sizeof(header));
+            if (ret == PIFS_SUCCESS && header.magic == PIFS_MAGIC
+#if ENABLE_PIFS_VERSION
+                    && header.majorVersion == PIFS_MAJOR_VERSION
+                    && header.minorVersion == PIFS_MINOR_VERSION
+#endif
+               )
             {
-                ret = pifs_read(ba, pa, 0, &header, sizeof(header));
-                if (ret == PIFS_SUCCESS && header.magic == PIFS_MAGIC
-        #if ENABLE_PIFS_VERSION
-                        && header.majorVersion == PIFS_MAJOR_VERSION
-                        && header.minorVersion == PIFS_MINOR_VERSION
-        #endif
-                        )
+                PIFS_DEBUG_MSG("Management page found: %s\r\n", ba_pa2str(ba, pa));
+                checksum = pifs_calc_header_checksum(&header);
+                if (checksum == header.checksum)
                 {
-                    PIFS_DEBUG_MSG("Management page found: %s\r\n", ba_pa2str(ba, pa));
-                    checksum = pifs_calc_header_checksum(&header);
-                    if (checksum == header.checksum)
+                    PIFS_DEBUG_MSG("Checksum is valid\r\n");
+                    if (!pifs.is_header_found || prev_header.counter < pifs.header.counter)
                     {
-                        PIFS_DEBUG_MSG("Checksum is valid\r\n");
-                        if (!pifs.is_header_found || prev_header.counter < pifs.header.counter)
-                        {
-                            pifs.is_header_found = TRUE;
-                            pifs.header_address.block_address = ba;
-                            pifs.header_address.page_address = pa;
-                            memcpy(&prev_header, &header, sizeof(prev_header));
-                        }
+                        pifs.is_header_found = TRUE;
+                        pifs.header_address.block_address = ba;
+                        pifs.header_address.page_address = pa;
+                        memcpy(&prev_header, &header, sizeof(prev_header));
                     }
-                    else
-                    {
-                        PIFS_WARNING_MSG("Checksum is invalid! Calculated: 0x%02X, read: 0x%02X\r\n",
-                                       checksum, pifs.header.checksum);
-                    }
+                }
+                else
+                {
+                    PIFS_WARNING_MSG("Checksum is invalid! Calculated: 0x%02X, read: 0x%02X\r\n",
+                            checksum, pifs.header.checksum);
                 }
             }
         }
@@ -1234,7 +1249,7 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
                                         PIFS_MAP_HEADER_SIZE_BYTE);
             PIFS_DEBUG_MSG("### New map %s ###\r\n",
                            address2str(&a_file->actual_map_address));
-            pifs_print_cache();
+//            pifs_print_cache();
             a_file->map_entry_idx = 0;
         }
         if (a_file->status == PIFS_SUCCESS)
@@ -1259,7 +1274,7 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
                                     PIFS_MAP_ENTRY_SIZE_BYTE);
         PIFS_DEBUG_MSG("### New map entry %s ###\r\n",
                        ba_pa2str(ba, pa));
-        pifs_print_cache();
+//        pifs_print_cache();
         is_written = TRUE;
     }
 

@@ -1,10 +1,10 @@
 /**
  * @file        common.h
  * @brief       Common definitions
- * @author      Copyright (C) Peter Ivanov, 2011, 2012
+ * @author      Copyright (C) Peter Ivanov, 2011, 2012, 2017
  *
  * Created      2011-01-19 11:48:53
- * Last modify: 2017-06-15 12:19:50 ivanovp {Time-stamp}
+ * Last modify: 2017-06-27 19:18:04 ivanovp {Time-stamp}
  * Licence:     GPL
  */
 
