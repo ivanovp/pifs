@@ -39,6 +39,8 @@ static pifs_t pifs =
     .page_buf_is_dirty = FALSE
 };
 
+static bool_t pifs_is_buffer_erased(const void * a_buf, size_t a_buf_size);
+
 #if PIFS_DEBUG_LEVEL >= 1
 /**
  * @brief address2str Convert address to human readable string.
@@ -479,6 +481,26 @@ static bool_t pifs_is_block_type(pifs_block_address_t a_block_address, pifs_bloc
 }
 
 /**
+ * @brief pifs_is_page_erased Checks if the given block address is block type.
+ * @param[in] a_block_address Block address to check.
+ * @param[in] a_page_address  Page address to check.
+ * @return TRUE: If page is erased.
+ */
+static bool_t pifs_is_page_erased(pifs_block_address_t a_block_address,
+                                  pifs_page_address_t a_page_address)
+{
+    pifs_status_t status;
+    bool_t is_erased = FALSE;
+
+    status = pifs_read(a_block_address, a_page_address, 0, NULL, 0);
+    if (status == PIFS_SUCCESS)
+    {
+        is_erased = pifs_is_buffer_erased(pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+    }
+    return is_erased;
+}
+
+/**
  * @brief pifs_find_page Find free page(s) in free space memory bitmap.
  * It tries to find 'a_page_count_desired' pages, but at least
  * 'a_page_count_minimum'.
@@ -532,23 +554,34 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
             {
                 if ((free_space_bitmap & mask) && pifs_is_block_type(fba, a_block_type))
                 {
-                    page_count_found++;
-                    if (page_count_found >= a_page_count_minimum)
-                    {
-                        pifs_calc_address(bit_pos + 2 - page_count_found * 2,
-                                          a_block_address, a_page_address);
-#if PIFS_DEBUG_LEVEL >= 6
-                        PIFS_DEBUG_MSG("%i page count found, bit_pos: %lu, %s\r\n",
-                                       page_count_found,
-                                       (size_t)bit_pos + 2 - page_count_found * 2,
-                                       ba_pa2str(*a_block_address, *a_page_address));
+#if PIFS_CHECK_IF_PAGE_IS_ERASED
+                    if (pifs_is_page_erased(fba, fpa))
 #endif
-                        *a_page_count_found = page_count_found;
-                    }
-                    if (page_count_found == a_page_count_desired)
                     {
-                        found = TRUE;
+                        page_count_found++;
+                        if (page_count_found >= a_page_count_minimum)
+                        {
+                            pifs_calc_address(bit_pos + 2 - page_count_found * 2,
+                                              a_block_address, a_page_address);
+#if PIFS_DEBUG_LEVEL >= 6
+                            PIFS_DEBUG_MSG("%i page count found, bit_pos: %lu, %s\r\n",
+                                           page_count_found,
+                                           (size_t)bit_pos + 2 - page_count_found * 2,
+                                           ba_pa2str(*a_block_address, *a_page_address));
+#endif
+                            *a_page_count_found = page_count_found;
+                        }
+                        if (page_count_found == a_page_count_desired)
+                        {
+                            found = TRUE;
+                        }
                     }
+#if PIFS_CHECK_IF_PAGE_IS_ERASED
+                    else
+                    {
+                        PIFS_ERROR_MSG("Flash page should be erased, but it is not! %s\r\n", ba_pa2str(fba, fpa));
+                    }
+#endif
                 }
                 else
                 {
@@ -732,8 +765,10 @@ pifs_status_t pifs_init(void)
     PIFS_INFO_MSG("Entry size in a page:               %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE * PIFS_ENTRY_PER_PAGE);
     PIFS_INFO_MSG("Entry list size:                    %lu bytes, %lu pages\r\n", PIFS_ENTRY_LIST_SIZE_BYTE, PIFS_ENTRY_LIST_SIZE_PAGE);
     PIFS_INFO_MSG("Free space bitmap size:             %u bytes, %u pages\r\n", PIFS_FREE_SPACE_BITMAP_SIZE_BYTE, PIFS_FREE_SPACE_BITMAP_SIZE_PAGE);
+    PIFS_INFO_MSG("Map header size:                    %lu bytes\r\n", PIFS_MAP_HEADER_SIZE_BYTE);
     PIFS_INFO_MSG("Map entry size:                     %lu bytes\r\n", PIFS_MAP_ENTRY_SIZE_BYTE);
     PIFS_INFO_MSG("Map entry/page:                     %lu\r\n", PIFS_MAP_ENTRY_PER_PAGE);
+    PIFS_INFO_MSG("Delta header size:                  %lu bytes\r\n", PIFS_DELTA_HEADER_SIZE_BYTE);
     PIFS_INFO_MSG("Delta entry size:                   %lu bytes\r\n", PIFS_DELTA_ENTRY_SIZE_BYTE);
     PIFS_INFO_MSG("Delta entry/page:                   %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE);
     PIFS_INFO_MSG("Size of management area:            %i\r\n",
