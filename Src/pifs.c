@@ -613,7 +613,6 @@ static void pifs_header_init(pifs_block_address_t a_block_address,
 #endif
     {
         a_header->management_blocks[i] = ba;
-        printf("+++ Management block: %i\r\n", ba);
 #if PIFS_MANAGEMENT_BLOCKS > 1
         ba++;
         if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
@@ -815,20 +814,6 @@ pifs_status_t pifs_init(void)
                           address2str(&pifs.header.entry_list_address));
             PIFS_INFO_MSG("Free space bitmap at %s\r\n",
                           address2str(&pifs.header.free_space_bitmap_address));
-        }
-    }
-
-    {
-        pifs_block_address_t ba = 0;
-        printf("PIFS_BLOCK_TYPE_DATA\r\n");
-        for (ba = 0; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
-        {
-            printf("ba: %i \t %i\r\n", ba, pifs_is_block_type(ba, PIFS_BLOCK_TYPE_DATA));
-        }
-        printf("PIFS_BLOCK_TYPE_MANAGEMENT\r\n");
-        for (ba = 0; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
-        {
-            printf("ba: %i \t %i\r\n", ba, pifs_is_block_type(ba, PIFS_BLOCK_TYPE_MANAGEMENT));
         }
     }
 
