@@ -561,8 +561,13 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                         page_count_found++;
                         if (page_count_found >= a_page_count_minimum)
                         {
+#if 1
+                            *a_block_address = fba;
+                            *a_page_address = fpa;
+#else
                             pifs_calc_address(bit_pos + 2 - page_count_found * 2,
                                               a_block_address, a_page_address);
+#endif
 #if PIFS_DEBUG_LEVEL >= 6
                             PIFS_DEBUG_MSG("%i page count found, bit_pos: %lu, %s\r\n",
                                            page_count_found,
