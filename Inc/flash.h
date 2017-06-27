@@ -58,6 +58,7 @@ typedef uint32_t pifs_page_offset_t;
 #error PIFS_FLASH_PAGE_SIZE_BYTE is too big!
 #endif
 
+/* FIXME not used yet */
 #if (PIFS_ENTRY_NUM_MAX < 255)
 typedef uint8_t pifs_object_id_t;
 #define OBJECT_ID_INVALID   (UINT8_MAX - 1u)

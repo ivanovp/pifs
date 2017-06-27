@@ -185,8 +185,9 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 {
     uint8_t                 name[PIFS_FILENAME_LEN_MAX];
     uint8_t                 attrib;
-    pifs_object_id_t        object_id;
-    pifs_address_t          first_map_address;    /**< First map page's addres */
+//    pifs_object_id_t        object_id;          /***< FIXME not used */
+    pifs_address_t          first_map_address;  /**< First map page's address */
+    pifs_page_offset_t      last_page_size;     /**< Bytes written into last page */
 } pifs_entry_t;
 
 /**
@@ -255,7 +256,7 @@ typedef struct
     pifs_address_t          header_address;
     bool_t                  is_header_found;
     pifs_header_t           header;
-    pifs_object_id_t        latest_object_id;
+//    pifs_object_id_t        latest_object_id;
     pifs_address_t          page_buf_address;                       /**< Address of page_buf */
     uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];    /**< Flash page buffer */
     bool_t                  page_buf_is_dirty;
