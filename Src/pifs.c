@@ -18,6 +18,16 @@
 #include "pifs_debug.h"
 #include "buffer.h" /* DEBUG */
 
+#if PIFS_MANAGEMENT_BLOCKS >= PIFS_FLASH_BLOCK_NUM_FS
+#error PIFS_MANAGEMENT_BLOCKS is greater than PIFS_FLASH_BLOCK_NUM_FS!
+#endif
+#if PIFS_MANAGEMENT_BLOCKS > PIFS_FLASH_BLOCK_NUM_FS / 4
+#warnings PIFS_MANAGEMENT_BLOCKS is larger than PIFS_FLASH_BLOCK_NUM_FS / 4!
+#endif
+#if PIFS_MANAGEMENT_BLOCKS < 1
+#error PIFS_MANAGEMENT_BLOCKS shall be 1 at minimum!
+#endif
+
 static pifs_t pifs =
 {
     .header_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
@@ -499,10 +509,12 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                     {
                         pifs_calc_address(bit_pos + 2 - page_count_found * 2,
                                           a_block_address, a_page_address);
+#if PIFS_DEBUG_LEVEL >= 6
                         PIFS_DEBUG_MSG("%i page count found, bit_pos: %lu, %s\r\n",
                                        page_count_found,
                                        (size_t)bit_pos + 2 - page_count_found * 2,
                                        ba_pa2str(*a_block_address, *a_page_address));
+#endif
                         *a_page_count_found = page_count_found;
                     }
                     if (page_count_found == a_page_count_desired)
@@ -549,6 +561,8 @@ static void pifs_header_init(pifs_block_address_t a_block_address,
                       pifs_page_address_t a_page_address,
                       pifs_header_t * a_header)
 {
+    size_t i = 0;
+    pifs_block_address_t ba = a_block_address;
     /* FIXME use random block? */
     PIFS_DEBUG_MSG("Creating managamenet block %s\r\n", ba_pa2str(a_block_address, a_page_address));
     a_header->magic = PIFS_MAGIC;
@@ -557,11 +571,23 @@ static void pifs_header_init(pifs_block_address_t a_block_address,
     a_header->minorVersion = PIFS_MINOR_VERSION;
 #endif
     a_header->counter = 1;
-    a_header->block_type = PIFS_BLOCK_TYPE_MANAGEMENT;
     a_header->entry_list_address.block_address = a_block_address;
     a_header->entry_list_address.page_address = a_page_address + PIFS_HEADER_SIZE_PAGE;
     a_header->free_space_bitmap_address.block_address = a_block_address;
     a_header->free_space_bitmap_address.page_address = a_page_address + PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE;
+#if PIFS_MANAGEMENT_BLOCKS > 1
+    for (i = 0; i < PIFS_MANAGEMENT_BLOCKS; i++)
+#endif
+    {
+        a_header->management_blocks[i] = ba;
+#if PIFS_MANAGEMENT_BLOCKS > 1
+        ba++;
+        if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
+        {
+            ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
+        }
+#endif
+    }
     a_header->checksum = pifs_calc_header_checksum(a_header);
 }
 
@@ -823,7 +849,7 @@ static pifs_status_t pifs_create_entry(const pifs_entry_t * a_entry)
 
     while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !created)
     {
-        ret = pifs_read(ba, pa, 0, pifs.page_buf, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
+        ret = pifs_read(ba, pa, 0, NULL, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
         for (i = 0; i < PIFS_ENTRY_PER_PAGE && !created; i++)
         {
             /* Check if this area is used */
@@ -1123,8 +1149,8 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
                                            pifs_page_address_t a_page_address,
                                            pifs_page_count_t a_page_count)
 {
-    pifs_block_address_t    ba = a_file->entry.first_map_address.block_address;
-    pifs_page_address_t     pa = a_file->entry.first_map_address.page_address;
+    pifs_block_address_t    ba = a_file->actual_map_address.block_address;
+    pifs_page_address_t     pa = a_file->actual_map_address.page_address;
     bool_t                  is_written = FALSE;
     bool_t                  empty_entry_found = FALSE;
     pifs_page_count_t       page_count_found = 0;
@@ -1145,7 +1171,7 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
     if (a_file->status == PIFS_ERROR_END_OF_FILE)
     {
         PIFS_DEBUG_MSG("End of file, new map will be created\r\n");
-        a_file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_PAGE_TYPE_DATA, TRUE,
+        a_file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_PAGE_TYPE_MANAGEMENT, TRUE,
                                         &ba, &pa, &page_count_found);
         if (a_file->status == PIFS_SUCCESS)
         {
@@ -1160,7 +1186,7 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
                                         PIFS_MAP_HEADER_SIZE_BYTE);
             PIFS_DEBUG_MSG("### Map full, set jump address %s ###\r\n",
                            address2str(&a_file->actual_map_address));
-            pifs_print_cache();
+//            pifs_print_cache();
         }
         if (a_file->status == PIFS_SUCCESS)
         {
@@ -1171,15 +1197,18 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
             /* Update actual map's address */
             a_file->actual_map_address.block_address = ba;
             a_file->actual_map_address.page_address = pa;
-            a_file->status = pifs_write(a_file->actual_map_address.block_address,
-                                        a_file->actual_map_address.page_address,
-                                        0,
-                                        &a_file->map_header,
+            a_file->status = pifs_write(ba, pa, 0, &a_file->map_header,
                                         PIFS_MAP_HEADER_SIZE_BYTE);
             PIFS_DEBUG_MSG("### New map %s ###\r\n",
                            address2str(&a_file->actual_map_address));
             pifs_print_cache();
             a_file->map_entry_idx = 0;
+        }
+        if (a_file->status == PIFS_SUCCESS)
+        {
+            PIFS_DEBUG_MSG("### Mark page %s ###\r\n",
+                           address2str(&a_file->actual_map_address));
+            a_file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, TRUE);
             empty_entry_found = TRUE;
         }
     }
@@ -1261,7 +1290,7 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
                 /* #1 Find a free page for map of file */
                 /* #2 Create entry of file, which contains the map's address */
                 /* #3 Mark map page */
-                file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_PAGE_TYPE_DATA, TRUE,
+                file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_PAGE_TYPE_MANAGEMENT, TRUE,
                                               &ba, &pa, &page_count_found);
                 if (file->status == PIFS_SUCCESS)
                 {

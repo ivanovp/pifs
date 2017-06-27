@@ -55,7 +55,7 @@ pifs_status_t pifs_test(void)
     if (file)
     {
         printf("File opened for writing\r\n");
-        for (i = 0; i <= PIFS_MAP_ENTRY_PER_PAGE; i++)
+        for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE + 2; i++)
         {
             generate_buffer(i);
 //            print_buffer(test_buf_w, sizeof(test_buf_w), 0);

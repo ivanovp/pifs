@@ -136,7 +136,7 @@ typedef enum
     /** Only management information stored in the block. */
     PIFS_BLOCK_TYPE_MANAGEMENT = 1,
     /** Data and management information stored as well. */
-    PIFS_BLOCK_TYPE_MIXED
+    PIFS_BLOCK_TYPE_DATA
 } pifs_block_type_t PIFS_PACKED_ATTRIBUTE;
 
 typedef enum
@@ -167,9 +167,9 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     uint8_t                 minorVersion;
 #endif
     uint32_t                counter;
-    pifs_block_type_t       block_type;
     pifs_address_t          free_space_bitmap_address;
     pifs_address_t          entry_list_address;
+    pifs_block_address_t    management_blocks[PIFS_MANAGEMENT_BLOCKS / 2];
     /** Checksum shall be the last element! */
     pifs_checksum_t         checksum;
 } pifs_header_t;
