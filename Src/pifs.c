@@ -453,6 +453,31 @@ static pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
 }
 
 /**
+ * @brief pifs_is_block_type Checks if the given block address is block type.
+ * @param[in] a_block_address Block address to check.
+ * @param[in] a_block_type    Block type.
+ * @return TRUE: If block address is equal to block type.
+ */
+static bool_t pifs_is_block_type(pifs_block_address_t a_block_address, pifs_block_type_t a_block_type)
+{
+    size_t               i = 0;
+    bool_t               is_block_type = TRUE;
+
+    is_block_type = (a_block_type == PIFS_BLOCK_TYPE_DATA);
+#if PIFS_MANAGEMENT_BLOCKS > 1
+    for (i = 0; i < PIFS_MANAGEMENT_BLOCKS; i++)
+#endif
+    {
+        if (pifs.header.management_blocks[i] == a_block_address)
+        {
+            is_block_type = (a_block_type == PIFS_BLOCK_TYPE_MANAGEMENT);
+        }
+    }
+
+    return is_block_type;
+}
+
+/**
  * @brief pifs_find_page Find free page(s) in free space memory bitmap.
  * It tries to find 'a_page_count_desired' pages, but at least
  * 'a_page_count_minimum'.
@@ -460,7 +485,7 @@ static pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
  *
  * @param[in] a_page_count_minimum Number of pages needed at least.
  * @param[in] a_page_count_desired Number of pages needed.
- * @param[in] a_page_type          Page type to find.
+ * @param[in] a_blocktype          Block type to find.
  * @param[in] a_is_free            TRUE: find free page, FALSE: find to be released page.
  * @param[out] a_block_address     Block address of page(s).
  * @param[out] a_page_address      Page address of page(s).
@@ -469,13 +494,15 @@ static pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
  */
 static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                              pifs_page_count_t a_page_count_desired,
-                             pifs_page_type_t a_page_type,
+                             pifs_block_type_t a_block_type,
                              bool_t a_is_free,
                              pifs_block_address_t * a_block_address,
                              pifs_page_address_t * a_page_address,
                              pifs_page_count_t * a_page_count_found)
 {
     pifs_status_t           ret = PIFS_ERROR;
+    pifs_block_address_t    fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
+    pifs_page_address_t     fpa = 0;
     pifs_block_address_t    ba = pifs.header.free_space_bitmap_address.block_address;
     pifs_page_address_t     pa = pifs.header.free_space_bitmap_address.page_address;
     pifs_page_offset_t      po = 0;
@@ -502,7 +529,7 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
         {
             for (i = 0; i < (PIFS_BYTE_BITS / 2) && !found; i++)
             {
-                if (free_space_bitmap & mask)
+                if ((free_space_bitmap & mask) && pifs_is_block_type(fba, a_block_type))
                 {
                     page_count_found++;
                     if (page_count_found >= a_page_count_minimum)
@@ -528,6 +555,12 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                 }
                 free_space_bitmap >>= 2;
                 bit_pos += 2;
+                fpa++;
+                if (fpa == PIFS_FLASH_PAGE_PER_BLOCK)
+                {
+                    fpa = 0;
+                    fba++;
+                }
             }
             po++;
             if (po == PIFS_FLASH_PAGE_SIZE_BYTE)
@@ -561,7 +594,7 @@ static void pifs_header_init(pifs_block_address_t a_block_address,
                       pifs_page_address_t a_page_address,
                       pifs_header_t * a_header)
 {
-    size_t i = 0;
+    size_t               i = 0;
     pifs_block_address_t ba = a_block_address;
     /* FIXME use random block? */
     PIFS_DEBUG_MSG("Creating managamenet block %s\r\n", ba_pa2str(a_block_address, a_page_address));
@@ -580,6 +613,7 @@ static void pifs_header_init(pifs_block_address_t a_block_address,
 #endif
     {
         a_header->management_blocks[i] = ba;
+        printf("+++ Management block: %i\r\n", ba);
 #if PIFS_MANAGEMENT_BLOCKS > 1
         ba++;
         if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
@@ -781,6 +815,20 @@ pifs_status_t pifs_init(void)
                           address2str(&pifs.header.entry_list_address));
             PIFS_INFO_MSG("Free space bitmap at %s\r\n",
                           address2str(&pifs.header.free_space_bitmap_address));
+        }
+    }
+
+    {
+        pifs_block_address_t ba = 0;
+        printf("PIFS_BLOCK_TYPE_DATA\r\n");
+        for (ba = 0; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
+        {
+            printf("ba: %i \t %i\r\n", ba, pifs_is_block_type(ba, PIFS_BLOCK_TYPE_DATA));
+        }
+        printf("PIFS_BLOCK_TYPE_MANAGEMENT\r\n");
+        for (ba = 0; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
+        {
+            printf("ba: %i \t %i\r\n", ba, pifs_is_block_type(ba, PIFS_BLOCK_TYPE_MANAGEMENT));
         }
     }
 

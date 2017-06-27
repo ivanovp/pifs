@@ -139,14 +139,6 @@ typedef enum
     PIFS_BLOCK_TYPE_DATA
 } pifs_block_type_t PIFS_PACKED_ATTRIBUTE;
 
-typedef enum
-{
-    /** Nanagement information stored in the page. */
-    PIFS_PAGE_TYPE_MANAGEMENT = 1,
-    /** Data information stored in the page. */
-    PIFS_PAGE_TYPE_DATA
-} pifs_page_type_t;
-
 /**
  * Address of a page in flash memory.
  */
@@ -169,7 +161,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     uint32_t                counter;
     pifs_address_t          free_space_bitmap_address;
     pifs_address_t          entry_list_address;
-    pifs_block_address_t    management_blocks[PIFS_MANAGEMENT_BLOCKS / 2];
+    pifs_block_address_t    management_blocks[PIFS_MANAGEMENT_BLOCKS];
     /** Checksum shall be the last element! */
     pifs_checksum_t         checksum;
 } pifs_header_t;
