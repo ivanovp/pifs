@@ -1204,7 +1204,7 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
     if (a_file->status == PIFS_ERROR_END_OF_FILE)
     {
         PIFS_DEBUG_MSG("End of file, new map will be created\r\n");
-        a_file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_PAGE_TYPE_MANAGEMENT, TRUE,
+        a_file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_BLOCK_TYPE_MANAGEMENT, TRUE,
                                         &ba, &pa, &page_count_found);
         if (a_file->status == PIFS_SUCCESS)
         {
@@ -1323,7 +1323,7 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
                 /* #1 Find a free page for map of file */
                 /* #2 Create entry of file, which contains the map's address */
                 /* #3 Mark map page */
-                file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_PAGE_TYPE_MANAGEMENT, TRUE,
+                file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_BLOCK_TYPE_MANAGEMENT, TRUE,
                                               &ba, &pa, &page_count_found);
                 if (file->status == PIFS_SUCCESS)
                 {
@@ -1395,7 +1395,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
             {
                 page_count_needed_limited = PIFS_PAGE_COUNT_INVALID - 1;
             }
-            file->status = pifs_find_page(1, page_count_needed_limited, PIFS_PAGE_TYPE_DATA, TRUE,
+            file->status = pifs_find_page(1, page_count_needed_limited, PIFS_BLOCK_TYPE_DATA, TRUE,
                                           &ba, &pa, &page_count_found);
             PIFS_DEBUG_MSG("%u pages found. %s\r\n", page_count_found, ba_pa2str(ba, pa));
             if (file->status == PIFS_SUCCESS)
