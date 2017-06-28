@@ -30,10 +30,9 @@
 
 #if (PIFS_DEBUG_LEVEL >= 1)
 #define PIFS_ERROR_MSG(...)    do { \
+        printf("%s ERROR: ", __FUNCTION__); \
+        printf(__VA_ARGS__); \
         fflush(stdout); \
-        fprintf(stderr, "%s ERROR: ", __FUNCTION__); \
-        fprintf(stderr, __VA_ARGS__); \
-        fflush(stderr); \
     } while (0);
 #else
 #define PIFS_ERROR_MSG(...)
@@ -41,10 +40,8 @@
 
 #if (PIFS_DEBUG_LEVEL >= 1)
 #define PIFS_FATAL_ERROR_MSG(...)    do { \
-        fflush(stdout); \
-        fprintf(stderr, "%s FATAL_ERROR: ", __FUNCTION__); \
-        fprintf(stderr, __VA_ARGS__); \
-        fflush(stderr); \
+        printf("%s FATAL_ERROR: ", __FUNCTION__); \
+        printf( __VA_ARGS__); \
         exit(-1); \
     } while (0);
 #else
@@ -53,10 +50,9 @@
 
 #if (PIFS_DEBUG_LEVEL >= 2)
 #define PIFS_WARNING_MSG(...)    do { \
+        printf("%s WARNING: ", __FUNCTION__); \
+        printf(__VA_ARGS__); \
         fflush(stdout); \
-        fprintf(stderr, "%s WARNING: ", __FUNCTION__); \
-        fprintf(stderr, __VA_ARGS__); \
-        fflush(stderr); \
     } while (0);
 #else
 #define PIFS_WARNING_MSG(...)

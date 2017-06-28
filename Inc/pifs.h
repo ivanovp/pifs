@@ -227,7 +227,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 } pifs_delta_entry_t;
 
 /**
- *
+ * Actual status and parameters of an opened file.
  */
 typedef struct
 {
@@ -245,7 +245,8 @@ typedef struct
     size_t                  map_entry_idx;      /**< Actual entry's index in the map */
     pifs_map_entry_t        map_entry;          /**< Actual entry in the map */
     size_t                  read_pos;
-    size_t                  write_pos;
+    size_t                  write_pos;          /**< Position in file after last write */
+    pifs_address_t          write_address;      /**< Last written page's address */
 } pifs_file_t;
 
 /**

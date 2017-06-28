@@ -601,6 +601,10 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                 {
                     fpa = 0;
                     fba++;
+                    if (fba >= PIFS_FLASH_BLOCK_NUM_ALL)
+                    {
+                        ret = PIFS_ERROR_NO_MORE_SPACE;
+                    }
                 }
             }
             po++;
@@ -1349,6 +1353,8 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
     if (pifs.is_header_found && strlen(a_filename))
     {
         file->write_pos = 0;
+        file->write_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
+        file->write_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
         file->read_pos = 0;
         file->actual_map_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
         file->actual_map_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
@@ -1446,65 +1452,93 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
     pifs_block_address_t ba_start = PIFS_BLOCK_ADDRESS_INVALID;
     pifs_page_address_t  pa = PIFS_PAGE_ADDRESS_INVALID;
     pifs_page_address_t  pa_start = PIFS_PAGE_ADDRESS_INVALID;
+    pifs_page_offset_t   po = PIFS_PAGE_OFFSET_INVALID;
 
     if (pifs.is_header_found && file && file->is_opened && file->mode_write)
     {
-        page_count_needed = (a_size * a_count + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
-        do
+        po = file->write_pos % PIFS_FLASH_PAGE_SIZE_BYTE;
+        if (po)
         {
-            page_count_needed_limited = page_count_needed;
-            if (page_count_needed_limited >= PIFS_PAGE_COUNT_INVALID)
-            {
-                page_count_needed_limited = PIFS_PAGE_COUNT_INVALID - 1;
-            }
-            file->status = pifs_find_page(1, page_count_needed_limited, PIFS_BLOCK_TYPE_DATA, TRUE,
-                                          &ba, &pa, &page_count_found);
-            PIFS_DEBUG_MSG("%u pages found. %s\r\n", page_count_found, ba_pa2str(ba, pa));
+            /* There is some space in the last page */
+            PIFS_ASSERT(file->write_address.block_address < PIFS_BLOCK_ADDRESS_INVALID);
+            PIFS_ASSERT(file->write_address.page_address < PIFS_PAGE_ADDRESS_INVALID);
+            chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE - po);
+            PIFS_DEBUG_MSG("--------> pos: %i po: %i a_size: %i chunk_size: %i\r\n",
+                           file->write_pos, po, data_size, chunk_size);
+            file->status = pifs_write(file->write_address.block_address,
+                                      file->write_address.page_address,
+                                      po, data, chunk_size);
+            pifs_print_cache();
             if (file->status == PIFS_SUCCESS)
             {
-                ba_start = ba;
-                pa_start = pa;
-                page_cound_found_start = page_count_found;
-                do
-                {
-                    if (data_size > PIFS_FLASH_PAGE_SIZE_BYTE)
-                    {
-                        chunk_size = PIFS_FLASH_PAGE_SIZE_BYTE;
-                    }
-                    else
-                    {
-                        chunk_size = data_size;
-                    }
-                    file->status = pifs_write(ba, pa, 0, data, chunk_size);
-                    pa++;
-                    if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
-                    {
-                        pa = 0;
-                        ba++;
-                        if (ba == PIFS_FLASH_BLOCK_NUM_ALL)
-                        {
-                            PIFS_FATAL_ERROR_MSG("Trying to write to invalid flash address! %s\r\n",
-                                                 ba_pa2str(ba, pa));
-                        }
-                    }
-                    data += chunk_size;
-                    data_size -= chunk_size;
-                    written_size += chunk_size;
-                    page_count_found--;
-                    page_count_needed--;
-                } while (page_count_found && file->status == PIFS_SUCCESS);
-
-                if (file->status == PIFS_SUCCESS)
-                {
-                    file->status = pifs_mark_page(ba_start, pa_start, page_cound_found_start, TRUE);
-                }
-                if (file->status == PIFS_SUCCESS)
-                {
-                    /* Write pages to file map entry after successfully write */
-                    file->status = pifs_append_map_entry(file, ba_start, pa_start, page_cound_found_start);
-                }
+                data += chunk_size;
+                data_size -= chunk_size;
+                written_size += chunk_size;
             }
-        } while (page_count_needed && file->status == PIFS_SUCCESS);
+        }
+
+        if (file->status == PIFS_SUCCESS && data_size > 0)
+        {
+            page_count_needed = (data_size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
+            do
+            {
+                page_count_needed_limited = page_count_needed;
+                if (page_count_needed_limited >= PIFS_PAGE_COUNT_INVALID)
+                {
+                    page_count_needed_limited = PIFS_PAGE_COUNT_INVALID - 1;
+                }
+                file->status = pifs_find_page(1, page_count_needed_limited, PIFS_BLOCK_TYPE_DATA, TRUE,
+                                              &ba, &pa, &page_count_found);
+                PIFS_DEBUG_MSG("%u pages found. %s\r\n", page_count_found, ba_pa2str(ba, pa));
+                if (file->status == PIFS_SUCCESS)
+                {
+                    ba_start = ba;
+                    pa_start = pa;
+                    page_cound_found_start = page_count_found;
+                    do
+                    {
+                        if (data_size > PIFS_FLASH_PAGE_SIZE_BYTE)
+                        {
+                            chunk_size = PIFS_FLASH_PAGE_SIZE_BYTE;
+                        }
+                        else
+                        {
+                            chunk_size = data_size;
+                        }
+                        file->status = pifs_write(ba, pa, 0, data, chunk_size);
+                        /* Save last page's address for future use */
+                        file->write_address.block_address = ba;
+                        file->write_address.page_address = pa;
+                        pa++;
+                        if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
+                        {
+                            pa = 0;
+                            ba++;
+                            if (ba == PIFS_FLASH_BLOCK_NUM_ALL)
+                            {
+                                PIFS_FATAL_ERROR_MSG("Trying to write to invalid flash address! %s\r\n",
+                                                     ba_pa2str(ba, pa));
+                            }
+                        }
+                        data += chunk_size;
+                        data_size -= chunk_size;
+                        written_size += chunk_size;
+                        page_count_found--;
+                        page_count_needed--;
+                    } while (page_count_found && file->status == PIFS_SUCCESS);
+
+                    if (file->status == PIFS_SUCCESS)
+                    {
+                        file->status = pifs_mark_page(ba_start, pa_start, page_cound_found_start, TRUE);
+                    }
+                    if (file->status == PIFS_SUCCESS)
+                    {
+                        /* Write pages to file map entry after successfully write */
+                        file->status = pifs_append_map_entry(file, ba_start, pa_start, page_cound_found_start);
+                    }
+                }
+            } while (page_count_needed && file->status == PIFS_SUCCESS);
+        }
         file->write_pos += written_size;
     }
 

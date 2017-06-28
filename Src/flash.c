@@ -18,10 +18,9 @@
 
 #if FLASH_DEBUG
 #define FLASH_ERROR_MSG(...)    do { \
+        printf("%s ERROR: ", __FUNCTION__); \
+        printf(__VA_ARGS__); \
         fflush(stdout); \
-        fprintf(stderr, "%s ERROR: ", __FUNCTION__); \
-        fprintf(stderr, __VA_ARGS__); \
-        fflush(stderr); \
     } while (0);
 #else
 #define FLASH_ERROR_MSG(...)
