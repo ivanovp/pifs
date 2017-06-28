@@ -28,12 +28,14 @@
 #error PIFS_MANAGEMENT_BLOCKS shall be 1 at minimum!
 #endif
 
+#define PIFS_MAP_PAGE_NUM               1   /**< Default number of map pages. Minimum: 1 */
+
 static pifs_t pifs =
 {
     .header_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
     .is_header_found = FALSE,
     .header = { 0 },
-    .latest_object_id = 1,
+//    .latest_object_id = 1,
     .page_buf_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
     .page_buf = { 0 },
     .page_buf_is_dirty = FALSE
@@ -1112,6 +1114,7 @@ static pifs_status_t pifs_find_file_pages(pifs_file_t * a_file)
     pifs_page_offset_t      po = PIFS_MAP_HEADER_SIZE_BYTE;
 
     PIFS_DEBUG_MSG("Searching in map entry at %s\r\n", ba_pa2str(ba, pa));
+
     do
     {
         a_file->status = pifs_read(ba, pa, 0, &a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE);
@@ -1146,12 +1149,16 @@ static pifs_status_t pifs_find_file_pages(pifs_file_t * a_file)
                 po += PIFS_MAP_ENTRY_SIZE_BYTE;
             }
         }
-        /* Mark map page to be released */
-        /* FIXME If PIFS_MAP_PAGE_NUM > 1, this can cause error?! */
-        a_file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, FALSE);
-        /* Jump to the next map page */
-        ba = a_file->map_header.next_map_address.block_address;
-        pa = a_file->map_header.next_map_address.page_address;
+        if (a_file->status == PIFS_SUCCESS)
+        {
+            /* Mark map page to be released */
+            /* FIXME If PIFS_MAP_PAGE_NUM > 1, this can cause error?! */
+            a_file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, FALSE);
+            /* Jump to the next map page */
+            ba = a_file->map_header.next_map_address.block_address;
+            pa = a_file->map_header.next_map_address.page_address;
+            po = PIFS_MAP_HEADER_SIZE_BYTE;
+        }
     } while (ba < PIFS_BLOCK_ADDRESS_INVALID && pa < PIFS_PAGE_ADDRESS_INVALID && a_file->status == PIFS_SUCCESS);
 
     return a_file->status;
@@ -1384,7 +1391,7 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
                 {
                     PIFS_DEBUG_MSG("Map page: %u free page found %s\r\n", page_count_found, ba_pa2str(ba, pa));
                     strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
-                    entry->object_id = pifs.latest_object_id++;
+//                    entry->object_id = pifs.latest_object_id++;
                     entry->attrib = PIFS_ATTRIB_ARCHIVE;
                     entry->first_map_address.block_address = ba;
                     entry->first_map_address.page_address = pa;
