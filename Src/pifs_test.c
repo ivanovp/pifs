@@ -75,7 +75,7 @@ pifs_status_t pifs_test(void)
     file = pifs_fopen("test2.dat", "w");
     if (file)
     {
-        const size_t size_delta = 5;
+        const size_t size_delta = 4;
         printf("File opened for writing\r\n");
         generate_buffer(2);
         written_size = 0;

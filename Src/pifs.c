@@ -1457,18 +1457,19 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
     if (pifs.is_header_found && file && file->is_opened && file->mode_write)
     {
         po = file->write_pos % PIFS_FLASH_PAGE_SIZE_BYTE;
+        /* Check if last page was not fully used up */
         if (po)
         {
             /* There is some space in the last page */
             PIFS_ASSERT(file->write_address.block_address < PIFS_BLOCK_ADDRESS_INVALID);
             PIFS_ASSERT(file->write_address.page_address < PIFS_PAGE_ADDRESS_INVALID);
             chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE - po);
-            PIFS_DEBUG_MSG("--------> pos: %i po: %i a_size: %i chunk_size: %i\r\n",
-                           file->write_pos, po, data_size, chunk_size);
+//            PIFS_DEBUG_MSG("--------> pos: %i po: %i a_size: %i chunk_size: %i\r\n",
+//                           file->write_pos, po, data_size, chunk_size);
             file->status = pifs_write(file->write_address.block_address,
                                       file->write_address.page_address,
                                       po, data, chunk_size);
-            pifs_print_cache();
+//            pifs_print_cache();
             if (file->status == PIFS_SUCCESS)
             {
                 data += chunk_size;
