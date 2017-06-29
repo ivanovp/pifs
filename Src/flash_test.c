@@ -17,8 +17,8 @@
 #include "buffer.h"
 
 #define FLASH_TEST_ERROR_MSG(...)    do { \
-        fprintf(stderr, "%s ERROR: ", __FUNCTION__); \
-        fprintf(stderr, __VA_ARGS__); \
+        printf("%s ERROR: ", __FUNCTION__); \
+        printf(__VA_ARGS__); \
     } while (0);
 
 uint8_t test_buf_w[PIFS_FLASH_PAGE_SIZE_BYTE];

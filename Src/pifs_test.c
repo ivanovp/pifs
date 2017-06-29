@@ -17,12 +17,13 @@
 #include "pifs_debug.h"
 #include "buffer.h"
 
-#define ENABLE_LARGE_TEST       0
-#define ENABLE_FRAGMENT_TEST    1
+#define ENABLE_LARGE_TEST             0
+#define ENABLE_WRITE_FRAGMENT_TEST    0
+#define ENABLE_READ_FRAGMENT_TEST     1
 
 #define PIFS_TEST_ERROR_MSG(...)    do { \
-        fprintf(stderr, "%s ERROR: ", __FUNCTION__); \
-        fprintf(stderr, __VA_ARGS__); \
+        printf("%s ERROR: ", __FUNCTION__); \
+        printf(__VA_ARGS__); \
     } while (0);
 
 uint8_t test_buf_w[2 * 256] __attribute__((aligned(4)));
@@ -69,13 +70,13 @@ pifs_status_t pifs_test(void)
     pifs_fclose(file);
 #endif
 
-#if ENABLE_FRAGMENT_TEST
+#if ENABLE_WRITE_FRAGMENT_TEST
     printf("-------------------------------------------------\r\n");
 
     file = pifs_fopen("test2.dat", "w");
     if (file)
     {
-        const size_t size_delta = 4;
+        const size_t size_delta = 5;
         printf("File opened for writing\r\n");
         generate_buffer(2);
         written_size = 0;
@@ -86,7 +87,7 @@ pifs_status_t pifs_test(void)
     }
     pifs_fclose(file);
 #endif
-#if 0
+#if ENABLE_READ_FRAGMENT_TEST
     printf("-------------------------------------------------\r\n");
 
     file = pifs_fopen("test3.dat", "w");
@@ -115,9 +116,10 @@ pifs_status_t pifs_test(void)
     }
     pifs_fclose(file);
 #endif
-#if ENABLE_FRAGMENT_TEST
+#if ENABLE_WRITE_FRAGMENT_TEST
     printf("-------------------------------------------------\r\n");
 
+    memset(test_buf_r, 0, sizeof(test_buf_r));
     file = pifs_fopen("test2.dat", "r");
     if (file)
     {
@@ -125,6 +127,25 @@ pifs_status_t pifs_test(void)
         generate_buffer(2);
         read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
         //print_buffer(test_buf_r, sizeof(test_buf_r), 0);
+        check_buffers();
+    }
+    pifs_fclose(file);
+#endif
+#if ENABLE_READ_FRAGMENT_TEST
+    printf("-------------------------------------------------\r\n");
+
+    memset(test_buf_r, 0, sizeof(test_buf_r));
+    file = pifs_fopen("test3.dat", "r");
+    if (file)
+    {
+        const size_t size_delta = 5;
+        printf("File opened for reading\r\n");
+        generate_buffer(3);
+        read_size = 0;
+        for (i = 0; i < sizeof(test_buf_r); i += size_delta)
+        {
+            read_size += pifs_fread(&test_buf_r[i], 1, size_delta, file);
+        }
         check_buffers();
     }
     pifs_fclose(file);

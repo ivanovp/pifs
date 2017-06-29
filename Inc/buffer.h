@@ -18,8 +18,8 @@ extern "C" {
 #endif
 
 #define BUFFER_ERROR_MSG(...)    do { \
-        fprintf(stderr, "%s ERROR: ", __FUNCTION__); \
-        fprintf(stderr, __VA_ARGS__); \
+        printf("%s ERROR: ", __FUNCTION__); \
+        printf(__VA_ARGS__); \
     } while (0);
 
 typedef enum
