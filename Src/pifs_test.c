@@ -17,7 +17,7 @@
 #include "pifs_debug.h"
 #include "buffer.h"
 
-#define ENABLE_FULL_WRITE_TEST        1
+#define ENABLE_FULL_WRITE_TEST        0
 #define ENABLE_LARGE_TEST             1
 #define ENABLE_WRITE_FRAGMENT_TEST    1
 #define ENABLE_READ_FRAGMENT_TEST     1

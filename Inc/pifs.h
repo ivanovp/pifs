@@ -78,10 +78,11 @@
 /******************************************************************************/
 /*** DELTA PAGES                                                            ***/
 /******************************************************************************/
-#define PIFS_DELTA_HEADER_SIZE_BYTE         (sizeof(pifs_delta_header_t))
+//#define PIFS_DELTA_HEADER_SIZE_BYTE         (sizeof(pifs_delta_header_t))
 #define PIFS_DELTA_ENTRY_SIZE_BYTE          (sizeof(pifs_delta_entry_t))
 
-#define PIFS_DELTA_ENTRY_PER_PAGE           ((PIFS_FLASH_PAGE_SIZE_BYTE - PIFS_DELTA_HEADER_SIZE_BYTE) / PIFS_DELTA_ENTRY_SIZE_BYTE)
+//#define PIFS_DELTA_ENTRY_PER_PAGE           ((PIFS_FLASH_PAGE_SIZE_BYTE - PIFS_DELTA_HEADER_SIZE_BYTE) / PIFS_DELTA_ENTRY_SIZE_BYTE)
+#define PIFS_DELTA_ENTRY_PER_PAGE           (PIFS_FLASH_PAGE_SIZE_BYTE / PIFS_DELTA_ENTRY_SIZE_BYTE)
 
 /******************************************************************************/
 
@@ -173,7 +174,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_block_address_t    next_management_blocks[PIFS_MANAGEMENT_BLOCKS];
     pifs_address_t          free_space_bitmap_address;
     pifs_address_t          entry_list_address;
-    pifs_address_t          delta_pages_address;
+    pifs_address_t          delta_map_address;
     /** Checksum shall be the last element! */
     pifs_checksum_t         checksum;
 } pifs_header_t;
@@ -208,6 +209,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_page_count_t       page_count;
 } pifs_map_entry_t;
 
+#if 0
 /**
  * Delta pages' header.
  */
@@ -215,6 +217,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 {
     pifs_address_t          next_delta_address;
 } pifs_delta_header_t;
+#endif
 
 /**
  * Delta page.
@@ -264,6 +267,7 @@ typedef struct
     uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];    /**< Flash page buffer */
     bool_t                  page_buf_is_dirty;
     pifs_file_t             file[PIFS_OPEN_FILE_NUM_MAX];           /**< Opened files */
+    uint8_t                 delta_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE * PIFS_DELTA_MAP_PAGE_NUM];
 } pifs_t;
 
 #endif /* _INCLUDE_PIFS_H_ */

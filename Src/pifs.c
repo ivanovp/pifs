@@ -819,10 +819,11 @@ pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
  * @param a_page_address[in]    Page address of header.
  * @param a_header[out]         Pointer to the header to be initialized.
  */
-static void pifs_header_init(pifs_block_address_t a_block_address,
+static pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
                       pifs_page_address_t a_page_address,
                       pifs_header_t * a_header)
 {
+    pifs_status_t        ret = PIFS_SUCCESS;
     size_t               i = 0;
     pifs_block_address_t ba = a_block_address;
     /* FIXME use random block? */
@@ -837,12 +838,13 @@ static void pifs_header_init(pifs_block_address_t a_block_address,
     a_header->entry_list_address.page_address = a_page_address + PIFS_HEADER_SIZE_PAGE;
     a_header->free_space_bitmap_address.block_address = a_block_address;
     a_header->free_space_bitmap_address.page_address = a_header->entry_list_address.page_address + PIFS_ENTRY_LIST_SIZE_PAGE;
-    a_header->delta_pages_address.block_address = a_block_address;
-    a_header->delta_pages_address.page_address = a_header->free_space_bitmap_address.page_address + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE;
-    if (a_header->delta_pages_address.page_address + PIFS_DELTA_PAGES_NUM >= PIFS_FLASH_PAGE_PER_BLOCK)
+    a_header->delta_map_address.block_address = a_block_address;
+    a_header->delta_map_address.page_address = a_header->free_space_bitmap_address.page_address + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE;
+    if (a_header->delta_map_address.page_address + PIFS_DELTA_MAP_PAGE_NUM >= PIFS_FLASH_PAGE_PER_BLOCK)
     {
         PIFS_ERROR_MSG("Cannot fit data into first management block!\r\n");
         PIFS_ERROR_MSG("Decrease PIFS_ENTRY_NUM_MAX or PIFS_FILENAME_LEN_MAX or PIFS_DELTA_PAGES_NUM!\r\n");
+        ret = PIFS_ERROR_CONFIGURATION;
     }
 #if PIFS_MANAGEMENT_BLOCKS > 1
     for (i = 0; i < PIFS_MANAGEMENT_BLOCKS; i++)
@@ -871,6 +873,8 @@ static void pifs_header_init(pifs_block_address_t a_block_address,
 #endif
     }
     a_header->checksum = pifs_calc_header_checksum(a_header);
+
+    return ret;
 }
 
 /**
@@ -923,9 +927,9 @@ static pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
     if (ret == PIFS_SUCCESS)
     {
         /* Mark first delta page map as used */
-        ret = pifs_mark_page(a_header->delta_pages_address.block_address,
-                             a_header->delta_pages_address.page_address,
-                             PIFS_DELTA_PAGES_NUM, TRUE);
+        ret = pifs_mark_page(a_header->delta_map_address.block_address,
+                             a_header->delta_map_address.page_address,
+                             PIFS_DELTA_MAP_PAGE_NUM, TRUE);
     }
 
     return ret;
@@ -980,10 +984,11 @@ pifs_status_t pifs_init(void)
     PIFS_INFO_MSG("Free space bitmap size:             %u bytes, %u pages\r\n", PIFS_FREE_SPACE_BITMAP_SIZE_BYTE, PIFS_FREE_SPACE_BITMAP_SIZE_PAGE);
     PIFS_INFO_MSG("Map header size:                    %lu bytes\r\n", PIFS_MAP_HEADER_SIZE_BYTE);
     PIFS_INFO_MSG("Map entry size:                     %lu bytes\r\n", PIFS_MAP_ENTRY_SIZE_BYTE);
-    PIFS_INFO_MSG("Map entry/page:                     %lu\r\n", PIFS_MAP_ENTRY_PER_PAGE);
-    PIFS_INFO_MSG("Delta header size:                  %lu bytes\r\n", PIFS_DELTA_HEADER_SIZE_BYTE);
+    PIFS_INFO_MSG("Number of map entries/page:         %lu\r\n", PIFS_MAP_ENTRY_PER_PAGE);
+//    PIFS_INFO_MSG("Delta header size:                  %lu bytes\r\n", PIFS_DELTA_HEADER_SIZE_BYTE);
     PIFS_INFO_MSG("Delta entry size:                   %lu bytes\r\n", PIFS_DELTA_ENTRY_SIZE_BYTE);
-    PIFS_INFO_MSG("Delta entry/page:                   %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE);
+    PIFS_INFO_MSG("Number of delta entries/page:       %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE);
+    PIFS_INFO_MSG("Number of delta entries:            %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE * PIFS_DELTA_MAP_PAGE_NUM);
     PIFS_INFO_MSG("Full reserved area for management:  %i bytes, %i pages\r\n",
                    PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_BLOCK_SIZE_BYTE,
                    PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_PAGE_PER_BLOCK);
@@ -1064,8 +1069,11 @@ pifs_status_t pifs_init(void)
             ba = PIFS_FLASH_BLOCK_RESERVED_NUM + rand() % (PIFS_FLASH_BLOCK_NUM_FS);
 #endif
             pa = 0;
-            pifs_header_init(ba, pa, &pifs.header);
-            ret = pifs_header_write(ba, pa, &pifs.header);
+            ret = pifs_header_init(ba, pa, &pifs.header);
+            if (ret == PIFS_SUCCESS)
+            {
+                ret = pifs_header_write(ba, pa, &pifs.header);
+            }
         }
 
         if (pifs.is_header_found)
@@ -1088,7 +1096,7 @@ pifs_status_t pifs_init(void)
 
 #if PIFS_DEBUG_LEVEL >= 6
             {
-                int i;
+                uint32_t i;
                 printf("DATA blocks\r\n");
                 for (i = 0; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
                 {
