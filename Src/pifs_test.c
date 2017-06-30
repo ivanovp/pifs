@@ -17,9 +17,12 @@
 #include "pifs_debug.h"
 #include "buffer.h"
 
+#define ENABLE_FULL_WRITE_TEST        1
 #define ENABLE_LARGE_TEST             0
 #define ENABLE_WRITE_FRAGMENT_TEST    0
-#define ENABLE_READ_FRAGMENT_TEST     1
+#define ENABLE_READ_FRAGMENT_TEST     0
+
+#define TEST_FULL_PAGES               ( 1792 / 2 )
 
 #define PIFS_TEST_ERROR_MSG(...)    do { \
         printf("%s ERROR: ", __FUNCTION__); \
@@ -42,6 +45,23 @@ void check_buffers()
     }
 }
 
+void print_fs_info(void)
+{
+    size_t               free_management_bytes;
+    size_t               free_data_bytes;
+    size_t               free_management_pages;
+    size_t               free_data_pages;
+    if (pifs_get_free_space(&free_management_bytes, &free_data_bytes,
+                                    &free_management_pages, &free_data_pages) != PIFS_SUCCESS)
+    {
+        PIFS_ERROR_MSG("Cannot get free space!\r\n");
+    }
+    PIFS_INFO_MSG("Free data area:                     %i bytes, %i pages\r\n",
+                  free_data_bytes, free_data_pages);
+    PIFS_INFO_MSG("Free management area:               %i bytes, %i pages\r\n",
+                  free_management_bytes, free_management_pages);
+}
+
 pifs_status_t pifs_test(void)
 {
     pifs_status_t ret = PIFS_ERROR_FLASH_INIT;
@@ -52,6 +72,27 @@ pifs_status_t pifs_test(void)
 
     ret = pifs_init();
     PIFS_ASSERT(ret == PIFS_SUCCESS);
+
+#if ENABLE_FULL_WRITE_TEST
+    printf("-------------------------------------------------\r\n");
+
+    file = pifs_fopen("testfull.dat", "w");
+    if (file)
+    {
+        printf("File opened for writing\r\n");
+        for (i = 0; i < TEST_FULL_PAGES; i++)
+        {
+            generate_buffer(i);
+//            print_buffer(test_buf_w, sizeof(test_buf_w), 0);
+            written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+        }
+    }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot open file!\r\n");
+    }
+    pifs_fclose(file);
+#endif
 
 #if ENABLE_LARGE_TEST
     printf("-------------------------------------------------\r\n");
@@ -66,6 +107,10 @@ pifs_status_t pifs_test(void)
 //            print_buffer(test_buf_w, sizeof(test_buf_w), 0);
             written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
         }
+    }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot open file!\r\n");
     }
     pifs_fclose(file);
 #endif
@@ -85,6 +130,10 @@ pifs_status_t pifs_test(void)
             written_size += pifs_fwrite(&test_buf_w[i], 1, size_delta, file);
         }
     }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot open file!\r\n");
+    }
     pifs_fclose(file);
 #endif
 #if ENABLE_READ_FRAGMENT_TEST
@@ -96,6 +145,31 @@ pifs_status_t pifs_test(void)
         printf("File opened for writing\r\n");
         generate_buffer(3);
         written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+    }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot open file!\r\n");
+    }
+    pifs_fclose(file);
+#endif
+#if 0 && ENABLE_FULL_WRITE_TEST
+    printf("-------------------------------------------------\r\n");
+
+    file = pifs_fopen("testfull.dat", "r");
+    if (file)
+    {
+        printf("File opened for reading\r\n");
+        for (i = 0; i < TEST_FULL_PAGES; i++)
+        {
+            generate_buffer(i);
+            read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
+//            print_buffer(test_buf_r, sizeof(test_buf_r), 0);
+            check_buffers();
+        }
+    }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot open file!\r\n");
     }
     pifs_fclose(file);
 #endif
@@ -114,6 +188,10 @@ pifs_status_t pifs_test(void)
             check_buffers();
         }
     }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot open file!\r\n");
+    }
     pifs_fclose(file);
 #endif
 #if ENABLE_WRITE_FRAGMENT_TEST
@@ -128,6 +206,10 @@ pifs_status_t pifs_test(void)
         read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
         //print_buffer(test_buf_r, sizeof(test_buf_r), 0);
         check_buffers();
+    }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot open file!\r\n");
     }
     pifs_fclose(file);
 #endif
@@ -148,8 +230,13 @@ pifs_status_t pifs_test(void)
         }
         check_buffers();
     }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot open file!\r\n");
+    }
     pifs_fclose(file);
 #endif
+    print_fs_info();
     ret = pifs_delete();
     PIFS_ASSERT(ret == PIFS_SUCCESS);
 
