@@ -56,9 +56,9 @@ void print_fs_info(void)
     {
         PIFS_ERROR_MSG("Cannot get free space!\r\n");
     }
-    PIFS_INFO_MSG("Free data area:                     %i bytes, %i pages\r\n",
+    PIFS_INFO_MSG("Free data area:                     %lu bytes, %lu pages\r\n",
                   free_data_bytes, free_data_pages);
-    PIFS_INFO_MSG("Free management area:               %i bytes, %i pages\r\n",
+    PIFS_INFO_MSG("Free management area:               %lu bytes, %lu pages\r\n",
                   free_management_bytes, free_management_pages);
 }
 

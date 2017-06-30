@@ -147,7 +147,7 @@ typedef enum
     PIFS_BLOCK_TYPE_MANAGEMENT = 1,
     /** Data and management information stored as well. */
     PIFS_BLOCK_TYPE_DATA
-} pifs_block_type_t PIFS_PACKED_ATTRIBUTE;
+} pifs_block_type_t;
 
 /**
  * Address of a page in flash memory.

@@ -344,6 +344,50 @@ static pifs_status_t pifs_erase(pifs_block_address_t a_block_address)
 }
 
 /**
+ * @brief pifs_read  Cached read with delta page handling.
+ *
+ * @param a_block_address[in]   Block address of page to read.
+ * @param a_page_address[in]    Page address of page to read.
+ * @param a_page_offset[in]     Offset in page.
+ * @param a_buf[out]            Pointer to buffer to fill or NULL if
+ *                              pifs.page_buf is used.
+ * @param a_buf_size[in]        Size of buffer. Ignored if a_buf is NULL.
+ * @return PIFS_SUCCESS if data read successfully.
+ */
+static pifs_status_t pifs_read_delta(pifs_block_address_t a_block_address,
+                                     pifs_page_address_t a_page_address,
+                                     pifs_page_offset_t a_page_offset,
+                                     void * const a_buf,
+                                     size_t a_buf_size)
+{
+    pifs_status_t ret = PIFS_ERROR;
+
+    return ret;
+}
+
+/**
+ * @brief pifs_write  Cached write with delta page handling.
+ *
+ * @param a_block_address[in]   Block address of page to write.
+ * @param a_page_address[in]    Page address of page to write.
+ * @param a_page_offset[in]     Offset in page.
+ * @param a_buf[in]             Pointer to buffer to write or NULL if
+ *                              pifs.page_buf is directly written.
+ * @param a_buf_size[in]        Size of buffer. Ignored if a_buf is NULL.
+ * @return PIFS_SUCCESS if data write successfully.
+ */
+static pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
+                                      pifs_page_address_t a_page_address,
+                                      pifs_page_offset_t a_page_offset,
+                                      const void * const a_buf,
+                                      size_t a_buf_size)
+{
+    pifs_status_t ret = PIFS_ERROR;
+
+    return ret;
+}
+
+/**
  * @brief pifs_mark_page Mark page(s) as used (or to be released) in free space
  * memory bitmap.
  *
@@ -625,7 +669,7 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
     return ret;
 }
 
-char * byte2bin_str(uint8_t byte)
+static char * byte2bin_str(uint8_t byte)
 {
     uint8_t i;
     static char s[12];
@@ -644,8 +688,8 @@ char * byte2bin_str(uint8_t byte)
  *
  * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
  */
-pifs_status_t pifs_get_free_pages(size_t * a_free_management_page_count,
-                                  size_t * a_free_data_page_count)
+static pifs_status_t pifs_get_free_pages(size_t * a_free_management_page_count,
+                                         size_t * a_free_data_page_count)
 {
     pifs_status_t           ret = PIFS_ERROR;
     pifs_block_address_t    fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
@@ -792,7 +836,14 @@ static void pifs_header_init(pifs_block_address_t a_block_address,
     a_header->entry_list_address.block_address = a_block_address;
     a_header->entry_list_address.page_address = a_page_address + PIFS_HEADER_SIZE_PAGE;
     a_header->free_space_bitmap_address.block_address = a_block_address;
-    a_header->free_space_bitmap_address.page_address = a_page_address + PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE;
+    a_header->free_space_bitmap_address.page_address = a_header->entry_list_address.page_address + PIFS_ENTRY_LIST_SIZE_PAGE;
+    a_header->delta_pages_address.block_address = a_block_address;
+    a_header->delta_pages_address.page_address = a_header->free_space_bitmap_address.page_address + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE;
+    if (a_header->delta_pages_address.page_address + PIFS_DELTA_PAGES_NUM >= PIFS_FLASH_PAGE_PER_BLOCK)
+    {
+        PIFS_ERROR_MSG("Cannot fit data into first management block!\r\n");
+        PIFS_ERROR_MSG("Decrease PIFS_ENTRY_NUM_MAX or PIFS_FILENAME_LEN_MAX or PIFS_DELTA_PAGES_NUM!\r\n");
+    }
 #if PIFS_MANAGEMENT_BLOCKS > 1
     for (i = 0; i < PIFS_MANAGEMENT_BLOCKS; i++)
 #endif
@@ -868,6 +919,13 @@ static pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
         ret = pifs_mark_page(a_header->free_space_bitmap_address.block_address,
                              a_header->free_space_bitmap_address.page_address,
                              PIFS_FREE_SPACE_BITMAP_SIZE_PAGE, TRUE);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        /* Mark first delta page map as used */
+        ret = pifs_mark_page(a_header->delta_pages_address.block_address,
+                             a_header->delta_pages_address.page_address,
+                             PIFS_DELTA_PAGES_NUM, TRUE);
     }
 
     return ret;
@@ -1028,19 +1086,21 @@ pifs_status_t pifs_init(void)
             PIFS_INFO_MSG("Free management area:               %lu bytes, %lu pages\r\n",
                           free_management_bytes, free_management_pages);
 
+#if PIFS_DEBUG_LEVEL >= 6
             {
                 int i;
-                printf("DATA\r\n");
+                printf("DATA blocks\r\n");
                 for (i = 0; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
                 {
                     printf("%i %i\r\n", i, pifs_is_block_type(i, PIFS_BLOCK_TYPE_DATA));
                 }
-                printf("MANAGEMENT\r\n");
+                printf("MANAGEMENT blocks\r\n");
                 for (i = 0; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
                 {
                     printf("%i %i\r\n", i, pifs_is_block_type(i, PIFS_BLOCK_TYPE_MANAGEMENT));
                 }
             }
+#endif
         }
     }
 
