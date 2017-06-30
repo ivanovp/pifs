@@ -69,6 +69,7 @@ pifs_status_t pifs_test(void)
     size_t   written_size = 0;
     size_t   read_size = 0;
     size_t   i = 0;
+    size_t   written_pages = 0;
 
     ret = pifs_init();
     PIFS_ASSERT(ret == PIFS_SUCCESS);
@@ -80,11 +81,21 @@ pifs_status_t pifs_test(void)
     if (file)
     {
         printf("File opened for writing\r\n");
+        written_pages = 0;
         for (i = 0; i < TEST_FULL_PAGES; i++)
         {
             generate_buffer(i);
 //            print_buffer(test_buf_w, sizeof(test_buf_w), 0);
             written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+            if (written_size == sizeof(test_buf_w))
+            {
+                written_pages++;
+            }
+            else
+            {
+                PIFS_DEBUG_MSG("Media full!!!\r\n");
+                break;
+            }
         }
     }
     else
@@ -152,14 +163,14 @@ pifs_status_t pifs_test(void)
     }
     pifs_fclose(file);
 #endif
-#if 0 && ENABLE_FULL_WRITE_TEST
+#if ENABLE_FULL_WRITE_TEST
     printf("-------------------------------------------------\r\n");
 
     file = pifs_fopen("testfull.dat", "r");
     if (file)
     {
         printf("File opened for reading\r\n");
-        for (i = 0; i < TEST_FULL_PAGES; i++)
+        for (i = 0; i < written_pages; i++)
         {
             generate_buffer(i);
             read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);

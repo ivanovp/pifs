@@ -683,7 +683,7 @@ pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
         ret = pifs_read(ba, pa, po, &free_space_bitmap, sizeof(free_space_bitmap));
         if (ret == PIFS_SUCCESS)
         {
-#if 1 || PIFS_DEBUG_LEVEL >= 6
+#if PIFS_DEBUG_LEVEL >= 6
             printf("%s ", byte2bin_str(free_space_bitmap));
             if (((po + 1) % 8) == 0)
             {
@@ -1011,29 +1011,6 @@ pifs_status_t pifs_init(void)
                           free_data_bytes, free_data_pages);
             PIFS_INFO_MSG("Free management area:               %lu bytes, %lu pages\r\n",
                           free_management_bytes, free_management_pages);
-#if 0
-            pifs_mark_page(1, 0, 15, TRUE);
-            {
-                pifs_block_address_t ba;
-                pifs_page_address_t pa;
-                pifs_page_count_t count;
-                if (pifs_find_page(2, 2, PIFS_BLOCK_TYPE_DATA, TRUE, &ba, &pa, &count) == PIFS_SUCCESS)
-                {
-                    pifs_mark_page(ba, pa, count, TRUE);
-                }
-                else
-                {
-                    PIFS_ERROR_MSG("Cant find free page!\r\n");
-                }
-            }
-            pifs_get_free_space(&free_management_bytes, &free_data_bytes,
-                                &free_management_pages, &free_data_pages);
-            PIFS_INFO_MSG("Free data area:                     %lu bytes, %lu pages\r\n",
-                          free_data_bytes, free_data_pages);
-            PIFS_INFO_MSG("Free management area:               %lu bytes, %lu pages\r\n",
-                          free_management_bytes, free_management_pages);
-            exit(-1);
-#endif
         }
     }
 
@@ -1524,6 +1501,7 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
     /* TODO check validity of filename */
     if (pifs.is_header_found && strlen(a_filename))
     {
+        file->status = PIFS_SUCCESS;
         file->write_pos = 0;
         file->write_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
         file->write_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
