@@ -1858,7 +1858,7 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 
 /**
  * @brief pifs_fclose Close file. Works like fclose().
- * @param a_file File to close.
+ * @param[in] a_file File to close.
  * @return 0 if file close, PIFS_EOF if error occurred.
  */
 int pifs_fclose(P_FILE * a_file)
@@ -1876,6 +1876,12 @@ int pifs_fclose(P_FILE * a_file)
     return ret;
 }
 
+/**
+ * @brief pifs_remove Remove file.
+ *
+ * @param[in] a_filename Pointer to filename to be removed.
+ * @return 0 if file removed. -1 if file not found.
+ */
 int pifs_remove(const char * a_filename)
 {
     int ret = -1; /* FIXME error code! */
