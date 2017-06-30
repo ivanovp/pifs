@@ -640,13 +640,11 @@ char * byte2bin_str(uint8_t byte)
 }
 
 /**
- * @brief pifs_get_free_space Find free page(s) in free space memory bitmap.
+ * @brief pifs_get_free_pages Find free page(s) in free space memory bitmap.
  *
  * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
  */
-pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
-                                  size_t * a_free_data_bytes,
-                                  size_t * a_free_management_page_count,
+pifs_status_t pifs_get_free_pages(size_t * a_free_management_page_count,
                                   size_t * a_free_data_page_count)
 {
     pifs_status_t           ret = PIFS_ERROR;
@@ -673,8 +671,6 @@ pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
     }
 #endif
 
-    *a_free_management_bytes = 0;
-    *a_free_data_bytes = 0;
     *a_free_management_page_count = 0;
     *a_free_data_page_count = 0;
 
@@ -741,12 +737,32 @@ pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
         }
     } while (byte_cntr-- > 0 && ret == PIFS_SUCCESS && !end);
 
-    *a_free_management_bytes = *a_free_management_page_count * PIFS_FLASH_PAGE_SIZE_BYTE;
-    *a_free_data_bytes = *a_free_data_page_count * PIFS_FLASH_PAGE_SIZE_BYTE;
-
     if (ret == PIFS_SUCCESS && !found)
     {
         ret = PIFS_ERROR_NO_MORE_SPACE;
+    }
+
+    return ret;
+}
+
+/**
+ * @brief pifs_get_free_space Find free page(s) in free space memory bitmap.
+ *
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
+ */
+pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
+                                  size_t * a_free_data_bytes,
+                                  size_t * a_free_management_page_count,
+                                  size_t * a_free_data_page_count)
+{
+    pifs_status_t           ret = PIFS_ERROR;
+
+    ret = pifs_get_free_pages(a_free_management_page_count, a_free_data_page_count);
+
+    if (ret == PIFS_SUCCESS)
+    {
+        *a_free_management_bytes = *a_free_management_page_count * PIFS_FLASH_PAGE_SIZE_BYTE;
+        *a_free_data_bytes = *a_free_data_page_count * PIFS_FLASH_PAGE_SIZE_BYTE;
     }
 
     return ret;
@@ -782,8 +798,8 @@ static void pifs_header_init(pifs_block_address_t a_block_address,
 #endif
     {
         a_header->management_blocks[i] = ba;
-#if PIFS_MANAGEMENT_BLOCKS > 1
         ba++;
+#if PIFS_MANAGEMENT_BLOCKS > 1
         if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
         {
             ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
@@ -1011,6 +1027,20 @@ pifs_status_t pifs_init(void)
                           free_data_bytes, free_data_pages);
             PIFS_INFO_MSG("Free management area:               %lu bytes, %lu pages\r\n",
                           free_management_bytes, free_management_pages);
+
+            {
+                int i;
+                printf("DATA\r\n");
+                for (i = 0; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
+                {
+                    printf("%i %i\r\n", i, pifs_is_block_type(i, PIFS_BLOCK_TYPE_DATA));
+                }
+                printf("MANAGEMENT\r\n");
+                for (i = 0; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
+                {
+                    printf("%i %i\r\n", i, pifs_is_block_type(i, PIFS_BLOCK_TYPE_MANAGEMENT));
+                }
+            }
         }
     }
 
@@ -1497,6 +1527,8 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
     pifs_block_address_t ba = PIFS_BLOCK_ADDRESS_INVALID;
     pifs_page_address_t  pa = PIFS_PAGE_ADDRESS_INVALID;
     pifs_page_count_t    page_count_found = 0;
+    size_t               free_management_pages = 0;
+    size_t               free_data_pages = 0;
 
     /* TODO check validity of filename */
     if (pifs.is_header_found && strlen(a_filename))
@@ -1522,7 +1554,8 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
             }
             if (file->mode_create_new_file)
             {
-                if (file->status == PIFS_SUCCESS)
+                pifs_get_free_pages(&free_management_pages, &free_data_pages);
+                if (file->status == PIFS_SUCCESS && free_data_pages > 0)
                 {
                     /* File already exist */
                     file->status = pifs_clear_entry(a_filename);
@@ -1702,9 +1735,14 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
     return written_size;
 }
 
+/**
+ * @brief pifs_inc_read_address Increment read address for file reading.
+ *
+ * @param[in] a_file Pointer to the internal file structure.
+ */
 void pifs_inc_read_address(pifs_file_t * a_file)
 {
-  PIFS_DEBUG_MSG("started %s\r\n", address2str(&a_file->read_address));
+//  PIFS_DEBUG_MSG("started %s\r\n", address2str(&a_file->read_address));
   a_file->read_page_count--;
   if (a_file->read_page_count)
   {
@@ -1738,10 +1776,10 @@ void pifs_inc_read_address(pifs_file_t * a_file)
     }
     else
     {
-      PIFS_DEBUG_MSG("status: %i\r\n", a_file->status);
+//      PIFS_DEBUG_MSG("status: %i\r\n", a_file->status);
     }
   }
-  PIFS_DEBUG_MSG("exited %s\r\n", address2str(&a_file->read_address));
+//  PIFS_DEBUG_MSG("exited %s\r\n", address2str(&a_file->read_address));
 }
 
 /**
@@ -1798,7 +1836,7 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
           while (page_count && file->status == PIFS_SUCCESS)
           {
             chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE);
-            PIFS_DEBUG_MSG("read %s\r\n", address2str(&file->read_address));
+//            PIFS_DEBUG_MSG("read %s\r\n", address2str(&file->read_address));
             file->status = pifs_read(file->read_address.block_address,
                                      file->read_address.page_address,
                                      0, data, chunk_size);
@@ -1838,3 +1876,23 @@ int pifs_fclose(P_FILE * a_file)
     return ret;
 }
 
+int pifs_remove(const char * a_filename)
+{
+    int ret = -1; /* FIXME error code! */
+    pifs_file_t * file;
+
+    file = (pifs_file_t*) pifs_fopen(a_filename, "r");
+    if (file)
+    {
+        /* File already exist */
+        file->status = pifs_clear_entry(a_filename);
+        if (file->status == PIFS_SUCCESS)
+        {
+            /* Mark allocated pages to be released */
+            file->status = pifs_find_file_pages(file);
+        }
+        ret = pifs_fclose(file);
+    }
+
+    return ret;
+}

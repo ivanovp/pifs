@@ -18,9 +18,9 @@
 #include "buffer.h"
 
 #define ENABLE_FULL_WRITE_TEST        1
-#define ENABLE_LARGE_TEST             0
-#define ENABLE_WRITE_FRAGMENT_TEST    0
-#define ENABLE_READ_FRAGMENT_TEST     0
+#define ENABLE_LARGE_TEST             1
+#define ENABLE_WRITE_FRAGMENT_TEST    1
+#define ENABLE_READ_FRAGMENT_TEST     1
 
 #define TEST_FULL_PAGES               ( 1792 / 2 )
 
@@ -103,6 +103,34 @@ pifs_status_t pifs_test(void)
         PIFS_ERROR_MSG("Cannot open file!\r\n");
     }
     pifs_fclose(file);
+
+    printf("-------------------------------------------------\r\n");
+
+    file = pifs_fopen("testfull.dat", "r");
+    if (file)
+    {
+        printf("File opened for reading\r\n");
+        for (i = 0; i < written_pages; i++)
+        {
+            generate_buffer(i);
+            read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
+//            print_buffer(test_buf_r, sizeof(test_buf_r), 0);
+            check_buffers();
+        }
+    }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot open file!\r\n");
+    }
+    pifs_fclose(file);
+    if (pifs_remove("testfull.dat") == 0)
+    {
+        printf("File removed!\r\n");
+    }
+    else
+    {
+        printf("ERROR: Cannot remove file!\r\n");
+    }
 #endif
 
 #if ENABLE_LARGE_TEST
@@ -163,27 +191,7 @@ pifs_status_t pifs_test(void)
     }
     pifs_fclose(file);
 #endif
-#if ENABLE_FULL_WRITE_TEST
-    printf("-------------------------------------------------\r\n");
 
-    file = pifs_fopen("testfull.dat", "r");
-    if (file)
-    {
-        printf("File opened for reading\r\n");
-        for (i = 0; i < written_pages; i++)
-        {
-            generate_buffer(i);
-            read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
-//            print_buffer(test_buf_r, sizeof(test_buf_r), 0);
-            check_buffers();
-        }
-    }
-    else
-    {
-        PIFS_ERROR_MSG("Cannot open file!\r\n");
-    }
-    pifs_fclose(file);
-#endif
 #if ENABLE_LARGE_TEST
     printf("-------------------------------------------------\r\n");
 

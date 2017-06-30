@@ -52,7 +52,7 @@ pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
                                   size_t * a_free_data_bytes,
                                   size_t * a_free_management_page_count,
                                   size_t * a_free_data_page_count);
-
+int pifs_remove(const char * a_filename);
 #ifdef __cplusplus
 }
 #endif
