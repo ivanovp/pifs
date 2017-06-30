@@ -76,10 +76,10 @@ void fill_buffer(void * a_buf, size_t a_buf_size, fill_type_t a_fill_type, uint3
 
 pifs_status_t compare_buffer(void * a_buf1, size_t a_buf_size, void * a_buf2)
 {
-    size_t    i;
-    uint8_t * buf1 = a_buf1;
-    uint8_t * buf2 = a_buf2;
-    pifs_status_t ret = PIFS_SUCCESS;
+    size_t          i;
+    uint8_t       * buf1 = a_buf1;
+    uint8_t       * buf2 = a_buf2;
+    pifs_status_t   ret = PIFS_SUCCESS;
 
     for (i = 0; i < a_buf_size; i++)
     {
@@ -89,6 +89,14 @@ pifs_status_t compare_buffer(void * a_buf1, size_t a_buf_size, void * a_buf2)
                     i, buf1[i], buf2[i]);
             ret = PIFS_ERROR;
         }
+    }
+
+    if (ret == PIFS_ERROR)
+    {
+        BUFFER_ERROR_MSG("a_buf1:\r\n");
+        print_buffer(a_buf1, a_buf_size, 0);
+        BUFFER_ERROR_MSG("a_buf2:\r\n");
+        print_buffer(a_buf2, a_buf_size, 0);
     }
 
     return ret;

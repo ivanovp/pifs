@@ -1549,7 +1549,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
     return written_size;
 }
 
-pifs_status_t pifs_inc_read_address(pifs_file_t * a_file)
+void pifs_inc_read_address(pifs_file_t * a_file)
 {
   PIFS_DEBUG_MSG("started %s\r\n", address2str(&a_file->read_address));
   a_file->read_page_count--;
@@ -1617,21 +1617,17 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
         if (po)
         {
           /* There is some data in the last page */
-          PIFS_DEBUG_MSG("po != 0  %s\r\n", address2str(&file->read_address));
-          if (file->read_address.block_address == 255)
-          {
-            PIFS_DEBUG_MSG("HERE\r\n");
-          }
+//          PIFS_DEBUG_MSG("po != 0  %s\r\n", address2str(&file->read_address));
           PIFS_ASSERT(file->read_address.block_address < PIFS_BLOCK_ADDRESS_INVALID);
           PIFS_ASSERT(file->read_address.page_address < PIFS_PAGE_ADDRESS_INVALID);
           chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE - po);
-          PIFS_DEBUG_MSG("--------> pos: %i po: %i data_size: %i chunk_size: %i\r\n",
-                         file->read_pos, po, data_size, chunk_size);
+//          PIFS_DEBUG_MSG("--------> pos: %i po: %i data_size: %i chunk_size: %i\r\n",
+//                         file->read_pos, po, data_size, chunk_size);
           file->status = pifs_read(file->read_address.block_address,
                                    file->read_address.page_address,
                                    po, data, chunk_size);
           //pifs_print_cache();
-          print_buffer(data, chunk_size, 0);
+//          print_buffer(data, chunk_size, 0);
           if (file->status == PIFS_SUCCESS)
           {
             data += chunk_size;
@@ -1653,7 +1649,7 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
             file->status = pifs_read(file->read_address.block_address,
                                      file->read_address.page_address,
                                      0, data, chunk_size);
-            if (file->status == PIFS_SUCCESS)
+            if (file->status == PIFS_SUCCESS && chunk_size == PIFS_FLASH_PAGE_SIZE_BYTE)
             {
               pifs_inc_read_address(file);
             }
