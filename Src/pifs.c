@@ -629,6 +629,111 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
 }
 
 /**
+ * @brief pifs_get_free_space Find free page(s) in free space memory bitmap.
+ *
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
+ */
+static pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
+                                         size_t * a_free_data_bytes,
+                                         size_t * a_free_management_page_count,
+                                         size_t * a_free_data_page_count)
+{
+    pifs_status_t           ret = PIFS_ERROR;
+    pifs_block_address_t    fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
+    pifs_page_address_t     fpa = 0;
+    pifs_block_address_t    ba = pifs.header.free_space_bitmap_address.block_address;
+    pifs_page_address_t     pa = pifs.header.free_space_bitmap_address.page_address;
+    pifs_page_offset_t      po = 0;
+    size_t                  i;
+    uint8_t                 free_space_bitmap = 0;
+    bool_t                  found = FALSE;
+    size_t                  byte_cntr = PIFS_FREE_SPACE_BITMAP_SIZE_BYTE;
+    pifs_bit_pos_t          bit_pos = 0;
+    uint8_t                 mask = 1; /**< Mask for finding free page */
+
+    PIFS_ASSERT(pifs.is_header_found);
+
+#if 0
+    if (!a_is_free)
+    {
+        /* Find to be released page */
+        mask = 2;
+    }
+#endif
+
+    *a_free_management_bytes = 0;
+    *a_free_data_bytes = 0;
+    *a_free_management_page_count = 0;
+    *a_free_data_page_count = 0;
+
+    do
+    {
+        ret = pifs_read(ba, pa, po, &free_space_bitmap, sizeof(free_space_bitmap));
+        if (ret == PIFS_SUCCESS)
+        {
+            for (i = 0; i < (PIFS_BYTE_BITS / 2); i++)
+            {
+                if ((free_space_bitmap & mask))
+                {
+#if PIFS_CHECK_IF_PAGE_IS_ERASED
+                    if (pifs_is_page_erased(fba, fpa))
+#endif
+                    {
+                        found = TRUE;
+                        if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA))
+                        {
+                            (*a_free_data_page_count)++;
+                        }
+                        else
+                        {
+                            (*a_free_management_page_count)++;
+                        }
+                    }
+#if PIFS_CHECK_IF_PAGE_IS_ERASED
+                    else
+                    {
+                        PIFS_ERROR_MSG("Flash page should be erased, but it is not! %s\r\n", ba_pa2str(fba, fpa));
+                    }
+#endif
+                }
+                free_space_bitmap >>= 2;
+                bit_pos += 2;
+                fpa++;
+                if (fpa == PIFS_FLASH_PAGE_PER_BLOCK)
+                {
+                    fpa = 0;
+                    fba++;
+                    if (fba >= PIFS_FLASH_BLOCK_NUM_ALL)
+                    {
+                        ret = PIFS_ERROR_NO_MORE_SPACE;
+                    }
+                }
+            }
+            po++;
+            if (po == PIFS_FLASH_PAGE_SIZE_BYTE)
+            {
+                po = 0;
+                pa++;
+                if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
+                {
+                    PIFS_FATAL_ERROR_MSG("End of block. byte_cntr: %lu\r\n", byte_cntr);
+                }
+            }
+        }
+    } while (byte_cntr-- > 0 && ret == PIFS_SUCCESS);
+
+    *a_free_management_bytes = *a_free_management_page_count * PIFS_FLASH_PAGE_SIZE_BYTE;
+    *a_free_data_bytes = *a_free_data_page_count * PIFS_FLASH_PAGE_SIZE_BYTE;
+
+    if (ret == PIFS_SUCCESS && !found)
+    {
+        ret = PIFS_ERROR_NO_MORE_SPACE;
+    }
+
+    return ret;
+}
+
+/**
  * @brief pifs_header_init Initialize file system's header.
  *
  * @param a_block_address[in]   Block address of header.
@@ -746,6 +851,10 @@ pifs_status_t pifs_init(void)
     pifs_header_t        header;
     pifs_header_t        prev_header;
     pifs_checksum_t      checksum;
+    size_t               free_management_bytes;
+    size_t               free_data_bytes;
+    size_t               free_management_pages;
+    size_t               free_data_pages;
 
     pifs.header_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
     pifs.header_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
@@ -782,10 +891,12 @@ pifs_status_t pifs_init(void)
     PIFS_INFO_MSG("Delta header size:                  %lu bytes\r\n", PIFS_DELTA_HEADER_SIZE_BYTE);
     PIFS_INFO_MSG("Delta entry size:                   %lu bytes\r\n", PIFS_DELTA_ENTRY_SIZE_BYTE);
     PIFS_INFO_MSG("Delta entry/page:                   %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE);
-    PIFS_INFO_MSG("Size of management area:            %i\r\n",
-                   PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_BLOCK_SIZE_BYTE);
-    PIFS_INFO_MSG("Number of management pages:         %i\r\n",
+    PIFS_INFO_MSG("Full reserved area for management:  %i bytes, %i pages\r\n",
+                   PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_BLOCK_SIZE_BYTE,
                    PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_PAGE_PER_BLOCK);
+    PIFS_INFO_MSG("Size of management area:            %i bytes, %i pages\r\n",
+                   PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_BLOCK_SIZE_BYTE,
+                   PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_PAGE_PER_BLOCK);
     PIFS_INFO_MSG("\r\n");
 
     if (PIFS_ENTRY_SIZE_BYTE > PIFS_FLASH_PAGE_SIZE_BYTE)
@@ -875,6 +986,12 @@ pifs_status_t pifs_init(void)
                           address2str(&pifs.header.entry_list_address));
             PIFS_INFO_MSG("Free space bitmap at %s\r\n",
                           address2str(&pifs.header.free_space_bitmap_address));
+            pifs_get_free_space(&free_management_bytes, &free_data_bytes,
+                                &free_management_pages, &free_data_pages);
+            PIFS_INFO_MSG("Free data area:                     %i bytes, %i pages\r\n",
+                          free_data_bytes, free_data_pages);
+            PIFS_INFO_MSG("Free management area:               %i bytes, %i pages\r\n",
+                          free_management_bytes, free_management_pages);
         }
     }
 
@@ -932,7 +1049,7 @@ static bool_t pifs_is_buffer_erased(const void * a_buf, size_t a_buf_size)
  * PIFS_ERROR_NO_MORE_SPACE if entry list is full.
  * PIFS_ERROR_FLASH_WRITE if flash write failed.
  */
-static pifs_status_t pifs_create_entry(const pifs_entry_t * a_entry)
+static pifs_status_t pifs_create_entry(pifs_entry_t * a_entry)
 {
     pifs_status_t        ret = PIFS_ERROR_NO_MORE_SPACE;
     pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
@@ -941,6 +1058,8 @@ static pifs_status_t pifs_create_entry(const pifs_entry_t * a_entry)
     pifs_entry_t       * entry = (pifs_entry_t*) pifs.page_buf;
     size_t               i;
 
+    /* Invert attribute bits */
+    a_entry->attrib ^= a_entry->attrib;
     while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !created)
     {
         ret = pifs_read(ba, pa, 0, NULL, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
@@ -964,6 +1083,8 @@ static pifs_status_t pifs_create_entry(const pifs_entry_t * a_entry)
         }
         pa++;
     }
+    /* Restore attribute bits */
+    a_entry->attrib ^= a_entry->attrib;
 
     return ret;
 }
@@ -998,6 +1119,8 @@ static pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a
                 {
                     /* Copy entry */
                     memcpy(a_entry, &entry[i], sizeof(pifs_entry_t));
+                    /* Invert entry bits as it is stored inverted */
+                    a_entry->attrib ^= a_entry->attrib;
                 }
                 else
                 {
@@ -1391,8 +1514,11 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
                 /* #1 Find a free page for map of file */
                 /* #2 Create entry of file, which contains the map's address */
                 /* #3 Mark map page */
-                file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_BLOCK_TYPE_MANAGEMENT, TRUE,
-                                              &ba, &pa, &page_count_found);
+                if (file->status == PIFS_SUCCESS)
+                {
+                    file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_BLOCK_TYPE_MANAGEMENT, TRUE,
+                                                  &ba, &pa, &page_count_found);
+                }
                 if (file->status == PIFS_SUCCESS)
                 {
                     PIFS_DEBUG_MSG("Map page: %u free page found %s\r\n", page_count_found, ba_pa2str(ba, pa));

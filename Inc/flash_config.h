@@ -15,7 +15,7 @@
 #define FLASH_TYPE_N25Q128A 2
 
 /** Type of emulated flash memory */
-#define FLASH_TYPE          FLASH_TYPE_M25P80
+#define FLASH_TYPE          FLASH_TYPE_M25P40
 
 #if FLASH_TYPE == FLASH_TYPE_M25P40
 /* Geometry of M25P40 */
