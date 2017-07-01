@@ -655,7 +655,12 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                 pa++;
                 if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
                 {
-                    PIFS_FATAL_ERROR_MSG("End of block. byte_cntr: %lu\r\n", byte_cntr);
+                    pa = 0;
+                    ba++;
+                    if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
+                    {
+                        PIFS_FATAL_ERROR_MSG("End of flash byte_cntr: %lu\r\n", byte_cntr);
+                    }
                 }
             }
         }
@@ -775,7 +780,12 @@ static pifs_status_t pifs_get_free_pages(size_t * a_free_management_page_count,
                 pa++;
                 if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
                 {
-                    PIFS_FATAL_ERROR_MSG("End of block. byte_cntr: %lu\r\n", byte_cntr);
+                    pa = 0;
+                    ba++;
+                    if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
+                    {
+                        PIFS_FATAL_ERROR_MSG("End of flash byte_cntr: %lu\r\n", byte_cntr);
+                    }
                 }
             }
         }
@@ -834,18 +844,17 @@ static pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
     a_header->minorVersion = PIFS_MINOR_VERSION;
 #endif
     a_header->counter = 1;
-    a_header->entry_list_address.block_address = a_block_address;
+    a_header->entry_list_address.block_address = ba;
     a_header->entry_list_address.page_address = a_page_address + PIFS_HEADER_SIZE_PAGE;
-    a_header->free_space_bitmap_address.block_address = a_block_address;
+    a_header->free_space_bitmap_address.block_address = ba;
     a_header->free_space_bitmap_address.page_address = a_header->entry_list_address.page_address + PIFS_ENTRY_LIST_SIZE_PAGE;
-    a_header->delta_map_address.block_address = a_block_address;
-    a_header->delta_map_address.page_address = a_header->free_space_bitmap_address.page_address + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE;
-    if (a_header->delta_map_address.page_address + PIFS_DELTA_MAP_PAGE_NUM >= PIFS_FLASH_PAGE_PER_BLOCK)
+    if (a_header->free_space_bitmap_address.page_address + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE >= PIFS_FLASH_PAGE_PER_BLOCK)
     {
-        PIFS_ERROR_MSG("Cannot fit data into first management block!\r\n");
-        PIFS_ERROR_MSG("Decrease PIFS_ENTRY_NUM_MAX or PIFS_FILENAME_LEN_MAX or PIFS_DELTA_PAGES_NUM!\r\n");
-        ret = PIFS_ERROR_CONFIGURATION;
+        ba++;
     }
+    a_header->delta_map_address.block_address = ba;
+    a_header->delta_map_address.page_address = a_header->free_space_bitmap_address.page_address + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE;
+    ba = a_block_address;
 #if PIFS_MANAGEMENT_BLOCKS > 1
     for (i = 0; i < PIFS_MANAGEMENT_BLOCKS; i++)
 #endif
@@ -960,6 +969,15 @@ pifs_status_t pifs_init(void)
     pifs.page_buf_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
     pifs.page_buf_is_dirty = FALSE;
 
+    if (PIFS_ENTRY_SIZE_BYTE > PIFS_FLASH_PAGE_SIZE_BYTE)
+    {
+        PIFS_ERROR_MSG("Entry size (%i) is larger than flash page (%i)!\r\n"
+                       "Change PIFS_FILENAME_LEN_MAX to %i!\r\n",
+                       PIFS_ENTRY_SIZE_BYTE, PIFS_FLASH_PAGE_SIZE_BYTE,
+                       PIFS_FILENAME_LEN_MAX - (PIFS_ENTRY_SIZE_BYTE - PIFS_FLASH_PAGE_SIZE_BYTE));
+        ret = PIFS_ERROR_CONFIGURATION;
+    }
+
     PIFS_INFO_MSG("Geometry of flash memory\r\n");
     PIFS_INFO_MSG("------------------------\r\n");
     PIFS_INFO_MSG("Size of flash memory (all):         %i bytes\r\n", PIFS_FLASH_SIZE_BYTE_ALL);
@@ -997,15 +1015,12 @@ pifs_status_t pifs_init(void)
                    PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_PAGE_PER_BLOCK);
     PIFS_INFO_MSG("\r\n");
 
-    if (PIFS_ENTRY_SIZE_BYTE > PIFS_FLASH_PAGE_SIZE_BYTE)
+    if ((PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE + PIFS_DELTA_MAP_PAGE_NUM) > PIFS_FLASH_PAGE_PER_BLOCK * PIFS_MANAGEMENT_BLOCKS)
     {
-        PIFS_ERROR_MSG("Entry size is larger than flash page! Decrease PIFS_FILENAME_LEN_MAX!\r\n");
-        ret = PIFS_ERROR_CONFIGURATION;
-    }
-
-    if ((PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE) > PIFS_FLASH_PAGE_PER_BLOCK)
-    {
-        PIFS_ERROR_MSG("Entry and free space bitmap is larger than a block! Decrease PIFS_FILENAME_LEN_MAX or PIFS_ENTRY_NUM_MAX!\r\n");
+        PIFS_ERROR_MSG("Cannot fit data into management block!\r\n");
+        PIFS_ERROR_MSG("Decrease PIFS_ENTRY_NUM_MAX or PIFS_FILENAME_LEN_MAX or PIFS_DELTA_PAGES_NUM!\r\n");
+        PIFS_ERROR_MSG("Or increase PIFS_MANAGEMENT_BLOCKS to %lu!\r\n",
+                       (PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE + PIFS_DELTA_MAP_PAGE_NUM + PIFS_FLASH_PAGE_PER_BLOCK - 1) / PIFS_FLASH_PAGE_PER_BLOCK);
         ret = PIFS_ERROR_CONFIGURATION;
     }
 

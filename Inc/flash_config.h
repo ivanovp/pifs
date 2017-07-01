@@ -10,12 +10,14 @@
 #ifndef _INCLUDE_FLASH_CONFIG_H_
 #define _INCLUDE_FLASH_CONFIG_H_
 
-#define FLASH_TYPE_M25P40   0
-#define FLASH_TYPE_M25P80   1
-#define FLASH_TYPE_N25Q128A 2
+#define FLASH_TYPE_M25P40           0
+#define FLASH_TYPE_M25P80           1
+#define FLASH_TYPE_N25Q128A         2
+#define FLASH_TYPE_S25FL127S_64K    3   /**< 64 KiB sector mode */
+#define FLASH_TYPE_S25FL127S_256K   4   /**< 256 KiB sector mode */
 
 /** Type of emulated flash memory */
-#define FLASH_TYPE          FLASH_TYPE_M25P40
+#define FLASH_TYPE          FLASH_TYPE_S25FL127S_64K
 
 #if FLASH_TYPE == FLASH_TYPE_M25P40
 /* Geometry of M25P40 */
@@ -36,6 +38,20 @@
 #define PIFS_FLASH_BLOCK_NUM_ALL            4096u   /**< Number of blocks in flash memory */
 #define PIFS_FLASH_BLOCK_RESERVED_NUM       4u      /**< Index of first block to use by the file system */
 #define PIFS_FLASH_PAGE_PER_BLOCK           16u     /**< Number of pages in a block */
+#define PIFS_FLASH_PAGE_SIZE_BYTE           256u    /**< Size of a page in bytes */
+#define PIFS_FLASH_PAGE_SIZE_SPARE          0u      /**< Number of spare bytes in a page */
+#elif FLASH_TYPE == FLASH_TYPE_S25FL127S_64K
+/* Geometry of Cypress S25FL127S */
+#define PIFS_FLASH_BLOCK_NUM_ALL            256u    /**< Number of blocks in flash memory */
+#define PIFS_FLASH_BLOCK_RESERVED_NUM       0u      /**< Index of first block to use by the file system */
+#define PIFS_FLASH_PAGE_PER_BLOCK           256u    /**< Number of pages in a block */
+#define PIFS_FLASH_PAGE_SIZE_BYTE           256u    /**< Size of a page in bytes */
+#define PIFS_FLASH_PAGE_SIZE_SPARE          0u      /**< Number of spare bytes in a page */
+#elif FLASH_TYPE == FLASH_TYPE_S25FL127S_256K
+/* Geometry of Cypress S25FL127S */
+#define PIFS_FLASH_BLOCK_NUM_ALL            64u     /**< Number of blocks in flash memory */
+#define PIFS_FLASH_BLOCK_RESERVED_NUM       0u      /**< Index of first block to use by the file system */
+#define PIFS_FLASH_PAGE_PER_BLOCK           1024u   /**< Number of pages in a block */
 #define PIFS_FLASH_PAGE_SIZE_BYTE           256u    /**< Size of a page in bytes */
 #define PIFS_FLASH_PAGE_SIZE_SPARE          0u      /**< Number of spare bytes in a page */
 #endif

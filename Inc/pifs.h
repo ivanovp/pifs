@@ -267,7 +267,7 @@ typedef struct
     uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];    /**< Flash page buffer */
     bool_t                  page_buf_is_dirty;
     pifs_file_t             file[PIFS_OPEN_FILE_NUM_MAX];           /**< Opened files */
-    uint8_t                 delta_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE * PIFS_DELTA_MAP_PAGE_NUM];
+    uint8_t                 delta_page_buf[PIFS_DELTA_MAP_PAGE_NUM][PIFS_FLASH_PAGE_SIZE_BYTE];
 } pifs_t;
 
 #endif /* _INCLUDE_PIFS_H_ */
