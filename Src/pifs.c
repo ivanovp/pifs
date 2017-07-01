@@ -755,8 +755,12 @@ static pifs_status_t pifs_get_free_pages(size_t * a_free_management_page_count,
                         {
                             (*a_free_data_page_count)++;
                         }
-                        else
+                        else if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT))
                         {
+                            /* Only count primary management, because secondary
+                             * management pages will be used when this management
+                             * area is full.
+                             */
                             (*a_free_management_page_count)++;
                         }
                     }
@@ -853,11 +857,15 @@ static pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
     a_header->counter = 1;
     a_header->entry_list_address.block_address = ba;
     a_header->entry_list_address.page_address = a_page_address + PIFS_HEADER_SIZE_PAGE;
+    if (a_header->entry_list_address.page_address + PIFS_ENTRY_LIST_SIZE_PAGE >= PIFS_FLASH_PAGE_PER_BLOCK)
+    {
+        ba += (a_header->entry_list_address.page_address + PIFS_ENTRY_LIST_SIZE_PAGE + PIFS_FLASH_PAGE_PER_BLOCK - 1) / PIFS_FLASH_PAGE_PER_BLOCK;
+    }
     a_header->free_space_bitmap_address.block_address = ba;
     a_header->free_space_bitmap_address.page_address = a_header->entry_list_address.page_address + PIFS_ENTRY_LIST_SIZE_PAGE;
     if (a_header->free_space_bitmap_address.page_address + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE >= PIFS_FLASH_PAGE_PER_BLOCK)
     {
-        ba++;
+        ba += (a_header->free_space_bitmap_address.page_address + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE + PIFS_FLASH_PAGE_PER_BLOCK - 1) / PIFS_FLASH_PAGE_PER_BLOCK;
     }
     a_header->delta_map_address.block_address = ba;
     a_header->delta_map_address.page_address = a_header->free_space_bitmap_address.page_address + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE;
@@ -1110,6 +1118,8 @@ pifs_status_t pifs_init(void)
                           address2str(&pifs.header.entry_list_address));
             PIFS_INFO_MSG("Free space bitmap at %s\r\n",
                           address2str(&pifs.header.free_space_bitmap_address));
+            PIFS_INFO_MSG("Delta page map at %s\r\n",
+                          address2str(&pifs.header.delta_map_address));
             pifs_get_free_space(&free_management_bytes, &free_data_bytes,
                                 &free_management_pages, &free_data_pages);
             PIFS_INFO_MSG("Free data area:                     %lu bytes, %lu pages\r\n",
