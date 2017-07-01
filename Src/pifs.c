@@ -22,7 +22,7 @@
 #error PIFS_MANAGEMENT_BLOCKS is greater than PIFS_FLASH_BLOCK_NUM_FS!
 #endif
 #if PIFS_MANAGEMENT_BLOCKS > PIFS_FLASH_BLOCK_NUM_FS / 4
-#warnings PIFS_MANAGEMENT_BLOCKS is larger than PIFS_FLASH_BLOCK_NUM_FS / 4!
+#warning PIFS_MANAGEMENT_BLOCKS is larger than PIFS_FLASH_BLOCK_NUM_FS / 4!
 #endif
 #if PIFS_MANAGEMENT_BLOCKS < 1
 #error PIFS_MANAGEMENT_BLOCKS shall be 1 at minimum!
@@ -41,7 +41,17 @@ static pifs_t pifs =
     .cache_page_buf_is_dirty = FALSE
 };
 
+static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
+                                    pifs_page_count_t a_page_count_desired,
+                                    pifs_block_type_t a_block_type,
+                                    bool_t a_is_free,
+                                    pifs_block_address_t * a_block_address,
+                                    pifs_page_address_t * a_page_address,
+                                    pifs_page_count_t * a_page_count_found);
 static bool_t pifs_is_buffer_erased(const void * a_buf, size_t a_buf_size);
+static pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
+                             pifs_page_address_t a_page_address,
+                             pifs_page_count_t a_page_count, bool_t a_mark_used);
 
 #if PIFS_DEBUG_LEVEL >= 1
 /**
@@ -359,7 +369,7 @@ static pifs_status_t pifs_read_delta_map_page(void)
     {
         ret = pifs_read(ba, pa, 0, &pifs.delta_map_page_buf[i], PIFS_FLASH_PAGE_SIZE_BYTE);
         pa++;
-        if (pa == PIFS_FLASH_PAGE_SIZE_BYTE)
+        if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
         {
             pa = 0;
             ba++;
@@ -386,6 +396,7 @@ static pifs_status_t pifs_write_delta_map_page(size_t delta_map_page_idx)
     size_t               i;
     pifs_status_t        ret = PIFS_SUCCESS;
 
+    /* TODO calculate delta page address instead of increasing */
     for (i = 0; i < PIFS_DELTA_MAP_PAGE_NUM && ret == PIFS_SUCCESS; i++)
     {
         if (i == delta_map_page_idx)
@@ -394,7 +405,7 @@ static pifs_status_t pifs_write_delta_map_page(size_t delta_map_page_idx)
             break;
         }
         pa++;
-        if (pa == PIFS_FLASH_PAGE_SIZE_BYTE)
+        if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
         {
             pa = 0;
             ba++;
@@ -430,7 +441,7 @@ static pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
     {
         for (i = 0; i < PIFS_DELTA_MAP_PAGE_NUM; i++)
         {
-            delta_entry = pifs.delta_map_page_buf[i];
+            delta_entry = (pifs_delta_entry_t*) &pifs.delta_map_page_buf[i];
             for (j = 0; j < PIFS_DELTA_ENTRY_PER_PAGE; j++)
             {
                 if (delta_entry[j].orig_address.block_address == a_block_address
@@ -439,6 +450,10 @@ static pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
                     delta_found = TRUE;
                     ba = delta_entry[j].delta_address.block_address;
                     pa = delta_entry[j].delta_address.page_address;
+                    PIFS_DEBUG_MSG("delta found %s -> ",
+                                   ba_pa2str(a_block_address, a_page_address));
+                    PIFS_DEBUG_MSG("%s\r\n",
+                                   ba_pa2str(ba, pa));
                 }
             }
         }
@@ -474,6 +489,8 @@ static pifs_status_t pifs_read_delta(pifs_block_address_t a_block_address,
     ret = pifs_find_delta_page(a_block_address, a_page_address, &ba, &pa);
     if (ret == PIFS_SUCCESS)
     {
+        PIFS_DEBUG_MSG("%s\r\n",
+                       ba_pa2str(ba, pa));
         ret = pifs_read(ba, pa, a_page_offset, a_buf, a_buf_size);
     }
 
@@ -514,7 +531,7 @@ static pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
     if (ret == PIFS_SUCCESS)
     {
         /* Read to page buffer */
-        ret = pifs_read(ba, pa, &pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE, 0);
+        ret = pifs_read(ba, pa, 0, &pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
     }
     if (ret == PIFS_SUCCESS)
     {
@@ -534,35 +551,54 @@ static pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
                  * therefore a delta page is needed.
                  */
                 delta_needed = TRUE;
+                PIFS_DEBUG_MSG("Delta page needed! orig: 0x%x new: 0x%X\r\n",
+                               pifs.page_buf[i], buf[j]);
             }
         }
     }
-    if (ret == PIFS_SUCCESS && delta_needed)
+    if (ret == PIFS_SUCCESS)
     {
-        /* Find a new data page */
-        ret = pifs_find_page(1, 1, PIFS_BLOCK_TYPE_DATA, TRUE, &fba, &fpa, &page_count_found);
-        if (ret == PIFS_SUCCESS)
+        if (delta_needed)
         {
-            for (i = 0; i < PIFS_DELTA_MAP_PAGE_NUM && !delta_written && ret == PIFS_SUCCESS; i++)
+            /* Find a new data page */
+            ret = pifs_find_page(1, 1, PIFS_BLOCK_TYPE_DATA, TRUE, &fba, &fpa, &page_count_found);
+            if (ret == PIFS_SUCCESS)
             {
-                delta_entry = pifs.delta_map_page_buf[i];
-                for (j = 0; j < PIFS_DELTA_ENTRY_PER_PAGE && !delta_written && ret == PIFS_SUCCESS; j++)
+                PIFS_DEBUG_MSG("free page %s\r\n", ba_pa2str(fba, fpa));
+                for (i = 0; i < PIFS_DELTA_MAP_PAGE_NUM && !delta_written && ret == PIFS_SUCCESS; i++)
                 {
-                    if (pifs_is_buffer_erased(delta_entry[j], PIFS_DELTA_ENTRY_SIZE_BYTE))
+                    delta_entry = (pifs_delta_entry_t*) &pifs.delta_map_page_buf[i];
+                    for (j = 0; j < PIFS_DELTA_ENTRY_PER_PAGE && !delta_written && ret == PIFS_SUCCESS; j++)
                     {
-                        delta_written = TRUE;
-                        delta_entry[j].orig_address.block_address = a_block_address;
-                        delta_entry[j].orig_address.page_address = a_page_address;
-                        delta_entry[j].delta_address.block_address = fba;
-                        delta_entry[j].delta_address.page_address = fpa;
-                        ret = pifs_write(fba, fpa, a_page_offset, pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
-                        if (ret == PIFS_SUCCESS)
+                        if (pifs_is_buffer_erased(&delta_entry[j], PIFS_DELTA_ENTRY_SIZE_BYTE))
                         {
-                            ret = pifs_write_delta_map_page(j);
+                            delta_written = TRUE;
+                            delta_entry[j].orig_address.block_address = a_block_address;
+                            delta_entry[j].orig_address.page_address = a_page_address;
+                            delta_entry[j].delta_address.block_address = fba;
+                            delta_entry[j].delta_address.page_address = fpa;
+                            PIFS_DEBUG_MSG("delta page %s -> ",
+                                           ba_pa2str(a_block_address, a_page_address));
+                            PIFS_DEBUG_MSG("%s\r\n",
+                                           ba_pa2str(fba, fpa));
+                            ret = pifs_write(fba, fpa, a_page_offset, a_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+                            if (ret == PIFS_SUCCESS)
+                            {
+                                ret = pifs_write_delta_map_page(j);
+                            }
+                            if (ret == PIFS_SUCCESS)
+                            {
+                                ret = pifs_mark_page(fba, fba, 1, TRUE);
+                            }
                         }
                     }
                 }
             }
+        }
+        else
+        {
+            /* No delta page needed, simple write */
+            ret = pifs_write(ba, pa, a_page_offset, a_buf, a_buf_size);
         }
     }
 
@@ -707,10 +743,12 @@ static bool_t pifs_is_block_type(pifs_block_address_t a_block_address, pifs_bloc
             is_block_type = (a_block_type == PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT);
         }
     }
+#if PIFS_FLASH_BLOCK_RESERVED_NUM
     if (a_block_address < PIFS_FLASH_BLOCK_RESERVED_NUM)
     {
         is_block_type = (a_block_type == PIFS_BLOCK_TYPE_RESERVED);
     }
+#endif
 
     return is_block_type;
 }
@@ -752,12 +790,12 @@ static bool_t pifs_is_page_erased(pifs_block_address_t a_block_address,
  * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
  */
 static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
-                             pifs_page_count_t a_page_count_desired,
-                             pifs_block_type_t a_block_type,
-                             bool_t a_is_free,
-                             pifs_block_address_t * a_block_address,
-                             pifs_page_address_t * a_page_address,
-                             pifs_page_count_t * a_page_count_found)
+                                    pifs_page_count_t a_page_count_desired,
+                                    pifs_block_type_t a_block_type,
+                                    bool_t a_is_free,
+                                    pifs_block_address_t * a_block_address,
+                                    pifs_page_address_t * a_page_address,
+                                    pifs_page_count_t * a_page_count_found)
 {
     pifs_status_t           ret = PIFS_ERROR;
     pifs_block_address_t    fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
@@ -1141,6 +1179,8 @@ static pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
     return ret;
 }
 
+#include "buffer.h" // FIXME DEBUG
+
 /**
  * @brief pifs_init Initialize flash driver and file system.
  *
@@ -1168,8 +1208,8 @@ pifs_status_t pifs_init(void)
 
     if (PIFS_ENTRY_SIZE_BYTE > PIFS_FLASH_PAGE_SIZE_BYTE)
     {
-        PIFS_ERROR_MSG("Entry size (%i) is larger than flash page (%i)!\r\n"
-                       "Change PIFS_FILENAME_LEN_MAX to %i!\r\n",
+        PIFS_ERROR_MSG("Entry size (%lu) is larger than flash page (%u)!\r\n"
+                       "Change PIFS_FILENAME_LEN_MAX to %lu!\r\n",
                        PIFS_ENTRY_SIZE_BYTE, PIFS_FLASH_PAGE_SIZE_BYTE,
                        PIFS_FILENAME_LEN_MAX - (PIFS_ENTRY_SIZE_BYTE - PIFS_FLASH_PAGE_SIZE_BYTE));
         ret = PIFS_ERROR_CONFIGURATION;
@@ -1204,7 +1244,7 @@ pifs_status_t pifs_init(void)
     PIFS_INFO_MSG("Delta entry size:                   %lu bytes\r\n", PIFS_DELTA_ENTRY_SIZE_BYTE);
     PIFS_INFO_MSG("Number of delta entries/page:       %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE);
     PIFS_INFO_MSG("Number of delta entries:            %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE * PIFS_DELTA_MAP_PAGE_NUM);
-    PIFS_INFO_MSG("Delta map size:                     %lu bytes, %lu pages\r\n", PIFS_DELTA_MAP_PAGE_NUM * PIFS_FLASH_PAGE_SIZE_BYTE, PIFS_DELTA_MAP_PAGE_NUM);
+    PIFS_INFO_MSG("Delta map size:                     %u bytes, %u pages\r\n", PIFS_DELTA_MAP_PAGE_NUM * PIFS_FLASH_PAGE_SIZE_BYTE, PIFS_DELTA_MAP_PAGE_NUM);
     PIFS_INFO_MSG("Full reserved area for management:  %i bytes, %i pages\r\n",
                    PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_BLOCK_SIZE_BYTE,
                    PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_PAGE_PER_BLOCK);
@@ -1334,6 +1374,23 @@ pifs_status_t pifs_init(void)
                 }
             }
 #endif
+            {
+                pifs_block_address_t ba = 1;
+                pifs_page_address_t  pa = 0;
+                pifs_status_t ret;
+                char test_buf[256];
+                char test_buf2[256];
+
+                fill_buffer(test_buf, sizeof(test_buf), FILL_TYPE_SEQUENCE_WORD, 0x1);
+                ret = pifs_write_delta(ba, pa, 0, test_buf, sizeof (test_buf));
+                test_buf[0] = 0xff;
+                test_buf[1] = 0xff;
+                ret = pifs_write_delta(ba, pa, 0, test_buf, sizeof (test_buf));
+//                pifs_flush();
+                ret = pifs_read_delta(ba, pa, 0, test_buf2, sizeof(test_buf2));
+                print_buffer(test_buf2, sizeof(test_buf2), 0);
+                exit(-1);
+            }
         }
     }
 

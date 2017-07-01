@@ -20,7 +20,7 @@
 #define FLASH_TYPE_W25Q16DV_64K     7   /**< 64 KiB sector mode */
 
 /** Type of emulated flash memory */
-#define FLASH_TYPE                  FLASH_TYPE_W25Q16DV_4K
+#define FLASH_TYPE                  FLASH_TYPE_M25P40
 
 #if FLASH_TYPE == FLASH_TYPE_M25P40
 /* Geometry of ST M25P40 */
