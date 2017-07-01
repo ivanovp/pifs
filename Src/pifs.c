@@ -516,10 +516,13 @@ static bool_t pifs_is_block_type(pifs_block_address_t a_block_address, pifs_bloc
     for (i = 0; i < PIFS_MANAGEMENT_BLOCKS; i++)
 #endif
     {
-        if (pifs.header.management_blocks[i] == a_block_address 
-                || pifs.header.next_management_blocks[i] == a_block_address)
+        if (pifs.header.management_blocks[i] == a_block_address)
         {
-            is_block_type = (a_block_type == PIFS_BLOCK_TYPE_MANAGEMENT);
+            is_block_type = (a_block_type == PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT);
+        }
+        if (pifs.header.next_management_blocks[i] == a_block_address)
+        {
+            is_block_type = (a_block_type == PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT);
         }
     }
 
@@ -1007,6 +1010,7 @@ pifs_status_t pifs_init(void)
     PIFS_INFO_MSG("Delta entry size:                   %lu bytes\r\n", PIFS_DELTA_ENTRY_SIZE_BYTE);
     PIFS_INFO_MSG("Number of delta entries/page:       %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE);
     PIFS_INFO_MSG("Number of delta entries:            %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE * PIFS_DELTA_MAP_PAGE_NUM);
+    PIFS_INFO_MSG("Delta map size:                     %lu bytes, %lu pages\r\n", PIFS_DELTA_MAP_PAGE_NUM * PIFS_FLASH_PAGE_SIZE_BYTE, PIFS_DELTA_MAP_PAGE_NUM);
     PIFS_INFO_MSG("Full reserved area for management:  %i bytes, %i pages\r\n",
                    PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_BLOCK_SIZE_BYTE,
                    PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_PAGE_PER_BLOCK);
@@ -1117,10 +1121,15 @@ pifs_status_t pifs_init(void)
                 {
                     printf("%i %i\r\n", i, pifs_is_block_type(i, PIFS_BLOCK_TYPE_DATA));
                 }
-                printf("MANAGEMENT blocks\r\n");
+                printf("PRIMARY MANAGEMENT blocks\r\n");
                 for (i = 0; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
                 {
-                    printf("%i %i\r\n", i, pifs_is_block_type(i, PIFS_BLOCK_TYPE_MANAGEMENT));
+                    printf("%i %i\r\n", i, pifs_is_block_type(i, PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT));
+                }
+                printf("SECONDARY MANAGEMENT blocks\r\n");
+                for (i = 0; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
+                {
+                    printf("%i %i\r\n", i, pifs_is_block_type(i, PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT));
                 }
             }
 #endif
@@ -1525,7 +1534,7 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
     if (a_file->status == PIFS_ERROR_END_OF_FILE)
     {
         PIFS_DEBUG_MSG("End of map, new map will be created\r\n");
-        a_file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_BLOCK_TYPE_MANAGEMENT, TRUE,
+        a_file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT, TRUE,
                                         &ba, &pa, &page_count_found);
         if (a_file->status == PIFS_SUCCESS)
         {
@@ -1659,7 +1668,7 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
                 /* #3 Mark map page */
                 if (file->status == PIFS_SUCCESS)
                 {
-                    file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_BLOCK_TYPE_MANAGEMENT, TRUE,
+                    file->status = pifs_find_page(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM, PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT, TRUE,
                                                   &ba, &pa, &page_count_found);
                 }
                 if (file->status == PIFS_SUCCESS)

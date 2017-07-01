@@ -144,9 +144,11 @@ typedef uint32_t pifs_page_count_t;
 
 typedef enum
 {
-    /** Only management information stored in the block. */
-    PIFS_BLOCK_TYPE_MANAGEMENT = 1,
-    /** Data and management information stored as well. */
+    /** Only management information stored in the block. Actual management block. */
+    PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT = 1,
+    /** Only management information stored in the block. Next management block. */
+    PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT,
+    /** Data stored in the block. */
     PIFS_BLOCK_TYPE_DATA
 } pifs_block_type_t;
 

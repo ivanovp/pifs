@@ -17,7 +17,7 @@
 #define FLASH_TYPE_S25FL127S_256K   4   /**< 256 KiB sector mode */
 
 /** Type of emulated flash memory */
-#define FLASH_TYPE          FLASH_TYPE_S25FL127S_64K
+#define FLASH_TYPE                  FLASH_TYPE_M25P40
 
 #if FLASH_TYPE == FLASH_TYPE_M25P40
 /* Geometry of M25P40 */
