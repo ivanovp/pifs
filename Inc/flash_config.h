@@ -22,7 +22,7 @@
 #if FLASH_TYPE == FLASH_TYPE_M25P40
 /* Geometry of M25P40 */
 #define PIFS_FLASH_BLOCK_NUM_ALL            8u      /**< Number of blocks in flash memory */
-#define PIFS_FLASH_BLOCK_RESERVED_NUM       0u      /**< Index of first block to use by the file system */
+#define PIFS_FLASH_BLOCK_RESERVED_NUM       1u      /**< Index of first block to use by the file system */
 #define PIFS_FLASH_PAGE_PER_BLOCK           256u    /**< Number of pages in a block */
 #define PIFS_FLASH_PAGE_SIZE_BYTE           256u    /**< Size of a page in bytes */
 #define PIFS_FLASH_PAGE_SIZE_SPARE          0u      /**< Number of spare bytes in a page */

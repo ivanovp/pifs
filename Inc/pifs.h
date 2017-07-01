@@ -149,7 +149,9 @@ typedef enum
     /** Only management information stored in the block. Next management block. */
     PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT,
     /** Data stored in the block. */
-    PIFS_BLOCK_TYPE_DATA
+    PIFS_BLOCK_TYPE_DATA,
+    /** Reserved block */
+    PIFS_BLOCK_TYPE_RESERVED
 } pifs_block_type_t;
 
 /**

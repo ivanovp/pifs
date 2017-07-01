@@ -525,6 +525,10 @@ static bool_t pifs_is_block_type(pifs_block_address_t a_block_address, pifs_bloc
             is_block_type = (a_block_type == PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT);
         }
     }
+    if (a_block_address < PIFS_FLASH_BLOCK_RESERVED_NUM)
+    {
+        is_block_type = (a_block_type == PIFS_BLOCK_TYPE_RESERVED);
+    }
 
     return is_block_type;
 }
@@ -1130,6 +1134,11 @@ pifs_status_t pifs_init(void)
                 for (i = 0; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
                 {
                     printf("%i %i\r\n", i, pifs_is_block_type(i, PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT));
+                }
+                printf("RESERVED blocks\r\n");
+                for (i = 0; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
+                {
+                    printf("%i %i\r\n", i, pifs_is_block_type(i, PIFS_BLOCK_TYPE_RESERVED));
                 }
             }
 #endif
