@@ -236,7 +236,6 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 {
     pifs_address_t          delta_address;
     pifs_address_t          orig_address;
-    pifs_page_count_t       page_count;
 } pifs_delta_entry_t;
 
 /**
@@ -273,11 +272,15 @@ typedef struct
     bool_t                  is_header_found;
     pifs_header_t           header;
 //    pifs_object_id_t        latest_object_id;
-    pifs_address_t          page_buf_address;                       /**< Address of page_buf */
-    uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];    /**< Flash page buffer */
-    bool_t                  page_buf_is_dirty;
-    pifs_file_t             file[PIFS_OPEN_FILE_NUM_MAX];           /**< Opened files */
-    uint8_t                 delta_page_buf[PIFS_DELTA_MAP_PAGE_NUM][PIFS_FLASH_PAGE_SIZE_BYTE];
+    pifs_address_t          cache_page_buf_address;                       /**< Address of cache_page_buf */
+    uint8_t                 cache_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];    /**< Flash page buffer for cache */
+    bool_t                  cache_page_buf_is_dirty;
+    pifs_file_t             file[PIFS_OPEN_FILE_NUM_MAX];                 /**< Opened files */
+    uint8_t                 delta_map_page_buf[PIFS_DELTA_MAP_PAGE_NUM][PIFS_FLASH_PAGE_SIZE_BYTE];
+    bool_t                  delta_map_page_is_read PIFS_BOOL_SIZE;
+    bool_t                  delta_map_page_is_dirty PIFS_BOOL_SIZE;
+    size_t                  delta_map_entry_count;
+    uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];           /**< Flash page buffer */
 } pifs_t;
 
 #endif /* _INCLUDE_PIFS_H_ */

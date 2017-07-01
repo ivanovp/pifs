@@ -80,7 +80,7 @@
 #define PIFS_FLASH_PAGE_SIZE_SPARE          0u      /**< Number of spare bytes in a page */
 #endif
 
-#define PIFS_FLASH_ERASED_VALUE       0xFFu
-#define PIFS_FLASH_PROGRAMMED_VALUE   0x00u
+#define PIFS_FLASH_ERASED_BYTE_VALUE        0xFFu
+#define PIFS_FLASH_PROGRAMMED_BYTE_VALUE    (PIFS_FLASH_ERASED_BYTE_VALUE ^ 0xFFu)
 
 #endif /* _INCLUDE_FLASH_CONFIG_H_ */

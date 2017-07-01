@@ -36,9 +36,9 @@ static pifs_t pifs =
     .is_header_found = FALSE,
     .header = { 0 },
 //    .latest_object_id = 1,
-    .page_buf_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
-    .page_buf = { 0 },
-    .page_buf_is_dirty = FALSE
+    .cache_page_buf_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
+    .cache_page_buf = { 0 },
+    .cache_page_buf_is_dirty = FALSE
 };
 
 static bool_t pifs_is_buffer_erased(const void * a_buf, size_t a_buf_size);
@@ -86,9 +86,9 @@ static char * ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_
  */
 static void pifs_print_cache(void)
 {
-    print_buffer(pifs.page_buf, sizeof(pifs.page_buf),
-                 pifs.page_buf_address.block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
-                 + pifs.page_buf_address.page_address * PIFS_FLASH_PAGE_SIZE_BYTE);
+    print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf),
+                 pifs.cache_page_buf_address.block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
+                 + pifs.cache_page_buf_address.page_address * PIFS_FLASH_PAGE_SIZE_BYTE);
 }
 #else
 #define pifs_print_cache()
@@ -189,20 +189,20 @@ static pifs_status_t pifs_flush(void)
 {
     pifs_status_t ret = PIFS_SUCCESS;
 
-    if (pifs.page_buf_is_dirty)
+    if (pifs.cache_page_buf_is_dirty)
     {
-        ret = pifs_flash_write(pifs.page_buf_address.block_address,
-                               pifs.page_buf_address.page_address,
+        ret = pifs_flash_write(pifs.cache_page_buf_address.block_address,
+                               pifs.cache_page_buf_address.page_address,
                                0,
-                               pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+                               pifs.cache_page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
         if (ret == PIFS_SUCCESS)
         {
-            pifs.page_buf_is_dirty = FALSE;
+            pifs.cache_page_buf_is_dirty = FALSE;
         }
         else
         {
             PIFS_ERROR_MSG("Cannot flush buffer %s\r\n",
-                           address2str(&pifs.page_buf_address));
+                           address2str(&pifs.cache_page_buf_address));
         }
     }
 
@@ -216,7 +216,7 @@ static pifs_status_t pifs_flush(void)
  * @param a_page_address[in]    Page address of page to read.
  * @param a_page_offset[in]     Offset in page.
  * @param a_buf[out]            Pointer to buffer to fill or NULL if
- *                              pifs.page_buf is used.
+ *                              pifs.cache_page_buf is used.
  * @param a_buf_size[in]        Size of buffer. Ignored if a_buf is NULL.
  * @return PIFS_SUCCESS if data read successfully.
  */
@@ -228,13 +228,13 @@ static pifs_status_t pifs_read(pifs_block_address_t a_block_address,
 {
     pifs_status_t ret = PIFS_ERROR;
 
-    if (a_block_address == pifs.page_buf_address.block_address
-            && a_page_address == pifs.page_buf_address.page_address)
+    if (a_block_address == pifs.cache_page_buf_address.block_address
+            && a_page_address == pifs.cache_page_buf_address.page_address)
     {
         /* Cache hit */
         if (a_buf)
         {
-            memcpy(a_buf, &pifs.page_buf[a_page_offset], a_buf_size);
+            memcpy(a_buf, &pifs.cache_page_buf[a_page_offset], a_buf_size);
         }
         ret = PIFS_SUCCESS;
     }
@@ -246,17 +246,17 @@ static pifs_status_t pifs_read(pifs_block_address_t a_block_address,
         if (ret == PIFS_SUCCESS)
         {
             ret = pifs_flash_read(a_block_address, a_page_address, 0,
-                                  pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+                                  pifs.cache_page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
         }
 
         if (ret == PIFS_SUCCESS)
         {
             if (a_buf)
             {
-                memcpy(a_buf, &pifs.page_buf[a_page_offset], a_buf_size);
+                memcpy(a_buf, &pifs.cache_page_buf[a_page_offset], a_buf_size);
             }
-            pifs.page_buf_address.block_address = a_block_address;
-            pifs.page_buf_address.page_address = a_page_address;
+            pifs.cache_page_buf_address.block_address = a_block_address;
+            pifs.cache_page_buf_address.page_address = a_page_address;
         }
     }
 
@@ -270,7 +270,7 @@ static pifs_status_t pifs_read(pifs_block_address_t a_block_address,
  * @param a_page_address[in]    Page address of page to write.
  * @param a_page_offset[in]     Offset in page.
  * @param a_buf[in]             Pointer to buffer to write or NULL if
- *                              pifs.page_buf is directly written.
+ *                              pifs.cache_page_buf is directly written.
  * @param a_buf_size[in]        Size of buffer. Ignored if a_buf is NULL.
  * @return PIFS_SUCCESS if data write successfully.
  */
@@ -282,15 +282,15 @@ static pifs_status_t pifs_write(pifs_block_address_t a_block_address,
 {
     pifs_status_t ret = PIFS_ERROR;
 
-    if (a_block_address == pifs.page_buf_address.block_address
-            && a_page_address == pifs.page_buf_address.page_address)
+    if (a_block_address == pifs.cache_page_buf_address.block_address
+            && a_page_address == pifs.cache_page_buf_address.page_address)
     {
         /* Cache hit */
         if (a_buf)
         {
-            memcpy(&pifs.page_buf[a_page_offset], a_buf, a_buf_size);
+            memcpy(&pifs.cache_page_buf[a_page_offset], a_buf, a_buf_size);
         }
-        pifs.page_buf_is_dirty = TRUE;
+        pifs.cache_page_buf_is_dirty = TRUE;
         ret = PIFS_SUCCESS;
     }
     else
@@ -304,16 +304,16 @@ static pifs_status_t pifs_write(pifs_block_address_t a_block_address,
             {
                 /* Only part of page is written */
                 ret = pifs_flash_read(a_block_address, a_page_address, 0,
-                                      pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+                                      pifs.cache_page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
             }
 
             if (a_buf)
             {
-                memcpy(&pifs.page_buf[a_page_offset], a_buf, a_buf_size);
+                memcpy(&pifs.cache_page_buf[a_page_offset], a_buf, a_buf_size);
             }
-            pifs.page_buf_address.block_address = a_block_address;
-            pifs.page_buf_address.page_address = a_page_address;
-            pifs.page_buf_is_dirty = TRUE;
+            pifs.cache_page_buf_address.block_address = a_block_address;
+            pifs.cache_page_buf_address.page_address = a_page_address;
+            pifs.cache_page_buf_is_dirty = TRUE;
         }
     }
 
@@ -332,25 +332,132 @@ static pifs_status_t pifs_erase(pifs_block_address_t a_block_address)
 
     ret = pifs_flash_erase(a_block_address);
 
-    if (a_block_address == pifs.page_buf_address.block_address)
+    if (a_block_address == pifs.cache_page_buf_address.block_address)
     {
         /* If the block was erased which contains the cached page, simply forget it */
-        pifs.page_buf_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
-        pifs.page_buf_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
-        pifs.page_buf_is_dirty = FALSE;
+        pifs.cache_page_buf_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
+        pifs.cache_page_buf_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
+        pifs.cache_page_buf_is_dirty = FALSE;
     }
 
     return ret;
 }
 
 /**
- * @brief pifs_read  Cached read with delta page handling.
+ * @brief pifs_read_delta_map_page Read delta map pages to memory buffer.
+ *
+ * @return PIFS_SUCCES
+ */
+static pifs_status_t pifs_read_delta_map_page(void)
+{
+    pifs_block_address_t ba = pifs.header.delta_map_address.block_address;
+    pifs_page_address_t  pa = pifs.header.delta_map_address.page_address;
+    size_t               i;
+    pifs_status_t        ret = PIFS_SUCCESS;
+
+    for (i = 0; i < PIFS_DELTA_MAP_PAGE_NUM && ret == PIFS_SUCCESS; i++)
+    {
+        ret = pifs_read(ba, pa, 0, &pifs.delta_map_page_buf[i], PIFS_FLASH_PAGE_SIZE_BYTE);
+        pa++;
+        if (pa == PIFS_FLASH_PAGE_SIZE_BYTE)
+        {
+            pa = 0;
+            ba++;
+            if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
+            {
+                PIFS_ERROR_MSG("End of flash. %s", ba_pa2str(ba, pa));
+                ret = PIFS_ERROR_INTERNAL_RANGE;
+            }
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * @brief pifs_write_delta_map_page Read delta map pages to memory buffer.
+ *
+ * @return PIFS_SUCCES
+ */
+static pifs_status_t pifs_write_delta_map_page(size_t delta_map_page_idx)
+{
+    pifs_block_address_t ba = pifs.header.delta_map_address.block_address;
+    pifs_page_address_t  pa = pifs.header.delta_map_address.page_address;
+    size_t               i;
+    pifs_status_t        ret = PIFS_SUCCESS;
+
+    for (i = 0; i < PIFS_DELTA_MAP_PAGE_NUM && ret == PIFS_SUCCESS; i++)
+    {
+        if (i == delta_map_page_idx)
+        {
+            ret = pifs_write(ba, pa, 0, &pifs.delta_map_page_buf[i], PIFS_FLASH_PAGE_SIZE_BYTE);
+            break;
+        }
+        pa++;
+        if (pa == PIFS_FLASH_PAGE_SIZE_BYTE)
+        {
+            pa = 0;
+            ba++;
+            if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
+            {
+                PIFS_ERROR_MSG("End of flash. %s", ba_pa2str(ba, pa));
+                ret = PIFS_ERROR_INTERNAL_RANGE;
+            }
+        }
+    }
+
+    return ret;
+}
+
+static pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
+                                     pifs_page_address_t a_page_address,
+                                     pifs_block_address_t * a_delta_block_address,
+                                     pifs_page_address_t * a_delta_page_address)
+{
+    pifs_status_t        ret = PIFS_SUCCESS;
+    size_t               i;
+    size_t               j;
+    pifs_delta_entry_t * delta_entry;
+    bool_t               delta_found = FALSE;
+    pifs_block_address_t ba = a_block_address;
+    pifs_page_address_t  pa = a_page_address;
+
+    if (!pifs.delta_map_page_is_read)
+    {
+        ret = pifs_read_delta_map_page();
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        for (i = 0; i < PIFS_DELTA_MAP_PAGE_NUM; i++)
+        {
+            delta_entry = pifs.delta_map_page_buf[i];
+            for (j = 0; j < PIFS_DELTA_ENTRY_PER_PAGE; j++)
+            {
+                if (delta_entry[j].orig_address.block_address == a_block_address
+                        && delta_entry[j].orig_address.page_address == a_page_address)
+                {
+                    delta_found = TRUE;
+                    ba = delta_entry[j].delta_address.block_address;
+                    pa = delta_entry[j].delta_address.page_address;
+                }
+            }
+        }
+        *a_delta_block_address = ba;
+        *a_delta_page_address = pa;
+    }
+
+    return ret;
+}
+
+
+/**
+ * @brief pifs_read_delta  Cached read with delta page handling.
  *
  * @param a_block_address[in]   Block address of page to read.
  * @param a_page_address[in]    Page address of page to read.
  * @param a_page_offset[in]     Offset in page.
  * @param a_buf[out]            Pointer to buffer to fill or NULL if
- *                              pifs.page_buf is used.
+ *                              pifs.cache_page_buf is used.
  * @param a_buf_size[in]        Size of buffer. Ignored if a_buf is NULL.
  * @return PIFS_SUCCESS if data read successfully.
  */
@@ -360,7 +467,15 @@ static pifs_status_t pifs_read_delta(pifs_block_address_t a_block_address,
                                      void * const a_buf,
                                      size_t a_buf_size)
 {
-    pifs_status_t ret = PIFS_ERROR;
+    pifs_status_t        ret = PIFS_SUCCESS;
+    pifs_block_address_t ba;
+    pifs_page_address_t  pa;
+
+    ret = pifs_find_delta_page(a_block_address, a_page_address, &ba, &pa);
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_read(ba, pa, a_page_offset, a_buf, a_buf_size);
+    }
 
     return ret;
 }
@@ -372,7 +487,7 @@ static pifs_status_t pifs_read_delta(pifs_block_address_t a_block_address,
  * @param a_page_address[in]    Page address of page to write.
  * @param a_page_offset[in]     Offset in page.
  * @param a_buf[in]             Pointer to buffer to write or NULL if
- *                              pifs.page_buf is directly written.
+ *                              pifs.cache_page_buf is directly written.
  * @param a_buf_size[in]        Size of buffer. Ignored if a_buf is NULL.
  * @return PIFS_SUCCESS if data write successfully.
  */
@@ -382,7 +497,74 @@ static pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
                                       const void * const a_buf,
                                       size_t a_buf_size)
 {
-    pifs_status_t ret = PIFS_ERROR;
+    pifs_status_t        ret = PIFS_SUCCESS;
+    size_t               i;
+    size_t               j;
+    pifs_delta_entry_t * delta_entry;
+    bool_t               delta_needed = FALSE;
+    bool_t               delta_written = FALSE;
+    pifs_block_address_t ba;
+    pifs_page_address_t  pa;
+    uint8_t            * buf = (uint8_t*) a_buf;
+    pifs_block_address_t fba;
+    pifs_page_address_t  fpa;
+    pifs_page_count_t    page_count_found;
+
+    ret = pifs_find_delta_page(a_block_address, a_page_address, &ba, &pa);
+    if (ret == PIFS_SUCCESS)
+    {
+        /* Read to page buffer */
+        ret = pifs_read(ba, pa, &pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE, 0);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        for (i = a_page_offset, j = 0; i < a_buf_size && !delta_needed; i++, j++)
+        {
+            /* Checking if only bit programming is needed.
+             * When erased value if 0xFF, bit programming generated falling edge
+             * on data.
+             */
+#if PIFS_FLASH_ERASED_BYTE_VALUE == 0xFF
+            if ((pifs.page_buf[i] ^ buf[j]) & buf[j])         /* Detecting rising edge */
+#else
+            if ((pifs.page_buf[i] ^ buf[j]) & pifs.cache_page_buf[i]) /* Detecting falling edge */
+#endif
+            {
+                /* Bit erasing would be necessary to store the data,
+                 * therefore a delta page is needed.
+                 */
+                delta_needed = TRUE;
+            }
+        }
+    }
+    if (ret == PIFS_SUCCESS && delta_needed)
+    {
+        /* Find a new data page */
+        ret = pifs_find_page(1, 1, PIFS_BLOCK_TYPE_DATA, TRUE, &fba, &fpa, &page_count_found);
+        if (ret == PIFS_SUCCESS)
+        {
+            for (i = 0; i < PIFS_DELTA_MAP_PAGE_NUM && !delta_written && ret == PIFS_SUCCESS; i++)
+            {
+                delta_entry = pifs.delta_map_page_buf[i];
+                for (j = 0; j < PIFS_DELTA_ENTRY_PER_PAGE && !delta_written && ret == PIFS_SUCCESS; j++)
+                {
+                    if (pifs_is_buffer_erased(delta_entry[j], PIFS_DELTA_ENTRY_SIZE_BYTE))
+                    {
+                        delta_written = TRUE;
+                        delta_entry[j].orig_address.block_address = a_block_address;
+                        delta_entry[j].orig_address.page_address = a_page_address;
+                        delta_entry[j].delta_address.block_address = fba;
+                        delta_entry[j].delta_address.page_address = fpa;
+                        ret = pifs_write(fba, fpa, a_page_offset, pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+                        if (ret == PIFS_SUCCESS)
+                        {
+                            ret = pifs_write_delta_map_page(j);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     return ret;
 }
@@ -423,21 +605,21 @@ static pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
         if (ret == PIFS_SUCCESS)
         {
             PIFS_ASSERT((bit_pos / PIFS_BYTE_BITS) < PIFS_FLASH_PAGE_SIZE_BYTE);
-//            print_buffer(pifs.page_buf, sizeof(pifs.page_buf), 0);
-//            PIFS_DEBUG_MSG("-Free space byte:    0x%02X\r\n", pifs.page_buf[bit_pos / PIFS_BYTE_BITS]);
-            is_free_space = pifs.page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << (bit_pos % PIFS_BYTE_BITS));
-            is_not_to_be_released = pifs.page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << ((bit_pos % PIFS_BYTE_BITS) + 1));
+//            print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf), 0);
+//            PIFS_DEBUG_MSG("-Free space byte:    0x%02X\r\n", pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS]);
+            is_free_space = pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << (bit_pos % PIFS_BYTE_BITS));
+            is_not_to_be_released = pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << ((bit_pos % PIFS_BYTE_BITS) + 1));
 //            PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", is_free_space);
 //            PIFS_DEBUG_MSG("-Release space bit:  %i\r\n", is_not_to_be_released);
-//            PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", (pifs.page_buf[bit_pos / PIFS_BYTE_BITS] >> (bit_pos % PIFS_BYTE_BITS)) & 1);
-//            PIFS_DEBUG_MSG("-Release space bit:  %i\r\n", (pifs.page_buf[bit_pos / PIFS_BYTE_BITS] >> ((bit_pos % PIFS_BYTE_BITS) + 1)) & 1);
+//            PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", (pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] >> (bit_pos % PIFS_BYTE_BITS)) & 1);
+//            PIFS_DEBUG_MSG("-Release space bit:  %i\r\n", (pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] >> ((bit_pos % PIFS_BYTE_BITS) + 1)) & 1);
             if (a_mark_used)
             {
                 /* Mark page used */
                 if (is_free_space)
                 {
                     /* Clear free bit */
-                    pifs.page_buf[bit_pos / PIFS_BYTE_BITS] &= ~(1u << (bit_pos % PIFS_BYTE_BITS));
+                    pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] &= ~(1u << (bit_pos % PIFS_BYTE_BITS));
                 }
                 else
                 {
@@ -454,7 +636,7 @@ static pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                     if (is_not_to_be_released)
                     {
                         /* Clear release bit */
-                        pifs.page_buf[bit_pos / PIFS_BYTE_BITS] &= ~(1u << ((bit_pos % PIFS_BYTE_BITS) + 1));
+                        pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] &= ~(1u << ((bit_pos % PIFS_BYTE_BITS) + 1));
                     }
                     else
                     {
@@ -470,9 +652,9 @@ static pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                     ret = PIFS_ERROR_INTERNAL_ALLOCATION;
                 }
             }
-//            PIFS_DEBUG_MSG("+Free space byte:    0x%02X\r\n", pifs.page_buf[bit_pos / PIFS_BYTE_BITS]);
-//            PIFS_DEBUG_MSG("+Free space bit:     %i\r\n", (pifs.page_buf[bit_pos / PIFS_BYTE_BITS] >> (bit_pos % PIFS_BYTE_BITS)) & 1);
-//            PIFS_DEBUG_MSG("+Release space bit:  %i\r\n", (pifs.page_buf[bit_pos / PIFS_BYTE_BITS] >> ((bit_pos % PIFS_BYTE_BITS) + 1)) & 1);
+//            PIFS_DEBUG_MSG("+Free space byte:    0x%02X\r\n", pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS]);
+//            PIFS_DEBUG_MSG("+Free space bit:     %i\r\n", (pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] >> (bit_pos % PIFS_BYTE_BITS)) & 1);
+//            PIFS_DEBUG_MSG("+Release space bit:  %i\r\n", (pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] >> ((bit_pos % PIFS_BYTE_BITS) + 1)) & 1);
             /* Write new status to cache */
             ret = pifs_write(ba, pa, 0, NULL, 0);
         }
@@ -548,7 +730,7 @@ static bool_t pifs_is_page_erased(pifs_block_address_t a_block_address,
     status = pifs_read(a_block_address, a_page_address, 0, NULL, 0);
     if (status == PIFS_SUCCESS)
     {
-        is_erased = pifs_is_buffer_erased(pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+        is_erased = pifs_is_buffer_erased(pifs.cache_page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
     }
     return is_erased;
 }
@@ -666,7 +848,7 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                     ba++;
                     if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
                     {
-                        PIFS_FATAL_ERROR_MSG("End of flash byte_cntr: %lu\r\n", byte_cntr);
+                        PIFS_FATAL_ERROR_MSG("End of flash! byte_cntr: %lu\r\n", byte_cntr);
                     }
                 }
             }
@@ -795,7 +977,7 @@ static pifs_status_t pifs_get_free_pages(size_t * a_free_management_page_count,
                     ba++;
                     if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
                     {
-                        PIFS_FATAL_ERROR_MSG("End of flash byte_cntr: %lu\r\n", byte_cntr);
+                        PIFS_FATAL_ERROR_MSG("End of flash! byte_cntr: %lu\r\n", byte_cntr);
                     }
                 }
             }
@@ -980,9 +1162,9 @@ pifs_status_t pifs_init(void)
     pifs.header_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
     pifs.header_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
     pifs.is_header_found = FALSE;
-    pifs.page_buf_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
-    pifs.page_buf_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
-    pifs.page_buf_is_dirty = FALSE;
+    pifs.cache_page_buf_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
+    pifs.cache_page_buf_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
+    pifs.cache_page_buf_is_dirty = FALSE;
 
     if (PIFS_ENTRY_SIZE_BYTE > PIFS_FLASH_PAGE_SIZE_BYTE)
     {
@@ -1192,7 +1374,7 @@ static bool_t pifs_is_buffer_erased(const void * a_buf, size_t a_buf_size)
 
     for (i = 0; i < a_buf_size && ret; i++)
     {
-        if (buf[i] != PIFS_FLASH_ERASED_VALUE)
+        if (buf[i] != PIFS_FLASH_ERASED_BYTE_VALUE)
         {
             ret = FALSE;
         }
@@ -1215,7 +1397,7 @@ static pifs_status_t pifs_create_entry(pifs_entry_t * a_entry)
     pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
     pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
     bool_t               created = FALSE;
-    pifs_entry_t       * entry = (pifs_entry_t*) pifs.page_buf;
+    pifs_entry_t       * entry = (pifs_entry_t*) pifs.cache_page_buf;
     size_t               i;
 
     /* Invert attribute bits */
@@ -1263,7 +1445,7 @@ static pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a
     pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
     pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
     bool_t               found = FALSE;
-    pifs_entry_t       * entry = (pifs_entry_t*) pifs.page_buf;
+    pifs_entry_t       * entry = (pifs_entry_t*) pifs.cache_page_buf;
     size_t               i;
 
     while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !found && ret == PIFS_SUCCESS)
@@ -1285,7 +1467,7 @@ static pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a
                 else
                 {
                     /* Clear entry */
-                    memset(&entry[i], PIFS_FLASH_PROGRAMMED_VALUE, sizeof(pifs_entry_t));
+                    memset(&entry[i], PIFS_FLASH_PROGRAMMED_BYTE_VALUE, sizeof(pifs_entry_t));
                     ret = pifs_write(ba, pa, 0, NULL, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
                 }
                 found = TRUE;
@@ -1580,7 +1762,7 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
         if (a_file->status == PIFS_SUCCESS)
         {
             /* Set jump address to previous map */
-            memset(&a_file->map_header, PIFS_FLASH_ERASED_VALUE, PIFS_MAP_HEADER_SIZE_BYTE);
+            memset(&a_file->map_header, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_MAP_HEADER_SIZE_BYTE);
             a_file->map_header.prev_map_address.block_address = a_file->actual_map_address.block_address;
             a_file->map_header.prev_map_address.page_address = a_file->actual_map_address.page_address;
             /* Update actual map's address */
@@ -1815,7 +1997,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                         {
                             pa = 0;
                             ba++;
-                            if (ba == PIFS_FLASH_BLOCK_NUM_ALL)
+                            if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
                             {
                                 PIFS_FATAL_ERROR_MSG("Trying to write to invalid flash address! %s\r\n",
                                                      ba_pa2str(ba, pa));
