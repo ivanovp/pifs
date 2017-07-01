@@ -15,26 +15,29 @@
 #define FLASH_TYPE_N25Q128A         2
 #define FLASH_TYPE_S25FL127S_64K    3   /**< 64 KiB sector mode */
 #define FLASH_TYPE_S25FL127S_256K   4   /**< 256 KiB sector mode */
+#define FLASH_TYPE_W25Q16DV_4K      5   /**< 4 KiB sector mode */
+#define FLASH_TYPE_W25Q16DV_32K     6   /**< 32 KiB sector mode */
+#define FLASH_TYPE_W25Q16DV_64K     7   /**< 64 KiB sector mode */
 
 /** Type of emulated flash memory */
-#define FLASH_TYPE                  FLASH_TYPE_M25P40
+#define FLASH_TYPE                  FLASH_TYPE_W25Q16DV_4K
 
 #if FLASH_TYPE == FLASH_TYPE_M25P40
-/* Geometry of M25P40 */
+/* Geometry of ST M25P40 */
 #define PIFS_FLASH_BLOCK_NUM_ALL            8u      /**< Number of blocks in flash memory */
-#define PIFS_FLASH_BLOCK_RESERVED_NUM       1u      /**< Index of first block to use by the file system */
+#define PIFS_FLASH_BLOCK_RESERVED_NUM       0u      /**< Index of first block to use by the file system */
 #define PIFS_FLASH_PAGE_PER_BLOCK           256u    /**< Number of pages in a block */
 #define PIFS_FLASH_PAGE_SIZE_BYTE           256u    /**< Size of a page in bytes */
 #define PIFS_FLASH_PAGE_SIZE_SPARE          0u      /**< Number of spare bytes in a page */
 #elif FLASH_TYPE == FLASH_TYPE_M25P80
-/* Geometry of M25P40 */
+/* Geometry of ST M25P40 */
 #define PIFS_FLASH_BLOCK_NUM_ALL            16u     /**< Number of blocks in flash memory */
 #define PIFS_FLASH_BLOCK_RESERVED_NUM       0u      /**< Index of first block to use by the file system */
 #define PIFS_FLASH_PAGE_PER_BLOCK           256u    /**< Number of pages in a block */
 #define PIFS_FLASH_PAGE_SIZE_BYTE           256u    /**< Size of a page in bytes */
 #define PIFS_FLASH_PAGE_SIZE_SPARE          0u      /**< Number of spare bytes in a page */
 #elif FLASH_TYPE == FLASH_TYPE_N25Q128A
-/* Geometry of N25Q128A */
+/* Geometry of Micron N25Q128A */
 #define PIFS_FLASH_BLOCK_NUM_ALL            4096u   /**< Number of blocks in flash memory */
 #define PIFS_FLASH_BLOCK_RESERVED_NUM       4u      /**< Index of first block to use by the file system */
 #define PIFS_FLASH_PAGE_PER_BLOCK           16u     /**< Number of pages in a block */
@@ -52,6 +55,27 @@
 #define PIFS_FLASH_BLOCK_NUM_ALL            64u     /**< Number of blocks in flash memory */
 #define PIFS_FLASH_BLOCK_RESERVED_NUM       0u      /**< Index of first block to use by the file system */
 #define PIFS_FLASH_PAGE_PER_BLOCK           1024u   /**< Number of pages in a block */
+#define PIFS_FLASH_PAGE_SIZE_BYTE           256u    /**< Size of a page in bytes */
+#define PIFS_FLASH_PAGE_SIZE_SPARE          0u      /**< Number of spare bytes in a page */
+#elif FLASH_TYPE == FLASH_TYPE_W25Q16DV_4K
+/* Geometry of Winbond W25Q16DV */
+#define PIFS_FLASH_BLOCK_NUM_ALL            512u    /**< Number of blocks in flash memory */
+#define PIFS_FLASH_BLOCK_RESERVED_NUM       0u      /**< Index of first block to use by the file system */
+#define PIFS_FLASH_PAGE_PER_BLOCK           16u     /**< Number of pages in a block */
+#define PIFS_FLASH_PAGE_SIZE_BYTE           256u    /**< Size of a page in bytes */
+#define PIFS_FLASH_PAGE_SIZE_SPARE          0u      /**< Number of spare bytes in a page */
+#elif FLASH_TYPE == FLASH_TYPE_W25Q16DV_32K
+/* Geometry of Winbond W25Q16DV */
+#define PIFS_FLASH_BLOCK_NUM_ALL            64u     /**< Number of blocks in flash memory */
+#define PIFS_FLASH_BLOCK_RESERVED_NUM       0u      /**< Index of first block to use by the file system */
+#define PIFS_FLASH_PAGE_PER_BLOCK           128u    /**< Number of pages in a block */
+#define PIFS_FLASH_PAGE_SIZE_BYTE           256u    /**< Size of a page in bytes */
+#define PIFS_FLASH_PAGE_SIZE_SPARE          0u      /**< Number of spare bytes in a page */
+#elif FLASH_TYPE == FLASH_TYPE_W25Q16DV_64K
+/* Geometry of Winbond W25Q16DV */
+#define PIFS_FLASH_BLOCK_NUM_ALL            32u     /**< Number of blocks in flash memory */
+#define PIFS_FLASH_BLOCK_RESERVED_NUM       0u      /**< Index of first block to use by the file system */
+#define PIFS_FLASH_PAGE_PER_BLOCK           256u    /**< Number of pages in a block */
 #define PIFS_FLASH_PAGE_SIZE_BYTE           256u    /**< Size of a page in bytes */
 #define PIFS_FLASH_PAGE_SIZE_SPARE          0u      /**< Number of spare bytes in a page */
 #endif
