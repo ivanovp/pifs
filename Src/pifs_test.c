@@ -52,7 +52,7 @@ void print_fs_info(void)
     size_t               free_management_pages;
     size_t               free_data_pages;
     if (pifs_get_free_space(&free_management_bytes, &free_data_bytes,
-                                    &free_management_pages, &free_data_pages) != PIFS_SUCCESS)
+                            &free_management_pages, &free_data_pages) != PIFS_SUCCESS)
     {
         PIFS_ERROR_MSG("Cannot get free space!\r\n");
     }
