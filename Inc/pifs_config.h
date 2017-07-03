@@ -18,7 +18,7 @@
 #define PIFS_PAGE_COUNT_SIZE            2u   /**< Size of page count variable of map entry in bytes. Valid values are 1, 2 and 4. */
 #define PIFS_OPTIMIZE_FOR_RAM           1u   /**< 1: Use less RAM, 0: Use more RAM, but faster code execution */
 #define PIFS_CHECK_IF_PAGE_IS_ERASED    1u   /**< 1: Check if page is erased */
-#define PIFS_DELTA_MAP_PAGE_NUM         4u   /**< Number of delta page maps */
+#define PIFS_DELTA_MAP_PAGE_NUM         1u   /**< Number of delta page maps */
 
 #define PIFS_PACKED_ATTRIBUTE           __attribute__((packed))
 

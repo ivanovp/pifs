@@ -426,9 +426,10 @@ static pifs_status_t pifs_write_delta_map_page(size_t delta_map_page_idx)
 }
 
 static pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
-                                     pifs_page_address_t a_page_address,
-                                     pifs_block_address_t * a_delta_block_address,
-                                     pifs_page_address_t * a_delta_page_address)
+                                          pifs_page_address_t a_page_address,
+                                          pifs_block_address_t * a_delta_block_address,
+                                          pifs_page_address_t * a_delta_page_address,
+                                          bool_t * a_is_map_full)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     size_t               i;
@@ -443,6 +444,10 @@ static pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
     }
     if (ret == PIFS_SUCCESS)
     {
+        if (a_is_map_full)
+        {
+            *a_is_map_full = TRUE;
+        }
         /* All delta pages shall be checked to find latest delta page! */
         for (i = 0; i < PIFS_DELTA_MAP_PAGE_NUM; i++)
         {
@@ -459,6 +464,11 @@ static pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
                     PIFS_DEBUG_MSG("%s\r\n",
                                    ba_pa2str(ba, pa));
                 }
+                if (a_is_map_full && *a_is_map_full
+                        && pifs_is_buffer_erased(&delta_entry[j], sizeof(PIFS_DELTA_ENTRY_SIZE_BYTE)))
+                {
+                    *a_is_map_full = FALSE;
+                }
             }
         }
         *a_delta_block_address = ba;
@@ -468,6 +478,41 @@ static pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
     return ret;
 }
 
+static pifs_status_t pifs_append_delta_map_entry(pifs_delta_entry_t * a_new_delta_entry)
+{
+    pifs_status_t        ret = PIFS_SUCCESS;
+    size_t               i;
+    size_t               j;
+    pifs_delta_entry_t * delta_entry;
+    bool_t               delta_written = FALSE;
+
+    if (!pifs.delta_map_page_is_read)
+    {
+        ret = pifs_read_delta_map_page();
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        for (i = 0; i < PIFS_DELTA_MAP_PAGE_NUM && !delta_written && ret == PIFS_SUCCESS; i++)
+        {
+            delta_entry = (pifs_delta_entry_t*) &pifs.delta_map_page_buf[i];
+            for (j = 0; j < PIFS_DELTA_ENTRY_PER_PAGE && !delta_written && ret == PIFS_SUCCESS; j++)
+            {
+                if (pifs_is_buffer_erased(&delta_entry[j], PIFS_DELTA_ENTRY_SIZE_BYTE))
+                {
+                    delta_entry[j] = *a_new_delta_entry;
+                    ret = pifs_write_delta_map_page(i);
+                    delta_written = TRUE;
+                }
+            }
+        }
+        if (!delta_written)
+        {
+            ret = PIFS_ERROR_NO_MORE_SPACE;
+        }
+    }
+
+    return ret;
+}
 
 /**
  * @brief pifs_read_delta  Cached read with delta page handling.
@@ -490,7 +535,7 @@ static pifs_status_t pifs_read_delta(pifs_block_address_t a_block_address,
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
 
-    ret = pifs_find_delta_page(a_block_address, a_page_address, &ba, &pa);
+    ret = pifs_find_delta_page(a_block_address, a_page_address, &ba, &pa, NULL);
     if (ret == PIFS_SUCCESS)
     {
         PIFS_DEBUG_MSG("%s\r\n",
@@ -524,7 +569,7 @@ static pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
     pifs_status_t        ret = PIFS_SUCCESS;
     size_t               i;
     size_t               j;
-    pifs_delta_entry_t * delta_entry;
+    pifs_delta_entry_t   delta_entry;
     bool_t               delta_needed = FALSE;
     bool_t               delta_written = FALSE;
     pifs_block_address_t ba;
@@ -533,8 +578,9 @@ static pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
     pifs_block_address_t fba;
     pifs_page_address_t  fpa;
     pifs_page_count_t    page_count_found;
+    bool_t               is_delta_map_full;
 
-    ret = pifs_find_delta_page(a_block_address, a_page_address, &ba, &pa);
+    ret = pifs_find_delta_page(a_block_address, a_page_address, &ba, &pa, &is_delta_map_full);
     if (ret == PIFS_SUCCESS)
     {
         /* Read to page buffer */
@@ -569,55 +615,54 @@ static pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
         {
             /* Find a new data page */
             *a_is_delta = TRUE;
-            ret = pifs_find_page(1, 1, PIFS_BLOCK_TYPE_DATA, TRUE, &fba, &fpa, &page_count_found);
+            if (is_delta_map_full)
+            {
+                PIFS_WARNING_MSG("Management blocks shall be merged!\r\n");
+                ret = pifs_merge_management();
+            }
+            if (ret == PIFS_SUCCESS)
+            {
+                ret = pifs_find_page(1, 1, PIFS_BLOCK_TYPE_DATA, TRUE, &fba, &fpa, &page_count_found);
+            }
             if (ret == PIFS_SUCCESS)
             {
                 PIFS_DEBUG_MSG("free page %s\r\n", ba_pa2str(fba, fpa));
-                for (i = 0; i < PIFS_DELTA_MAP_PAGE_NUM && !delta_written && ret == PIFS_SUCCESS; i++)
+
+                delta_entry.orig_address.block_address = a_block_address;
+                delta_entry.orig_address.page_address = a_page_address;
+                delta_entry.delta_address.block_address = fba;
+                delta_entry.delta_address.page_address = fpa;
+                PIFS_DEBUG_MSG("delta page %s -> ",
+                               ba_pa2str(a_block_address, a_page_address));
+                PIFS_DEBUG_MSG("%s\r\n",
+                               ba_pa2str(fba, fpa));
+                ret = pifs_write(fba, fpa, a_page_offset, a_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+                if (ret == PIFS_SUCCESS)
                 {
-                    delta_entry = (pifs_delta_entry_t*) &pifs.delta_map_page_buf[i];
-                    for (j = 0; j < PIFS_DELTA_ENTRY_PER_PAGE && !delta_written && ret == PIFS_SUCCESS; j++)
+                    ret = pifs_append_delta_map_entry(&delta_entry);
+                }
+                if (ret == PIFS_SUCCESS)
+                {
+                    /* Mark new page as used */
+                    ret = pifs_mark_page(fba, fpa, 1, TRUE);
+                    PIFS_DEBUG_MSG("Mark page %s as used: %i\r\n", ba_pa2str(fba, fpa), ret);
                     {
-                        if (pifs_is_buffer_erased(&delta_entry[j], PIFS_DELTA_ENTRY_SIZE_BYTE))
-                        {
-                            delta_entry[j].orig_address.block_address = a_block_address;
-                            delta_entry[j].orig_address.page_address = a_page_address;
-                            delta_entry[j].delta_address.block_address = fba;
-                            delta_entry[j].delta_address.page_address = fpa;
-                            PIFS_DEBUG_MSG("delta page %s -> ",
-                                           ba_pa2str(a_block_address, a_page_address));
-                            PIFS_DEBUG_MSG("%s\r\n",
-                                           ba_pa2str(fba, fpa));
-                            ret = pifs_write(fba, fpa, a_page_offset, a_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
-                            if (ret == PIFS_SUCCESS)
-                            {
-                                ret = pifs_write_delta_map_page(i);
-                            }
-                            if (ret == PIFS_SUCCESS)
-                            {
-                                /* Mark new page as used */
-                                ret = pifs_mark_page(fba, fpa, 1, TRUE);
-                                PIFS_DEBUG_MSG("Mark page %s as used: %i\r\n", ba_pa2str(fba, fpa), ret);
-                                {
-                                    pifs_block_address_t ba0;
-                                    pifs_page_address_t  pa0;
-                                    pifs_page_count_t    count0;
-                                    pifs_find_page(1, 1, PIFS_BLOCK_TYPE_DATA, TRUE,
-                                                   &ba0, &pa0, &count0);
-                                    PIFS_DEBUG_MSG("Find page %s, count: %i ret: %i\r\n",
-                                                   ba_pa2str(ba0, pa0), count0, ret);
-                                }
-                            }
-                            if (ret == PIFS_SUCCESS)
-                            {
-                                /* Mark old page (original or previous delta)
-                                 * as to be released */
-                                ret = pifs_mark_page(ba, pa, 1, FALSE);
-                                PIFS_DEBUG_MSG("Mark page %s as to be released: %i\r\n", ba_pa2str(a_block_address, a_page_address), ret);
-                                delta_written = TRUE;
-                            }
-                        }
+                        pifs_block_address_t ba0;
+                        pifs_page_address_t  pa0;
+                        pifs_page_count_t    count0;
+                        pifs_find_page(1, 1, PIFS_BLOCK_TYPE_DATA, TRUE,
+                                       &ba0, &pa0, &count0);
+                        PIFS_DEBUG_MSG("Find page %s, count: %i ret: %i\r\n",
+                                       ba_pa2str(ba0, pa0), count0, ret);
                     }
+                }
+                if (ret == PIFS_SUCCESS)
+                {
+                    /* Mark old page (original or previous delta)
+                     * as to be released */
+                    ret = pifs_mark_page(ba, pa, 1, FALSE);
+                    PIFS_DEBUG_MSG("Mark page %s as to be released: %i\r\n", ba_pa2str(a_block_address, a_page_address), ret);
+                    delta_written = TRUE;
                 }
             }
         }
