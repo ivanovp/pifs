@@ -514,6 +514,13 @@ static pifs_status_t pifs_append_delta_map_entry(pifs_delta_entry_t * a_new_delt
     return ret;
 }
 
+static pifs_status_t pifs_merge_management(void)
+{
+    pifs_status_t        ret = PIFS_SUCCESS;
+
+    return ret;
+}
+
 /**
  * @brief pifs_read_delta  Cached read with delta page handling.
  *
@@ -646,15 +653,6 @@ static pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
                     /* Mark new page as used */
                     ret = pifs_mark_page(fba, fpa, 1, TRUE);
                     PIFS_DEBUG_MSG("Mark page %s as used: %i\r\n", ba_pa2str(fba, fpa), ret);
-                    {
-                        pifs_block_address_t ba0;
-                        pifs_page_address_t  pa0;
-                        pifs_page_count_t    count0;
-                        pifs_find_page(1, 1, PIFS_BLOCK_TYPE_DATA, TRUE,
-                                       &ba0, &pa0, &count0);
-                        PIFS_DEBUG_MSG("Find page %s, count: %i ret: %i\r\n",
-                                       ba_pa2str(ba0, pa0), count0, ret);
-                    }
                 }
                 if (ret == PIFS_SUCCESS)
                 {
