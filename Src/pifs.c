@@ -588,7 +588,7 @@ static pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
                             }
                             if (ret == PIFS_SUCCESS)
                             {
-                                ret = pifs_mark_page(fba, fba, 1, TRUE);
+                                ret = pifs_mark_page(fba, fpa, 1, TRUE);
                             }
                         }
                     }
