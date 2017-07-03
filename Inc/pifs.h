@@ -180,6 +180,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     uint8_t                 minorVersion;
 #endif
     uint32_t                counter;
+    /* FIXME these arrays could be avoided ba..ba+PIFS_MANAGEMENT_BLOCKS-1 defines the array! */
     pifs_block_address_t    management_blocks[PIFS_MANAGEMENT_BLOCKS];
     pifs_block_address_t    next_management_blocks[PIFS_MANAGEMENT_BLOCKS];
     pifs_address_t          free_space_bitmap_address;
