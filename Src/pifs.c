@@ -612,7 +612,7 @@ static pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
                             {
                                 /* Mark old page (original or previous delta)
                                  * as to be released */
-                                ret = pifs_mark_page(ba, ba, 1, FALSE);
+                                ret = pifs_mark_page(ba, pa, 1, FALSE);
                                 PIFS_DEBUG_MSG("Mark page %s as to be released: %i\r\n", ba_pa2str(a_block_address, a_page_address), ret);
                                 delta_written = TRUE;
                             }
@@ -928,7 +928,7 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
         ret = pifs_read(ba, pa, po, &free_space_bitmap, sizeof(free_space_bitmap));
         if (ret == PIFS_SUCCESS)
         {
-            PIFS_DEBUG_MSG("%s %i 0x%X\r\n", ba_pa2str(ba, pa), po, free_space_bitmap);
+//            PIFS_DEBUG_MSG("%s %i 0x%X\r\n", ba_pa2str(ba, pa), po, free_space_bitmap);
             for (i = 0; i < (PIFS_BYTE_BITS / 2) && !found; i++)
             {
                 if ((free_space_bitmap & mask) && pifs_is_block_type(fba, a_block_type))
