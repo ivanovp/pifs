@@ -98,6 +98,26 @@ static char * ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_
 
     return str;
 }
+
+/**
+ * @brief byte2bin_str Convert a byte to binary string.
+ *
+ * @param[in] byte  Byte to convert.
+ * @return Binary string.
+ */
+static char * byte2bin_str(uint8_t byte)
+{
+    uint8_t i;
+    static char s[12];
+
+    s[0] = 0;
+    for (i = 0; i < PIFS_BYTE_BITS; i++)
+    {
+        strncat(s, (byte & 0x80) ? "1" : "0", sizeof(s));
+        byte <<= 1;
+    }
+    return s;
+}
 #endif
 
 #if PIFS_DEBUG_LEVEL >= 5
@@ -1075,16 +1095,19 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                 {
                     page_count_found = 0;
                 }
-                free_space_bitmap >>= 2;
-                bit_pos += 2;
-                fpa++;
-                if (fpa == PIFS_FLASH_PAGE_PER_BLOCK)
+                if (!found)
                 {
-                    fpa = 0;
-                    fba++;
-                    if (fba >= PIFS_FLASH_BLOCK_NUM_ALL)
+                    free_space_bitmap >>= 2;
+                    bit_pos += 2;
+                    fpa++;
+                    if (fpa == PIFS_FLASH_PAGE_PER_BLOCK)
                     {
-                        ret = PIFS_ERROR_NO_MORE_SPACE;
+                        fpa = 0;
+                        fba++;
+                        if (fba >= PIFS_FLASH_BLOCK_NUM_ALL)
+                        {
+                            ret = PIFS_ERROR_NO_MORE_SPACE;
+                        }
                     }
                 }
             }
@@ -1112,20 +1135,6 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
     }
 
     return ret;
-}
-
-static char * byte2bin_str(uint8_t byte)
-{
-    uint8_t i;
-    static char s[12];
-
-    s[0] = 0;
-    for (i = 0; i < PIFS_BYTE_BITS; i++)
-    {
-        strncat(s, (byte & 0x80) ? "1" : "0", sizeof(s));
-        byte <<= 1;
-    }
-    return s;
 }
 
 /**
@@ -2205,8 +2214,6 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
                 PIFS_ASSERT(file->status == PIFS_SUCCESS);
                 file->read_address = file->map_entry.address;
                 file->read_page_count = file->map_entry.page_count;
-                PIFS_DEBUG_MSG("read_address: %s read_page_count: %i\r\n",
-                               address2str(&file->read_address), file->read_page_count);
             }
         }
     }
@@ -2277,7 +2284,8 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                 }
                 file->status = pifs_find_page(1, page_count_needed_limited, PIFS_BLOCK_TYPE_DATA, TRUE,
                                               &ba, &pa, &page_count_found);
-                PIFS_DEBUG_MSG("%u pages found. %s\r\n", page_count_found, ba_pa2str(ba, pa));
+                PIFS_DEBUG_MSG("%u pages found. %s, status: %i\r\n",
+                               page_count_found, ba_pa2str(ba, pa), file->status);
                 if (file->status == PIFS_SUCCESS)
                 {
                     ba_start = ba;

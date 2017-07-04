@@ -23,15 +23,16 @@
 #define ENABLE_WRITE_FRAGMENT_TEST    0
 #define ENABLE_READ_FRAGMENT_TEST     0
 
-#define TEST_FULL_PAGES               ( 1792 / 2 )
+#define TEST_FULL_PAGE_NUM            (PIFS_FLASH_PAGE_NUM_FS / 2)
+#define TEST_BUF_SIZE                 (PIFS_FLASH_PAGE_SIZE_BYTE * 2)
 
 #define PIFS_TEST_ERROR_MSG(...)    do { \
         printf("%s ERROR: ", __FUNCTION__); \
         printf(__VA_ARGS__); \
     } while (0);
 
-uint8_t test_buf_w[2 * 256] __attribute__((aligned(4)));
-uint8_t test_buf_r[2 * 256] __attribute__((aligned(4)));
+uint8_t test_buf_w[TEST_BUF_SIZE] __attribute__((aligned(4)));
+uint8_t test_buf_r[TEST_BUF_SIZE] __attribute__((aligned(4)));
 
 void generate_buffer(uint32_t sequence_start)
 {
@@ -83,7 +84,7 @@ pifs_status_t pifs_test(void)
     {
         printf("File opened for writing\r\n");
         written_pages = 0;
-        for (i = 0; i < TEST_FULL_PAGES; i++)
+        for (i = 0; i < TEST_FULL_PAGE_NUM; i++)
         {
             generate_buffer(i);
 //            print_buffer(test_buf_w, sizeof(test_buf_w), 0);
