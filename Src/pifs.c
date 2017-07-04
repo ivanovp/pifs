@@ -2249,7 +2249,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
         if (po)
         {
             /* There is some space in the last page */
-            PIFS_ASSERT(pifs_is_address_valid(&file->write_address.block_address));
+            PIFS_ASSERT(pifs_is_address_valid(&file->write_address));
             chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE - po);
 //            PIFS_DEBUG_MSG("--------> pos: %i po: %i data_size: %i chunk_size: %i\r\n",
 //                           file->write_pos, po, data_size, chunk_size);
@@ -2406,7 +2406,7 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
         {
             /* There is some data in the last page */
             //          PIFS_DEBUG_MSG("po != 0  %s\r\n", address2str(&file->read_address));
-            PIFS_ASSERT(pifs_is_address_valid(&file->read_address.block_address));
+            PIFS_ASSERT(pifs_is_address_valid(&file->read_address));
             chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE - po);
             //          PIFS_DEBUG_MSG("--------> pos: %i po: %i data_size: %i chunk_size: %i\r\n",
             //                         file->read_pos, po, data_size, chunk_size);
@@ -2431,7 +2431,7 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
             page_count = (data_size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
             while (page_count && file->status == PIFS_SUCCESS)
             {
-                PIFS_ASSERT(pifs_is_address_valid(&file->read_address.block_address));
+                PIFS_ASSERT(pifs_is_address_valid(&file->read_address));
                 chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE);
                 //PIFS_DEBUG_MSG("read %s\r\n", address2str(&file->read_address));
                 file->status = pifs_read_delta(file->read_address.block_address,
