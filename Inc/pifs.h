@@ -116,6 +116,8 @@ typedef uint16_t pifs_bit_pos_t;
 typedef uint32_t pifs_bit_pos_t;
 #endif
 
+typedef size_t pifs_size_t;
+
 #ifndef PIFS_PAGE_COUNT_SIZE
 #if PIFS_FLASH_PAGE_PER_BLOCK < 256
 #define PIFS_PAGE_COUNT_SIZE        1
@@ -199,7 +201,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     uint8_t                 attrib;
 //    pifs_object_id_t        object_id;          /***< FIXME not used */
     pifs_address_t          first_map_address;  /**< First map page's address */
-    pifs_page_offset_t      last_page_size;     /**< Bytes written into last page */
+    pifs_size_t             file_size;          /**< Bytes written into last page */
 } pifs_entry_t;
 
 /**
@@ -246,6 +248,7 @@ typedef struct
 {
     bool_t                  is_used PIFS_BOOL_SIZE;
     bool_t                  is_opened PIFS_BOOL_SIZE;
+    bool_t                  is_size_changed PIFS_BOOL_SIZE;
     bool_t                  mode_create_new_file PIFS_BOOL_SIZE;
     bool_t                  mode_read PIFS_BOOL_SIZE;
     bool_t                  mode_write PIFS_BOOL_SIZE;

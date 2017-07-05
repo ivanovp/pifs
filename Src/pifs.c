@@ -49,7 +49,7 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                                     pifs_block_address_t * a_block_address,
                                     pifs_page_address_t * a_page_address,
                                     pifs_page_count_t * a_page_count_found);
-static bool_t pifs_is_buffer_erased(const void * a_buf, size_t a_buf_size);
+static bool_t pifs_is_buffer_erased(const void * a_buf, pifs_size_t a_buf_size);
 static bool_t pifs_is_page_free(pifs_block_address_t a_block_address,
                                 pifs_page_address_t a_page_address);
 static bool_t pifs_is_page_to_be_released(pifs_block_address_t a_block_address,
@@ -273,7 +273,7 @@ static pifs_status_t pifs_read(pifs_block_address_t a_block_address,
                         pifs_page_address_t a_page_address,
                         pifs_page_offset_t a_page_offset,
                         void * const a_buf,
-                        size_t a_buf_size)
+                        pifs_size_t a_buf_size)
 {
     pifs_status_t ret = PIFS_ERROR;
 
@@ -327,7 +327,7 @@ static pifs_status_t pifs_write(pifs_block_address_t a_block_address,
                                 pifs_page_address_t a_page_address,
                                 pifs_page_offset_t a_page_offset,
                                 const void * const a_buf,
-                                size_t a_buf_size)
+                                pifs_size_t a_buf_size)
 {
     pifs_status_t ret = PIFS_ERROR;
 
@@ -401,7 +401,7 @@ static pifs_status_t pifs_read_delta_map_page(void)
 {
     pifs_block_address_t ba = pifs.header.delta_map_address.block_address;
     pifs_page_address_t  pa = pifs.header.delta_map_address.page_address;
-    size_t               i;
+    pifs_size_t          i;
     pifs_status_t        ret = PIFS_SUCCESS;
 
     for (i = 0; i < PIFS_DELTA_MAP_PAGE_NUM && ret == PIFS_SUCCESS; i++)
@@ -428,11 +428,11 @@ static pifs_status_t pifs_read_delta_map_page(void)
  *
  * @return PIFS_SUCCES
  */
-static pifs_status_t pifs_write_delta_map_page(size_t delta_map_page_idx)
+static pifs_status_t pifs_write_delta_map_page(pifs_size_t delta_map_page_idx)
 {
     pifs_block_address_t ba = pifs.header.delta_map_address.block_address;
     pifs_page_address_t  pa = pifs.header.delta_map_address.page_address;
-    size_t               i;
+    pifs_size_t          i;
     pifs_status_t        ret = PIFS_SUCCESS;
 
     /* TODO calculate delta page address instead of increasing */
@@ -467,8 +467,8 @@ static pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
                                           bool_t * a_is_map_full)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
-    size_t               i;
-    size_t               j;
+    pifs_size_t          i;
+    pifs_size_t          j;
     pifs_delta_entry_t * delta_entry;
     pifs_block_address_t ba = a_block_address;
     pifs_page_address_t  pa = a_page_address;
@@ -519,8 +519,8 @@ static pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
 static pifs_status_t pifs_append_delta_map_entry(pifs_delta_entry_t * a_new_delta_entry)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
-    size_t               i;
-    size_t               j;
+    pifs_size_t          i;
+    pifs_size_t          j;
     pifs_delta_entry_t * delta_entry;
     bool_t               delta_written = FALSE;
 
@@ -579,7 +579,7 @@ static pifs_status_t pifs_merge_management(void)
     pifs_block_address_t hba = PIFS_BLOCK_ADDRESS_INVALID;
     pifs_page_address_t  hpa = PIFS_PAGE_ADDRESS_INVALID;
     pifs_header_t        old_header = pifs.header;
-    size_t               i;
+    pifs_size_t          i;
     pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
     pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
     pifs_entry_t       * entry = (pifs_entry_t*) pifs.cache_page_buf;
@@ -642,7 +642,7 @@ static pifs_status_t pifs_read_delta(pifs_block_address_t a_block_address,
                                      pifs_page_address_t a_page_address,
                                      pifs_page_offset_t a_page_offset,
                                      void * const a_buf,
-                                     size_t a_buf_size)
+                                     pifs_size_t a_buf_size)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_block_address_t ba;
@@ -676,12 +676,12 @@ static pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
                                       pifs_page_address_t a_page_address,
                                       pifs_page_offset_t a_page_offset,
                                       const void * const a_buf,
-                                      size_t a_buf_size,
+                                      pifs_size_t a_buf_size,
                                       bool_t * a_is_delta)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
-    size_t               i;
-    size_t               j;
+    pifs_size_t          i;
+    pifs_size_t          j;
     pifs_delta_entry_t   delta_entry;
     bool_t               delta_needed = FALSE;
     bool_t               delta_written = FALSE;
@@ -981,7 +981,7 @@ static pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
  */
 static bool_t pifs_is_block_type(pifs_block_address_t a_block_address, pifs_block_type_t a_block_type)
 {
-    size_t               i = 0;
+    pifs_size_t          i = 0;
     bool_t               is_block_type = TRUE;
 
     is_block_type = (a_block_type == PIFS_BLOCK_TYPE_DATA);
@@ -1064,11 +1064,11 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
     pifs_block_address_t    ba = pifs.header.free_space_bitmap_address.block_address;
     pifs_page_address_t     pa = pifs.header.free_space_bitmap_address.page_address;
     pifs_page_offset_t      po = 0;
-    size_t                  i;
+    pifs_size_t             i;
     pifs_page_count_t       page_count_found = 0;
     uint8_t                 free_space_bitmap = 0;
     bool_t                  found = FALSE;
-    size_t                  byte_cntr = PIFS_FREE_SPACE_BITMAP_SIZE_BYTE;
+    pifs_size_t             byte_cntr = PIFS_FREE_SPACE_BITMAP_SIZE_BYTE;
     pifs_bit_pos_t          bit_pos = 0;
     uint8_t                 mask = 1; /**< Mask for finding free page */
 
@@ -1173,8 +1173,8 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
  *
  * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
  */
-static pifs_status_t pifs_get_free_pages(size_t * a_free_management_page_count,
-                                         size_t * a_free_data_page_count)
+static pifs_status_t pifs_get_free_pages(pifs_size_t * a_free_management_page_count,
+                                         pifs_size_t * a_free_data_page_count)
 {
     pifs_status_t           ret = PIFS_ERROR;
     pifs_block_address_t    fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
@@ -1182,11 +1182,11 @@ static pifs_status_t pifs_get_free_pages(size_t * a_free_management_page_count,
     pifs_block_address_t    ba = pifs.header.free_space_bitmap_address.block_address;
     pifs_page_address_t     pa = pifs.header.free_space_bitmap_address.page_address;
     pifs_page_offset_t      po = 0;
-    size_t                  i;
+    pifs_size_t             i;
     uint8_t                 free_space_bitmap = 0;
     bool_t                  found = FALSE;
     bool_t                  end = FALSE;
-    size_t                  byte_cntr = PIFS_FREE_SPACE_BITMAP_SIZE_BYTE;
+    pifs_size_t             byte_cntr = PIFS_FREE_SPACE_BITMAP_SIZE_BYTE;
     pifs_bit_pos_t          bit_pos = 0;
     uint8_t                 mask = 1; /**< Mask for finding free page */
 
@@ -1288,10 +1288,10 @@ static pifs_status_t pifs_get_free_pages(size_t * a_free_management_page_count,
  *
  * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
  */
-pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
-                                  size_t * a_free_data_bytes,
-                                  size_t * a_free_management_page_count,
-                                  size_t * a_free_data_page_count)
+pifs_status_t pifs_get_free_space(pifs_size_t * a_free_management_bytes,
+                                  pifs_size_t * a_free_data_bytes,
+                                  pifs_size_t * a_free_management_page_count,
+                                  pifs_size_t * a_free_data_page_count)
 {
     pifs_status_t           ret = PIFS_ERROR;
 
@@ -1318,7 +1318,7 @@ static pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
                                       pifs_header_t * a_header)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
-    size_t               i = 0;
+    pifs_size_t          i = 0;
     pifs_block_address_t ba = a_block_address;
     /* FIXME use random block? */
     PIFS_DEBUG_MSG("Creating managamenet block %s\r\n", ba_pa2str(a_block_address, a_page_address));
@@ -1447,10 +1447,10 @@ pifs_status_t pifs_init(void)
     pifs_header_t        header;
     pifs_header_t        prev_header;
     pifs_checksum_t      checksum;
-    size_t               free_management_bytes;
-    size_t               free_data_bytes;
-    size_t               free_management_pages;
-    size_t               free_data_pages;
+    pifs_size_t          free_management_bytes;
+    pifs_size_t          free_data_bytes;
+    pifs_size_t          free_management_pages;
+    pifs_size_t          free_data_pages;
 
     pifs.header_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
     pifs.header_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
@@ -1689,11 +1689,11 @@ pifs_status_t pifs_delete(void)
  * @return TRUE: if buffer is erased.
  * FALSE: if buffer contains at least one programmed bit.
  */
-static bool_t pifs_is_buffer_erased(const void * a_buf, size_t a_buf_size)
+static bool_t pifs_is_buffer_erased(const void * a_buf, pifs_size_t a_buf_size)
 {
-    uint8_t * buf = (uint8_t*) a_buf;
-    size_t    i;
-    bool_t    ret = TRUE;
+    uint8_t   * buf = (uint8_t*) a_buf;
+    pifs_size_t i;
+    bool_t      ret = TRUE;
 
     for (i = 0; i < a_buf_size && ret; i++)
     {
@@ -1721,7 +1721,7 @@ static pifs_status_t pifs_append_entry(pifs_entry_t * a_entry)
     pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
     bool_t               created = FALSE;
     pifs_entry_t       * entry = (pifs_entry_t*) pifs.cache_page_buf;
-    size_t               i;
+    pifs_size_t          i;
 
     /* Invert attribute bits */
     a_entry->attrib ^= a_entry->attrib;
@@ -1779,7 +1779,7 @@ static pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a
     pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
     bool_t               found = FALSE;
     pifs_entry_t       * entry = (pifs_entry_t*) pifs.cache_page_buf;
-    size_t               i;
+    pifs_size_t          i;
 
     while (ba < pifs.header.entry_list_address.block_address + PIFS_MANAGEMENT_BLOCKS
            && !found && ret == PIFS_SUCCESS)
@@ -1917,7 +1917,7 @@ static pifs_status_t pifs_find_file_pages(pifs_file_t * a_file)
     pifs_block_address_t    mba;
     pifs_page_address_t     mpa;
     pifs_page_count_t       page_count;
-    size_t                  i;
+    pifs_size_t             i;
     bool_t                  erased = FALSE;
     pifs_page_offset_t      po = PIFS_MAP_HEADER_SIZE_BYTE;
 
@@ -2161,8 +2161,8 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
     pifs_block_address_t ba = PIFS_BLOCK_ADDRESS_INVALID;
     pifs_page_address_t  pa = PIFS_PAGE_ADDRESS_INVALID;
     pifs_page_count_t    page_count_found = 0;
-    size_t               free_management_pages = 0;
-    size_t               free_data_pages = 0;
+    pifs_size_t          free_management_pages = 0;
+    pifs_size_t          free_data_pages = 0;
 
     /* TODO check validity of filename */
     if (pifs.is_header_found && strlen(a_filename))
@@ -2174,6 +2174,7 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
         file->read_pos = 0;
         file->actual_map_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
         file->actual_map_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
+        file->is_size_changed = FALSE;
         pifs_parse_open_mode(file, a_modes);
         if (file->status == PIFS_SUCCESS)
         {
@@ -2192,12 +2193,13 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
                 if (file->status == PIFS_SUCCESS && free_data_pages > 0)
                 {
                     /* File already exist */
-                    file->status = pifs_clear_entry(a_filename);
+                    file->status = pifs_clear_entry(a_filename); /* FIXME use delta pages! */
                     if (file->status == PIFS_SUCCESS)
                     {
                         /* Mark allocated pages to be released */
                         file->status = pifs_find_file_pages(file);
                     }
+                    file->is_size_changed = TRUE; /* FIXME when delta pages used! */
                 }
                 else
                 {
@@ -2265,25 +2267,25 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
  * @param[in] a_file    Pointer to file.
  * @return Number of data elements written.
  */
-size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
+pifs_size_t pifs_fwrite(const void * a_data, pifs_size_t a_size, pifs_size_t a_count, P_FILE * a_file)
 {
     pifs_file_t        * file = (pifs_file_t*) a_file;
     uint8_t            * data = (uint8_t*) a_data;
-    size_t               data_size = a_size * a_count;
-    size_t               written_size = 0;
+    pifs_size_t          data_size = a_size * a_count;
+    pifs_size_t          written_size = 0;
     pifs_page_count_t    page_count_needed = 0;
     pifs_page_count_t    page_count_needed_limited = 0;
     pifs_page_count_t    page_count_found;
     pifs_page_count_t    page_cound_found_start;
-    size_t               chunk_size;
+    pifs_size_t          chunk_size;
     pifs_block_address_t ba = PIFS_BLOCK_ADDRESS_INVALID;
     pifs_block_address_t ba_start = PIFS_BLOCK_ADDRESS_INVALID;
     pifs_page_address_t  pa = PIFS_PAGE_ADDRESS_INVALID;
     pifs_page_address_t  pa_start = PIFS_PAGE_ADDRESS_INVALID;
     pifs_page_offset_t   po = PIFS_PAGE_OFFSET_INVALID;
     bool_t               is_delta = FALSE;
-    size_t               free_management_pages = 0;
-    size_t               free_data_pages = 0;
+    pifs_size_t          free_management_pages = 0;
+    pifs_size_t          free_data_pages = 0;
 
     if (pifs.is_header_found && file && file->is_opened && file->mode_write)
     {
@@ -2449,14 +2451,14 @@ void pifs_inc_read_address(pifs_file_t * a_file)
  * @param[in] a_file    Pointer to file.
  * @return Number of data elements read.
  */
-size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
+pifs_size_t pifs_fread(void * a_data, pifs_size_t a_size, pifs_size_t a_count, P_FILE * a_file)
 {
     pifs_file_t        * file = (pifs_file_t*) a_file;
     uint8_t *            data = (uint8_t*) a_data;
-    size_t               read_size = 0;
-    size_t               chunk_size = 0;
-    size_t               data_size = a_size * a_count;
-    size_t               page_count = 0;
+    pifs_size_t          read_size = 0;
+    pifs_size_t          chunk_size = 0;
+    pifs_size_t          data_size = a_size * a_count;
+    pifs_size_t          page_count = 0;
     pifs_page_offset_t   po;
 
     if (pifs.is_header_found && file && file->is_opened && file->mode_read)
@@ -2526,6 +2528,10 @@ int pifs_fclose(P_FILE * a_file)
 
     if (pifs.is_header_found && file && file->is_opened)
     {
+        if (file->mode_write && file->is_size_changed)
+        {
+            /* FIXME update entry! */
+        }
         pifs_flush();
         file->is_opened = FALSE;
         ret = 0;
