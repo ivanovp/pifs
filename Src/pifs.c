@@ -63,6 +63,7 @@ static bool_t pifs_is_page_to_be_released(pifs_block_address_t a_block_address,
 static pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                              pifs_page_address_t a_page_address,
                              pifs_page_count_t a_page_count, bool_t a_mark_used);
+static bool_t pifs_is_block_type(pifs_block_address_t a_block_address, pifs_block_type_t a_block_type);
 static pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
                                       pifs_page_address_t a_page_address,
                                       pifs_header_t * a_header);
@@ -558,8 +559,88 @@ static pifs_status_t pifs_append_delta_map_entry(pifs_delta_entry_t * a_new_delt
     return ret;
 }
 
-static pifs_status_t pifs_merge(void)
+static pifs_status_t pifs_erase_blocks(pifs_header_t * a_old_header)
 {
+#if 1
+    pifs_status_t           ret = PIFS_ERROR;
+    pifs_block_address_t    fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
+    pifs_page_address_t     fpa = 0;
+    pifs_block_address_t    fba_start = PIFS_BLOCK_ADDRESS_INVALID;
+    pifs_page_address_t     fpa_start = PIFS_PAGE_ADDRESS_INVALID;
+    pifs_block_address_t    ba = pifs.header.free_space_bitmap_address.block_address;
+    pifs_page_address_t     pa = pifs.header.free_space_bitmap_address.page_address;
+    pifs_page_offset_t      po = 0;
+    pifs_block_address_t    old_ba = a_old_header->free_space_bitmap_address.block_address;
+    pifs_page_address_t     old_pa = a_old_header->free_space_bitmap_address.page_address;
+    pifs_size_t             i;
+    pifs_page_count_t       page_count_found = 0;
+    const pifs_page_count_t page_count_minimum = PIFS_FLASH_PAGE_PER_BLOCK;
+    uint8_t                 free_space_bitmap = 0;
+    bool_t                  found = FALSE;
+    bool_t                  erase_block = FALSE;
+    pifs_size_t             byte_cntr = PIFS_FREE_SPACE_BITMAP_SIZE_BYTE;
+    const uint8_t           mask = 2; /**< Mask for finding to be released page */
+    pifs_block_address_t    temp_ba;
+    pifs_page_address_t     temp_pa;
+    pifs_page_count_t       temp_page_count;
+
+    PIFS_ASSERT(pifs.is_header_found);
+
+    do
+    {
+        ret = pifs_find_page(PIFS_FLASH_PAGE_PER_BLOCK, PIFS_FLASH_PAGE_PER_BLOCK,
+                             PIFS_BLOCK_TYPE_DATA, FALSE, TRUE, fba,
+                             &temp_ba, &temp_pa, &temp_page_count);
+        if (ret == PIFS_SUCCESS)
+        {
+            if (temp_ba == fba)
+            {
+                if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA))
+                {
+                    ret = pifs_erase(temp_ba);
+                    erase_block = TRUE;
+                }
+            }
+            else
+            {
+                ret = pifs_read(old_ba, old_pa, 0, &pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+                if (ret == PIFS_SUCCESS)
+                {
+                    /* FIXME only bits of this block shall be copied! */
+                    ret = pifs_write(ba, pa, 0, &pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+                }
+                erase_block = FALSE;
+            }
+        }
+#if 0
+            po++;
+            if (po == PIFS_FLASH_PAGE_SIZE_BYTE)
+            {
+                po = 0;
+                pa++;
+                if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
+                {
+                    pa = 0;
+                    ba++;
+                    if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
+                    {
+                        PIFS_FATAL_ERROR_MSG("End of flash! byte_cntr: %lu\r\n", byte_cntr);
+                    }
+                }
+                old_pa++;
+                if (old_pa == PIFS_FLASH_PAGE_PER_BLOCK)
+                {
+                    old_pa = 0;
+                    old_ba++;
+                    if (old_ba >= PIFS_FLASH_BLOCK_NUM_ALL)
+                    {
+                        PIFS_FATAL_ERROR_MSG("End of flash! byte_cntr: %lu\r\n", byte_cntr);
+                    }
+                }
+            }
+#endif
+    } while (ret == PIFS_SUCCESS && !found);
+#else
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
@@ -587,11 +668,12 @@ static pifs_status_t pifs_merge(void)
             /* TODO mark free pages! */
         }
     }
+#endif
     exit(1); ////////////// FIXME remove
     return ret;
 }
 
-static pifs_status_t pifs_merge_management(void)
+static pifs_status_t pifs_merge(void)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_block_address_t hba = PIFS_BLOCK_ADDRESS_INVALID;
@@ -613,6 +695,10 @@ static pifs_status_t pifs_merge_management(void)
         hba = old_header.next_management_blocks[0];
         hpa = 0;
         ret = pifs_header_init(hba, hpa, &pifs.header);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_erase_blocks(&old_header);
     }
     if (ret == PIFS_SUCCESS)
     {
@@ -751,7 +837,7 @@ static pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
             if (is_delta_map_full)
             {
                 PIFS_WARNING_MSG("Management blocks shall be merged!\r\n");
-                ret = pifs_merge_management();
+                ret = pifs_merge();
             }
             if (ret == PIFS_SUCCESS)
             {
