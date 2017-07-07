@@ -226,8 +226,8 @@ static pifs_status_t pifs_calc_free_space_pos(const pifs_address_t * a_free_spac
  * @param[out] a_page_address   Page address of page to be calculated.
  */
 static void pifs_calc_address(pifs_bit_pos_t a_bit_pos,
-                       pifs_block_address_t * a_block_address,
-                       pifs_page_address_t * a_page_address)
+                              pifs_block_address_t * a_block_address,
+                              pifs_page_address_t * a_page_address)
 {
     /* Shift right by one (>> 1) due to two bits are stored in free space bitmap */
     a_bit_pos >>= 1;
@@ -573,10 +573,11 @@ static pifs_status_t pifs_erase_blocks(pifs_header_t * a_old_header)
     pifs_block_address_t    old_ba = a_old_header->free_space_bitmap_address.block_address;
     pifs_page_address_t     old_pa = a_old_header->free_space_bitmap_address.page_address;
     pifs_size_t             i;
+    pifs_size_t             j;
     pifs_page_count_t       page_count_found = 0;
     const pifs_page_count_t page_count_minimum = PIFS_FLASH_PAGE_PER_BLOCK;
-    uint8_t                 free_space_bitmap = 0;
-    bool_t                  found = FALSE;
+    uint8_t                 * free_space_bitmap;
+    bool_t                  find = TRUE;
     bool_t                  erase_block = FALSE;
     pifs_size_t             byte_cntr = PIFS_FREE_SPACE_BITMAP_SIZE_BYTE;
     const uint8_t           mask = 2; /**< Mask for finding to be released page */
@@ -588,58 +589,78 @@ static pifs_status_t pifs_erase_blocks(pifs_header_t * a_old_header)
 
     do
     {
-        ret = pifs_find_page(PIFS_FLASH_PAGE_PER_BLOCK, PIFS_FLASH_PAGE_PER_BLOCK,
-                             PIFS_BLOCK_TYPE_DATA, FALSE, TRUE, fba,
-                             &temp_ba, &temp_pa, &temp_page_count);
-        if (ret == PIFS_SUCCESS)
+        ret = pifs_read(old_ba, old_pa, 0, &pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+
+        for (j = 0; j < PIFS_FLASH_PAGE_SIZE_BYTE && ret == PIFS_SUCCESS; j++)
         {
-            if (temp_ba == fba)
+            if (ret == PIFS_SUCCESS && find)
             {
-                if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA))
-                {
-                    ret = pifs_erase(temp_ba);
-                    erase_block = TRUE;
-                }
-            }
-            else
-            {
-                ret = pifs_read(old_ba, old_pa, 0, &pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+                ret = pifs_find_page(PIFS_FLASH_PAGE_PER_BLOCK, PIFS_FLASH_PAGE_PER_BLOCK,
+                                     PIFS_BLOCK_TYPE_DATA, FALSE, TRUE, fba,
+                                     &temp_ba, &temp_pa, &temp_page_count);
+                find = FALSE;
                 if (ret == PIFS_SUCCESS)
                 {
-                    /* FIXME only bits of this block shall be copied! */
-                    ret = pifs_write(ba, pa, 0, &pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+                    if (temp_ba == fba)
+                    {
+                        if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA))
+                        {
+                            ret = pifs_erase(fba);
+                            erase_block = TRUE;
+                            PIFS_NOTICE_MSG("Block %i erased\r\n", fba);
+                        }
+                        else
+                        {
+                            PIFS_NOTICE_MSG("Block %i not erased, not data block\r\n", fba);
+                        }
+                    }
+                    else
+                    {
+                        erase_block = FALSE;
+                        PIFS_NOTICE_MSG("Block %i not erased\r\n", fba);
+                    }
                 }
-                erase_block = FALSE;
+            }
+
+            if (erase_block)
+            {
+                pifs.page_buf[j] = PIFS_FLASH_ERASED_BYTE_VALUE;
+            }
+
+            fpa += PIFS_BYTE_BITS / 2;
+            if (fpa == PIFS_FLASH_PAGE_PER_BLOCK)
+            {
+                fpa = 0;
+                fba++;
+                find = TRUE;
             }
         }
-#if 0
-            po++;
-            if (po == PIFS_FLASH_PAGE_SIZE_BYTE)
+
+        ret = pifs_write(ba, pa, 0, &pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+        print_buffer(pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE,
+                     ba * PIFS_FLASH_BLOCK_SIZE_BYTE + pa * PIFS_FLASH_PAGE_SIZE_BYTE);
+
+        pa++;
+        if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
+        {
+            pa = 0;
+            ba++;
+            if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
             {
-                po = 0;
-                pa++;
-                if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
-                {
-                    pa = 0;
-                    ba++;
-                    if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
-                    {
-                        PIFS_FATAL_ERROR_MSG("End of flash! byte_cntr: %lu\r\n", byte_cntr);
-                    }
-                }
-                old_pa++;
-                if (old_pa == PIFS_FLASH_PAGE_PER_BLOCK)
-                {
-                    old_pa = 0;
-                    old_ba++;
-                    if (old_ba >= PIFS_FLASH_BLOCK_NUM_ALL)
-                    {
-                        PIFS_FATAL_ERROR_MSG("End of flash! byte_cntr: %lu\r\n", byte_cntr);
-                    }
-                }
+                PIFS_FATAL_ERROR_MSG("End of flash! byte_cntr: %lu\r\n", byte_cntr);
             }
-#endif
-    } while (ret == PIFS_SUCCESS && !found);
+        }
+        old_pa++;
+        if (old_pa == PIFS_FLASH_PAGE_PER_BLOCK)
+        {
+            old_pa = 0;
+            old_ba++;
+            if (old_ba >= PIFS_FLASH_BLOCK_NUM_ALL)
+            {
+                PIFS_FATAL_ERROR_MSG("End of flash! byte_cntr: %lu\r\n", byte_cntr);
+            }
+        }
+    } while (ret == PIFS_SUCCESS && fba < PIFS_FLASH_BLOCK_NUM_ALL);
 #else
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_block_address_t ba;
