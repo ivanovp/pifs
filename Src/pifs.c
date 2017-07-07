@@ -2230,6 +2230,40 @@ static pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
 }
 
 /**
+ * @brief pifs_is_free_map_entry Check if free map entry exists in the actual
+ * map.
+ *
+ * @param a_file[in]            Pointer to file to use.
+ * @return PIFS_SUCCESS if entry was successfully written.
+ */
+static pifs_status_t pifs_is_free_map_entry(pifs_file_t * a_file,
+                                            bool_t * a_is_free_map_entry)
+{
+    pifs_block_address_t    ba = a_file->actual_map_address.block_address;
+    pifs_page_address_t     pa = a_file->actual_map_address.page_address;
+    bool_t                  empty_entry_found = FALSE;
+    pifs_map_entry_t      * map_entry = &pifs.page_buf[PIFS_MAP_HEADER_SIZE_BYTE];
+    pifs_size_t             i;
+
+    PIFS_DEBUG_MSG("Actual map address %s\r\n",
+                   address2str(&a_file->actual_map_address));
+    a_file->status = pifs_read(ba, pa, 0, pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+    if (a_file->status == PIFS_SUCCESS)
+    {
+        for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !empty_entry_found; i++)
+        {
+            if (pifs_is_buffer_erased(&map_entry[i], PIFS_MAP_ENTRY_SIZE_BYTE))
+            {
+                empty_entry_found = TRUE;
+            }
+        }
+    }
+    *a_is_free_map_entry = empty_entry_found;
+
+    return a_file->status;
+}
+
+/**
  * @brief pifs_append_map_entry Add an entry to the file's map.
  * This function is called when file is growing and new space is needed.
  *
@@ -2515,6 +2549,9 @@ pifs_size_t pifs_fwrite(const void * a_data, pifs_size_t a_size, pifs_size_t a_c
             }
             if (file->status == PIFS_SUCCESS && (free_data_pages == 0 || free_management_pages == 0))
             {
+                /* FIXME If free_management_pages is 0, number of free map entries should
+                 * be checked!
+                 */
                 /* Get number of erasable pages */
                 file->status = pifs_get_to_be_released_pages(&to_be_released_management_pages, &to_be_released_data_pages);
                 PIFS_NOTICE_MSG("to_be_released_data_pages: %i, to_be_released_management_pages: %i\r\n",
