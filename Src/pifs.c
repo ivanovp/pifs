@@ -404,7 +404,7 @@ static pifs_status_t pifs_erase(pifs_block_address_t a_block_address)
 /**
  * @brief pifs_read_delta_map_page Read delta map pages to memory buffer.
  *
- * @return PIFS_SUCCES
+ * @return PIFS_SUCCES if read successfully.
  */
 static pifs_status_t pifs_read_delta_map_page(void)
 {
@@ -433,9 +433,9 @@ static pifs_status_t pifs_read_delta_map_page(void)
 }
 
 /**
- * @brief pifs_write_delta_map_page Read delta map pages to memory buffer.
+ * @brief pifs_write_delta_map_page Write delta map pages to flash memory.
  *
- * @return PIFS_SUCCES
+ * @return PIFS_SUCCES if written successfully.
  */
 static pifs_status_t pifs_write_delta_map_page(pifs_size_t delta_map_page_idx)
 {
@@ -469,6 +469,20 @@ static pifs_status_t pifs_write_delta_map_page(pifs_size_t delta_map_page_idx)
     return ret;
 }
 
+/**
+ * @brief pifs_find_delta_page Look for a delta page of a specified page.
+ * a_delta_block_address and a_delta_page_address will contain the
+ * address of delta page if found or the original address (a_block_address,
+ * a_page_address) if not found.
+ *
+ * @param[in] a_block_address           Block address to search.
+ * @param[in] a_page_address            Page address to search.
+ * @param[out] a_delta_block_address    Pointer to block address to fill.
+ * @param[out] a_delta_page_address     Pointer to page address to fill.
+ * @param[out] a_is_map_full            TRUE: if delta map is full.
+ *                                      FALSE: there is space in delta map.
+ * @return PIFS_SUCCESS: if delta map read successfully.
+ */
 static pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
                                           pifs_page_address_t a_page_address,
                                           pifs_block_address_t * a_delta_block_address,
@@ -525,6 +539,13 @@ static pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
     return ret;
 }
 
+/**
+ * @brief pifs_append_delta_map_entry Add an entry to the delta map.
+ *
+ * @param[in] a_new_delta_entry Pointer to the new entry.
+ * @return PIFS_SUCCESS if entry was added. PIFS_ERROR_NO_MORE_SPACE if map
+ * is full.
+ */
 static pifs_status_t pifs_append_delta_map_entry(pifs_delta_entry_t * a_new_delta_entry)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
@@ -561,6 +582,13 @@ static pifs_status_t pifs_append_delta_map_entry(pifs_delta_entry_t * a_new_delt
     return ret;
 }
 
+/**
+ * @brief pifs_erase_blocks Find 'to be released' pages and erase them if they
+ * are in the same block.
+ *
+ * @param[in] a_old_header Pointer to previous file system's header.
+ * @return PIFS_SUCCESS if erase was successful.
+ */
 static pifs_status_t pifs_erase_blocks(pifs_header_t * a_old_header)
 {
     pifs_status_t           ret = PIFS_ERROR;
@@ -664,6 +692,13 @@ static pifs_status_t pifs_erase_blocks(pifs_header_t * a_old_header)
     return ret;
 }
 
+/**
+ * @brief pifs_copy_entry_list copy list of files (entry list) from previous
+ * management block.
+ *
+ * @param[in] a_old_header Pointer to previous file system's header.
+ * @return PIFS_SUCCESS if copy was successful.
+ */
 static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
@@ -716,6 +751,11 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header)
     return ret;
 }
 
+/**
+ * @brief pifs_merge Merge management and data pages. Erase to be released pages.
+ *
+ * @return PIFS_SUCCES when merge was successful.
+ */
 static pifs_status_t pifs_merge(void)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
@@ -1262,6 +1302,8 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
 //            PIFS_DEBUG_MSG("%s %i 0x%X\r\n", ba_pa2str(ba, pa), po, free_space_bitmap);
             for (i = 0; i < (PIFS_BYTE_BITS / 2) && !found; i++)
             {
+                /* TODO use free pages and to be released pages as well when
+                 * looking for erasable blocks! */
                 if ((free_space_bitmap & mask) && pifs_is_block_type(fba, a_block_type, &pifs.header))
                 {
 #if PIFS_CHECK_IF_PAGE_IS_ERASED
@@ -1344,10 +1386,10 @@ static pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
 /**
  * @brief pifs_get_pages Find free/to be released page(s) in free space memory bitmap.
  *
- * @param[in] a_is_free            TRUE: find free page,
- *                                 FALSE: find to be released page.
- * @param[out] a_management_page_count
- * @param[out] a_data_page_count
+ * @param[in] a_is_free                 TRUE: find free page,
+ *                                      FALSE: find to be released page.
+ * @param[out] a_management_page_count  Number of management pages found.
+ * @param[out] a_data_page_count        Number of data pages found.
  *
  * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
  */
@@ -1460,12 +1502,28 @@ static pifs_status_t pifs_get_pages(bool_t a_is_free,
     return ret;
 }
 
+/**
+ * @brief pifs_get_pages Find to be released page(s) in free space memory bitmap.
+ *
+ * @param[out] a_management_page_count  Number of management pages found.
+ * @param[out] a_data_page_count        Number of data pages found.
+ *
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
+ */
 static inline pifs_status_t pifs_get_to_be_released_pages(pifs_size_t * a_free_management_page_count,
                                                           pifs_size_t * a_free_data_page_count)
 {
     return pifs_get_pages(FALSE, a_free_management_page_count, a_free_data_page_count);
 }
 
+/**
+ * @brief pifs_get_pages Find free page(s) in free space memory bitmap.
+ *
+ * @param[out] a_management_page_count  Number of management pages found.
+ * @param[out] a_data_page_count        Number of data pages found.
+ *
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
+ */
 static inline pifs_status_t pifs_get_free_pages(pifs_size_t * a_free_management_page_count,
                                                 pifs_size_t * a_free_data_page_count)
 {

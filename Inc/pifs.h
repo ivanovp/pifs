@@ -199,7 +199,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 {
     uint8_t                 name[PIFS_FILENAME_LEN_MAX];
     uint8_t                 attrib;
-//    pifs_object_id_t        object_id;          /***< FIXME not used */
+//    pifs_object_id_t        object_id;          /**< FIXME not used */
     pifs_address_t          first_map_address;  /**< First map page's address */
     pifs_size_t             file_size;          /**< Bytes written into last page */
 } pifs_entry_t;
