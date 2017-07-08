@@ -2308,7 +2308,7 @@ static pifs_status_t pifs_is_free_map_entry(pifs_file_t * a_file,
     pifs_block_address_t    ba = a_file->actual_map_address.block_address;
     pifs_page_address_t     pa = a_file->actual_map_address.page_address;
     bool_t                  empty_entry_found = FALSE;
-    pifs_map_entry_t      * map_entry = &pifs.page_buf[PIFS_MAP_HEADER_SIZE_BYTE];
+    pifs_map_entry_t      * map_entry = (pifs_map_entry_t*) &pifs.page_buf[PIFS_MAP_HEADER_SIZE_BYTE];
     pifs_size_t             i;
 
     PIFS_DEBUG_MSG("Actual map address %s\r\n",
@@ -2610,7 +2610,7 @@ pifs_size_t pifs_fwrite(const void * a_data, pifs_size_t a_size, pifs_size_t a_c
             {
                 /* Get number of free management and data pages */
                 file->status = pifs_get_free_pages(&free_management_pages, &free_data_pages);
-                PIFS_NOTICE_MSG("free_data_pages: %i, free_management_pages: %i\r\n",
+                PIFS_NOTICE_MSG("free_data_pages: %lu, free_management_pages: %lu\r\n",
                                 free_data_pages, free_management_pages);
             }
             if (file->status == PIFS_SUCCESS && (free_data_pages == 0 || free_management_pages == 0))
@@ -2620,7 +2620,7 @@ pifs_size_t pifs_fwrite(const void * a_data, pifs_size_t a_size, pifs_size_t a_c
                  */
                 /* Get number of erasable pages */
                 file->status = pifs_get_to_be_released_pages(&to_be_released_management_pages, &to_be_released_data_pages);
-                PIFS_NOTICE_MSG("to_be_released_data_pages: %i, to_be_released_management_pages: %i\r\n",
+                PIFS_NOTICE_MSG("to_be_released_data_pages: %lu, to_be_released_management_pages: %lu\r\n",
                                 to_be_released_data_pages, to_be_released_management_pages);
                 if (file->status == PIFS_SUCCESS
                         && (to_be_released_data_pages > 0 || to_be_released_management_pages > 0))
