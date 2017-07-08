@@ -357,6 +357,8 @@ static pifs_status_t pifs_copy_map(pifs_header_t * a_old_header, pifs_entry_t * 
                                                    &delta_ba, &delta_pa, NULL);
                         if (ret == PIFS_SUCCESS)
                         {
+                            PIFS_DEBUG_MSG("%s ->", pifs_address2str(&address));
+                            PIFS_DEBUG_MSG("%s\r\n", pifs_ba_pa2str(delta_ba, delta_pa));
                             ret = pifs_inc_address(&address);
                         }
                     }
