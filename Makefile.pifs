@@ -34,6 +34,7 @@ SRC_C = ./Src/pifs_test.c
 SRC_C += ./Src/flash.c
 SRC_C += ./Src/buffer.c
 SRC_C += ./Src/pifs.c
+SRC_C += ./Src/pifs_fsbm.c
 SRC_S = 
 OBJ_CPP = $(patsubst %.cpp, %.o, $(SRC_CPP))
 OBJ_C   = $(patsubst %.c, %.o, $(SRC_C))

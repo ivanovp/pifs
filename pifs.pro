@@ -7,6 +7,7 @@ SOURCES += ./Src/buffer.c \
 ./Src/flash.c \
 ./Src/flash_test.c \
 ./Src/pifs.c \
+./Src/pifs_fsbm.c \
 ./Src/pifs_test.c
 
 HEADERS += ./Inc/api_pifs.h \
@@ -16,7 +17,8 @@ HEADERS += ./Inc/api_pifs.h \
 ./Inc/flash_config.h \
 ./Inc/pifs.h \
 ./Inc/pifs_config.h \
-./Inc/pifs_debug.h
+./Inc/pifs_debug.h \
+./Inc/pifs_fsbm.h
 
 INCLUDEPATH += .
 INCLUDEPATH += ./Inc

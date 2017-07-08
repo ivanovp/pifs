@@ -145,6 +145,18 @@ typedef uint32_t pifs_page_count_t;
 #error PIFS_PAGE_COUNT_SIZE is invalid! Valid values are 1, 2 or 4.
 #endif
 
+#if PIFS_MANAGEMENT_BLOCKS >= PIFS_FLASH_BLOCK_NUM_FS
+#error PIFS_MANAGEMENT_BLOCKS is greater than PIFS_FLASH_BLOCK_NUM_FS!
+#endif
+#if PIFS_MANAGEMENT_BLOCKS > PIFS_FLASH_BLOCK_NUM_FS / 4
+#warning PIFS_MANAGEMENT_BLOCKS is larger than PIFS_FLASH_BLOCK_NUM_FS / 4!
+#endif
+#if PIFS_MANAGEMENT_BLOCKS < 1
+#error PIFS_MANAGEMENT_BLOCKS shall be 1 at minimum!
+#endif
+
+#define PIFS_MAP_PAGE_NUM               1   /**< Default number of map pages. Minimum: 1 */
+
 typedef enum
 {
     /**
@@ -287,5 +299,37 @@ typedef struct
     size_t                  delta_map_entry_count;
     uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];           /**< Flash page buffer */
 } pifs_t;
+
+extern pifs_t pifs;
+
+char * pifs_address2str(pifs_address_t * a_address);
+char * pifs_ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address);
+char * pifs_byte2bin_str(uint8_t byte);
+void pifs_print_cache(void);
+bool_t pifs_is_address_valid(pifs_address_t * a_address);
+pifs_status_t pifs_flush(void);
+pifs_status_t pifs_read(pifs_block_address_t a_block_address,
+                        pifs_page_address_t a_page_address,
+                        pifs_page_offset_t a_page_offset,
+                        void * const a_buf,
+                        pifs_size_t a_buf_size);
+pifs_status_t pifs_write(pifs_block_address_t a_block_address,
+                                pifs_page_address_t a_page_address,
+                                pifs_page_offset_t a_page_offset,
+                                const void * const a_buf,
+                                pifs_size_t a_buf_size);
+pifs_status_t pifs_erase(pifs_block_address_t a_block_address);
+bool_t pifs_is_buffer_erased(const void * a_buf, pifs_size_t a_buf_size);
+bool_t pifs_is_block_type(pifs_block_address_t a_block_address,
+                          pifs_block_type_t a_block_type,
+                          pifs_header_t *a_header);
+bool_t pifs_is_page_erased(pifs_block_address_t a_block_address,
+                           pifs_page_address_t a_page_address);
+pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
+                               pifs_page_address_t a_page_address,
+                               pifs_header_t * a_header);
+pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
+                                pifs_page_address_t a_page_address,
+                                pifs_header_t * a_header);
 
 #endif /* _INCLUDE_PIFS_H_ */
