@@ -949,12 +949,12 @@ static pifs_status_t pifs_clear_entry(const char * a_name)
 }
 
 /**
- * @brief pifs_find_file_pages Mark file map and file's pages to be released.
+ * @brief pifs_release_file_pages Mark file map and file's pages to be released.
  *
  * @param a_file[in] Pointer of file structure.
  * @return TRUE: if all pages were succesfully marked to be released.
  */
-static pifs_status_t pifs_find_file_pages(pifs_file_t * a_file)
+static pifs_status_t pifs_release_file_pages(pifs_file_t * a_file)
 {
     pifs_block_address_t    ba = a_file->entry.first_map_address.block_address;
     pifs_page_address_t     pa = a_file->entry.first_map_address.page_address;
@@ -1276,7 +1276,7 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
                     if (file->status == PIFS_SUCCESS)
                     {
                         /* Mark allocated pages to be released */
-                        file->status = pifs_find_file_pages(file);
+                        file->status = pifs_release_file_pages(file);
                     }
                     file->is_size_changed = TRUE; /* FIXME when delta pages used! */
                 }
@@ -1695,7 +1695,7 @@ int pifs_remove(const char * a_filename)
         if (file->status == PIFS_SUCCESS)
         {
             /* Mark allocated pages to be released */
-            file->status = pifs_find_file_pages(file);
+            file->status = pifs_release_file_pages(file);
         }
         ret = pifs_fclose(file);
     }
