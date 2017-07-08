@@ -16,6 +16,7 @@
 #include "flash_config.h"
 #include "pifs.h"
 #include "pifs_fsbm.h"
+#include "pifs_helper.h"
 #include "pifs_debug.h"
 #include "buffer.h" /* DEBUG */
 
@@ -29,83 +30,6 @@ pifs_t pifs =
     .cache_page_buf = { 0 },
     .cache_page_buf_is_dirty = FALSE
 };
-
-#if PIFS_DEBUG_LEVEL >= 1
-/**
- * @brief pifs_address2str Convert address to human readable string.
- *
- * @param[in] a_address Address to convert.
- * @return The created string.
- */
-char * pifs_address2str(pifs_address_t * a_address)
-{
-    static char str[32];
-
-    snprintf(str, sizeof(str), "BA%i/PA%i @0x%X", a_address->block_address, a_address->page_address,
-           a_address->block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
-           + a_address->page_address * PIFS_FLASH_PAGE_SIZE_BYTE);
-
-    return str;
-}
-
-/**
- * @brief pifs_ba_pa2str Convert adress to human readable string.
- *
- * @param[in] a_block_address Block address.
- * @param[in] a_page_address Page address.
- * @return The created string.
- */
-char * pifs_ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address)
-{
-    static char str[32];
-
-    snprintf(str, sizeof(str), "BA%i/PA%i @0x%X", a_block_address, a_page_address,
-           a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
-           + a_page_address * PIFS_FLASH_PAGE_SIZE_BYTE);
-
-    return str;
-}
-
-/**
- * @brief pifs_byte2bin_str Convert a byte to binary string.
- *
- * @param[in] byte  Byte to convert.
- * @return Binary string.
- */
-char * pifs_byte2bin_str(uint8_t byte)
-{
-    uint8_t i;
-    static char s[12];
-
-    s[0] = 0;
-    for (i = 0; i < PIFS_BYTE_BITS; i++)
-    {
-        strncat(s, (byte & 0x80) ? "1" : "0", sizeof(s));
-        byte <<= 1;
-    }
-    return s;
-}
-#endif
-
-/**
- * @brief pifs_print_cache Print content of page buffer.
- */
-void pifs_print_cache(void)
-{
-#if PIFS_DEBUG_LEVEL >= 5
-    print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf),
-                 pifs.cache_page_buf_address.block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
-                 + pifs.cache_page_buf_address.page_address * PIFS_FLASH_PAGE_SIZE_BYTE);
-#endif
-}
-
-bool_t pifs_is_address_valid(pifs_address_t * a_address)
-{
-    bool_t valid = (a_address->block_address < PIFS_FLASH_BLOCK_NUM_ALL)
-            && (a_address->page_address < PIFS_FLASH_PAGE_PER_BLOCK);
-
-    return valid;
-}
 
 /**
  * @brief pifs_calc_header_checksum Calculate checksum of the file system header.
@@ -866,64 +790,6 @@ static pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
 }
 
 /**
- * @brief pifs_is_block_type Checks if the given block address is block type.
- * @param[in] a_block_address Block address to check.
- * @param[in] a_block_type    Block type.
- * @param[in] a_header        Pointer to file system's header.
- * @return TRUE: If block address is equal to block type.
- */
-bool_t pifs_is_block_type(pifs_block_address_t a_block_address,
-                                 pifs_block_type_t a_block_type,
-                                 pifs_header_t * a_header)
-{
-    pifs_size_t          i = 0;
-    bool_t               is_block_type = TRUE;
-
-    is_block_type = (a_block_type == PIFS_BLOCK_TYPE_DATA);
-#if PIFS_MANAGEMENT_BLOCKS > 1
-    for (i = 0; i < PIFS_MANAGEMENT_BLOCKS; i++)
-#endif
-    {
-        if (a_header->management_blocks[i] == a_block_address)
-        {
-            is_block_type = (a_block_type == PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT);
-        }
-        if (a_header->next_management_blocks[i] == a_block_address)
-        {
-            is_block_type = (a_block_type == PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT);
-        }
-    }
-#if PIFS_FLASH_BLOCK_RESERVED_NUM
-    if (a_block_address < PIFS_FLASH_BLOCK_RESERVED_NUM)
-    {
-        is_block_type = (a_block_type == PIFS_BLOCK_TYPE_RESERVED);
-    }
-#endif
-
-    return is_block_type;
-}
-
-/**
- * @brief pifs_is_page_erased Checks if the given block address is block type.
- * @param[in] a_block_address Block address to check.
- * @param[in] a_page_address  Page address to check.
- * @return TRUE: If page is erased.
- */
-bool_t pifs_is_page_erased(pifs_block_address_t a_block_address,
-                           pifs_page_address_t a_page_address)
-{
-    pifs_status_t status;
-    bool_t is_erased = FALSE;
-
-    status = pifs_read(a_block_address, a_page_address, 0, NULL, 0);
-    if (status == PIFS_SUCCESS)
-    {
-        is_erased = pifs_is_buffer_erased(pifs.cache_page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
-    }
-    return is_erased;
-}
-
-/**
  * @brief pifs_header_init Initialize file system's header.
  *
  * @param a_block_address[in]   Block address of header.
@@ -1049,8 +915,6 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
 
     return ret;
 }
-
-#include "buffer.h" // FIXME DEBUG
 
 /**
  * @brief pifs_init Initialize flash driver and file system.
@@ -1294,32 +1158,6 @@ pifs_status_t pifs_delete(void)
     ret = pifs_flush();
 
     ret = pifs_flash_delete();
-
-    return ret;
-}
-
-/**
- * @brief pifs_is_buffer_erased Check if buffer is erased or contains
- * programmed bytes.
- *
- * @param[in] a_buf[in]         Pointer to buffer.
- * @param[in] a_buf_size[in]    Size of buffer.
- * @return TRUE: if buffer is erased.
- * FALSE: if buffer contains at least one programmed bit.
- */
-bool_t pifs_is_buffer_erased(const void * a_buf, pifs_size_t a_buf_size)
-{
-    uint8_t   * buf = (uint8_t*) a_buf;
-    pifs_size_t i;
-    bool_t      ret = TRUE;
-
-    for (i = 0; i < a_buf_size && ret; i++)
-    {
-        if (buf[i] != PIFS_FLASH_ERASED_BYTE_VALUE)
-        {
-            ret = FALSE;
-        }
-    }
 
     return ret;
 }

@@ -16,6 +16,7 @@
 #include "flash_config.h"
 #include "pifs.h"
 #include "pifs_fsbm.h"
+#include "pifs_helper.h"
 #include "pifs_debug.h"
 #include "buffer.h" /* DEBUG */
 
