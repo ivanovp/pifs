@@ -120,11 +120,11 @@ typedef uint32_t pifs_bit_pos_t;
 typedef size_t pifs_size_t;
 
 #ifndef PIFS_PAGE_COUNT_SIZE
-#if PIFS_FLASH_PAGE_PER_BLOCK < 256
+#if PIFS_FLASH_PAGE_PER_BLOCK < 255
 #define PIFS_PAGE_COUNT_SIZE        1
-#elif PIFS_FLASH_PAGE_PER_BLOCK < 65536
+#elif PIFS_FLASH_PAGE_PER_BLOCK < 65535
 #define PIFS_PAGE_COUNT_SIZE        2
-#elif PIFS_FLASH_PAGE_PER_BLOCK < 4294967296l
+#elif PIFS_FLASH_PAGE_PER_BLOCK < 4294967295l
 #define PIFS_PAGE_COUNT_SIZE        4
 #endif
 #endif
@@ -212,7 +212,6 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 {
     uint8_t                 name[PIFS_FILENAME_LEN_MAX];
     uint8_t                 attrib;
-//    pifs_object_id_t        object_id;          /**< FIXME not used */
     pifs_address_t          first_map_address;  /**< First map page's address */
     pifs_size_t             file_size;          /**< Bytes written into last page */
 } pifs_entry_t;
@@ -288,7 +287,6 @@ typedef struct
     pifs_address_t          header_address;
     bool_t                  is_header_found;
     pifs_header_t           header;
-//    pifs_object_id_t        latest_object_id;
     pifs_address_t          cache_page_buf_address;                       /**< Address of cache_page_buf */
     uint8_t                 cache_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];    /**< Flash page buffer for cache */
     bool_t                  cache_page_buf_is_dirty;

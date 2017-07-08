@@ -58,20 +58,6 @@ typedef uint32_t pifs_page_offset_t;
 #error PIFS_FLASH_PAGE_SIZE_BYTE is too big!
 #endif
 
-/* FIXME not used yet */
-#if (PIFS_ENTRY_NUM_MAX < 255)
-typedef uint8_t pifs_object_id_t;
-#define OBJECT_ID_INVALID   (UINT8_MAX - 1u)
-#elif (PIFS_OBJECT_NUM_MAX < 65535)
-typedef uint16_t pifs_object_id_t;
-#define OBJECT_ID_INVALID   (UINT16_MAX - 1u)
-#elif (PIFS_OBJECT_NUM_MAX < 4294967295l)
-typedef uint32_t pifs_object_id_t;
-#define OBJECT_ID_INVALID   (UINT32_MAX - 1u)
-#else
-#error PIFS_OBJECT_NUM_MAX is too big!
-#endif
-
 /** Number of blocks used by the file system */
 #define PIFS_FLASH_BLOCK_NUM_FS     (PIFS_FLASH_BLOCK_NUM_ALL - PIFS_FLASH_BLOCK_RESERVED_NUM)
 /** Size of a block in bytes */

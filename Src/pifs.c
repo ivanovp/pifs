@@ -26,7 +26,6 @@ pifs_t pifs =
     .header_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
     .is_header_found = FALSE,
     .header = { 0 },
-//    .latest_object_id = 1,
     .cache_page_buf_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
     .cache_page_buf = { 0 },
     .cache_page_buf_is_dirty = FALSE
@@ -669,7 +668,6 @@ pifs_status_t pifs_init(void)
     PIFS_INFO_MSG("-----------------------\r\n");
     PIFS_INFO_MSG("Block address size:                 %lu bytes\r\n", sizeof(pifs_block_address_t));
     PIFS_INFO_MSG("Page address size:                  %lu bytes\r\n", sizeof(pifs_page_address_t));
-    PIFS_INFO_MSG("Object ID size:                     %lu bytes\r\n", sizeof(pifs_object_id_t));
     PIFS_INFO_MSG("Header size:                        %lu bytes, %lu pages\r\n", PIFS_HEADER_SIZE_BYTE, PIFS_HEADER_SIZE_PAGE);
     PIFS_INFO_MSG("Entry size:                         %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE);
     PIFS_INFO_MSG("Entry size in a page:               %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE * PIFS_ENTRY_PER_PAGE);
@@ -1347,7 +1345,6 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
                 {
                     PIFS_DEBUG_MSG("Map page: %u free page found %s\r\n", page_count_found, pifs_ba_pa2str(ba, pa));
                     strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
-//                    entry->object_id = pifs.latest_object_id++;
                     entry->attrib = PIFS_ATTRIB_ARCHIVE;
                     entry->first_map_address.block_address = ba;
                     entry->first_map_address.page_address = pa;
@@ -1695,6 +1692,8 @@ int pifs_fclose(P_FILE * a_file)
         if (file->mode_write && file->is_size_changed)
         {
             /* FIXME update entry! */
+            file->entry.file_size = file->write_pos;
+//            file->status = pifs_append_entry(file->entry);
         }
         pifs_flush();
         file->is_opened = FALSE;
