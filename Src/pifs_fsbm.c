@@ -1,6 +1,6 @@
 /**
  * @file        pifs_fsbm.c
- * @brief       Pi file system: free space bitmap
+ * @brief       Pi file system: free space bitmap functions
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19

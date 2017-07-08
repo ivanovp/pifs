@@ -1,6 +1,6 @@
 /**
- * @file        pifs.c
- * @brief       Pi file system
+ * @file        pifs_helper.c
+ * @brief       Pi file system: utility functions
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19

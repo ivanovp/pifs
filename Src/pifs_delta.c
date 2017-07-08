@@ -1,6 +1,6 @@
 /**
- * @file        pifs.c
- * @brief       Pi file system
+ * @file        pifs_delta.c
+ * @brief       Pi file system: delta page funtions
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19

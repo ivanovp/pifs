@@ -217,13 +217,13 @@ pifs_status_t pifs_erase(pifs_block_address_t a_block_address)
 }
 
 /**
- * @brief pifs_erase_blocks Find 'to be released' pages and erase them if they
- * are in the same block.
+ * @brief pifs_copy_fsbm Copy free space bitmap and process to be released pages.
+ * It find 'to be released' pages and erase them if they are in the same block.
  *
  * @param[in] a_old_header Pointer to previous file system's header.
  * @return PIFS_SUCCESS if erase was successful.
  */
-static pifs_status_t pifs_erase_blocks(pifs_header_t * a_old_header)
+static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header)
 {
     pifs_status_t           ret = PIFS_ERROR;
     pifs_block_address_t    fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
@@ -343,7 +343,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header)
     pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
     pifs_block_address_t old_ba = a_old_header->entry_list_address.block_address;
     pifs_page_address_t  old_pa = a_old_header->entry_list_address.page_address;
-    pifs_entry_t         entry;
+    pifs_entry_t         entry; /* FIXME this might be too much data for stack */
 
     PIFS_NOTICE_MSG("start\r\n");
     entry_cntr = 0;
@@ -433,7 +433,7 @@ pifs_status_t pifs_merge(void)
 #endif
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_erase_blocks(&old_header);
+        ret = pifs_copy_fsbm(&old_header);
     }
     if (ret == PIFS_SUCCESS)
     {
