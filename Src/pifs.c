@@ -2551,6 +2551,70 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
 }
 
 /**
+ * @brief pifs_merge_check Check if data merge is needed and perform it.
+ *
+ * @param[in] a_file Pointer to actual file or NULL.
+ * @return PIFS_SUCCESS if merge was not necessary or merge was successfull.
+ */
+pifs_status_t pifs_merge_check(pifs_file_t * a_file)
+{
+    pifs_status_t ret = PIFS_SUCCESS;
+    pifs_size_t   free_management_pages = 0;
+    pifs_size_t   free_data_pages = 0;
+    pifs_size_t   to_be_released_management_pages = 0;
+    pifs_size_t   to_be_released_data_pages = 0;
+    bool_t        merge = FALSE;
+    bool_t        is_free_map_entry = TRUE;
+
+    /* Get number of free management and data pages */
+    ret = pifs_get_free_pages(&free_management_pages, &free_data_pages);
+    PIFS_NOTICE_MSG("free_data_pages: %lu, free_management_pages: %lu\r\n",
+                    free_data_pages, free_management_pages);
+    if (ret == PIFS_SUCCESS && (free_data_pages == 0 || free_management_pages == 0))
+    {
+        /* Get number of erasable pages */
+        ret = pifs_get_to_be_released_pages(&to_be_released_management_pages,
+                                            &to_be_released_data_pages);
+        PIFS_NOTICE_MSG("to_be_released_data_pages: %lu, to_be_released_management_pages: %lu\r\n",
+                        to_be_released_data_pages, to_be_released_management_pages);
+        if (ret == PIFS_SUCCESS)
+        {
+            if (free_data_pages == 0 && to_be_released_data_pages > 0)
+            {
+                merge = TRUE;
+            }
+            if (free_management_pages == 0 && to_be_released_management_pages > 0)
+            {
+                if (a_file)
+                {
+                    /*
+                     * If free_management_pages is 0, number of free map entries
+                     * are to be checked. If there is free entry in the actual
+                     * map, no merge is needed.
+                     */
+                    ret = pifs_is_free_map_entry(a_file, &is_free_map_entry);
+                    if (ret == PIFS_SUCCESS && !is_free_map_entry)
+                    {
+                        merge = TRUE;
+                    }
+                }
+                else
+                {
+                    merge = TRUE;
+                }
+            }
+        }
+        if (ret == PIFS_SUCCESS && merge)
+        {
+            /* Some pages could be erased, do data merge */
+            ret = pifs_merge();
+        }
+    }
+
+    return ret;
+}
+
+/**
  * @brief pifs_fwrite Write to file. Works like fwrite().
  *
  * @param[in] a_data    Pointer to buffer to write.
@@ -2576,12 +2640,6 @@ pifs_size_t pifs_fwrite(const void * a_data, pifs_size_t a_size, pifs_size_t a_c
     pifs_page_address_t  pa_start = PIFS_PAGE_ADDRESS_INVALID;
     pifs_page_offset_t   po = PIFS_PAGE_OFFSET_INVALID;
     bool_t               is_delta = FALSE;
-    pifs_size_t          free_management_pages = 0;
-    pifs_size_t          free_data_pages = 0;
-    pifs_size_t          to_be_released_management_pages = 0;
-    pifs_size_t          to_be_released_data_pages = 0;
-    bool_t               merge = FALSE;
-    bool_t               is_free_map_entry = TRUE;
 
     if (pifs.is_header_found && file && file->is_opened && file->mode_write)
     {
@@ -2611,42 +2669,8 @@ pifs_size_t pifs_fwrite(const void * a_data, pifs_size_t a_size, pifs_size_t a_c
         {
             if (file->status == PIFS_SUCCESS)
             {
-                /* Get number of free management and data pages */
-                file->status = pifs_get_free_pages(&free_management_pages, &free_data_pages);
-                PIFS_NOTICE_MSG("free_data_pages: %lu, free_management_pages: %lu\r\n",
-                                free_data_pages, free_management_pages);
-            }
-            if (file->status == PIFS_SUCCESS && (free_data_pages == 0 || free_management_pages == 0))
-            {
-                /* Get number of erasable pages */
-                file->status = pifs_get_to_be_released_pages(&to_be_released_management_pages,
-                                                             &to_be_released_data_pages);
-                PIFS_NOTICE_MSG("to_be_released_data_pages: %lu, to_be_released_management_pages: %lu\r\n",
-                                to_be_released_data_pages, to_be_released_management_pages);
-                if (file->status == PIFS_SUCCESS)
-                {
-                    if (free_data_pages == 0 && to_be_released_data_pages > 0)
-                    {
-                        merge = TRUE;
-                    }
-                    if (free_management_pages == 0 && to_be_released_management_pages > 0)
-                    {
-                        /* If free_management_pages is 0, number of free map entries
-                         * are to be checked. If there is free entry in the actual
-                         * map, no merge is needed.
-                         */
-                        file->status = pifs_is_free_map_entry(file, &is_free_map_entry);
-                        if (file->status == PIFS_SUCCESS && !is_free_map_entry)
-                        {
-                            merge = TRUE;
-                        }
-                    }
-                }
-                if (file->status == PIFS_SUCCESS && merge)
-                {
-                    /* Some pages could be erased, do data merge */
-                    file->status = pifs_merge();
-                }
+                /* Check if merge needed and do it if necessary */
+                file->status = pifs_merge_check(a_file);
             }
             if (file->status == PIFS_SUCCESS)
             {
