@@ -3,7 +3,8 @@ CONFIG += console
 CONFIG -= qt
 
 include(other.pro)
-SOURCES += ./Src/buffer.c \
+SOURCES += ./Src/pifs_delta.c \
+./Src/buffer.c \
 ./Src/flash.c \
 ./Src/flash_test.c \
 ./Src/pifs.c \
@@ -19,6 +20,7 @@ HEADERS += ./Inc/api_pifs.h \
 ./Inc/pifs.h \
 ./Inc/pifs_config.h \
 ./Inc/pifs_debug.h \
+./Inc/pifs_delta.h \
 ./Inc/pifs_fsbm.h \
 ./Inc/pifs_helper.h
 

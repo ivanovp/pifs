@@ -34,6 +34,7 @@ SRC_C = ./Src/pifs_test.c
 SRC_C += ./Src/flash.c
 SRC_C += ./Src/buffer.c
 SRC_C += ./Src/pifs.c
+SRC_C += ./Src/pifs_delta.c
 SRC_C += ./Src/pifs_fsbm.c
 SRC_C += ./Src/pifs_helper.c
 SRC_S = 
