@@ -17,6 +17,7 @@
 #include "pifs_debug.h"
 #include "buffer.h"
 
+#define ENABLE_SMALL_FILES_TEST       1
 #define ENABLE_FULL_WRITE_TEST        1
 #define ENABLE_BASIC_TEST             1
 #define ENABLE_LARGE_TEST             0
@@ -72,9 +73,33 @@ pifs_status_t pifs_test(void)
     size_t   read_size = 0;
     size_t   i = 0;
     size_t   written_pages = 0;
+    char     filename[32];
 
     ret = pifs_init();
     PIFS_ASSERT(ret == PIFS_SUCCESS);
+
+#if ENABLE_SMALL_FILES_TEST
+    printf("-------------------------------------------------\r\n");
+
+    for (i = 0; i < PIFS_ENTRY_NUM_MAX / 2; i++)
+    {
+        snprintf(filename, sizeof(filename), "tsm%lu.dat", i);
+        file = pifs_fopen(filename, "w");
+        if (file)
+        {
+            printf("File opened for writing\r\n");
+            generate_buffer(i);
+            //print_buffer(test_buf_w, sizeof(test_buf_w), 0);
+            written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+        }
+        else
+        {
+            PIFS_ERROR_MSG("Cannot open file!\r\n");
+        }
+        pifs_fclose(file);
+    }
+#endif
+
 
 #if ENABLE_FULL_WRITE_TEST
     printf("-------------------------------------------------\r\n");
@@ -211,6 +236,29 @@ pifs_status_t pifs_test(void)
         PIFS_ERROR_MSG("Cannot open file!\r\n");
     }
     pifs_fclose(file);
+#endif
+
+#if ENABLE_SMALL_FILES_TEST
+    printf("-------------------------------------------------\r\n");
+
+    for (i = 0; i < PIFS_ENTRY_NUM_MAX / 2; i++)
+    {
+        snprintf(filename, sizeof(filename), "tsm%lu.dat", i);
+        file = pifs_fopen(filename, "r");
+        if (file)
+        {
+            printf("File opened for reading\r\n");
+            generate_buffer(i);
+            read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
+            //print_buffer(test_buf_r, sizeof(test_buf_r), 0);
+            check_buffers();
+        }
+        else
+        {
+            PIFS_ERROR_MSG("Cannot open file!\r\n");
+        }
+        pifs_fclose(file);
+    }
 #endif
 
 #if ENABLE_LARGE_TEST

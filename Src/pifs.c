@@ -218,7 +218,7 @@ pifs_status_t pifs_erase(pifs_block_address_t a_block_address)
 
 /**
  * @brief pifs_copy_fsbm Copy free space bitmap and process to be released pages.
- * It find 'to be released' pages and erase them if they are in the same block.
+ * It finds 'to be released' pages and erase them if they are in the same block.
  *
  * @param[in] a_old_header Pointer to previous file system's header.
  * @return PIFS_SUCCESS if erase was successful.
