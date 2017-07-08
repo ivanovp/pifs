@@ -330,6 +330,7 @@ static pifs_status_t pifs_copy_map(pifs_header_t * a_old_header, pifs_entry_t * 
     bool_t               end = FALSE;
     pifs_block_address_t delta_ba;
     pifs_page_address_t  delta_pa;
+    pifs_address_t       address;
 
     PIFS_NOTICE_MSG("start\r\n");
 
@@ -349,11 +350,16 @@ static pifs_status_t pifs_copy_map(pifs_header_t * a_old_header, pifs_entry_t * 
                     /* Map entry is valid */
                     /* Check if original page was overwritten and
                      * delta page was used */
-                    for (j = 0; j < map_entry.page_count; j++)
+                    address = map_entry.address;
+                    for (j = 0; j < map_entry.page_count && ret == PIFS_SUCCESS; j++)
                     {
-                        ret = pifs_find_delta_page(map_entry.address.block_address,
-                                                   map_entry.address.page_address,
+                        ret = pifs_find_delta_page(address.block_address,
+                                                   address.page_address,
                                                    &delta_ba, &delta_pa, NULL);
+                        if (ret == PIFS_SUCCESS)
+                        {
+                            ret = pifs_inc_address(&address);
+                        }
                     }
                 }
                 else
