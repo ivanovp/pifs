@@ -249,6 +249,13 @@ void pifs_parse_open_mode(pifs_file_t * a_file, const char * a_modes)
     PIFS_DEBUG_MSG("file_shall_exist: %i\r\n", a_file->mode_file_shall_exist);
 }
 
+/**
+ * @brief pifs_inc_address Increment address.
+ *
+ * @param[in] a_address Pointer to address to increment.
+ * @return PIFS_SUCCESS if successfully incremented.
+ * PIFS_ERROR_INTERNAL_RANGE if end of flash is reached.
+ */
 pifs_status_t pifs_inc_address(pifs_address_t * a_address)
 {
     pifs_status_t ret = PIFS_SUCCESS;
@@ -268,6 +275,14 @@ pifs_status_t pifs_inc_address(pifs_address_t * a_address)
     return ret;
 }
 
+/**
+ * @brief pifs_inc_ba_pa Increment address.
+ * @param[in] a_block_address  Pointer to block address to increment.
+ * @param[in] a_page_address   Pointer to page address to increment.
+ *
+ * @return PIFS_SUCCESS if successfully incremented.
+ * PIFS_ERROR_INTERNAL_RANGE if end of flash is reached.
+ */
 pifs_status_t pifs_inc_ba_pa(pifs_block_address_t * a_block_address,
                              pifs_page_address_t * a_page_address)
 {
