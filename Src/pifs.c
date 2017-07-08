@@ -279,10 +279,10 @@ static pifs_status_t pifs_flush(void)
  * @return PIFS_SUCCESS if data read successfully.
  */
 static pifs_status_t pifs_read(pifs_block_address_t a_block_address,
-                        pifs_page_address_t a_page_address,
-                        pifs_page_offset_t a_page_offset,
-                        void * const a_buf,
-                        pifs_size_t a_buf_size)
+                               pifs_page_address_t a_page_address,
+                               pifs_page_offset_t a_page_offset,
+                               void * const a_buf,
+                               pifs_size_t a_buf_size)
 {
     pifs_status_t ret = PIFS_ERROR;
 
@@ -324,7 +324,7 @@ static pifs_status_t pifs_read(pifs_block_address_t a_block_address,
 /**
  * @brief pifs_write  Cached write.
  *
- * @param[in] a_block_address Block address of page to write.
+ * @param[in] a_block_address   Block address of page to write.
  * @param[in] a_page_address    Page address of page to write.
  * @param[in] a_page_offset     Offset in page.
  * @param[in] a_buf             Pointer to buffer to write or NULL if
@@ -703,48 +703,57 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_size_t          i;
+    pifs_size_t          j;
     pifs_size_t          entry_cntr;
     pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
     pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
     pifs_block_address_t old_ba = a_old_header->entry_list_address.block_address;
     pifs_page_address_t  old_pa = a_old_header->entry_list_address.page_address;
-    pifs_entry_t       * entry = (pifs_entry_t*) pifs.page_buf;
+    pifs_entry_t         entry;
 
     PIFS_NOTICE_MSG("start\r\n");
     entry_cntr = 0;
     do
     {
-        ret = pifs_read(old_ba, old_pa, 0, pifs.page_buf, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
-        for (i = 0; i < PIFS_ENTRY_PER_PAGE && entry_cntr < PIFS_ENTRY_NUM_MAX; i++)
+        for (i = 0, j = 0; i < PIFS_ENTRY_PER_PAGE && entry_cntr < PIFS_ENTRY_NUM_MAX; i++)
         {
+            ret = pifs_read(old_ba, old_pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
+                            PIFS_ENTRY_SIZE_BYTE);
             /* Check if entry is valid */
-            if (!pifs_is_buffer_erased(&entry[i], PIFS_ENTRY_SIZE_BYTE))
+            if (!pifs_is_buffer_erased(&entry, PIFS_ENTRY_SIZE_BYTE))
             {
                 PIFS_NOTICE_MSG("name: %s attrib: 0x%02X\r\n",
-                                entry[i].name, entry[i].attrib);
+                                entry.name, entry.attrib);
             }
-            if (!pifs_is_buffer_erased(&entry[i], PIFS_ENTRY_SIZE_BYTE)
-                    && (entry[i].attrib != 0))
+            if (!pifs_is_buffer_erased(&entry, PIFS_ENTRY_SIZE_BYTE)
+                    && (entry.attrib != 0))
             {
-                ret = pifs_write(ba, pa, 0, pifs.page_buf, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
+                ret = pifs_write(ba, pa, j * PIFS_ENTRY_SIZE_BYTE, &entry,
+                                 PIFS_ENTRY_SIZE_BYTE);
                 PIFS_NOTICE_MSG("%s\r\n", ba_pa2str(ba, pa));
-                print_buffer(pifs.page_buf, sizeof(pifs.page_buf),
+                print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf),
                              ba * PIFS_FLASH_BLOCK_SIZE_BYTE + pa * PIFS_FLASH_PAGE_SIZE_BYTE);
+                j++;
             }
             entry_cntr++;
         }
-        pa++;
-        if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
+        if (entry_cntr < PIFS_ENTRY_NUM_MAX)
         {
-            pa = 0;
-            ba++;
-        }
+            pa++;
+            if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
+            {
+                pa = 0;
+                ba++;
+                PIFS_ASSERT(ba < PIFS_FLASH_BLOCK_NUM_ALL);
+            }
 
-        old_pa++;
-        if (old_pa == PIFS_FLASH_PAGE_PER_BLOCK)
-        {
-            old_pa = 0;
-            old_ba++;
+            old_pa++;
+            if (old_pa == PIFS_FLASH_PAGE_PER_BLOCK)
+            {
+                old_pa = 0;
+                old_ba++;
+                PIFS_ASSERT(old_ba < PIFS_FLASH_BLOCK_NUM_ALL);
+            }
         }
     } while (entry_cntr < PIFS_ENTRY_NUM_MAX && ret == PIFS_SUCCESS);
 
@@ -763,10 +772,6 @@ static pifs_status_t pifs_merge(void)
     pifs_page_address_t  hpa = PIFS_PAGE_ADDRESS_INVALID;
     pifs_header_t        old_header = pifs.header;
     pifs_size_t          i;
-    pifs_size_t          entry_cntr;
-    pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
-    pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
-    pifs_entry_t       * entry = (pifs_entry_t*) pifs.cache_page_buf;
 
     PIFS_NOTICE_MSG("start\r\n");
     for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
@@ -785,10 +790,13 @@ static pifs_status_t pifs_merge(void)
         /* Copy file entry list */
         ret = pifs_copy_entry_list(&old_header);
     }
+#if 0
     if (ret == PIFS_SUCCESS)
     {
         /* Process delta pages */
+        ret = pifs_copy_map(&old_header);
     }
+#endif
     if (ret == PIFS_SUCCESS)
     {
         ret = pifs_erase_blocks(&old_header);
@@ -1972,7 +1980,7 @@ static pifs_status_t pifs_append_entry(pifs_entry_t * a_entry)
     pifs_size_t          i;
 
     /* Invert attribute bits */
-    a_entry->attrib ^= a_entry->attrib;
+    a_entry->attrib ^= PIFS_ATTRIB_ALL;
     while (ba < pifs.header.entry_list_address.block_address + PIFS_MANAGEMENT_BLOCKS
            && !created && ret == PIFS_SUCCESS)
     {
@@ -2007,7 +2015,7 @@ static pifs_status_t pifs_append_entry(pifs_entry_t * a_entry)
         ret = PIFS_ERROR_NO_MORE_SPACE;
     }
     /* Restore attribute bits */
-    a_entry->attrib ^= a_entry->attrib;
+    a_entry->attrib ^= PIFS_ATTRIB_ALL;
 
     return ret;
 }
@@ -2046,7 +2054,7 @@ static pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a
                         /* Copy entry */
                         memcpy(a_entry, &entry[i], sizeof(pifs_entry_t));
                         /* Invert entry bits as it is stored inverted */
-                        a_entry->attrib ^= a_entry->attrib;
+                        a_entry->attrib ^= PIFS_ATTRIB_ALL;
                     }
                     else
                     {

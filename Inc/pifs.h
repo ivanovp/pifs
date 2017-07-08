@@ -35,6 +35,7 @@
 #define PIFS_ATTRIB_DIR         0x10u
 #define PIFS_ATTRIB_ARCHIVE     0x20u
 #define PIFS_ATTRIB_DELETED     0x80u
+#define PIFS_ATTRIB_ALL         UINT8_MAX
 
 /******************************************************************************/
 /*** FILE SYSTEM HEADER                                                     ***/
