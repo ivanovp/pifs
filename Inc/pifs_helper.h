@@ -22,5 +22,12 @@ char * pifs_ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_t 
 char * pifs_byte2bin_str(uint8_t byte);
 void pifs_print_cache(void);
 bool_t pifs_is_address_valid(pifs_address_t * a_address);
+bool_t pifs_is_block_type(pifs_block_address_t a_block_address,
+                          pifs_block_type_t a_block_type,
+                          pifs_header_t *a_header);
+bool_t pifs_is_buffer_erased(const void * a_buf, pifs_size_t a_buf_size);
+bool_t pifs_is_page_erased(pifs_block_address_t a_block_address,
+                           pifs_page_address_t a_page_address);
+void pifs_parse_open_mode(pifs_file_t * a_file, const char * a_modes);
 
 #endif /* _INCLUDE_PIFS_HELPER_H_ */

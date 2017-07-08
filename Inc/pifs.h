@@ -315,12 +315,6 @@ pifs_status_t pifs_write(pifs_block_address_t a_block_address,
                                 pifs_size_t a_buf_size);
 pifs_status_t pifs_erase(pifs_block_address_t a_block_address);
 pifs_status_t pifs_merge(void);
-bool_t pifs_is_buffer_erased(const void * a_buf, pifs_size_t a_buf_size);
-bool_t pifs_is_block_type(pifs_block_address_t a_block_address,
-                          pifs_block_type_t a_block_type,
-                          pifs_header_t *a_header);
-bool_t pifs_is_page_erased(pifs_block_address_t a_block_address,
-                           pifs_page_address_t a_page_address);
 pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
                                pifs_page_address_t a_page_address,
                                pifs_header_t * a_header);

@@ -186,7 +186,7 @@ bool_t pifs_is_page_erased(pifs_block_address_t a_block_address,
  * @param a_file[in]    Pointer to file's internal structure.
  * @param a_modes[in]   String of mode.
  */
-static void pifs_parse_open_mode(pifs_file_t * a_file, const char * a_modes)
+void pifs_parse_open_mode(pifs_file_t * a_file, const char * a_modes)
 {
     uint8_t i;
 
