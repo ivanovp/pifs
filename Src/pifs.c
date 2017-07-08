@@ -94,10 +94,10 @@ pifs_status_t pifs_flush(void)
  * @return PIFS_SUCCESS if data read successfully.
  */
 pifs_status_t pifs_read(pifs_block_address_t a_block_address,
-                               pifs_page_address_t a_page_address,
-                               pifs_page_offset_t a_page_offset,
-                               void * const a_buf,
-                               pifs_size_t a_buf_size)
+                        pifs_page_address_t a_page_address,
+                        pifs_page_offset_t a_page_offset,
+                        void * const a_buf,
+                        pifs_size_t a_buf_size)
 {
     pifs_status_t ret = PIFS_ERROR;
 
@@ -301,25 +301,13 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header)
                          ba * PIFS_FLASH_BLOCK_SIZE_BYTE + pa * PIFS_FLASH_PAGE_SIZE_BYTE);
         }
 
-        pa++;
-        if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
+        if (ret == PIFS_SUCCESS)
         {
-            pa = 0;
-            ba++;
-            if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
-            {
-                PIFS_FATAL_ERROR_MSG("End of flash! byte_cntr: %lu\r\n", byte_cntr);
-            }
+            ret = pifs_inc_ba_pa(&ba, &pa);
         }
-        old_pa++;
-        if (old_pa == PIFS_FLASH_PAGE_PER_BLOCK)
+        if (ret == PIFS_SUCCESS)
         {
-            old_pa = 0;
-            old_ba++;
-            if (old_ba >= PIFS_FLASH_BLOCK_NUM_ALL)
-            {
-                PIFS_FATAL_ERROR_MSG("End of flash! byte_cntr: %lu\r\n", byte_cntr);
-            }
+            ret = pifs_inc_ba_pa(&old_ba, &old_pa);
         }
     } while (ret == PIFS_SUCCESS && fba < PIFS_FLASH_BLOCK_NUM_ALL);
 
@@ -328,6 +316,56 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header)
 
 static pifs_status_t pifs_copy_map(pifs_header_t * a_old_header, pifs_entry_t * a_entry)
 {
+    pifs_status_t        ret = PIFS_SUCCESS;
+
+    pifs_size_t          i;
+    pifs_size_t          j;
+    pifs_size_t          entry_cntr;
+    pifs_block_address_t old_ba = a_entry->first_map_address.block_address;
+    pifs_page_address_t  old_pa = a_entry->first_map_address.page_address;
+    pifs_block_address_t ba;
+    pifs_page_address_t  pa;
+    pifs_map_header_t    map_header;
+    pifs_map_entry_t     map_entry;
+    bool_t               end = FALSE;
+    pifs_block_address_t delta_ba;
+    pifs_page_address_t  delta_pa;
+
+    PIFS_NOTICE_MSG("start\r\n");
+
+    do
+    {
+        /* Read map's header */
+        ret = pifs_read(old_ba, old_pa, 0, &map_header, PIFS_MAP_HEADER_SIZE_BYTE);
+        for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !end && ret == PIFS_SUCCESS; i++)
+        {
+            /* Go through all map entries in the page */
+            ret = pifs_read(old_ba, old_pa, PIFS_MAP_HEADER_SIZE_BYTE + i * PIFS_MAP_ENTRY_SIZE_BYTE,
+                            &map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
+            if (ret == PIFS_SUCCESS)
+            {
+                if (!pifs_is_buffer_erased(&map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
+                {
+                    /* Map entry is valid */
+                    /* Check if original page was overwritten and
+                     * delta page was used */
+                    for (j = 0; j < map_entry.page_count; j++)
+                    {
+                        ret = pifs_find_delta_page(map_entry.address.block_address,
+                                                   map_entry.address.page_address,
+                                                   &delta_ba, &delta_pa, NULL);
+                    }
+                }
+                else
+                {
+                    /* Map entry is unused */
+                    end = TRUE;
+                }
+            }
+        }
+    } while (!end && ret == PIFS_SUCCESS);
+
+    return ret;
 }
 
 /**
@@ -384,20 +422,13 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header)
         }
         if (entry_cntr < PIFS_ENTRY_NUM_MAX)
         {
-            pa++;
-            if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
+            if (ret == PIFS_SUCCESS)
             {
-                pa = 0;
-                ba++;
-                PIFS_ASSERT(ba < PIFS_FLASH_BLOCK_NUM_ALL);
+                ret = pifs_inc_ba_pa(&ba, &pa);
             }
-
-            old_pa++;
-            if (old_pa == PIFS_FLASH_PAGE_PER_BLOCK)
+            if (ret == PIFS_SUCCESS)
             {
-                old_pa = 0;
-                old_ba++;
-                PIFS_ASSERT(old_ba < PIFS_FLASH_BLOCK_NUM_ALL);
+                ret = pifs_inc_ba_pa(&old_ba, &old_pa);
             }
         }
     } while (entry_cntr < PIFS_ENTRY_NUM_MAX && ret == PIFS_SUCCESS);
@@ -1512,17 +1543,7 @@ pifs_size_t pifs_fwrite(const void * a_data, pifs_size_t a_size, pifs_size_t a_c
                             page_count_needed--;
                             if (page_count_found)
                             {
-                                pa++;
-                                if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
-                                {
-                                    pa = 0;
-                                    ba++;
-                                    if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
-                                    {
-                                        PIFS_FATAL_ERROR_MSG("Trying to write to invalid flash address! %s\r\n",
-                                                             pifs_ba_pa2str(ba, pa));
-                                    }
-                                }
+                                file->status = pifs_inc_ba_pa(&ba, &pa);
                             }
                         } while (page_count_found && file->status == PIFS_SUCCESS);
 
@@ -1553,17 +1574,7 @@ void pifs_inc_read_address(pifs_file_t * a_file)
     a_file->read_page_count--;
     if (a_file->read_page_count)
     {
-        a_file->read_address.page_address++;
-        if (a_file->read_address.page_address >= PIFS_FLASH_PAGE_PER_BLOCK)
-        {
-            a_file->read_address.page_address = 0;
-            a_file->read_address.block_address++;
-            if (a_file->read_address.block_address == PIFS_FLASH_BLOCK_NUM_ALL)
-            {
-                PIFS_FATAL_ERROR_MSG("Trying to read from invalid address! %s\r\n",
-                                     pifs_address2str(&a_file->read_address));
-            }
-        }
+        a_file->status = pifs_inc_address(&a_file->read_address);
     }
     else
     {

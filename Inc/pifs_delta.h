@@ -17,6 +17,11 @@
 #include "pifs_config.h"
 #include "pifs.h"
 
+pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
+                                   pifs_page_address_t a_page_address,
+                                   pifs_block_address_t * a_delta_block_address,
+                                   pifs_page_address_t * a_delta_page_address,
+                                   bool_t * a_is_map_full);
 pifs_status_t pifs_read_delta(pifs_block_address_t a_block_address,
                               pifs_page_address_t a_page_address,
                               pifs_page_offset_t a_page_offset,

@@ -29,5 +29,8 @@ bool_t pifs_is_buffer_erased(const void * a_buf, pifs_size_t a_buf_size);
 bool_t pifs_is_page_erased(pifs_block_address_t a_block_address,
                            pifs_page_address_t a_page_address);
 void pifs_parse_open_mode(pifs_file_t * a_file, const char * a_modes);
+pifs_status_t pifs_inc_address(pifs_address_t * a_address);
+pifs_status_t pifs_inc_ba_pa(pifs_block_address_t * a_block_address,
+                             pifs_page_address_t * a_page_address);
 
 #endif /* _INCLUDE_PIFS_HELPER_H_ */

@@ -103,11 +103,11 @@ static pifs_status_t pifs_write_delta_map_page(pifs_size_t delta_map_page_idx)
  *                                      FALSE: there is space in delta map.
  * @return PIFS_SUCCESS: if delta map read successfully.
  */
-static pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
-                                          pifs_page_address_t a_page_address,
-                                          pifs_block_address_t * a_delta_block_address,
-                                          pifs_page_address_t * a_delta_page_address,
-                                          bool_t * a_is_map_full)
+pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
+                                   pifs_page_address_t a_page_address,
+                                   pifs_block_address_t * a_delta_block_address,
+                                   pifs_page_address_t * a_delta_page_address,
+                                   bool_t * a_is_map_full)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_size_t          i;
