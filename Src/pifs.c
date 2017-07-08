@@ -326,6 +326,10 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header)
     return ret;
 }
 
+static pifs_status_t pifs_copy_map(pifs_header_t * a_old_header, pifs_entry_t * a_entry)
+{
+}
+
 /**
  * @brief pifs_copy_entry_list copy list of files (entry list) from previous
  * management block.
@@ -364,10 +368,17 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header)
             {
                 ret = pifs_write(ba, pa, j * PIFS_ENTRY_SIZE_BYTE, &entry,
                                  PIFS_ENTRY_SIZE_BYTE);
-                PIFS_NOTICE_MSG("%s\r\n", pifs_ba_pa2str(ba, pa));
-                print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf),
-                             ba * PIFS_FLASH_BLOCK_SIZE_BYTE + pa * PIFS_FLASH_PAGE_SIZE_BYTE);
+                if (ret == PIFS_SUCCESS)
+                {
+                    ret = pifs_copy_map(a_old_header, &entry);
+                }
                 j++;
+                if ((j % PIFS_ENTRY_PER_PAGE) == 0)
+                {
+                    PIFS_NOTICE_MSG("%s\r\n", pifs_ba_pa2str(ba, pa));
+                    print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf),
+                                 ba * PIFS_FLASH_BLOCK_SIZE_BYTE + pa * PIFS_FLASH_PAGE_SIZE_BYTE);
+                }
             }
             entry_cntr++;
         }
