@@ -291,6 +291,7 @@ typedef struct
     uint8_t                 cache_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];    /**< Flash page buffer for cache */
     bool_t                  cache_page_buf_is_dirty;
     pifs_file_t             file[PIFS_OPEN_FILE_NUM_MAX];                 /**< Opened files */
+    pifs_file_t             internal_file;                                /**< Internally opened files */
     uint8_t                 delta_map_page_buf[PIFS_DELTA_MAP_PAGE_NUM][PIFS_FLASH_PAGE_SIZE_BYTE];
     bool_t                  delta_map_page_is_read PIFS_BOOL_SIZE;
     bool_t                  delta_map_page_is_dirty PIFS_BOOL_SIZE;
@@ -319,5 +320,10 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
 pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                                 pifs_page_address_t a_page_address,
                                 pifs_header_t * a_header);
+pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
+                                    pifs_block_address_t a_block_address,
+                                    pifs_page_address_t a_page_address,
+                                    pifs_page_count_t a_page_count);
+void pifs_internal_open(pifs_file_t * a_file, const char * a_filename, const char * a_modes);
 
 #endif /* _INCLUDE_PIFS_H_ */

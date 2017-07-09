@@ -333,53 +333,66 @@ static pifs_status_t pifs_copy_map(pifs_header_t * a_old_header, pifs_entry_t * 
 
     PIFS_NOTICE_MSG("start\r\n");
 
-    do
+    pifs_internal_open(&pifs.internal_file, a_entry->name, "w");
+
+    if (pifs.internal_file.status == PIFS_SUCCESS)
     {
-        /* Read map's header */
-        ret = pifs_read(old_ba, old_pa, 0, &map_header, PIFS_MAP_HEADER_SIZE_BYTE);
-        for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !end && ret == PIFS_SUCCESS; i++)
+        do
         {
-            /* Go through all map entries in the page */
-            ret = pifs_read(old_ba, old_pa, PIFS_MAP_HEADER_SIZE_BYTE + i * PIFS_MAP_ENTRY_SIZE_BYTE,
-                            &map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
-            if (ret == PIFS_SUCCESS)
+            /* Read map's header */
+            ret = pifs_read(old_ba, old_pa, 0, &map_header, PIFS_MAP_HEADER_SIZE_BYTE);
+            for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !end && ret == PIFS_SUCCESS; i++)
             {
-                if (!pifs_is_buffer_erased(&map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
+                /* Go through all map entries in the page */
+                ret = pifs_read(old_ba, old_pa, PIFS_MAP_HEADER_SIZE_BYTE + i * PIFS_MAP_ENTRY_SIZE_BYTE,
+                                &map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
+                if (ret == PIFS_SUCCESS)
                 {
-                    /* Map entry is valid */
-                    /* Check if original page was overwritten and
-                     * delta page was used */
-                    address = map_entry.address;
-                    for (j = 0; j < map_entry.page_count && ret == PIFS_SUCCESS; j++)
+                    if (!pifs_is_buffer_erased(&map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
                     {
-                        ret = pifs_find_delta_page(address.block_address,
-                                                   address.page_address,
-                                                   &delta_ba, &delta_pa, NULL);
-                        if (ret == PIFS_SUCCESS)
+                        /* Map entry is valid */
+                        /* Check if original page was overwritten and */
+                        /* delta page was used */
+                        address = map_entry.address;
+                        for (j = 0; j < map_entry.page_count && ret == PIFS_SUCCESS; j++)
                         {
-                            PIFS_DEBUG_MSG("%s ->", pifs_address2str(&address));
-                            PIFS_DEBUG_MSG("%s\r\n", pifs_ba_pa2str(delta_ba, delta_pa));
-                            ret = pifs_inc_address(&address);
+                            ret = pifs_find_delta_page(address.block_address,
+                                                       address.page_address,
+                                                       &delta_ba, &delta_pa, NULL);
+                            if (ret == PIFS_SUCCESS)
+                            {
+                                PIFS_DEBUG_MSG("%s ->", pifs_address2str(&address));
+                                PIFS_DEBUG_MSG("%s\r\n", pifs_ba_pa2str(delta_ba, delta_pa));
+                                ret = pifs_append_map_entry(&pifs.internal_file,
+                                                      address.block_address,
+                                                      address.page_address, 1);
+                            }
+                            if (ret == PIFS_SUCCESS)
+                            {
+                                ret = pifs_inc_address(&address);
+                            }
                         }
                     }
-                }
-                else
-                {
-                    /* Map entry is unused */
-                    end = TRUE;
+                    else
+                    {
+                        /* Map entry is unused */
+                        end = TRUE;
+                    }
                 }
             }
-        }
-        if (!pifs_is_buffer_erased(&map_header.next_map_address, sizeof(pifs_address_t)))
-        {
-            old_ba = map_header.next_map_address.block_address;
-            old_pa = map_header.next_map_address.page_address;
-        }
-        else
-        {
-            end = TRUE;
-        }
-    } while (!end && ret == PIFS_SUCCESS);
+            if (!pifs_is_buffer_erased(&map_header.next_map_address, sizeof(pifs_address_t)))
+            {
+                old_ba = map_header.next_map_address.block_address;
+                old_pa = map_header.next_map_address.page_address;
+            }
+            else
+            {
+                end = TRUE;
+            }
+        } while (!end && ret == PIFS_SUCCESS);
+        // FIXME is this close OK? Handle return code?        
+        pifs_fclose(&pifs.internal_file);
+    }
 
     return ret;
 }
@@ -420,9 +433,9 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header)
             if (!pifs_is_buffer_erased(&entry, PIFS_ENTRY_SIZE_BYTE)
                     && (entry.attrib != 0))
             {
-                ret = pifs_write(ba, pa, j * PIFS_ENTRY_SIZE_BYTE, &entry,
-                                 PIFS_ENTRY_SIZE_BYTE);
-                if (ret == PIFS_SUCCESS)
+//                ret = pifs_write(ba, pa, j * PIFS_ENTRY_SIZE_BYTE, &entry,
+//                                 PIFS_ENTRY_SIZE_BYTE);
+//                if (ret == PIFS_SUCCESS)
                 {
                     ret = pifs_copy_map(a_old_header, &entry);
                 }
@@ -497,6 +510,7 @@ pifs_status_t pifs_merge(void)
     {
         ret = pifs_header_write(hba, hpa, &pifs.header);
     }
+    pifs_flush();
     exit(1);
 
     return ret;
@@ -1183,10 +1197,10 @@ static pifs_status_t pifs_is_free_map_entry(pifs_file_t * a_file,
  * @param a_page_count[in]      Number of new file pages.
  * @return PIFS_SUCCESS if entry was successfully written.
  */
-static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
-                                           pifs_block_address_t a_block_address,
-                                           pifs_page_address_t a_page_address,
-                                           pifs_page_count_t a_page_count)
+pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
+                                    pifs_block_address_t a_block_address,
+                                    pifs_page_address_t a_page_address,
+                                    pifs_page_count_t a_page_count)
 {
     pifs_block_address_t    ba = a_file->actual_map_address.block_address;
     pifs_page_address_t     pa = a_file->actual_map_address.page_address;
@@ -1280,6 +1294,102 @@ static pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
     return a_file->status;
 }
 
+void pifs_internal_open(pifs_file_t * a_file, const char * a_filename, const char * a_modes)
+{
+    pifs_entry_t       * entry = &a_file->entry;
+    pifs_block_address_t ba = PIFS_BLOCK_ADDRESS_INVALID;
+    pifs_page_address_t  pa = PIFS_PAGE_ADDRESS_INVALID;
+    pifs_page_count_t    page_count_found = 0;
+    pifs_size_t          free_management_pages = 0;
+    pifs_size_t          free_data_pages = 0;
+
+    a_file->status = PIFS_SUCCESS;
+    a_file->write_pos = 0;
+    a_file->write_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
+    a_file->write_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
+    a_file->read_pos = 0;
+    a_file->actual_map_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
+    a_file->actual_map_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
+    a_file->is_size_changed = FALSE;
+    pifs_parse_open_mode(a_file, a_modes);
+    if (a_file->status == PIFS_SUCCESS)
+    {
+        a_file->status = pifs_find_entry(a_filename, entry);
+        if (a_file->mode_file_shall_exist && a_file->status == PIFS_SUCCESS)
+        {
+            PIFS_DEBUG_MSG("Entry of %s found\r\n", a_filename);
+#if PIFS_DEBUG_LEVEL >= 6
+            print_buffer(entry, sizeof(pifs_entry_t), 0);
+#endif
+            a_file->is_opened = TRUE;
+        }
+        if (a_file->mode_create_new_file)
+        {
+            /* Deliberately avoiding return code */
+            (void)pifs_get_free_pages(&free_management_pages, &free_data_pages);
+            if (a_file->status == PIFS_SUCCESS && free_data_pages > 0)
+            {
+                /* File already exist */
+                a_file->status = pifs_clear_entry(a_filename); /* FIXME use delta pages! */
+                if (a_file->status == PIFS_SUCCESS)
+                {
+                    /* Mark allocated pages to be released */
+                    a_file->status = pifs_release_file_pages(a_file);
+                }
+                a_file->is_size_changed = TRUE; /* FIXME when delta pages used! */
+            }
+            else
+            {
+                /* File does not exists, no problem, we'll create it */
+                a_file->status = PIFS_SUCCESS;
+            }
+            /* Order of steps to create a a_file: */
+            /* #1 Find a free page for map of a_file */
+            /* #2 Create entry of a_file, which contains the map's address */
+            /* #3 Mark map page */
+            if (a_file->status == PIFS_SUCCESS)
+            {
+                a_file->status = pifs_find_free_page(PIFS_MAP_PAGE_NUM,
+                                                   PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT,
+                                                   &ba, &pa, &page_count_found);
+            }
+            if (a_file->status == PIFS_SUCCESS)
+            {
+                PIFS_DEBUG_MSG("Map page: %u free page found %s\r\n", page_count_found, pifs_ba_pa2str(ba, pa));
+                strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
+                entry->attrib = PIFS_ATTRIB_ARCHIVE;
+                entry->first_map_address.block_address = ba;
+                entry->first_map_address.page_address = pa;
+                a_file->status = pifs_append_entry(entry);
+                if (a_file->status == PIFS_SUCCESS)
+                {
+                    PIFS_DEBUG_MSG("Entry created\r\n");
+                    a_file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, TRUE);
+                    if (a_file->status == PIFS_SUCCESS)
+                    {
+                        a_file->is_opened = TRUE;
+                    }
+                }
+                else
+                {
+                    PIFS_DEBUG_MSG("Cannot create entry!\r\n");
+                }
+            }
+            else
+            {
+                PIFS_DEBUG_MSG("No free page found!\r\n");
+            }
+        }
+        if (a_file->is_opened)
+        {
+            a_file->status = pifs_read_first_map_entry(a_file);
+            PIFS_ASSERT(a_file->status == PIFS_SUCCESS);
+            a_file->read_address = a_file->map_entry.address;
+            a_file->read_page_count = a_file->map_entry.page_count;
+        }
+    }
+}
+
 /**
  * @brief pifs_fopen Open file, works like fopen().
  * Note: "a", "a+" not handled correctly.
@@ -1292,101 +1402,11 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
 {
     /* TODO search first free element of pifs.file[] */
     pifs_file_t        * file = &pifs.file[0];
-    pifs_entry_t       * entry = &pifs.file[0].entry;
-    pifs_block_address_t ba = PIFS_BLOCK_ADDRESS_INVALID;
-    pifs_page_address_t  pa = PIFS_PAGE_ADDRESS_INVALID;
-    pifs_page_count_t    page_count_found = 0;
-    pifs_size_t          free_management_pages = 0;
-    pifs_size_t          free_data_pages = 0;
 
     /* TODO check validity of filename */
     if (pifs.is_header_found && strlen(a_filename))
     {
-        file->status = PIFS_SUCCESS;
-        file->write_pos = 0;
-        file->write_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
-        file->write_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
-        file->read_pos = 0;
-        file->actual_map_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
-        file->actual_map_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
-        file->is_size_changed = FALSE;
-        pifs_parse_open_mode(file, a_modes);
-        if (file->status == PIFS_SUCCESS)
-        {
-            file->status = pifs_find_entry(a_filename, entry);
-            if (file->mode_file_shall_exist && file->status == PIFS_SUCCESS)
-            {
-                PIFS_DEBUG_MSG("Entry of %s found\r\n", a_filename);
-#if PIFS_DEBUG_LEVEL >= 6
-                print_buffer(entry, sizeof(pifs_entry_t), 0);
-#endif
-                file->is_opened = TRUE;
-            }
-            if (file->mode_create_new_file)
-            {
-                /* Deliberately avoiding return code */
-                (void)pifs_get_free_pages(&free_management_pages, &free_data_pages);
-                if (file->status == PIFS_SUCCESS && free_data_pages > 0)
-                {
-                    /* File already exist */
-                    file->status = pifs_clear_entry(a_filename); /* FIXME use delta pages! */
-                    if (file->status == PIFS_SUCCESS)
-                    {
-                        /* Mark allocated pages to be released */
-                        file->status = pifs_release_file_pages(file);
-                    }
-                    file->is_size_changed = TRUE; /* FIXME when delta pages used! */
-                }
-                else
-                {
-                    /* File does not exists, no problem, we'll create it */
-                    file->status = PIFS_SUCCESS;
-                }
-                /* Order of steps to create a file: */
-                /* #1 Find a free page for map of file */
-                /* #2 Create entry of file, which contains the map's address */
-                /* #3 Mark map page */
-                if (file->status == PIFS_SUCCESS)
-                {
-                    file->status = pifs_find_free_page(PIFS_MAP_PAGE_NUM,
-                                                  PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT,
-                                                  &ba, &pa, &page_count_found);
-                }
-                if (file->status == PIFS_SUCCESS)
-                {
-                    PIFS_DEBUG_MSG("Map page: %u free page found %s\r\n", page_count_found, pifs_ba_pa2str(ba, pa));
-                    strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
-                    entry->attrib = PIFS_ATTRIB_ARCHIVE;
-                    entry->first_map_address.block_address = ba;
-                    entry->first_map_address.page_address = pa;
-                    file->status = pifs_append_entry(entry);
-                    if (file->status == PIFS_SUCCESS)
-                    {
-                        PIFS_DEBUG_MSG("Entry created\r\n");
-                        file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, TRUE);
-                        if (file->status == PIFS_SUCCESS)
-                        {
-                            file->is_opened = TRUE;
-                        }
-                    }
-                    else
-                    {
-                        PIFS_DEBUG_MSG("Cannot create entry!\r\n");
-                    }
-                }
-                else
-                {
-                    PIFS_DEBUG_MSG("No free page found!\r\n");
-                }
-            }
-            if (file->is_opened)
-            {
-                file->status = pifs_read_first_map_entry(file);
-                PIFS_ASSERT(file->status == PIFS_SUCCESS);
-                file->read_address = file->map_entry.address;
-                file->read_page_count = file->map_entry.page_count;
-            }
-        }
+        pifs_internal_open(file, a_filename, a_modes);
     }
 
     return file->is_opened ? (P_FILE*) file : (P_FILE*) NULL;
