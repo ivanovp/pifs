@@ -370,6 +370,15 @@ static pifs_status_t pifs_copy_map(pifs_header_t * a_old_header, pifs_entry_t * 
                 }
             }
         }
+        if (!pifs_is_buffer_erased(&map_header.next_map_address, sizeof(pifs_address_t)))
+        {
+            old_ba = map_header.next_map_address.block_address;
+            old_pa = map_header.next_map_address.page_address;
+        }
+        else
+        {
+            end = TRUE;
+        }
     } while (!end && ret == PIFS_SUCCESS);
 
     return ret;

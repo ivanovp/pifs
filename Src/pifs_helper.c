@@ -271,6 +271,7 @@ pifs_status_t pifs_inc_address(pifs_address_t * a_address)
             ret = PIFS_ERROR_INTERNAL_RANGE;
         }
     }
+    PIFS_NOTICE_MSG("%s\r\n", pifs_address2str(a_address));
 
     return ret;
 }
@@ -288,11 +289,11 @@ pifs_status_t pifs_inc_ba_pa(pifs_block_address_t * a_block_address,
 {
     pifs_status_t ret = PIFS_SUCCESS;
 
-    *a_page_address++;
+    (*a_page_address)++;
     if (*a_page_address == PIFS_FLASH_PAGE_PER_BLOCK)
     {
         *a_page_address = 0;
-        *a_block_address++;
+        (*a_block_address)++;
         if (*a_block_address >= PIFS_FLASH_BLOCK_NUM_ALL)
         {
             PIFS_ERROR_MSG("End of flash: %s\r\n",
@@ -300,6 +301,7 @@ pifs_status_t pifs_inc_ba_pa(pifs_block_address_t * a_block_address,
             ret = PIFS_ERROR_INTERNAL_RANGE;
         }
     }
+    PIFS_NOTICE_MSG("%s\r\n", pifs_ba_pa2str(*a_block_address, *a_page_address));
 
     return ret;
 }
