@@ -22,4 +22,6 @@
 
 #define PIFS_PACKED_ATTRIBUTE           __attribute__((packed))
 
+typedef char pifs_char_t;
+
 #endif /* _INCLUDE_PIFS_CONFIG_H_ */

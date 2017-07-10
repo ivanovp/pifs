@@ -186,7 +186,7 @@ bool_t pifs_is_page_erased(pifs_block_address_t a_block_address,
  * @param a_file[in]    Pointer to file's internal structure.
  * @param a_modes[in]   String of mode.
  */
-void pifs_parse_open_mode(pifs_file_t * a_file, const char * a_modes)
+void pifs_parse_open_mode(pifs_file_t * a_file, const pifs_char_t * a_modes)
 {
     uint8_t i;
 
@@ -311,12 +311,12 @@ pifs_status_t pifs_inc_ba_pa(pifs_block_address_t * a_block_address,
  * @param[in] a_filename    Pointer to the file name to be checked.
  * @return PIFS_SUCCESS if filename does not contain invalid characters.
  */
-pifs_status_t pifs_check_filename(const char * a_filename)
+pifs_status_t pifs_check_filename(const pifs_char_t * a_filename)
 {
-    pifs_status_t ret = PIFS_ERROR_NOT_INITIALIZED;
-    pifs_size_t   i;
-    pifs_size_t   len = strlen(a_filename);
-    const char    invalid_chars[] = "'*,/:=;<>?[\"]|";
+    pifs_status_t     ret = PIFS_ERROR_NOT_INITIALIZED;
+    pifs_size_t       i;
+    pifs_size_t       len = strlen(a_filename);
+    const pifs_char_t invalid_chars[] = "\"'*,/:;<=>?[]|";
 
     if (pifs.is_header_found)
     {

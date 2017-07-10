@@ -333,7 +333,7 @@ static pifs_status_t pifs_copy_map(pifs_header_t * a_old_header, pifs_entry_t * 
 
     PIFS_NOTICE_MSG("start\r\n");
 
-    pifs_internal_open(&pifs.internal_file, (char*) a_entry->name, "w");
+    pifs_internal_open(&pifs.internal_file, a_entry->name, "w");
 
     if (pifs.internal_file.status == PIFS_SUCCESS)
     {
@@ -954,7 +954,7 @@ static pifs_status_t pifs_append_entry(pifs_entry_t * a_entry)
  * @return PIFS_SUCCESS if entry found.
  * PIFS_ERROR_FILE_NOT_FOUND if entry not found.
  */
-static pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a_entry)
+static pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a_entry)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
@@ -1014,7 +1014,7 @@ static pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a
  * @return PIFS_SUCCESS if entry found and cleared.
  * PIFS_ERROR_FILE_NOT_FOUND if entry not found.
  */
-static pifs_status_t pifs_clear_entry(const char * a_name)
+static pifs_status_t pifs_clear_entry(const pifs_char_t * a_name)
 {
     return pifs_find_entry(a_name, NULL);
 }
@@ -1301,7 +1301,9 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
  * @param[in] a_filename    Pointer to file name.
  * @param[in] a_modes       Pointer to open mode.
  */
-void pifs_internal_open(pifs_file_t * a_file, const char * a_filename, const char * a_modes)
+void pifs_internal_open(pifs_file_t * a_file,
+                        const pifs_char_t * a_filename,
+                        const pifs_char_t * a_modes)
 {
     pifs_entry_t       * entry = &a_file->entry;
     pifs_block_address_t ba = PIFS_BLOCK_ADDRESS_INVALID;
@@ -1431,7 +1433,7 @@ pifs_status_t pifs_get_file(pifs_file_t **a_file)
  * @param[in] a_modes       Open mode: "r", "r+", "w", "w+", "a" or "a+".
  * @return Pointer to file if file opened successfully.
  */
-P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
+P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
 {
     /* TODO search first free element of pifs.file[] */
     pifs_file_t  * file = NULL;
@@ -1780,7 +1782,7 @@ int pifs_fclose(P_FILE * a_file)
  * @param[in] a_filename Pointer to filename to be removed.
  * @return 0 if file removed. -1 if file not found.
  */
-int pifs_remove(const char * a_filename)
+int pifs_remove(const pifs_char_t * a_filename)
 {
     int ret;
     pifs_file_t * file;
