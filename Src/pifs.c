@@ -479,7 +479,6 @@ pifs_status_t pifs_merge(void)
     {
         ret = pifs_erase(pifs.header.next_management_blocks[i]);
     }
-
     if (ret == PIFS_SUCCESS)
     {
         hba = old_header.next_management_blocks[0];
@@ -494,7 +493,7 @@ pifs_status_t pifs_merge(void)
     if (ret == PIFS_SUCCESS)
     {
         /* Write new management area's header */
-        ret = pifs_header_write(hba, hpa, &pifs.header);
+        ret = pifs_header_write(hba, hpa, &pifs.header, FALSE);
     }
     if (ret == PIFS_SUCCESS)
     {
@@ -533,10 +532,10 @@ pifs_status_t pifs_merge(void)
     if (ret == PIFS_SUCCESS)
     {
         /* Write new management area's header with next management block's address */
-        ret = pifs_header_write(hba, hpa, &pifs.header);
+        ret = pifs_header_write(hba, hpa, &pifs.header, TRUE);
     }
-//    pifs_flush();
-//    exit(1);
+    pifs_flush();
+    exit(1);
 
     return ret;
 }
@@ -637,7 +636,8 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
  */
 pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                                 pifs_page_address_t a_page_address,
-                                pifs_header_t * a_header)
+                                pifs_header_t * a_header,
+                                bool_t a_mark_pages)
 {
     pifs_status_t ret = PIFS_ERROR;
     pifs_size_t   free_management_bytes;
@@ -645,47 +645,46 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
     pifs_size_t   free_management_pages;
     pifs_size_t   free_data_pages;
 
-    ret = pifs_erase(a_block_address);
-    if (ret == PIFS_SUCCESS)
-    {
-        ret = pifs_write(a_block_address, a_page_address, 0, a_header, sizeof(pifs_header_t));
-    }
+    ret = pifs_write(a_block_address, a_page_address, 0, a_header, sizeof(pifs_header_t));
     if (ret == PIFS_SUCCESS)
     {
         pifs.is_header_found = TRUE;
         pifs.header_address.block_address = a_block_address;
         pifs.header_address.page_address = a_page_address;
-
-        /* Mark file system header as used */
-        ret = pifs_mark_page(a_block_address,
-                             a_page_address,
-                             PIFS_HEADER_SIZE_PAGE, TRUE);
     }
-    /* FIXME this may not be the right function to mark entry list and
-     * free space bitmap.
-     */
-    if (ret == PIFS_SUCCESS)
+    if (a_mark_pages)
     {
-        /* Mark entry list as used */
-        ret = pifs_mark_page(a_header->entry_list_address.block_address,
-                             a_header->entry_list_address.page_address,
-                             PIFS_ENTRY_LIST_SIZE_PAGE, TRUE);
+        if (ret == PIFS_SUCCESS)
+        {
+            /* Mark file system header as used */
+            ret = pifs_mark_page(a_block_address,
+                                 a_page_address,
+                                 PIFS_HEADER_SIZE_PAGE, TRUE);
+        }
+        /* FIXME this may not be the right function to mark entry list and
+         * free space bitmap. */
+        if (ret == PIFS_SUCCESS)
+        {
+            /* Mark entry list as used */
+            ret = pifs_mark_page(a_header->entry_list_address.block_address,
+                                 a_header->entry_list_address.page_address,
+                                 PIFS_ENTRY_LIST_SIZE_PAGE, TRUE);
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            /* Mark free space bitmap as used */
+            ret = pifs_mark_page(a_header->free_space_bitmap_address.block_address,
+                                 a_header->free_space_bitmap_address.page_address,
+                                 PIFS_FREE_SPACE_BITMAP_SIZE_PAGE, TRUE);
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            /* Mark first delta page map as used */
+            ret = pifs_mark_page(a_header->delta_map_address.block_address,
+                                 a_header->delta_map_address.page_address,
+                                 PIFS_DELTA_MAP_PAGE_NUM, TRUE);
+        }
     }
-    if (ret == PIFS_SUCCESS)
-    {
-        /* Mark free space bitmap as used */
-        ret = pifs_mark_page(a_header->free_space_bitmap_address.block_address,
-                             a_header->free_space_bitmap_address.page_address,
-                             PIFS_FREE_SPACE_BITMAP_SIZE_PAGE, TRUE);
-    }
-    if (ret == PIFS_SUCCESS)
-    {
-        /* Mark first delta page map as used */
-        ret = pifs_mark_page(a_header->delta_map_address.block_address,
-                             a_header->delta_map_address.page_address,
-                             PIFS_DELTA_MAP_PAGE_NUM, TRUE);
-    }
-
     PIFS_INFO_MSG("Counter: %i\r\n",
                   a_header->counter);
     PIFS_INFO_MSG("Entry list at %s\r\n",
@@ -848,7 +847,11 @@ pifs_status_t pifs_init(void)
             ret = pifs_header_init(ba, pa, ba + PIFS_MANAGEMENT_BLOCKS, &pifs.header);
             if (ret == PIFS_SUCCESS)
             {
-                ret = pifs_header_write(ba, pa, &pifs.header);
+                ret = pifs_erase(ba);
+            }
+            if (ret == PIFS_SUCCESS)
+            {
+                ret = pifs_header_write(ba, pa, &pifs.header, TRUE);
             }
         }
 
