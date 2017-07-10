@@ -1294,6 +1294,13 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
     return a_file->status;
 }
 
+/**
+ * @brief pifs_internal_open Internally used function to open a file.
+ *
+ * @param[in] a_file        Pointer to internal file structure.
+ * @param[in] a_filename    Pointer to file name.
+ * @param[in] a_modes       Pointer to open mode.
+ */
 void pifs_internal_open(pifs_file_t * a_file, const char * a_filename, const char * a_modes)
 {
     pifs_entry_t       * entry = &a_file->entry;
@@ -1391,6 +1398,32 @@ void pifs_internal_open(pifs_file_t * a_file, const char * a_filename, const cha
 }
 
 /**
+ * @brief pifs_get_file Find an unused file structure (file handle).
+ *
+ * @param[out] a_file Pointer to pointer of file structure to fill.
+ * @return PIFS_SUCCESS if unused file structure found.
+ */
+pifs_status_t pifs_get_file(pifs_file_t **a_file)
+{
+    pifs_status_t ret = PIFS_ERROR_NO_MORE_FILE_HANDLE;
+    pifs_size_t   i;
+    pifs_file_t * file = NULL;
+
+    for (i = 0; i < PIFS_OPEN_FILE_NUM_MAX && ret != PIFS_SUCCESS; i++)
+    {
+        if (!pifs.file[i].is_used)
+        {
+            file = &pifs.file[i];
+            file->is_used = TRUE;
+            *a_file = file;
+            ret = PIFS_SUCCESS;
+        }
+    }
+
+    return ret;
+}
+
+/**
  * @brief pifs_fopen Open file, works like fopen().
  * Note: "a", "a+" not handled correctly.
  *
@@ -1401,10 +1434,16 @@ void pifs_internal_open(pifs_file_t * a_file, const char * a_filename, const cha
 P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
 {
     /* TODO search first free element of pifs.file[] */
-    pifs_file_t        * file = &pifs.file[0];
+    pifs_file_t  * file = NULL;
+    pifs_status_t  ret;
 
-    /* TODO check validity of filename */
-    if (pifs_check_filename(a_filename) == PIFS_SUCCESS)
+    /* TODO put return value to 'errno' */
+    ret = pifs_get_file(&file);
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_check_filename(a_filename);
+    }
+    if (ret == PIFS_SUCCESS)
     {
         pifs_internal_open(file, a_filename, a_modes);
     }
@@ -1728,6 +1767,7 @@ int pifs_fclose(P_FILE * a_file)
         }
         pifs_flush();
         file->is_opened = FALSE;
+        file->is_used = FALSE;
         ret = 0;
     }
 
@@ -1763,6 +1803,20 @@ int pifs_remove(const char * a_filename)
             ret = pifs_fclose(file);
         }
     }
+
+    return ret;
+}
+
+/**
+ * @brief pifs_ferror Return last error of file.
+ *
+ * @param[in] a_file Pointer to file.
+ * @return 0 (PIFS_SUCCESS): if no error occurred.
+ */
+int pifs_ferror(P_FILE * a_file)
+{
+    pifs_file_t * file = (pifs_file_t*) a_file;
+    int ret = file->status;
 
     return ret;
 }

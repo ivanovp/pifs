@@ -27,6 +27,7 @@ typedef enum
     PIFS_ERROR,
     PIFS_ERROR_NOT_INITIALIZED,
     PIFS_ERROR_INVALID_OPEN_MODE,
+    PIFS_ERROR_NO_MORE_FILE_HANDLE,
     PIFS_ERROR_INVALID_FILE_NAME,
     PIFS_ERROR_FILE_NOT_FOUND,
     PIFS_ERROR_NO_MORE_SPACE,
@@ -55,6 +56,7 @@ pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
                                   size_t * a_free_management_page_count,
                                   size_t * a_free_data_page_count);
 int pifs_remove(const char * a_filename);
+int pifs_ferror(P_FILE * a_file);
 #ifdef __cplusplus
 }
 #endif
