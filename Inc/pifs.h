@@ -101,10 +101,13 @@
 
 #if PIFS_CHECKSUM_SIZE == 1
 typedef uint8_t pifs_checksum_t;
+#define PIFS_CHECKSUM_ERASED    (UINT8_MAX)
 #elif PIFS_CHECKSUM_SIZE == 2
 typedef uint16_t pifs_checksum_t;
+#define PIFS_CHECKSUM_ERASED    (UINT16_MAX)
 #elif PIFS_CHECKSUM_SIZE == 4
 typedef uint32_t pifs_checksum_t;
+#define PIFS_CHECKSUM_ERASED    (UINT32_MAX)
 #else
 #error PIFS_CHECKSUM_SIZE is invalid! Valid values are 1, 2 or 4.
 #endif
@@ -162,17 +165,19 @@ typedef enum
     /**
      * Management information stored in the block. Actual management block.
      */
-    PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT = 1,
+    PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT = 0x01,
     /**
      * Management information stored in the block. Next management block.
      * Secondary management pages will be used when primary management area is
      * full.
      */
-    PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT,
+    PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT = 0x02,
     /** Data stored in the block. */
-    PIFS_BLOCK_TYPE_DATA,
+    PIFS_BLOCK_TYPE_DATA = 0x04,
+    /** Any type of the above. */
+    PIFS_BLOCK_TYPE_ANY = 0x07,
     /** Reserved block */
-    PIFS_BLOCK_TYPE_RESERVED
+    PIFS_BLOCK_TYPE_RESERVED = 0x08
 } pifs_block_type_t;
 
 /**
@@ -316,6 +321,7 @@ pifs_status_t pifs_erase(pifs_block_address_t a_block_address);
 pifs_status_t pifs_merge(void);
 pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
                                pifs_page_address_t a_page_address,
+                               pifs_block_address_t a_next_mgmt_block_address,
                                pifs_header_t * a_header);
 pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                                 pifs_page_address_t a_page_address,

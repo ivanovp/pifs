@@ -13,6 +13,7 @@
 #include "api_pifs.h"
 #include "flash.h"
 #include "pifs_debug.h"
+#include "pifs_helper.h"
 
 #define FLASH_DEBUG     1
 
@@ -21,6 +22,7 @@
         printf("%s ERROR: ", __FUNCTION__); \
         printf(__VA_ARGS__); \
         fflush(stdout); \
+        exit(-1); \
     } while (0);
 #else
 #define FLASH_ERROR_MSG(...)
@@ -139,9 +141,10 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
                 if (((buf8[i] ^ flash_page_buf[i]) & buf8[i]) != 0)
                 {
                     /* Error: cannot write data */
-                    FLASH_ERROR_MSG("Cannot program 0x%02X to 0x%02X. BA%i/PA%i/OFS%i\r\n",
+                    FLASH_ERROR_MSG("Cannot program 0x%02X to 0x%02X. %s offset: %i\r\n",
                                     flash_page_buf[i], buf8[i],
-                                    a_block_address, a_page_address, a_page_offset + i );
+                                    pifs_ba_pa2str(a_block_address, a_page_address),
+                                    a_page_offset + i );
                     ret = PIFS_ERROR_FLASH_WRITE;
                 }
             }
@@ -158,8 +161,8 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
     }
     else
     {
-        FLASH_ERROR_MSG("Trying to write to invalid flash address! BA%i/PA%i/OFS%i\r\n",
-                        a_block_address, a_page_address, a_page_offset);
+        FLASH_ERROR_MSG("Trying to write to invalid flash address! %s offset: %i\r\n",
+                        pifs_ba_pa2str(a_block_address, a_page_address), a_page_offset);
     }
 
     return ret;

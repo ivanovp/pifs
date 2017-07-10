@@ -406,7 +406,9 @@ pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                     {
                         fpa = 0;
                         fba++;
-                        if (a_is_same_block)
+                        if (a_is_same_block
+                                && (a_page_count_minimum < PIFS_FLASH_PAGE_PER_BLOCK
+                                || (fpa_start > 0 && a_page_count_desired > PIFS_FLASH_PAGE_PER_BLOCK)))
                         {
                             page_count_found = 0;
                         }
@@ -439,6 +441,27 @@ pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
     {
         ret = PIFS_ERROR_NO_MORE_SPACE;
     }
+
+    return ret;
+}
+
+pifs_status_t pifs_find_free_block(pifs_size_t a_block_count,
+                                   pifs_block_type_t a_block_type,
+                                   pifs_block_address_t a_start_block_address,
+                                   pifs_block_address_t * a_block_address)
+{
+    pifs_status_t        ret;
+    pifs_block_address_t ba;
+    pifs_page_address_t  pa;
+    pifs_page_count_t    page_count;
+
+    ret = pifs_find_page(a_block_count * PIFS_FLASH_PAGE_PER_BLOCK,
+                         a_block_count * PIFS_FLASH_PAGE_PER_BLOCK,
+                         a_block_type,
+                         TRUE, TRUE, a_start_block_address,
+                         &ba, &pa, &page_count);
+
+    *a_block_address = ba;
 
     return ret;
 }

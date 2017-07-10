@@ -104,32 +104,39 @@ bool_t pifs_is_address_valid(pifs_address_t * a_address)
  * @return TRUE: If block address is equal to block type.
  */
 bool_t pifs_is_block_type(pifs_block_address_t a_block_address,
-                                 pifs_block_type_t a_block_type,
-                                 pifs_header_t * a_header)
+                          pifs_block_type_t a_block_type,
+                          pifs_header_t * a_header)
 {
     pifs_size_t          i = 0;
     bool_t               is_block_type = TRUE;
 
-    is_block_type = (a_block_type == PIFS_BLOCK_TYPE_DATA);
+    if (a_block_type == PIFS_BLOCK_TYPE_ANY)
+    {
+        is_block_type = TRUE;
+    }
+    else
+    {
+        is_block_type = (a_block_type == PIFS_BLOCK_TYPE_DATA);
 #if PIFS_MANAGEMENT_BLOCKS > 1
-    for (i = 0; i < PIFS_MANAGEMENT_BLOCKS; i++)
+        for (i = 0; i < PIFS_MANAGEMENT_BLOCKS; i++)
 #endif
-    {
-        if (a_header->management_blocks[i] == a_block_address)
         {
-            is_block_type = (a_block_type == PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT);
+            if (a_header->management_blocks[i] == a_block_address)
+            {
+                is_block_type = (a_block_type == PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT);
+            }
+            if (a_header->next_management_blocks[i] == a_block_address)
+            {
+                is_block_type = (a_block_type == PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT);
+            }
         }
-        if (a_header->next_management_blocks[i] == a_block_address)
-        {
-            is_block_type = (a_block_type == PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT);
-        }
-    }
 #if PIFS_FLASH_BLOCK_RESERVED_NUM
-    if (a_block_address < PIFS_FLASH_BLOCK_RESERVED_NUM)
-    {
-        is_block_type = (a_block_type == PIFS_BLOCK_TYPE_RESERVED);
-    }
+        if (a_block_address < PIFS_FLASH_BLOCK_RESERVED_NUM)
+        {
+            is_block_type = (a_block_type == PIFS_BLOCK_TYPE_RESERVED);
+        }
 #endif
+    }
 
     return is_block_type;
 }

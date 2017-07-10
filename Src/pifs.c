@@ -468,6 +468,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header)
 pifs_status_t pifs_merge(void)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
+    pifs_block_address_t next_mgmt_ba = PIFS_BLOCK_ADDRESS_INVALID;
     pifs_block_address_t hba = PIFS_BLOCK_ADDRESS_INVALID;
     pifs_page_address_t  hpa = PIFS_PAGE_ADDRESS_INVALID;
     pifs_header_t        old_header = pifs.header;
@@ -483,7 +484,7 @@ pifs_status_t pifs_merge(void)
     {
         hba = old_header.next_management_blocks[0];
         hpa = 0;
-        ret = pifs_header_init(hba, hpa, &pifs.header);
+        ret = pifs_header_init(hba, hpa, PIFS_BLOCK_ADDRESS_ERASED, &pifs.header);
     }
     if (ret == PIFS_SUCCESS)
     {
@@ -508,6 +509,32 @@ pifs_status_t pifs_merge(void)
             ret = pifs_erase(old_header.management_blocks[i]);
         }
     }
+    if (ret == PIFS_SUCCESS)
+    {
+        /* Find next management blocks address after actual management block */
+        ret = pifs_find_free_block(PIFS_MANAGEMENT_BLOCKS, PIFS_BLOCK_TYPE_ANY,
+                                   hba + PIFS_MANAGEMENT_BLOCKS,
+                                   &next_mgmt_ba);
+        if (ret != PIFS_SUCCESS)
+        {
+            /* No free blocks found, find next management blocks address */
+            /* anywhere */
+            ret = pifs_find_free_block(PIFS_MANAGEMENT_BLOCKS, PIFS_BLOCK_TYPE_ANY,
+                                       0,
+                                       &next_mgmt_ba);
+        }
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        PIFS_DEBUG_MSG("next management block: %i, ret: %i\r\n", next_mgmt_ba, ret);
+        /* Add next management block's address to the current header */
+        ret = pifs_header_init(hba, hpa, next_mgmt_ba, &pifs.header);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        /* Write new management area's header with next management block's address */
+        ret = pifs_header_write(hba, hpa, &pifs.header);
+    }
 //    pifs_flush();
 //    exit(1);
 
@@ -522,8 +549,9 @@ pifs_status_t pifs_merge(void)
  * @param a_header[out]         Pointer to the header to be initialized.
  */
 pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
-                                      pifs_page_address_t a_page_address,
-                                      pifs_header_t * a_header)
+                               pifs_page_address_t a_page_address,
+                               pifs_block_address_t a_next_mgmt_block_address,
+                               pifs_header_t * a_header)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_size_t          i = 0;
@@ -535,7 +563,10 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
     a_header->majorVersion = PIFS_MAJOR_VERSION;
     a_header->minorVersion = PIFS_MINOR_VERSION;
 #endif
-    a_header->counter++;
+    if (a_next_mgmt_block_address == PIFS_BLOCK_ADDRESS_ERASED)
+    {
+        a_header->counter++;
+    }
     a_header->entry_list_address.block_address = ba;
     a_header->entry_list_address.page_address = a_page_address + PIFS_HEADER_SIZE_PAGE;
     if (a_header->entry_list_address.page_address + PIFS_ENTRY_LIST_SIZE_PAGE >= PIFS_FLASH_PAGE_PER_BLOCK)
@@ -568,17 +599,30 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
     for (i = 0; i < PIFS_MANAGEMENT_BLOCKS; i++)
 #endif
     {
-        /* FIXME choose free blocks here! */
-        a_header->next_management_blocks[i] = ba;
-#if PIFS_MANAGEMENT_BLOCKS > 1
-        ba++;
-        if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
+        if (a_next_mgmt_block_address != PIFS_BLOCK_ADDRESS_ERASED)
         {
-            ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
-        }
+            a_header->next_management_blocks[i] = ba;
+#if PIFS_MANAGEMENT_BLOCKS > 1
+            ba++;
+            if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
+            {
+                ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
+            }
 #endif
+        }
+        else
+        {
+            a_header->next_management_blocks[i] = PIFS_BLOCK_ADDRESS_ERASED;
+        }
     }
-    a_header->checksum = pifs_calc_header_checksum(a_header);
+    if (a_next_mgmt_block_address != PIFS_BLOCK_ADDRESS_ERASED)
+    {
+        a_header->checksum = pifs_calc_header_checksum(a_header);
+    }
+    else
+    {
+        a_header->checksum = PIFS_CHECKSUM_ERASED;
+    }
 
     return ret;
 }
@@ -592,8 +636,8 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
  * @return PIFS_SUCCESS if header successfully written.
  */
 pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
-                                       pifs_page_address_t a_page_address,
-                                       pifs_header_t * a_header)
+                                pifs_page_address_t a_page_address,
+                                pifs_header_t * a_header)
 {
     pifs_status_t ret = PIFS_ERROR;
     pifs_size_t   free_management_bytes;
@@ -801,7 +845,7 @@ pifs_status_t pifs_init(void)
             ba = PIFS_FLASH_BLOCK_RESERVED_NUM + rand() % (PIFS_FLASH_BLOCK_NUM_FS);
 #endif
             pa = 0;
-            ret = pifs_header_init(ba, pa, &pifs.header);
+            ret = pifs_header_init(ba, pa, ba + PIFS_MANAGEMENT_BLOCKS, &pifs.header);
             if (ret == PIFS_SUCCESS)
             {
                 ret = pifs_header_write(ba, pa, &pifs.header);

@@ -47,6 +47,9 @@ pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                              pifs_block_address_t * a_block_address,
                              pifs_page_address_t * a_page_address,
                              pifs_page_count_t * a_page_count_found);
+pifs_status_t pifs_find_free_block(pifs_size_t a_block_count,
+                                   pifs_block_type_t a_block_type, pifs_block_address_t a_start_block_address,
+                                   pifs_block_address_t * a_block_address);
 pifs_status_t pifs_get_pages(bool_t a_is_free,
                              pifs_size_t * a_management_page_count,
                              pifs_size_t * a_data_page_count);

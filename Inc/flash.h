@@ -22,12 +22,15 @@ extern "C" {
 #if (PIFS_FLASH_BLOCK_NUM_ALL < 255)
 typedef uint8_t pifs_block_address_t;
 #define PIFS_BLOCK_ADDRESS_INVALID   (UINT8_MAX - 1u)
+#define PIFS_BLOCK_ADDRESS_ERASED    (UINT8_MAX)
 #elif (PIFS_FLASH_BLOCK_NUM_ALL < 65535)
 typedef uint16_t pifs_block_address_t;
 #define PIFS_BLOCK_ADDRESS_INVALID   (UINT16_MAX - 1u)
+#define PIFS_BLOCK_ADDRESS_ERASED    (UINT16_MAX)
 #elif (PIFS_FLASH_BLOCK_NUM_ALL < 4294967295l)
 typedef uint32_t pifs_block_address_t;
 #define PIFS_BLOCK_ADDRESS_INVALID   (UINT32_MAX - 1u)
+#define PIFS_BLOCK_ADDRESS_ERASED    (UINT32_MAX)
 #else
 #error PIFS_FLASH_BLOCK_NUM_ALL is too big!
 #endif
@@ -35,12 +38,15 @@ typedef uint32_t pifs_block_address_t;
 #if (PIFS_FLASH_PAGE_PER_BLOCK < 255)
 typedef uint8_t pifs_page_address_t;
 #define PIFS_PAGE_ADDRESS_INVALID   (UINT8_MAX - 1u)
+#define PIFS_PAGE_ADDRESS_ERASED    (UINT8_MAX)
 #elif (PIFS_FLASH_PAGE_PER_BLOCK < 65535)
 typedef uint16_t pifs_page_address_t;
 #define PIFS_PAGE_ADDRESS_INVALID   (UINT16_MAX - 1u)
+#define PIFS_PAGE_ADDRESS_ERASED    (UINT16_MAX)
 #elif (PIFS_FLASH_PAGE_PER_BLOCK < 4294967295l)
 typedef uint32_t pifs_page_address_t;
 #define PIFS_PAGE_ADDRESS_INVALID   (UINT32_MAX - 1u)
+#define PIFS_PAGE_ADDRESS_ERASED    (UINT32_MAX)
 #else
 #error PIFS_FLASH_PAGE_PER_BLOCK is too big!
 #endif
@@ -48,12 +54,15 @@ typedef uint32_t pifs_page_address_t;
 #if (PIFS_FLASH_PAGE_SIZE_BYTE < 255)
 typedef uint8_t pifs_page_offset_t;
 #define PIFS_PAGE_OFFSET_INVALID   (UINT8_MAX - 1u)
+#define PIFS_PAGE_OFFSET_ERASED    (UINT8_MAX)
 #elif (PIFS_FLASH_PAGE_SIZE_BYTE < 65535)
 typedef uint16_t pifs_page_offset_t;
 #define PIFS_PAGE_OFFSET_INVALID   (UINT16_MAX - 1u)
+#define PIFS_PAGE_OFFSET_ERASED    (UINT16_MAX)
 #elif (PIFS_FLASH_PAGE_SIZE_BYTE < 4294967295l)
 typedef uint32_t pifs_page_offset_t;
 #define PIFS_PAGE_OFFSET_INVALID   (UINT32_MAX - 1u)
+#define PIFS_PAGE_OFFSET_ERASED    (UINT32_MAX)
 #else
 #error PIFS_FLASH_PAGE_SIZE_BYTE is too big!
 #endif
