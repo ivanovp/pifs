@@ -305,3 +305,37 @@ pifs_status_t pifs_inc_ba_pa(pifs_block_address_t * a_block_address,
 
     return ret;
 }
+
+/**
+ * @brief pifs_check_filename Check if file name is valid.
+ * @param[in] a_filename    Pointer to the file name to be checked.
+ * @return PIFS_SUCCESS if filename does not contain invalid characters.
+ */
+pifs_status_t pifs_check_filename(const char * a_filename)
+{
+    pifs_status_t ret = PIFS_ERROR_NOT_INITIALIZED;
+    pifs_size_t   i;
+    pifs_size_t   len = strlen(a_filename);
+    const char    invalid_chars[] = "'*,/:=;<>?[\"]|";
+
+    if (pifs.is_header_found)
+    {
+        if (len > 0)
+        {
+            ret = PIFS_SUCCESS;
+            for (i = 0; i < len && ret == PIFS_SUCCESS; i++)
+            {
+                if (strchr(invalid_chars, a_filename[i]) != NULL)
+                {
+                    ret = PIFS_ERROR_INVALID_FILE_NAME;
+                }
+            }
+        }
+        else
+        {
+            ret = PIFS_ERROR_INVALID_FILE_NAME;
+        }
+    }
+
+    return ret;
+}
