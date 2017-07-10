@@ -493,7 +493,7 @@ pifs_status_t pifs_merge(void)
     if (ret == PIFS_SUCCESS)
     {
         /* Write new management area's header */
-        ret = pifs_header_write(hba, hpa, &pifs.header, FALSE);
+        ret = pifs_header_write(hba, hpa, &pifs.header, TRUE);
     }
     if (ret == PIFS_SUCCESS)
     {
@@ -532,7 +532,7 @@ pifs_status_t pifs_merge(void)
     if (ret == PIFS_SUCCESS)
     {
         /* Write new management area's header with next management block's address */
-        ret = pifs_header_write(hba, hpa, &pifs.header, TRUE);
+        ret = pifs_header_write(hba, hpa, &pifs.header, FALSE);
     }
     pifs_flush();
     exit(1);
