@@ -86,8 +86,11 @@ pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address, pifs_page_ad
     size_t read_count = 0;
 
     PIFS_ASSERT(flash_file);
-    if (offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
-            && (offset + a_buf_size) <= PIFS_FLASH_SIZE_BYTE_ALL)
+    if ((offset + a_buf_size) <= PIFS_FLASH_SIZE_BYTE_ALL
+        #if PIFS_FLASH_BLOCK_RESERVED_NUM
+            && offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
+        #endif
+            )
     {
         PIFS_ASSERT(fseek(flash_file, offset, SEEK_SET) == 0);
         read_count = fread(a_buf, 1, a_buf_size, flash_file);
@@ -117,8 +120,11 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
     uint8_t * buf8 = (uint8_t*) a_buf;
     
     PIFS_ASSERT(flash_file);
-    if (offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
-            && (offset + a_buf_size) <= PIFS_FLASH_SIZE_BYTE_ALL)
+    if ((offset + a_buf_size) <= PIFS_FLASH_SIZE_BYTE_ALL
+        #if PIFS_FLASH_BLOCK_RESERVED_NUM
+            && offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
+        #endif
+            )
     {
         PIFS_ASSERT(fseek(flash_file, offset, SEEK_SET) == 0);
         /* Check if write is possible */
@@ -167,8 +173,11 @@ pifs_status_t pifs_flash_erase(pifs_block_address_t a_block_address)
     pifs_page_address_t i;
     
     PIFS_ASSERT(flash_file);
-    if (offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
-            && (offset + PIFS_FLASH_BLOCK_SIZE_BYTE) <= PIFS_FLASH_SIZE_BYTE_ALL)
+    if ((offset + PIFS_FLASH_BLOCK_SIZE_BYTE) <= PIFS_FLASH_SIZE_BYTE_ALL
+        #if PIFS_FLASH_BLOCK_RESERVED_NUM
+            && offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
+        #endif
+            )
     {
         PIFS_ASSERT(fseek(flash_file, offset, SEEK_SET) == 0);
         ret = PIFS_SUCCESS;

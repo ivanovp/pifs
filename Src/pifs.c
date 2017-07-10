@@ -333,7 +333,7 @@ static pifs_status_t pifs_copy_map(pifs_header_t * a_old_header, pifs_entry_t * 
 
     PIFS_NOTICE_MSG("start\r\n");
 
-    pifs_internal_open(&pifs.internal_file, a_entry->name, "w");
+    pifs_internal_open(&pifs.internal_file, (char*) a_entry->name, "w");
 
     if (pifs.internal_file.status == PIFS_SUCCESS)
     {
@@ -492,6 +492,14 @@ pifs_status_t pifs_merge(void)
     }
     if (ret == PIFS_SUCCESS)
     {
+        ret = pifs_copy_fsbm(&old_header);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_header_write(hba, hpa, &pifs.header);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
         /* Copy file entry list */
         ret = pifs_copy_entry_list(&old_header);
     }
@@ -502,14 +510,6 @@ pifs_status_t pifs_merge(void)
         ret = pifs_copy_map(&old_header);
     }
 #endif
-    if (ret == PIFS_SUCCESS)
-    {
-        ret = pifs_copy_fsbm(&old_header);
-    }
-    if (ret == PIFS_SUCCESS)
-    {
-        ret = pifs_header_write(hba, hpa, &pifs.header);
-    }
     pifs_flush();
     exit(1);
 
@@ -952,7 +952,7 @@ static pifs_status_t pifs_append_entry(pifs_entry_t * a_entry)
  * @param a_name[in]    Pointer to name to find.
  * @param a_entry[out]  Pointer to entry to fill. NULL: clear entry.
  * @return PIFS_SUCCESS if entry found.
- * PIFS_ERROR_ENTRY_NOT_FOUND if entry not found.
+ * PIFS_ERROR_FILE_NOT_FOUND if entry not found.
  */
 static pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a_entry)
 {
@@ -999,7 +999,7 @@ static pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a
 
     if (ret == PIFS_SUCCESS && !found)
     {
-        ret = PIFS_ERROR_ENTRY_NOT_FOUND;
+        ret = PIFS_ERROR_FILE_NOT_FOUND;
     }
 
     return ret;
@@ -1012,7 +1012,7 @@ static pifs_status_t pifs_find_entry(const char * a_name, pifs_entry_t * const a
  *
  * @param a_name[in]    Pointer to name to find.
  * @return PIFS_SUCCESS if entry found and cleared.
- * PIFS_ERROR_ENTRY_NOT_FOUND if entry not found.
+ * PIFS_ERROR_FILE_NOT_FOUND if entry not found.
  */
 static pifs_status_t pifs_clear_entry(const char * a_name)
 {
@@ -1391,6 +1391,40 @@ void pifs_internal_open(pifs_file_t * a_file, const char * a_filename, const cha
 }
 
 /**
+ * @brief pifs_check_filename Check if file name is valid.
+ * @param[in] a_filename    Pointer to the file name to be checked.
+ * @return PIFS_SUCCESS if filename does not contain invalid characters.
+ */
+pifs_status_t pifs_check_filename(const char * a_filename)
+{
+    pifs_status_t ret = PIFS_ERROR_NOT_INITIALIZED;
+    pifs_size_t   i;
+    pifs_size_t   len = strlen(a_filename);
+    const char    invalid_chars[] = "'*,/:=;<>?[\"]|";
+
+    if (pifs.is_header_found)
+    {
+        if (len > 0)
+        {
+            ret = PIFS_SUCCESS;
+            for (i = 0; i < len && ret == PIFS_SUCCESS; i++)
+            {
+                if (strchr(invalid_chars, a_filename[i]) != NULL)
+                {
+                    ret = PIFS_ERROR_INVALID_FILE_NAME;
+                }
+            }
+        }
+        else
+        {
+            ret = PIFS_ERROR_INVALID_FILE_NAME;
+        }
+    }
+
+    return ret;
+}
+
+/**
  * @brief pifs_fopen Open file, works like fopen().
  * Note: "a", "a+" not handled correctly.
  *
@@ -1404,7 +1438,7 @@ P_FILE * pifs_fopen(const char * a_filename, const char * a_modes)
     pifs_file_t        * file = &pifs.file[0];
 
     /* TODO check validity of filename */
-    if (pifs.is_header_found && strlen(a_filename))
+    if (pifs_check_filename(a_filename) == PIFS_SUCCESS)
     {
         pifs_internal_open(file, a_filename, a_modes);
     }
@@ -1742,20 +1776,26 @@ int pifs_fclose(P_FILE * a_file)
  */
 int pifs_remove(const char * a_filename)
 {
-    int ret = -1; /* FIXME error code! */
+    int ret;
     pifs_file_t * file;
 
-    file = (pifs_file_t*) pifs_fopen(a_filename, "r");
-    if (file)
+    ret = pifs_check_filename(a_filename);
+    if (ret == PIFS_SUCCESS)
     {
-        /* File already exist */
-        file->status = pifs_clear_entry(a_filename);
-        if (file->status == PIFS_SUCCESS)
+        ret = PIFS_ERROR_FILE_NOT_FOUND;
+        /* TODO use internal open */
+        file = (pifs_file_t*) pifs_fopen(a_filename, "r");
+        if (file)
         {
-            /* Mark allocated pages to be released */
-            file->status = pifs_release_file_pages(file);
+            /* File already exist */
+            file->status = pifs_clear_entry(a_filename);
+            if (file->status == PIFS_SUCCESS)
+            {
+                /* Mark allocated pages to be released */
+                file->status = pifs_release_file_pages(file);
+            }
+            ret = pifs_fclose(file);
         }
-        ret = pifs_fclose(file);
     }
 
     return ret;
