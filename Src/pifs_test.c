@@ -141,6 +141,10 @@ pifs_status_t pifs_test(void)
         {
             generate_buffer(i);
             read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
+            if (read_size != sizeof(test_buf_r))
+            {
+                printf("Read size differs!\r\n");
+            }
 //            print_buffer(test_buf_r, sizeof(test_buf_r), 0);
             check_buffers();
         }

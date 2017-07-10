@@ -234,7 +234,6 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header)
     pifs_size_t             i;
     bool_t                  find = TRUE;
     bool_t                  erase_block = FALSE;
-    pifs_size_t             byte_cntr = PIFS_FREE_SPACE_BITMAP_SIZE_BYTE;
     pifs_block_address_t    temp_ba;
     pifs_page_address_t     temp_pa;
     pifs_page_count_t       temp_page_count;
@@ -300,30 +299,30 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header)
                          ba * PIFS_FLASH_BLOCK_SIZE_BYTE + pa * PIFS_FLASH_PAGE_SIZE_BYTE);
         }
 
-        if (ret == PIFS_SUCCESS)
+        if (fba < PIFS_FLASH_BLOCK_NUM_ALL)
         {
-            ret = pifs_inc_ba_pa(&ba, &pa);
-        }
-        if (ret == PIFS_SUCCESS)
-        {
-            ret = pifs_inc_ba_pa(&old_ba, &old_pa);
+            if (ret == PIFS_SUCCESS)
+            {
+                ret = pifs_inc_ba_pa(&ba, &pa);
+            }
+            if (ret == PIFS_SUCCESS)
+            {
+                ret = pifs_inc_ba_pa(&old_ba, &old_pa);
+            }
         }
     } while (ret == PIFS_SUCCESS && fba < PIFS_FLASH_BLOCK_NUM_ALL);
 
     return ret;
 }
 
-static pifs_status_t pifs_copy_map(pifs_header_t * a_old_header, pifs_entry_t * a_entry)
+static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
 
     pifs_size_t          i;
     pifs_size_t          j;
-    pifs_size_t          entry_cntr;
-    pifs_block_address_t old_ba = a_entry->first_map_address.block_address;
-    pifs_page_address_t  old_pa = a_entry->first_map_address.page_address;
-    pifs_block_address_t ba;
-    pifs_page_address_t  pa;
+    pifs_block_address_t old_ba = a_old_entry->first_map_address.block_address;
+    pifs_page_address_t  old_pa = a_old_entry->first_map_address.page_address;
     pifs_map_header_t    map_header;
     pifs_map_entry_t     map_entry;
     bool_t               end = FALSE;
@@ -333,7 +332,7 @@ static pifs_status_t pifs_copy_map(pifs_header_t * a_old_header, pifs_entry_t * 
 
     PIFS_NOTICE_MSG("start\r\n");
 
-    pifs_internal_open(&pifs.internal_file, a_entry->name, "w");
+    pifs_internal_open(&pifs.internal_file, a_old_entry->name, "w");
 
     if (pifs.internal_file.status == PIFS_SUCCESS)
     {
@@ -367,7 +366,7 @@ static pifs_status_t pifs_copy_map(pifs_header_t * a_old_header, pifs_entry_t * 
                                                       address.block_address,
                                                       address.page_address, 1);
                             }
-                            if (ret == PIFS_SUCCESS)
+                            if (ret == PIFS_SUCCESS && j < map_entry.page_count)
                             {
                                 ret = pifs_inc_address(&address);
                             }
@@ -433,12 +432,8 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header)
             if (!pifs_is_buffer_erased(&entry, PIFS_ENTRY_SIZE_BYTE)
                     && (entry.attrib != 0))
             {
-//                ret = pifs_write(ba, pa, j * PIFS_ENTRY_SIZE_BYTE, &entry,
-//                                 PIFS_ENTRY_SIZE_BYTE);
-//                if (ret == PIFS_SUCCESS)
-                {
-                    ret = pifs_copy_map(a_old_header, &entry);
-                }
+                /* Create file in the new management area and copy map */
+                ret = pifs_copy_map(&entry);
                 j++;
                 if ((j % PIFS_ENTRY_PER_PAGE) == 0)
                 {
@@ -492,10 +487,12 @@ pifs_status_t pifs_merge(void)
     }
     if (ret == PIFS_SUCCESS)
     {
+        /* Copy free space bitmap */
         ret = pifs_copy_fsbm(&old_header);
     }
     if (ret == PIFS_SUCCESS)
     {
+        /* Write new management area's header */
         ret = pifs_header_write(hba, hpa, &pifs.header);
     }
     if (ret == PIFS_SUCCESS)
@@ -503,15 +500,16 @@ pifs_status_t pifs_merge(void)
         /* Copy file entry list */
         ret = pifs_copy_entry_list(&old_header);
     }
-#if 0
     if (ret == PIFS_SUCCESS)
     {
-        /* Process delta pages */
-        ret = pifs_copy_map(&old_header);
+        /* Erase old management area */
+        for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
+        {
+            ret = pifs_erase(old_header.management_blocks[i]);
+        }
     }
-#endif
-    pifs_flush();
-    exit(1);
+//    pifs_flush();
+//    exit(1);
 
     return ret;
 }
@@ -598,6 +596,10 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                                        pifs_header_t * a_header)
 {
     pifs_status_t ret = PIFS_ERROR;
+    pifs_size_t   free_management_bytes;
+    pifs_size_t   free_data_bytes;
+    pifs_size_t   free_management_pages;
+    pifs_size_t   free_data_pages;
 
     ret = pifs_erase(a_block_address);
     if (ret == PIFS_SUCCESS)
@@ -639,6 +641,21 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                              a_header->delta_map_address.page_address,
                              PIFS_DELTA_MAP_PAGE_NUM, TRUE);
     }
+
+    PIFS_INFO_MSG("Counter: %i\r\n",
+                  a_header->counter);
+    PIFS_INFO_MSG("Entry list at %s\r\n",
+                  pifs_address2str(&a_header->entry_list_address));
+    PIFS_INFO_MSG("Free space bitmap at %s\r\n",
+                  pifs_address2str(&a_header->free_space_bitmap_address));
+    PIFS_INFO_MSG("Delta page map at %s\r\n",
+                  pifs_address2str(&a_header->delta_map_address));
+    pifs_get_free_space(&free_management_bytes, &free_data_bytes,
+                        &free_management_pages, &free_data_pages);
+    PIFS_INFO_MSG("Free data area:                     %lu bytes, %lu pages\r\n",
+                  free_data_bytes, free_data_pages);
+    PIFS_INFO_MSG("Free management area:               %lu bytes, %lu pages\r\n",
+                  free_management_bytes, free_management_pages);
 
     return ret;
 }
@@ -1204,7 +1221,6 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
 {
     pifs_block_address_t    ba = a_file->actual_map_address.block_address;
     pifs_page_address_t     pa = a_file->actual_map_address.page_address;
-    bool_t                  is_written = FALSE;
     bool_t                  empty_entry_found = FALSE;
     pifs_page_count_t       page_count_found = 0;
 
@@ -1288,7 +1304,6 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
         PIFS_DEBUG_MSG("### New map entry %s ###\r\n",
                        pifs_ba_pa2str(ba, pa));
 //        pifs_print_cache();
-        is_written = TRUE;
     }
 
     return a_file->status;
@@ -1450,7 +1465,7 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
         pifs_internal_open(file, a_filename, a_modes);
     }
 
-    return file->is_opened ? (P_FILE*) file : (P_FILE*) NULL;
+    return (P_FILE*) file;
 }
 
 /**

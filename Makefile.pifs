@@ -18,7 +18,7 @@ COMMON_FLAGS =
 
 # Compiler options
 CFLAGS = -c -O0 -ggdb3 $(INCLUDE)
-CFLAGS += -Wall -Wextra -Wno-unused -Wno-format #-pedantic -std=c99
+CFLAGS += -Wall -Wextra -Wno-format #-pedantic -std=c99
 CFLAGS += -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 CFLAGS += $(COMMON_FLAGS)
 CPPFLAGS = $(CFLAGS)
