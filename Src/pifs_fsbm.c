@@ -431,7 +431,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                 }
                 if (!found)
                 {
-                    free_space_bitmap >>= 2;
+                    free_space_bitmap >>= PIFS_FSBM_BITS_PER_PAGE;
                     fpa++;
                     if (fpa == PIFS_FLASH_PAGE_PER_BLOCK)
                     {
@@ -518,7 +518,7 @@ pifs_status_t pifs_find_to_be_released_block(pifs_size_t a_block_count,
     find.page_count_minimum = a_block_count * PIFS_FLASH_PAGE_PER_BLOCK;
     find.page_count_desired = a_block_count * PIFS_FLASH_PAGE_PER_BLOCK;
     find.block_type = a_block_type;
-    find.is_free = TRUE;
+    find.is_free = FALSE;
     find.is_same_block = TRUE;
     find.start_block_address = a_start_block_address;
     find.header = a_header;

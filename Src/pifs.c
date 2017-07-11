@@ -234,7 +234,7 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_new_header)
     pifs_page_address_t  new_fsbm_pa = a_new_header->free_space_bitmap_address.page_address;
     pifs_size_t          i;
     bool_t               find = TRUE;
-    bool_t               erase_block = FALSE;
+    bool_t               mark_block_free = FALSE;
     pifs_block_address_t to_be_released_ba;
 
     PIFS_ASSERT(pifs.is_header_found);
@@ -264,7 +264,8 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_new_header)
                         if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA, &pifs.header))
                         {
                             ret = pifs_erase(fba);
-                            erase_block = TRUE;
+                            /* Block erased, it can be marked as free */
+                            mark_block_free = TRUE;
                             PIFS_NOTICE_MSG("Block %i erased\r\n", fba);
                         }
                         else
@@ -281,22 +282,24 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_new_header)
                         || pifs_is_block_type(fba, PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT, &pifs.header))
                 {
                     PIFS_NOTICE_MSG("Block %i is management, mark free in bitmap\r\n", fba);
-                    erase_block = TRUE;
+                    /* Block will be allocated later or erased later, it can be */
+                    /* marked as free */
+                    mark_block_free = TRUE;
                 }
             }
 
-            if (erase_block)
+            if (mark_block_free)
             {
                 pifs.page_buf[i] = PIFS_FLASH_ERASED_BYTE_VALUE;
             }
 
-            fpa += PIFS_BYTE_BITS / 2;
+            fpa += PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE;
             if (fpa == PIFS_FLASH_PAGE_PER_BLOCK)
             {
                 fpa = 0;
                 fba++;
                 find = TRUE;
-                erase_block = FALSE;
+                mark_block_free = FALSE;
             }
         }
 
