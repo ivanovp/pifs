@@ -15,7 +15,10 @@
 #include "buffer.h"
 #include "pifs_debug.h"
 
-#define PRINT_BUF_COLUMNS (16)
+#define PRINT_BUF_COLUMNS               (16)
+/* 1: print first mismatch, then print buffer content */
+/* 0: print all mismatches, then print buffer content */
+#define COMPARE_PRINT_FIRST_MISMATCH    1
 
 void fill_buffer(void * a_buf, size_t a_buf_size, fill_type_t a_fill_type, uint32_t a_fill_arg)
 {
@@ -88,6 +91,9 @@ pifs_status_t compare_buffer(void * a_buf1, size_t a_buf_size, void * a_buf2)
             BUFFER_ERROR_MSG("Mismatch at index %lu. Expected: 0x%02X, Read: 0x%02X\r\n",
                     i, buf1[i], buf2[i]);
             ret = PIFS_ERROR;
+#if COMPARE_PRINT_FIRST_MISMATCH
+            break;
+#endif
         }
     }
 
@@ -97,6 +103,7 @@ pifs_status_t compare_buffer(void * a_buf1, size_t a_buf_size, void * a_buf2)
         print_buffer(a_buf1, a_buf_size, 0);
         BUFFER_ERROR_MSG("a_buf2:\r\n");
         print_buffer(a_buf2, a_buf_size, 0);
+        exit(-1);
     }
 
     return ret;

@@ -72,6 +72,7 @@ pifs_status_t pifs_test(void)
     size_t   written_size = 0;
     size_t   read_size = 0;
     size_t   i = 0;
+    size_t   testfull = 0;
     size_t   written_pages = 0;
     char     filename[32];
 
@@ -80,6 +81,7 @@ pifs_status_t pifs_test(void)
 
 #if ENABLE_SMALL_FILES_TEST
     printf("-------------------------------------------------\r\n");
+    printf("Small file test: writing files\r\n");
 
     for (i = 0; i < PIFS_ENTRY_NUM_MAX / 2; i++)
     {
@@ -103,6 +105,7 @@ pifs_status_t pifs_test(void)
 
 #if ENABLE_FULL_WRITE_TEST
     printf("-------------------------------------------------\r\n");
+    printf("Full write test: writing file\r\n");
 
     file = pifs_fopen("testfull.dat", "w");
     if (file)
@@ -111,7 +114,7 @@ pifs_status_t pifs_test(void)
         written_pages = 0;
         for (i = 0; i < TEST_FULL_PAGE_NUM; i++)
         {
-            generate_buffer(i);
+            generate_buffer(i + 55);
 //            print_buffer(test_buf_w, sizeof(test_buf_w), 0);
             written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
             if (written_size == sizeof(test_buf_w))
@@ -121,6 +124,7 @@ pifs_status_t pifs_test(void)
             else
             {
                 PIFS_DEBUG_MSG("Media full!!!\r\n");
+                testfull = i;
                 break;
             }
         }
@@ -132,6 +136,7 @@ pifs_status_t pifs_test(void)
     pifs_fclose(file);
 
     printf("-------------------------------------------------\r\n");
+    printf("Full write test: reading file\r\n");
 
     file = pifs_fopen("testfull.dat", "r");
     if (file)
@@ -139,7 +144,8 @@ pifs_status_t pifs_test(void)
         printf("File opened for reading\r\n");
         for (i = 0; i < written_pages; i++)
         {
-            generate_buffer(i);
+            printf("i: %i\r\n", i);
+            generate_buffer(i + 55);
             read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
             if (read_size != sizeof(test_buf_r))
             {
@@ -166,6 +172,7 @@ pifs_status_t pifs_test(void)
 
 #if ENABLE_BASIC_TEST
     printf("-------------------------------------------------\r\n");
+    printf("Basic test: writing file\r\n");
 
     file = pifs_fopen("testb.dat", "w");
     if (file)
@@ -185,6 +192,7 @@ pifs_status_t pifs_test(void)
 
 #if ENABLE_LARGE_TEST
     printf("-------------------------------------------------\r\n");
+    printf("Large test: writing file\r\n");
 
     file = pifs_fopen("test.dat", "w");
     if (file)
@@ -206,6 +214,7 @@ pifs_status_t pifs_test(void)
 
 #if ENABLE_WRITE_FRAGMENT_TEST
     printf("-------------------------------------------------\r\n");
+    printf("Fragment write test: writing file\r\n");
 
     file = pifs_fopen("test2.dat", "w");
     if (file)
@@ -227,6 +236,7 @@ pifs_status_t pifs_test(void)
 #endif
 #if ENABLE_READ_FRAGMENT_TEST
     printf("-------------------------------------------------\r\n");
+    printf("Fragment read test: writing file\r\n");
 
     file = pifs_fopen("test3.dat", "w");
     if (file)
@@ -244,6 +254,7 @@ pifs_status_t pifs_test(void)
 
 #if ENABLE_SMALL_FILES_TEST
     printf("-------------------------------------------------\r\n");
+    printf("Small files test: reading files\r\n");
 
     for (i = 0; i < PIFS_ENTRY_NUM_MAX / 2; i++)
     {
@@ -267,6 +278,7 @@ pifs_status_t pifs_test(void)
 
 #if ENABLE_LARGE_TEST
     printf("-------------------------------------------------\r\n");
+    printf("Large test: reading file\r\n");
 
     file = pifs_fopen("test.dat", "r");
     if (file)
@@ -288,6 +300,7 @@ pifs_status_t pifs_test(void)
 #endif
 #if ENABLE_BASIC_TEST
     printf("-------------------------------------------------\r\n");
+    printf("Basic test: reading file\r\n");
 
     file = pifs_fopen("testb.dat", "r");
     if (file)
@@ -306,6 +319,7 @@ pifs_status_t pifs_test(void)
 #endif
 #if ENABLE_WRITE_FRAGMENT_TEST
     printf("-------------------------------------------------\r\n");
+    printf("Write fragment test: reading file\r\n");
 
     memset(test_buf_r, 0, sizeof(test_buf_r));
     file = pifs_fopen("test2.dat", "r");
@@ -325,6 +339,7 @@ pifs_status_t pifs_test(void)
 #endif
 #if ENABLE_READ_FRAGMENT_TEST
     printf("-------------------------------------------------\r\n");
+    printf("Read fragment test: reading file\r\n");
 
     memset(test_buf_r, 0, sizeof(test_buf_r));
     file = pifs_fopen("test3.dat", "r");
@@ -346,6 +361,7 @@ pifs_status_t pifs_test(void)
     }
     pifs_fclose(file);
 #endif
+    printf("END OF TESTS\r\n");
     print_fs_info();
     ret = pifs_delete();
     PIFS_ASSERT(ret == PIFS_SUCCESS);

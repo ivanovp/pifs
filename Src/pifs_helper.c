@@ -248,12 +248,13 @@ void pifs_parse_open_mode(pifs_file_t * a_file, const pifs_char_t * a_modes)
                 break;
         }
     }
-
+#if 0
     PIFS_DEBUG_MSG("create_new_file: %i\r\n", a_file->mode_create_new_file);
     PIFS_DEBUG_MSG("read: %i\r\n", a_file->mode_read);
     PIFS_DEBUG_MSG("write: %i\r\n", a_file->mode_write);
     PIFS_DEBUG_MSG("append: %i\r\n", a_file->mode_append);
     PIFS_DEBUG_MSG("file_shall_exist: %i\r\n", a_file->mode_file_shall_exist);
+#endif
 }
 
 /**

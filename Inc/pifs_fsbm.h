@@ -17,6 +17,19 @@
 #include "pifs_config.h"
 #include "pifs.h"
 
+typedef struct
+{
+    pifs_page_count_t    page_count_minimum;  /**< Number of pages needed at least. */
+    pifs_page_count_t    page_count_desired;  /**< Number of pages needed. */
+    pifs_block_type_t    block_type;          /**< Block type to find. */
+    bool_t               is_free;             /**< TRUE: find free page,
+                                                   FALSE: find to be released page. */
+    bool_t               is_same_block;       /**< TRUE: find pages in same block,
+                                                   FALSE: pages can be in different block. */
+    pifs_block_address_t start_block_address; /**< Start address to search. */
+    pifs_header_t      * header;
+} pifs_find_t;
+
 pifs_status_t pifs_calc_free_space_pos(const pifs_address_t * a_free_space_bitmap_address,
                                        pifs_block_address_t a_block_address,
                                        pifs_page_address_t a_page_address,
@@ -47,9 +60,19 @@ pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                              pifs_block_address_t * a_block_address,
                              pifs_page_address_t * a_page_address,
                              pifs_page_count_t * a_page_count_found);
+pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
+                                 pifs_block_address_t * a_block_address,
+                                 pifs_page_address_t * a_page_address,
+                                 pifs_page_count_t * a_page_count_found);
 pifs_status_t pifs_find_free_block(pifs_size_t a_block_count,
-                                   pifs_block_type_t a_block_type, pifs_block_address_t a_start_block_address,
+                                   pifs_block_type_t a_block_type,
+                                   pifs_block_address_t a_start_block_address, pifs_header_t *a_header,
                                    pifs_block_address_t * a_block_address);
+pifs_status_t pifs_find_to_be_released_block(pifs_size_t a_block_count,
+                                             pifs_block_type_t a_block_type,
+                                             pifs_block_address_t a_start_block_address,
+                                             pifs_header_t * a_header,
+                                             pifs_block_address_t * a_block_address);
 pifs_status_t pifs_get_pages(bool_t a_is_free,
                              pifs_size_t * a_management_page_count,
                              pifs_size_t * a_data_page_count);

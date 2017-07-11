@@ -159,6 +159,8 @@ typedef uint32_t pifs_page_count_t;
 #endif
 
 #define PIFS_MAP_PAGE_NUM               1   /**< Default number of map pages. Minimum: 1 */
+#define PIFS_FSBM_BITS_PER_PAGE_SHIFT   1
+#define PIFS_FSBM_BITS_PER_PAGE         (1u << PIFS_FSBM_BITS_PER_PAGE_SHIFT)
 
 typedef enum
 {
@@ -291,6 +293,7 @@ typedef struct
 {
     pifs_address_t          header_address;
     bool_t                  is_header_found;
+    /** Actual header. */
     pifs_header_t           header;
     pifs_address_t          cache_page_buf_address;                       /**< Address of cache_page_buf */
     uint8_t                 cache_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];    /**< Flash page buffer for cache */

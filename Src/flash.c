@@ -82,9 +82,9 @@ pifs_status_t pifs_flash_delete(void)
 pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address, pifs_page_offset_t a_page_offset, void * const a_buf, size_t a_buf_size)
 {
     pifs_status_t ret = PIFS_ERROR_FLASH_READ;
-    long int offset = a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE 
-        + a_page_address * PIFS_FLASH_PAGE_SIZE_BYTE
-        + a_page_offset;
+    long unsigned int offset = a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
+            + a_page_address * PIFS_FLASH_PAGE_SIZE_BYTE
+            + a_page_offset;
     size_t read_count = 0;
 
     PIFS_ASSERT(flash_file);
@@ -113,9 +113,9 @@ pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address, pifs_page_ad
 pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address, pifs_page_address_t a_page_offset, const void * const a_buf, size_t a_buf_size)
 {
     pifs_status_t ret = PIFS_ERROR_FLASH_WRITE;
-    long int offset = a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE 
-        + a_page_address * PIFS_FLASH_PAGE_SIZE_BYTE
-        + a_page_offset;
+    long unsigned int offset = a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
+            + a_page_address * PIFS_FLASH_PAGE_SIZE_BYTE
+            + a_page_offset;
     size_t write_count = 0;
     size_t read_count = 0;
     pifs_page_offset_t i;
@@ -171,7 +171,7 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
 pifs_status_t pifs_flash_erase(pifs_block_address_t a_block_address)
 {
     pifs_status_t ret = PIFS_ERROR_FLASH_ERASE;
-    long int offset = a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE;
+    long unsigned int offset = a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE;
     size_t write_count = 0;
     pifs_page_address_t i;
     

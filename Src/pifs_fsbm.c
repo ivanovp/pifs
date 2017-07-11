@@ -45,7 +45,7 @@ pifs_status_t pifs_calc_free_space_pos(const pifs_address_t * a_free_space_bitma
             && a_page_address < PIFS_PAGE_ADDRESS_INVALID)
     {
         /* Shift left by one (<< 1) due to two bits are stored in free space bitmap */
-        bit_pos = ((a_block_address - PIFS_FLASH_BLOCK_RESERVED_NUM) * PIFS_FLASH_PAGE_PER_BLOCK + a_page_address) << 1;
+        bit_pos = ((a_block_address - PIFS_FLASH_BLOCK_RESERVED_NUM) * PIFS_FLASH_PAGE_PER_BLOCK + a_page_address) << PIFS_FSBM_BITS_PER_PAGE_SHIFT;
         //PIFS_DEBUG_MSG("BA%i/PA%i bit_pos: %i\r\n", a_block_address, a_page_address, bit_pos);
         *a_free_space_block_address = a_free_space_bitmap_address->block_address
                 + (bit_pos / PIFS_BYTE_BITS / PIFS_FLASH_BLOCK_SIZE_BYTE);
@@ -79,7 +79,7 @@ void pifs_calc_address(pifs_bit_pos_t a_bit_pos,
                        pifs_page_address_t * a_page_address)
 {
     /* Shift right by one (>> 1) due to two bits are stored in free space bitmap */
-    a_bit_pos >>= 1;
+    a_bit_pos >>= PIFS_FSBM_BITS_PER_PAGE_SHIFT;
     *a_block_address = (a_bit_pos / PIFS_FLASH_PAGE_PER_BLOCK) + PIFS_FLASH_BLOCK_RESERVED_NUM;
     a_bit_pos %= PIFS_FLASH_PAGE_PER_BLOCK;
     *a_page_address = a_bit_pos;
@@ -322,13 +322,44 @@ pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                              pifs_page_address_t * a_page_address,
                              pifs_page_count_t * a_page_count_found)
 {
+    pifs_find_t find;
+
+    find.page_count_minimum = a_page_count_minimum;
+    find.page_count_desired = a_page_count_desired;
+    find.block_type = a_block_type;
+    find.is_free = a_is_free;
+    find.is_same_block = a_is_same_block;
+    find.start_block_address = a_start_block_address;
+    find.header = &pifs.header;
+
+    return pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
+}
+
+/**
+ * @brief pifs_find_page_adv Find free or to be released page(s) in free space
+ * memory bitmap. Advanced version.
+ * It tries to find 'page_count_desired' pages, but at least
+ * 'page_count_minimum'.
+ * FIXME there should be an option for maximum search time.
+ *
+ * @param[in] a_find               Find parameters.
+ * @param[out] a_block_address     Block address of page(s).
+ * @param[out] a_page_address      Page address of page(s).
+ * @param[out] a_page_count_found  Number of free pages found.
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
+ */
+pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
+                                 pifs_block_address_t * a_block_address,
+                                 pifs_page_address_t * a_page_address,
+                                 pifs_page_count_t * a_page_count_found)
+{
     pifs_status_t           ret = PIFS_ERROR;
-    pifs_block_address_t    fba = a_start_block_address;
+    pifs_block_address_t    fba = a_find->start_block_address;
     pifs_page_address_t     fpa = 0;
     pifs_block_address_t    fba_start = PIFS_BLOCK_ADDRESS_INVALID;
     pifs_page_address_t     fpa_start = PIFS_PAGE_ADDRESS_INVALID;
-    pifs_block_address_t    ba = pifs.header.free_space_bitmap_address.block_address;
-    pifs_page_address_t     pa = pifs.header.free_space_bitmap_address.page_address;
+    pifs_block_address_t    fsbm_ba = a_find->header->free_space_bitmap_address.block_address;
+    pifs_page_address_t     fsbm_pa = a_find->header->free_space_bitmap_address.page_address;
     pifs_page_offset_t      po = 0;
     pifs_size_t             i;
     pifs_page_count_t       page_count_found = 0;
@@ -341,30 +372,30 @@ pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
     PIFS_ASSERT(pifs.is_header_found);
 
 #if PIFS_FLASH_BLOCK_RESERVED_NUM
-    fba = PIFS_MAX(PIFS_FLASH_BLOCK_RESERVED_NUM, a_start_block_address);
+    fba = PIFS_MAX(PIFS_FLASH_BLOCK_RESERVED_NUM, a_find->start_block_address);
 #endif
 
-    if (!a_is_free)
+    if (!a_find->is_free)
     {
         /* Find to be released page */
         mask = 2;
     }
 
-    (void)pifs_calc_free_space_pos(&pifs.header.free_space_bitmap_address,
-                                   fba, fpa, &ba, &pa, &bit_pos);
+    (void)pifs_calc_free_space_pos(&a_find->header->free_space_bitmap_address,
+                                   fba, fpa, &fsbm_ba, &fsbm_pa, &bit_pos);
     po = bit_pos / PIFS_BYTE_BITS;
 
     do
     {
-        ret = pifs_read(ba, pa, po, &free_space_bitmap, sizeof(free_space_bitmap));
+        ret = pifs_read(fsbm_ba, fsbm_pa, po, &free_space_bitmap, sizeof(free_space_bitmap));
         if (ret == PIFS_SUCCESS)
         {
             //            PIFS_DEBUG_MSG("%s %i 0x%X\r\n", pifs_ba_pa2str(ba, pa), po, free_space_bitmap);
-            for (i = 0; i < (PIFS_BYTE_BITS / 2) && !found; i++)
+            for (i = 0; i < (PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE) && !found; i++)
             {
                 /* TODO use free pages and to be released pages as well when
                  * looking for erasable blocks! */
-                if ((free_space_bitmap & mask) && pifs_is_block_type(fba, a_block_type, &pifs.header))
+                if ((free_space_bitmap & mask) && pifs_is_block_type(fba, a_find->block_type, &pifs.header))
                 {
 #if PIFS_CHECK_IF_PAGE_IS_ERASED
                     if (!a_is_free || pifs_is_page_erased(fba, fpa))
@@ -376,13 +407,13 @@ pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                             fpa_start = fpa;
                         }
                         page_count_found++;
-                        if (page_count_found >= a_page_count_minimum)
+                        if (page_count_found >= a_find->page_count_minimum)
                         {
                             *a_block_address = fba_start;
                             *a_page_address = fpa_start;
                             *a_page_count_found = page_count_found;
                         }
-                        if (page_count_found == a_page_count_desired)
+                        if (page_count_found == a_find->page_count_desired)
                         {
                             found = TRUE;
                         }
@@ -406,9 +437,9 @@ pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                     {
                         fpa = 0;
                         fba++;
-                        if (a_is_same_block
-                                && (a_page_count_minimum < PIFS_FLASH_PAGE_PER_BLOCK
-                                || (fpa_start > 0 && a_page_count_desired > PIFS_FLASH_PAGE_PER_BLOCK)))
+                        if (a_find->is_same_block
+                                && (a_find->page_count_minimum < PIFS_FLASH_PAGE_PER_BLOCK
+                                || (fpa_start > 0 && a_find->page_count_desired > PIFS_FLASH_PAGE_PER_BLOCK)))
                         {
                             page_count_found = 0;
                         }
@@ -423,12 +454,12 @@ pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
             if (po == PIFS_FLASH_PAGE_SIZE_BYTE)
             {
                 po = 0;
-                pa++;
-                if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
+                fsbm_pa++;
+                if (fsbm_pa == PIFS_FLASH_PAGE_PER_BLOCK)
                 {
-                    pa = 0;
-                    ba++;
-                    if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
+                    fsbm_pa = 0;
+                    fsbm_ba++;
+                    if (fsbm_ba >= PIFS_FLASH_BLOCK_NUM_ALL)
                     {
                         PIFS_FATAL_ERROR_MSG("End of flash! byte_cntr: %lu\r\n", byte_cntr);
                     }
@@ -448,18 +479,51 @@ pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
 pifs_status_t pifs_find_free_block(pifs_size_t a_block_count,
                                    pifs_block_type_t a_block_type,
                                    pifs_block_address_t a_start_block_address,
+                                   pifs_header_t *a_header,
                                    pifs_block_address_t * a_block_address)
 {
     pifs_status_t        ret;
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
     pifs_page_count_t    page_count;
+    pifs_find_t          find;
 
-    ret = pifs_find_page(a_block_count * PIFS_FLASH_PAGE_PER_BLOCK,
-                         a_block_count * PIFS_FLASH_PAGE_PER_BLOCK,
-                         a_block_type,
-                         TRUE, TRUE, a_start_block_address,
-                         &ba, &pa, &page_count);
+    find.page_count_minimum = a_block_count * PIFS_FLASH_PAGE_PER_BLOCK;
+    find.page_count_desired = a_block_count * PIFS_FLASH_PAGE_PER_BLOCK;
+    find.block_type = a_block_type;
+    find.is_free = TRUE;
+    find.is_same_block = TRUE;
+    find.start_block_address = a_start_block_address;
+    find.header = a_header;
+
+    ret = pifs_find_page_adv(&find, &ba, &pa, &page_count);
+
+    *a_block_address = ba;
+
+    return ret;
+}
+
+pifs_status_t pifs_find_to_be_released_block(pifs_size_t a_block_count,
+                                             pifs_block_type_t a_block_type,
+                                             pifs_block_address_t a_start_block_address,
+                                             pifs_header_t *a_header,
+                                             pifs_block_address_t * a_block_address)
+{
+    pifs_status_t        ret;
+    pifs_block_address_t ba = PIFS_BLOCK_ADDRESS_INVALID;
+    pifs_page_address_t  pa;
+    pifs_page_count_t    page_count;
+    pifs_find_t          find;
+
+    find.page_count_minimum = a_block_count * PIFS_FLASH_PAGE_PER_BLOCK;
+    find.page_count_desired = a_block_count * PIFS_FLASH_PAGE_PER_BLOCK;
+    find.block_type = a_block_type;
+    find.is_free = TRUE;
+    find.is_same_block = TRUE;
+    find.start_block_address = a_start_block_address;
+    find.header = a_header;
+
+    ret = pifs_find_page_adv(&find, &ba, &pa, &page_count);
 
     *a_block_address = ba;
 
@@ -517,7 +581,7 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
                 printf("\r\n");
             }
 #endif
-            for (i = 0; i < (PIFS_BYTE_BITS / 2); i++)
+            for (i = 0; i < (PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE); i++)
             {
                 if ((free_space_bitmap & mask))
                 {
@@ -546,8 +610,8 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
                     }
 #endif
                 }
-                free_space_bitmap >>= 2;
-                bit_pos += 2;
+                free_space_bitmap >>= PIFS_FSBM_BITS_PER_PAGE;
+                bit_pos += PIFS_FSBM_BITS_PER_PAGE;
                 fpa++;
                 if (fpa == PIFS_FLASH_PAGE_PER_BLOCK)
                 {
