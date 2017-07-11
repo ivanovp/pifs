@@ -223,13 +223,13 @@ pifs_status_t pifs_erase(pifs_block_address_t a_block_address)
  * @param[in] a_new_header Pointer to previous file system's header.
  * @return PIFS_SUCCESS if erase was successful.
  */
-static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_new_header)
+static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t * a_new_header)
 {
     pifs_status_t        ret = PIFS_ERROR;
     pifs_block_address_t fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
     pifs_page_address_t  fpa = 0;
-    pifs_block_address_t old_fsbm_ba = pifs.header.free_space_bitmap_address.block_address;
-    pifs_page_address_t  old_fsbm_pa = pifs.header.free_space_bitmap_address.page_address;
+    pifs_block_address_t old_fsbm_ba = a_old_header->free_space_bitmap_address.block_address;
+    pifs_page_address_t  old_fsbm_pa = a_old_header->free_space_bitmap_address.page_address;
     pifs_block_address_t new_fsbm_ba = a_new_header->free_space_bitmap_address.block_address;
     pifs_page_address_t  new_fsbm_pa = a_new_header->free_space_bitmap_address.page_address;
     pifs_size_t          i;
@@ -254,14 +254,15 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_new_header)
             {
                 /* Find to be released pages for whole block */
                 ret = pifs_find_to_be_released_block(1, PIFS_BLOCK_TYPE_DATA, fba,
-                                                     &pifs.header,
+                                                     a_old_header,
                                                      &to_be_released_ba);
                 find = FALSE;
                 if (ret == PIFS_SUCCESS)
                 {
+                    /* Check if the found block is the actual block */
                     if (to_be_released_ba == fba)
                     {
-                        if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA, &pifs.header))
+                        if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA, a_old_header))
                         {
                             ret = pifs_erase(fba);
                             /* Block erased, it can be marked as free */
@@ -273,13 +274,14 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_new_header)
                             PIFS_NOTICE_MSG("Block %i not erased, not data block\r\n", fba);
                         }
                     }
-                    else
-                    {
-                        PIFS_NOTICE_MSG("Block %i not erased\r\n", fba);
-                    }
                 }
-                if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT, &pifs.header)
-                        || pifs_is_block_type(fba, PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT, &pifs.header))
+                /* Mark management block as free because */
+                /* #1 The old management blocks (primary) will be erased, */
+                /*    at the end of merge. */
+                /* #2 The new management blocks (secondary) will be allocated, */
+                /*    when the new header is written. */
+                if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT, a_old_header)
+                        || pifs_is_block_type(fba, PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT, a_old_header))
                 {
                     PIFS_NOTICE_MSG("Block %i is management, mark free in bitmap\r\n", fba);
                     /* Block will be allocated later or erased later, it can be */
@@ -415,14 +417,14 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
  * @param[in] a_old_header Pointer to previous file system's header.
  * @return PIFS_SUCCESS if copy was successful.
  */
-static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header)
+static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_header_t * a_new_header)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_size_t          i;
     pifs_size_t          j;
     pifs_size_t          entry_cntr;
-    pifs_block_address_t new_entry_list_ba = pifs.header.entry_list_address.block_address;
-    pifs_page_address_t  new_entry_list_pa = pifs.header.entry_list_address.page_address;
+    pifs_block_address_t new_entry_list_ba = a_new_header->entry_list_address.block_address;
+    pifs_page_address_t  new_entry_list_pa = a_new_header->entry_list_address.page_address;
     pifs_block_address_t old_entry_list_ba = a_old_header->entry_list_address.block_address;
     pifs_page_address_t  old_entry_list_pa = a_old_header->entry_list_address.page_address;
     pifs_entry_t         entry; /* FIXME this might be too much data for stack */
@@ -519,7 +521,7 @@ pifs_status_t pifs_merge(void)
     if (ret == PIFS_SUCCESS)
     {
         /* Copy free space bitmap */
-        ret = pifs_copy_fsbm(&new_header);
+        ret = pifs_copy_fsbm(&old_header, &new_header);
     }
     /* #4 */
     if (ret == PIFS_SUCCESS)
@@ -532,7 +534,7 @@ pifs_status_t pifs_merge(void)
     if (ret == PIFS_SUCCESS)
     {
         /* Copy file entry list */
-        ret = pifs_copy_entry_list(&old_header);
+        ret = pifs_copy_entry_list(&old_header, &new_header);
     }
     /* #6 */
     if (ret == PIFS_SUCCESS)
