@@ -501,7 +501,7 @@ pifs_status_t pifs_merge(void)
     pifs_block_address_t new_header_ba = PIFS_BLOCK_ADDRESS_INVALID;
     pifs_page_address_t  new_header_pa = PIFS_PAGE_ADDRESS_INVALID;
     pifs_header_t        old_header = pifs.header;
-    pifs_header_t        new_header = pifs.header;
+    pifs_header_t        new_header;
     pifs_size_t          i;
 
     PIFS_NOTICE_MSG("start\r\n");
@@ -513,6 +513,7 @@ pifs_status_t pifs_merge(void)
     /* #2 */
     if (ret == PIFS_SUCCESS)
     {
+        new_header.counter = old_header.counter;
         new_header_ba = old_header.next_management_blocks[0];
         new_header_pa = 0;
         ret = pifs_header_init(new_header_ba, new_header_pa, PIFS_BLOCK_ADDRESS_ERASED, &new_header);
