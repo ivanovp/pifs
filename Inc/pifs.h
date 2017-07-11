@@ -303,7 +303,6 @@ typedef struct
     uint8_t                 delta_map_page_buf[PIFS_DELTA_MAP_PAGE_NUM][PIFS_FLASH_PAGE_SIZE_BYTE];
     bool_t                  delta_map_page_is_read PIFS_BOOL_SIZE;
     bool_t                  delta_map_page_is_dirty PIFS_BOOL_SIZE;
-    size_t                  delta_map_entry_count;
     uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];           /**< Flash page buffer */
 } pifs_t;
 

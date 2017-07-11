@@ -36,16 +36,9 @@ static pifs_status_t pifs_read_delta_map_page(void)
     for (i = 0; i < PIFS_DELTA_MAP_PAGE_NUM && ret == PIFS_SUCCESS; i++)
     {
         ret = pifs_read(ba, pa, 0, &pifs.delta_map_page_buf[i], PIFS_FLASH_PAGE_SIZE_BYTE);
-        pa++;
-        if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
+        if (ret == PIFS_SUCCESS)
         {
-            pa = 0;
-            ba++;
-            if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
-            {
-                PIFS_ERROR_MSG("End of flash. %s", pifs_ba_pa2str(ba, pa));
-                ret = PIFS_ERROR_INTERNAL_RANGE;
-            }
+            ret = pifs_inc_ba_pa(&ba, &pa);
         }
     }
 
@@ -73,16 +66,9 @@ static pifs_status_t pifs_write_delta_map_page(pifs_size_t delta_map_page_idx)
             PIFS_DEBUG_MSG("%s ret: %i\r\n", pifs_ba_pa2str(ba, pa), ret);
             break;
         }
-        pa++;
-        if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
+        if (ret == PIFS_SUCCESS)
         {
-            pa = 0;
-            ba++;
-            if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
-            {
-                PIFS_ERROR_MSG("End of flash. %s", pifs_ba_pa2str(ba, pa));
-                ret = PIFS_ERROR_INTERNAL_RANGE;
-            }
+            ret = pifs_inc_ba_pa(&ba, &pa);
         }
     }
 

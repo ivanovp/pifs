@@ -486,7 +486,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
  *    initialized.
  * #5 Copy file entries from old to new management blocks. Maps are also copied,
  *    so map blocks are allocated from new management area (FSBM is needed).
- * #6 Erase old management blocks.
+ * #6 Erase old management blocks. Erase delta page mirror in RAM.
  * #7 Find free blocks for next management block in the new file system header.
  * #8 Add next management block's address to the new file system header and
  *    calculate checksum.
@@ -545,6 +545,10 @@ pifs_status_t pifs_merge(void)
         {
             ret = pifs_erase(old_header.management_blocks[i]);
         }
+        memset(pifs.delta_map_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE,
+               PIFS_DELTA_MAP_PAGE_NUM * PIFS_FLASH_PAGE_SIZE_BYTE);
+        pifs.delta_map_page_is_dirty = FALSE;
+        pifs.delta_map_page_is_read = FALSE;
     }
     /* #7 */
     if (ret == PIFS_SUCCESS)

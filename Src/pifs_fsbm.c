@@ -247,17 +247,7 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
         a_page_count--;
         if (a_page_count > 0)
         {
-            a_page_address++;
-            if (a_page_address == PIFS_FLASH_PAGE_PER_BLOCK)
-            {
-                a_page_address = 0;
-                a_block_address++;
-                if (a_block_address == PIFS_FLASH_BLOCK_NUM_ALL)
-                {
-                    PIFS_FATAL_ERROR_MSG("Trying to mark invalid address! %s\r\n", pifs_ba_pa2str(a_block_address, a_page_address));
-                    ret = PIFS_ERROR_INTERNAL_RANGE;
-                }
-            }
+            ret = pifs_inc_ba_pa(&a_block_address, &a_page_address);
         }
         else
         {
