@@ -2099,11 +2099,16 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
     return ret;
 }
 
+/**
+ * @brief pifs_rewind Set file positions to zero.
+ *
+ * @param[in] a_file Pointer to file.
+ */
 void pifs_rewind(P_FILE * a_file)
 {
     pifs_file_t * file = (pifs_file_t*) a_file;
 
-    if (file->is_opened)
+    if (pifs.is_header_found && file && file->is_opened)
     {
         file->write_pos = 0;
         file->write_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
