@@ -269,6 +269,11 @@ pifs_status_t pifs_test(void)
         printf("File opened for writing\r\n");
         generate_buffer(7);
         written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+        written_size += pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+        if (written_size != 2 * sizeof(test_buf_w))
+        {
+            printf("Cannot write\r\n");
+        }
     }
     else
     {
@@ -425,6 +430,12 @@ pifs_status_t pifs_test(void)
             printf("Cannot seek!\r\n");
         }
         read_size = pifs_fread(test_buf_r, 1, SEEK_TEST_POS, file);
+        check_buffers();
+        if (pifs_fseek(file, -sizeof(test_buf_r), PIFS_SEEK_END))
+        {
+            printf("Cannot seek!\r\n");
+        }
+        read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
         check_buffers();
     }
     else

@@ -2026,7 +2026,7 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
                 target_pos = a_offset;
                 break;
             case PIFS_SEEK_END:
-                data_size = file->entry.file_size - a_offset;
+                data_size = file->entry.file_size + a_offset;
                 if (data_size >= file->read_pos)
                 {
                     data_size -= file->read_pos;
