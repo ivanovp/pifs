@@ -365,6 +365,9 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
                         /* Map entry is valid */
                         /* Check if original page was overwritten and */
                         /* delta page was used */
+                        /* TODO to be optimized: map entry entries are added */
+                        /* one by one, if map pages follow each other */
+                        /* 2 or more map entries can be added. */
                         address = map_entry.address;
                         for (j = 0; j < map_entry.page_count && ret == PIFS_SUCCESS; j++)
                         {
@@ -377,7 +380,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
                                 PIFS_DEBUG_MSG("%s\r\n", pifs_ba_pa2str(delta_ba, delta_pa));
                                 ret = pifs_append_map_entry(&pifs.internal_file,
                                                       address.block_address,
-                                                      address.page_address, 1);
+                                                      address.page_address, 1); /* <<< one page added here */
                             }
                             if (ret == PIFS_SUCCESS && j < map_entry.page_count)
                             {
@@ -527,6 +530,7 @@ pifs_status_t pifs_merge(void)
     /* #4 */
     if (ret == PIFS_SUCCESS)
     {
+        /* Activate new file system header */
         pifs.header = new_header;
         /* Write new management area's header */
         ret = pifs_header_write(new_header_ba, new_header_pa, &pifs.header, TRUE);
@@ -534,7 +538,7 @@ pifs_status_t pifs_merge(void)
     /* #5 */
     if (ret == PIFS_SUCCESS)
     {
-        /* Copy file entry list */
+        /* Copy file entry list and process deltas */
         ret = pifs_copy_entry_list(&old_header, &new_header);
     }
     /* #6 */
@@ -545,6 +549,7 @@ pifs_status_t pifs_merge(void)
         {
             ret = pifs_erase(old_header.management_blocks[i]);
         }
+        /* Reset delta map */
         memset(pifs.delta_map_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE,
                PIFS_DELTA_MAP_PAGE_NUM * PIFS_FLASH_PAGE_SIZE_BYTE);
         pifs.delta_map_page_is_dirty = FALSE;
@@ -726,7 +731,7 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
         }
         if (ret == PIFS_SUCCESS)
         {
-            /* Mark first delta page map as used */
+            /* Mark delta page map as used */
             ret = pifs_mark_page(a_header->delta_map_address.block_address,
                                  a_header->delta_map_address.page_address,
                                  PIFS_DELTA_MAP_PAGE_NUM, TRUE);
