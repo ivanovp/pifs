@@ -17,12 +17,12 @@
 #include "pifs_debug.h"
 #include "buffer.h"
 
-#define ENABLE_SMALL_FILES_TEST       0
+#define ENABLE_SMALL_FILES_TEST       1
 #define ENABLE_FULL_WRITE_TEST        0
-#define ENABLE_BASIC_TEST             0
-#define ENABLE_LARGE_TEST             0
-#define ENABLE_WRITE_FRAGMENT_TEST    0
-#define ENABLE_READ_FRAGMENT_TEST     0
+#define ENABLE_BASIC_TEST             1
+#define ENABLE_LARGE_TEST             1
+#define ENABLE_WRITE_FRAGMENT_TEST    1
+#define ENABLE_READ_FRAGMENT_TEST     1
 #define ENABLE_SEEK_READ_TEST         1
 #define ENABLE_SEEK_WRITE_TEST        0
 
@@ -420,6 +420,7 @@ pifs_status_t pifs_test(void)
     if (file)
     {
         printf("File opened for reading\r\n");
+        generate_buffer(7);
         if (pifs_fseek(file, SEEK_TEST_POS, PIFS_SEEK_SET))
         {
             printf("Cannot seek!\r\n");
@@ -452,12 +453,12 @@ pifs_status_t pifs_test(void)
     if (file)
     {
         printf("File opened for reading\r\n");
+        generate_buffer(8);
         /* First 100 byte shall be zero, due to fseek */
         fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SEQUENCE_BYTE, 0);
         read_size = pifs_fread(test_buf_r, 1, 100, file);
         check_buffers();
 
-        generate_buffer(8);
 //        pifs_fseek(file, 100, PIFS_SEEK_SET);
         read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
         check_buffers();

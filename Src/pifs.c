@@ -481,6 +481,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
  * @brief pifs_merge Merge management and data pages. Erase to be released pages.
  *
  * Steps of merging:
+ * #0 Close opened files.
  * #1 Erase next management blocks
  * #2 Initialize file system's header, but not write. Next management blocks'
  *    address is not initialized and checksum is not calculated.
@@ -495,10 +496,8 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
  * #8 Add next management block's address to the new file system header and
  *    calculate checksum.
  * #9 Update page of new file system header.
- *
- * FIXME Opened file's actual_map_address, map_header, etc. shall be updated too!
- * Close opened files, do merging, re-open files and seek to the previous
- * position.
+ * #10 Re-open files and seek to the previous position.
+ *     Therefore actual_map_address, map_header, etc. will be updated.
  *
  * @return PIFS_SUCCES when merge was successful.
  */
@@ -511,8 +510,22 @@ pifs_status_t pifs_merge(void)
     pifs_header_t        old_header = pifs.header;
     pifs_header_t        new_header;
     pifs_size_t          i;
+    pifs_file_t        * file;
+    bool_t               file_is_opened[PIFS_OPEN_FILE_NUM_MAX] = { 0 };
+    pifs_size_t          file_pos[PIFS_OPEN_FILE_NUM_MAX];
 
     PIFS_NOTICE_MSG("start\r\n");
+    /* #0 */
+    for (i = 0; i < PIFS_OPEN_FILE_NUM_MAX; i++)
+    {
+        file = &pifs.file[i];
+        file_is_opened[i] = file->is_opened;
+        if (file_is_opened[i])
+        {
+            file_pos[i] = file->read_pos;
+            pifs_fclose(file);
+        }
+    }
     /* #1 */
     for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
     {
@@ -590,6 +603,22 @@ pifs_status_t pifs_merge(void)
     {
         /* Write new management area's header with next management block's address */
         ret = pifs_header_write(new_header_ba, new_header_pa, &pifs.header, FALSE);
+    }
+    /* #10 */
+    if (ret == PIFS_SUCCESS)
+    {
+        for (i = 0; i < PIFS_OPEN_FILE_NUM_MAX; i++)
+        {
+            file = &pifs.file[i];
+            if (file_is_opened[i])
+            {
+                pifs_internal_open(file, file->entry.name, NULL);
+                if (file->status == PIFS_SUCCESS)
+                {
+                    pifs_fseek(file, file_pos[i], PIFS_SEEK_SET);
+                }
+            }
+        }
     }
 //    pifs_flush();
 //    exit(1);
@@ -1479,7 +1508,7 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
  *
  * @param[in] a_file        Pointer to internal file structure.
  * @param[in] a_filename    Pointer to file name.
- * @param[in] a_modes       Pointer to open mode.
+ * @param[in] a_modes       Pointer to open mode. NULL: open with existing modes.
  */
 void pifs_internal_open(pifs_file_t * a_file,
                         const pifs_char_t * a_filename,
@@ -1500,7 +1529,10 @@ void pifs_internal_open(pifs_file_t * a_file,
     a_file->actual_map_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
     a_file->actual_map_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
     a_file->is_size_changed = FALSE;
-    pifs_parse_open_mode(a_file, a_modes);
+    if (a_modes)
+    {
+        pifs_parse_open_mode(a_file, a_modes);
+    }
     if (a_file->status == PIFS_SUCCESS)
     {
         a_file->status = pifs_find_entry(a_filename, entry);

@@ -204,7 +204,7 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                 /* Mark page used */
                 if (is_free_space)
                 {
-                    PIFS_NOTICE_MSG("MARK %s\r\n", pifs_ba_pa2str(a_block_address, a_page_address));
+//                    PIFS_NOTICE_MSG("MARK %s\r\n", pifs_ba_pa2str(a_block_address, a_page_address));
                     /* Clear free bit */
                     pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] &= ~(1u << (bit_pos % PIFS_BYTE_BITS));
                 }
