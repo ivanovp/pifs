@@ -23,10 +23,16 @@
 #define ENABLE_LARGE_TEST             0
 #define ENABLE_WRITE_FRAGMENT_TEST    0
 #define ENABLE_READ_FRAGMENT_TEST     0
-#define ENABLE_SEEK_TEST              1
+#define ENABLE_SEEK_READ_TEST         1
+#define ENABLE_SEEK_WRITE_TEST        0
 
 #define TEST_FULL_PAGE_NUM            (PIFS_FLASH_PAGE_NUM_FS / 2)
 #define TEST_BUF_SIZE                 (PIFS_FLASH_PAGE_SIZE_BYTE * 2)
+#define SEEK_TEST_POS                 100
+
+#if TEST_BUF_SIZE < SEEK_TEST_POS
+#error SEEK_TEST_POS shall be less than TEST_BUF_SIZE!
+#endif
 
 #define PIFS_TEST_ERROR_MSG(...)    do { \
         printf("%s ERROR: ", __FUNCTION__); \
@@ -253,16 +259,32 @@ pifs_status_t pifs_test(void)
     pifs_fclose(file);
 #endif
 
-#if ENABLE_SEEK_TEST
+#if ENABLE_SEEK_READ_TEST
     printf("-------------------------------------------------\r\n");
-    printf("Seek test: writing file\r\n");
+    printf("Seek read test: writing file\r\n");
 
     file = pifs_fopen("tstseek1.dat", "w");
     if (file)
     {
         printf("File opened for writing\r\n");
-        generate_buffer(3);
-        pifs_fseek(file, 100, PIFS_SEEK_SET);
+        generate_buffer(7);
+        written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+    }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot open file!\r\n");
+    }
+    pifs_fclose(file);
+#endif
+#if ENABLE_SEEK_WRITE_TEST
+    printf("-------------------------------------------------\r\n");
+    printf("Seek write test: writing file\r\n");
+    file = pifs_fopen("tstseek2.dat", "w");
+    if (file)
+    {
+        printf("File opened for writing\r\n");
+        generate_buffer(8);
+        pifs_fseek(file, SEEK_TEST_POS, PIFS_SEEK_SET);
         written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
     }
     else
@@ -385,20 +407,46 @@ pifs_status_t pifs_test(void)
     }
     pifs_fclose(file);
 #endif
-#if ENABLE_SEEK_TEST
+#if ENABLE_SEEK_READ_TEST
     printf("-------------------------------------------------\r\n");
-    printf("Seek test: reading file\r\n");
+    printf("Seek read test: reading file\r\n");
 
     file = pifs_fopen("tstseek1.dat", "r");
     if (file)
     {
         printf("File opened for reading\r\n");
-        /* Firt 100 byte shall be zero, due to fseek */
+        if (pifs_fseek(file, SEEK_TEST_POS, PIFS_SEEK_SET))
+        {
+            printf("Cannot seek!\r\n");
+        }
+        read_size = pifs_fread(&test_buf_r[SEEK_TEST_POS], 1, sizeof(test_buf_r) - SEEK_TEST_POS, file);
+        if (pifs_fseek(file, -sizeof(test_buf_r), PIFS_SEEK_CUR))
+        {
+            printf("Cannot seek!\r\n");
+        }
+        read_size = pifs_fread(test_buf_r, 1, SEEK_TEST_POS, file);
+        check_buffers();
+    }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot open file!\r\n");
+    }
+    pifs_fclose(file);
+#endif
+#if ENABLE_SEEK_WRITE_TEST
+    printf("-------------------------------------------------\r\n");
+    printf("Seek write test: reading file\r\n");
+
+    file = pifs_fopen("tstseek2.dat", "r");
+    if (file)
+    {
+        printf("File opened for reading\r\n");
+        /* First 100 byte shall be zero, due to fseek */
         fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SEQUENCE_BYTE, 0);
         read_size = pifs_fread(test_buf_r, 1, 100, file);
         check_buffers();
 
-        generate_buffer(3);
+        generate_buffer(8);
 //        pifs_fseek(file, 100, PIFS_SEEK_SET);
         read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
         check_buffers();

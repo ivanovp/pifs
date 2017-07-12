@@ -59,7 +59,8 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
 size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * a_file);
 size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file);
 int pifs_fclose(P_FILE * a_file);
-int pifs_fseek (FILE * a_file, long int a_offset, int a_origin);
+int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin);
+void pifs_rewind(P_FILE * a_file);
 pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
                                   size_t * a_free_data_bytes,
                                   size_t * a_free_management_page_count,

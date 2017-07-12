@@ -1068,6 +1068,57 @@ static pifs_status_t pifs_append_entry(pifs_entry_t * a_entry)
 }
 
 /**
+ * @brief pifs_update_entry Find entry in entry list and update its content.
+ *
+ * @param a_name[in]    Pointer to name to find.
+ * @param a_entry[in]   Pointer to entry to update. NULL: clear entry.
+ * @return PIFS_SUCCESS if entry found.
+ * PIFS_ERROR_FILE_NOT_FOUND if entry not found.
+ */
+static pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const a_entry)
+{
+    pifs_status_t        ret = PIFS_SUCCESS;
+    pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
+    pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
+    bool_t               found = FALSE;
+    pifs_entry_t       * entry = (pifs_entry_t*) pifs.cache_page_buf;
+    pifs_size_t          i;
+
+    /* Invert entry bits as it is stored inverted */
+    a_entry->attrib ^= PIFS_ATTRIB_ALL;
+    while (ba < pifs.header.entry_list_address.block_address + PIFS_MANAGEMENT_BLOCKS
+           && !found && ret == PIFS_SUCCESS)
+    {
+        while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !found && ret == PIFS_SUCCESS)
+        {
+            ret = pifs_read(ba, pa, 0, NULL, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
+            for (i = 0; i < PIFS_ENTRY_PER_PAGE && !found; i++)
+            {
+                /* Check if name matches */
+                if (strncmp((char*)entry[i].name, a_name, sizeof(entry[i].name)) == 0)
+                {
+                    /* Entry found */
+                    /* Copy entry */
+                    memcpy(&entry[i], a_entry, sizeof(pifs_entry_t));
+                    ret = pifs_write(ba, pa, 0, NULL, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
+                    found = TRUE;
+                }
+            }
+            pa++;
+        }
+        pa = 0;
+        ba++;
+    }
+
+    if (ret == PIFS_SUCCESS && !found)
+    {
+        ret = PIFS_ERROR_FILE_NOT_FOUND;
+    }
+
+    return ret;
+}
+
+/**
  * @brief pifs_find_entry Find entry in entry list.
  *
  * @param a_name[in]    Pointer to name to find.
@@ -1102,6 +1153,8 @@ static pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * 
                         memcpy(a_entry, &entry[i], sizeof(pifs_entry_t));
                         /* Invert entry bits as it is stored inverted */
                         a_entry->attrib ^= PIFS_ATTRIB_ALL;
+
+                        PIFS_DEBUG_MSG("file size: %i bytes\r\n", a_entry->file_size);
                     }
                     else
                     {
@@ -1492,6 +1545,7 @@ void pifs_internal_open(pifs_file_t * a_file,
             if (a_file->status == PIFS_SUCCESS)
             {
                 PIFS_DEBUG_MSG("Map page: %u free page found %s\r\n", page_count_found, pifs_ba_pa2str(ba, pa));
+                memset(entry, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
                 strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
                 entry->attrib = PIFS_ATTRIB_ARCHIVE;
                 entry->first_map_address.block_address = ba;
@@ -1760,6 +1814,13 @@ pifs_size_t pifs_fwrite(const void * a_data, pifs_size_t a_size, pifs_size_t a_c
             }
         }
         file->write_pos += written_size;
+        if (file->write_pos > file->entry.file_size
+                || file->entry.file_size == PIFS_FILE_SIZE_ERASED)
+        {
+            file->is_size_changed = TRUE;
+            file->entry.file_size = file->write_pos;
+            PIFS_DEBUG_MSG("New file size: %i bytes\r\n", file->entry.file_size);
+        }
         if (!file->mode_append)
         {
             file->read_pos = file->write_pos;
@@ -1900,9 +1961,7 @@ int pifs_fclose(P_FILE * a_file)
     {
         if (file->mode_write && file->is_size_changed)
         {
-            /* FIXME update entry! */
-            file->entry.file_size = file->write_pos;
-//            file->status = pifs_append_entry(file->entry);
+            file->status = pifs_update_entry(file->entry.name, &file->entry);
         }
         pifs_flush();
         file->is_opened = FALSE;
@@ -1923,16 +1982,140 @@ int pifs_fclose(P_FILE * a_file)
  *                      @see pifs_fseek_origin_t
  * @return 0 if seek was successful. Non-zero if error occured.
  */
-int pifs_fseek (FILE * a_file, long int a_offset, int a_origin)
+int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
 {
-    int           ret = PIFS_ERROR;
-    pifs_file_t * file = (pifs_file_t*) a_file;
+    int                 ret = PIFS_ERROR;
+    pifs_file_t       * file = (pifs_file_t*) a_file;
+    pifs_size_t         seek_size = 0;
+    pifs_size_t         chunk_size = 0;
+    pifs_size_t         data_size = 0;
+    pifs_size_t         page_count = 0;
+    pifs_page_offset_t  po;
+    pifs_size_t         target_pos = 0;
 
     if (pifs.is_header_found && file && file->is_opened)
     {
+        switch (a_origin)
+        {
+            case PIFS_SEEK_CUR:
+                if (a_offset > 0)
+                {
+                    data_size = a_offset;
+                }
+                else
+                {
+                    /* TODO implement better method: */
+                    /* if read_pos + a_offset > read_pos / 2 */
+                    /* (if position is close to current position) */
+                    /* go backward using map header's previous address entry */
+                    data_size = file->read_pos + a_offset;
+                    pifs_rewind(file);
+                }
+                target_pos = file->read_pos + a_offset;
+                break;
+            case PIFS_SEEK_SET:
+                if (file->read_pos < a_offset)
+                {
+                    data_size = a_offset - file->read_pos;
+                }
+                else
+                {
+                    data_size = a_offset;
+                    pifs_rewind(file);
+                }
+                target_pos = a_offset;
+                break;
+            case PIFS_SEEK_END:
+                data_size = file->entry.file_size - a_offset;
+                if (data_size >= file->read_pos)
+                {
+                    data_size -= file->read_pos;
+                }
+                else
+                {
+                    pifs_rewind(file);
+                }
+                target_pos = data_size;
+                break;
+            default:
+                break;
+        }
+
+        if (data_size > file->entry.file_size)
+        {
+            if (file->mode_write)
+            {
+                /* TODO write non-existing data */
+            }
+            else if (file->mode_read)
+            {
+
+            }
+        }
+
+        po = file->read_pos % PIFS_FLASH_PAGE_SIZE_BYTE;
+        /* Check if last page was not fully read */
+        if (po)
+        {
+            /* There is some data in the last page */
+            PIFS_ASSERT(pifs_is_address_valid(&file->read_address));
+            chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE - po);
+            if (file->status == PIFS_SUCCESS)
+            {
+                data_size -= chunk_size;
+                seek_size += chunk_size;
+                if (po + chunk_size >= PIFS_FLASH_PAGE_SIZE_BYTE)
+                {
+                    pifs_inc_read_address(file);
+                }
+            }
+        }
+        if (file->status == PIFS_SUCCESS && data_size > 0)
+        {
+            page_count = (data_size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
+            while (page_count && file->status == PIFS_SUCCESS)
+            {
+                PIFS_ASSERT(pifs_is_address_valid(&file->read_address));
+                chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE);
+                //PIFS_DEBUG_MSG("read %s\r\n", pifs_address2str(&file->read_address));
+                if (file->status == PIFS_SUCCESS && chunk_size == PIFS_FLASH_PAGE_SIZE_BYTE)
+                {
+                    pifs_inc_read_address(file);
+                }
+                data_size -= chunk_size;
+                seek_size += chunk_size;
+                page_count--;
+            }
+        }
+        file->read_pos += seek_size;
+        if (!file->mode_append)
+        {
+            file->write_pos = file->read_pos;
+            file->write_address = file->read_address;
+        }
+        ret = file->status;
     }
 
     return ret;
+}
+
+void pifs_rewind(P_FILE * a_file)
+{
+    pifs_file_t * file = (pifs_file_t*) a_file;
+
+    if (file->is_opened)
+    {
+        file->write_pos = 0;
+        file->write_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
+        file->write_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
+        file->read_pos = 0;
+        file->actual_map_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
+        file->actual_map_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
+        file->status = pifs_read_first_map_entry(file);
+        PIFS_ASSERT(file->status == PIFS_SUCCESS);
+        file->read_address = file->map_entry.address;
+        file->read_page_count = file->map_entry.page_count;
+    }
 }
 
 /**

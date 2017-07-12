@@ -120,7 +120,8 @@ typedef uint16_t pifs_bit_pos_t;
 typedef uint32_t pifs_bit_pos_t;
 #endif
 
-typedef size_t pifs_size_t;
+typedef uint32_t pifs_size_t;
+#define PIFS_FILE_SIZE_ERASED   UINT32_MAX
 
 #ifndef PIFS_PAGE_COUNT_SIZE
 #if PIFS_FLASH_PAGE_PER_BLOCK < 255
@@ -220,7 +221,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_char_t             name[PIFS_FILENAME_LEN_MAX];
     uint8_t                 attrib;
     pifs_address_t          first_map_address;  /**< First map page's address */
-    pifs_size_t             file_size;          /**< Bytes written into last page */
+    pifs_size_t             file_size;          /**< Bytes written to file */
 } pifs_entry_t;
 
 /**
