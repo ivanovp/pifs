@@ -512,7 +512,7 @@ pifs_status_t pifs_merge(void)
     pifs_size_t          i;
     pifs_file_t        * file;
     bool_t               file_is_opened[PIFS_OPEN_FILE_NUM_MAX] = { 0 };
-    pifs_size_t          file_pos[PIFS_OPEN_FILE_NUM_MAX];
+    pifs_size_t          file_pos[PIFS_OPEN_FILE_NUM_MAX] = { 0 };
 
     PIFS_NOTICE_MSG("start\r\n");
     /* #0 */
@@ -612,6 +612,7 @@ pifs_status_t pifs_merge(void)
             file = &pifs.file[i];
             if (file_is_opened[i])
             {
+                file->mode_create_new_file = FALSE;
                 pifs_internal_open(file, file->entry.name, NULL);
                 if (file->status == PIFS_SUCCESS)
                 {
@@ -1183,6 +1184,12 @@ static pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * 
                         /* Invert entry bits as it is stored inverted */
                         a_entry->attrib ^= PIFS_ATTRIB_ALL;
 
+#if 0
+                        if  (a_entry->file_size == PIFS_FILE_SIZE_ERASED)
+                        {
+                            printf("FILE SIZE IS NOT FILLED!\r\n");
+                        }
+#endif
                         PIFS_DEBUG_MSG("file size: %i bytes\r\n", a_entry->file_size);
                     }
                     else
