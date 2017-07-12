@@ -1760,6 +1760,11 @@ pifs_size_t pifs_fwrite(const void * a_data, pifs_size_t a_size, pifs_size_t a_c
             }
         }
         file->write_pos += written_size;
+        if (!file->mode_append)
+        {
+            file->read_pos = file->write_pos;
+            file->read_address = file->write_address;
+        }
     }
 
     return written_size;
@@ -1871,6 +1876,11 @@ pifs_size_t pifs_fread(void * a_data, pifs_size_t a_size, pifs_size_t a_count, P
             }
         }
         file->read_pos += read_size;
+        if (!file->mode_append)
+        {
+            file->write_pos = file->read_pos;
+            file->write_address = file->read_address;
+        }
     }
 
     return read_size;
@@ -1904,32 +1914,52 @@ int pifs_fclose(P_FILE * a_file)
 }
 
 /**
+ * @brief pifs_fseek Seek in opened file.
+ *
+ * @param[in] a_file    File to seek.
+ * @param[in] a_offset  Offset to seek.
+ * @param[in] a_origin  Origin of offset. Can be
+ *                      PIFS_SEEK_SET, PIFS_SEEK_CUR, PIFS_SEEK_END.
+ *                      @see pifs_fseek_origin_t
+ * @return 0 if seek was successful. Non-zero if error occured.
+ */
+int pifs_fseek (FILE * a_file, long int a_offset, int a_origin)
+{
+    int           ret = PIFS_ERROR;
+    pifs_file_t * file = (pifs_file_t*) a_file;
+
+    if (pifs.is_header_found && file && file->is_opened)
+    {
+    }
+
+    return ret;
+}
+
+/**
  * @brief pifs_remove Remove file.
  *
  * @param[in] a_filename Pointer to filename to be removed.
- * @return 0 if file removed. -1 if file not found.
+ * @return 0 if file removed. Non-zero if file not found or file name is not valid.
  */
 int pifs_remove(const pifs_char_t * a_filename)
 {
     int ret;
-    pifs_file_t * file;
 
     ret = pifs_check_filename(a_filename);
     if (ret == PIFS_SUCCESS)
     {
         ret = PIFS_ERROR_FILE_NOT_FOUND;
-        /* TODO use internal open */
-        file = (pifs_file_t*) pifs_fopen(a_filename, "r");
-        if (file)
+        pifs_internal_open(&pifs.internal_file, a_filename, "r");
+        if (pifs.internal_file.is_opened)
         {
             /* File already exist */
-            file->status = pifs_clear_entry(a_filename);
-            if (file->status == PIFS_SUCCESS)
+            pifs.internal_file.status = pifs_clear_entry(a_filename);
+            if (pifs.internal_file.status == PIFS_SUCCESS)
             {
                 /* Mark allocated pages to be released */
-                file->status = pifs_release_file_pages(file);
+                pifs.internal_file.status = pifs_release_file_pages(&pifs.internal_file);
             }
-            ret = pifs_fclose(file);
+            ret = pifs_fclose(&pifs.internal_file);
         }
     }
 

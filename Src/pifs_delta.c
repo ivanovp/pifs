@@ -244,7 +244,6 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
     pifs_size_t          j;
     pifs_delta_entry_t   delta_entry;
     bool_t               delta_needed = FALSE;
-    bool_t               delta_written = FALSE;
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
     uint8_t            * buf = (uint8_t*) a_buf;
@@ -330,7 +329,6 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
                      * as to be released */
                     ret = pifs_mark_page(ba, pa, 1, FALSE);
                     PIFS_DEBUG_MSG("Mark page %s as to be released: %i\r\n", pifs_ba_pa2str(a_block_address, a_page_address), ret);
-                    delta_written = TRUE;
                 }
             }
         }

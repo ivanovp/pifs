@@ -17,12 +17,13 @@
 #include "pifs_debug.h"
 #include "buffer.h"
 
-#define ENABLE_SMALL_FILES_TEST       1
-#define ENABLE_FULL_WRITE_TEST        1
-#define ENABLE_BASIC_TEST             1
+#define ENABLE_SMALL_FILES_TEST       0
+#define ENABLE_FULL_WRITE_TEST        0
+#define ENABLE_BASIC_TEST             0
 #define ENABLE_LARGE_TEST             0
 #define ENABLE_WRITE_FRAGMENT_TEST    0
 #define ENABLE_READ_FRAGMENT_TEST     0
+#define ENABLE_SEEK_TEST              1
 
 #define TEST_FULL_PAGE_NUM            (PIFS_FLASH_PAGE_NUM_FS / 2)
 #define TEST_BUF_SIZE                 (PIFS_FLASH_PAGE_SIZE_BYTE * 2)
@@ -252,6 +253,29 @@ pifs_status_t pifs_test(void)
     pifs_fclose(file);
 #endif
 
+#if ENABLE_SEEK_TEST
+    printf("-------------------------------------------------\r\n");
+    printf("Seek test: writing file\r\n");
+
+    file = pifs_fopen("tstseek1.dat", "w");
+    if (file)
+    {
+        printf("File opened for writing\r\n");
+        generate_buffer(3);
+        pifs_fseek(file, 100, PIFS_SEEK_SET);
+        written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+    }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot open file!\r\n");
+    }
+    pifs_fclose(file);
+#endif
+
+    /**************************************************************************/
+    /**************************************************************************/
+    /**************************************************************************/
+
 #if ENABLE_SMALL_FILES_TEST
     printf("-------------------------------------------------\r\n");
     printf("Small files test: reading files\r\n");
@@ -361,6 +385,31 @@ pifs_status_t pifs_test(void)
     }
     pifs_fclose(file);
 #endif
+#if ENABLE_SEEK_TEST
+    printf("-------------------------------------------------\r\n");
+    printf("Seek test: reading file\r\n");
+
+    file = pifs_fopen("tstseek1.dat", "r");
+    if (file)
+    {
+        printf("File opened for reading\r\n");
+        /* Firt 100 byte shall be zero, due to fseek */
+        fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SEQUENCE_BYTE, 0);
+        read_size = pifs_fread(test_buf_r, 1, 100, file);
+        check_buffers();
+
+        generate_buffer(3);
+//        pifs_fseek(file, 100, PIFS_SEEK_SET);
+        read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
+        check_buffers();
+    }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot open file!\r\n");
+    }
+    pifs_fclose(file);
+#endif
+
     printf("END OF TESTS\r\n");
     print_fs_info();
     ret = pifs_delete();

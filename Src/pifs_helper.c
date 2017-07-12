@@ -309,7 +309,7 @@ pifs_status_t pifs_inc_ba_pa(pifs_block_address_t * a_block_address,
             ret = PIFS_ERROR_INTERNAL_RANGE;
         }
     }
-    PIFS_NOTICE_MSG("%s\r\n", pifs_ba_pa2str(*a_block_address, *a_page_address));
+//    PIFS_NOTICE_MSG("%s\r\n", pifs_ba_pa2str(*a_block_address, *a_page_address));
 
     return ret;
 }
