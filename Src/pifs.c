@@ -366,7 +366,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
                         /* Check if original page was overwritten and */
                         /* delta page was used */
                         /* TODO to be optimized: map entry entries are added */
-                        /* one by one, if map pages follow each other */
+                        /* one by one, if data pages follow each other */
                         /* 2 or more map entries can be added. */
                         address = map_entry.address;
                         for (j = 0; j < map_entry.page_count && ret == PIFS_SUCCESS; j++)
@@ -405,7 +405,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
                 end = TRUE;
             }
         } while (!end && ret == PIFS_SUCCESS);
-        // FIXME is this close OK? Handle return code?        
+        /* Close internal file */
         ret = pifs_fclose(&pifs.internal_file);
         PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
@@ -479,6 +479,9 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
 
 /**
  * @brief pifs_merge Merge management and data pages. Erase to be released pages.
+ *
+ * FIXME Opened file's actual_map_address, map_header, etc. shall be updated too!
+ *
  * Steps of merging:
  * #1 Erase next management blocks
  * #2 Initialize file system's header, but not write. Next management blocks'

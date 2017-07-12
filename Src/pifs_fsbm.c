@@ -204,6 +204,7 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                 /* Mark page used */
                 if (is_free_space)
                 {
+                    PIFS_NOTICE_MSG("MARK %s\r\n", pifs_ba_pa2str(a_block_address, a_page_address));
                     /* Clear free bit */
                     pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] &= ~(1u << (bit_pos % PIFS_BYTE_BITS));
                 }
@@ -388,7 +389,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                 if ((free_space_bitmap & mask) && pifs_is_block_type(fba, a_find->block_type, &pifs.header))
                 {
 #if PIFS_CHECK_IF_PAGE_IS_ERASED
-                    if (!a_is_free || pifs_is_page_erased(fba, fpa))
+                    if (!a_find->is_free || pifs_is_page_erased(fba, fpa))
 #endif
                     {
                         if (page_count_found == 0)
