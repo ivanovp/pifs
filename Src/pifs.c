@@ -480,8 +480,6 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
 /**
  * @brief pifs_merge Merge management and data pages. Erase to be released pages.
  *
- * FIXME Opened file's actual_map_address, map_header, etc. shall be updated too!
- *
  * Steps of merging:
  * #1 Erase next management blocks
  * #2 Initialize file system's header, but not write. Next management blocks'
@@ -497,6 +495,10 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
  * #8 Add next management block's address to the new file system header and
  *    calculate checksum.
  * #9 Update page of new file system header.
+ *
+ * FIXME Opened file's actual_map_address, map_header, etc. shall be updated too!
+ * Close opened files, do merging, re-open files and seek to the previous
+ * position.
  *
  * @return PIFS_SUCCES when merge was successful.
  */
