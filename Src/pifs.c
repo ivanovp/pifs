@@ -682,9 +682,15 @@ void pifs_internal_open(pifs_file_t * a_file,
             if (a_file->status == PIFS_SUCCESS && free_data_pages > 0)
             {
                 /* File already exist */
-                /* Mark allocated pages to be released */
-                a_file->status = pifs_release_file_pages(a_file);
-                a_file->is_size_changed = TRUE; /* FIXME when delta pages used! */
+#if PIFS_USE_DELTA_FOR_ENTRIES == 0
+                a_file->status = pifs_clear_entry(a_filename);
+                if (a_file->status == PIFS_SUCCESS)
+#endif
+                {
+                    /* Mark allocated pages to be released */
+                    a_file->status = pifs_release_file_pages(a_file);
+                    a_file->is_size_changed = TRUE; /* FIXME when delta pages used! */
+                }
             }
             else
             {

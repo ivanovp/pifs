@@ -20,6 +20,7 @@
 #define PIFS_OPTIMIZE_FOR_RAM           1u   /**< 1: Use less RAM, 0: Use more RAM, but faster code execution */
 #define PIFS_CHECK_IF_PAGE_IS_ERASED    0u   /**< 1: Check if page is erased */
 #define PIFS_DELTA_MAP_PAGE_NUM         1u   /**< Number of delta page maps */
+#define PIFS_USE_DELTA_FOR_ENTRIES      0u   /**< 1: Use delta pages for list entries, 0: don't use delta pages */
 
 #define PIFS_PACKED_ATTRIBUTE           __attribute__((packed))
 

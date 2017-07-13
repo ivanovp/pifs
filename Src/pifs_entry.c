@@ -50,14 +50,24 @@ pifs_status_t pifs_append_entry(pifs_entry_t * a_entry)
         {
             for (i = 0; i < PIFS_ENTRY_PER_PAGE && !created && ret == PIFS_SUCCESS; i++)
             {
+#if PIFS_USE_DELTA_FOR_ENTRIES
                 ret = pifs_read_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
                                       PIFS_ENTRY_SIZE_BYTE);
+#else
+                ret = pifs_read(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
+                                PIFS_ENTRY_SIZE_BYTE);
+#endif
                 /* Check if this area is used */
                 if (pifs_is_buffer_erased(&entry, sizeof(entry)))
                 {
                     /* Empty entry found */
+#if PIFS_USE_DELTA_FOR_ENTRIES
                     ret = pifs_write_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, a_entry,
                                            sizeof(pifs_entry_t), NULL);
+#else
+                    ret = pifs_write(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, a_entry,
+                                     sizeof(pifs_entry_t));
+#endif
                     if (ret == PIFS_SUCCESS)
                     {
                         created = TRUE;
@@ -110,16 +120,26 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
         {
             for (i = 0; i < PIFS_ENTRY_PER_PAGE && !found; i++)
             {
+#if PIFS_USE_DELTA_FOR_ENTRIES
                 ret = pifs_read_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
                                       PIFS_ENTRY_SIZE_BYTE);
+#else
+                ret = pifs_read(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
+                                PIFS_ENTRY_SIZE_BYTE);
+#endif
                 /* Check if name matches */
                 if (strncmp((char*)entry.name, a_name, sizeof(entry.name)) == 0)
                 {
                     /* Entry found */
                     /* Copy entry */
                     memcpy(&entry, a_entry, sizeof(pifs_entry_t));
+#if PIFS_USE_DELTA_FOR_ENTRIES
                     ret = pifs_write_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
                                            PIFS_ENTRY_SIZE_BYTE, NULL);
+#else
+                    ret = pifs_write(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
+                                     PIFS_ENTRY_SIZE_BYTE);
+#endif
                     found = TRUE;
                 }
             }
@@ -161,8 +181,13 @@ pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a
         {
             for (i = 0; i < PIFS_ENTRY_PER_PAGE && !found; i++)
             {
+#if PIFS_USE_DELTA_FOR_ENTRIES
                 ret = pifs_read_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
                                       PIFS_ENTRY_SIZE_BYTE);
+#else
+                ret = pifs_read(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
+                                PIFS_ENTRY_SIZE_BYTE);
+#endif
                 /* Check if name matches */
                 if (strncmp((char*)entry.name, a_name, sizeof(entry.name)) == 0)
                 {
@@ -173,21 +198,19 @@ pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a
                         memcpy(a_entry, &entry, sizeof(pifs_entry_t));
                         /* Invert entry bits as it is stored inverted */
                         a_entry->attrib ^= PIFS_ATTRIB_ALL;
-
-#if 0
-                        if  (a_entry->file_size == PIFS_FILE_SIZE_ERASED)
-                        {
-                            printf("FILE SIZE IS NOT FILLED!\r\n");
-                        }
-#endif
                         PIFS_DEBUG_MSG("file size: %i bytes\r\n", a_entry->file_size);
                     }
                     else
                     {
                         /* Clear entry */
                         memset(&entry, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, sizeof(pifs_entry_t));
+#if PIFS_USE_DELTA_FOR_ENTRIES
                         ret = pifs_write_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
                                                PIFS_ENTRY_SIZE_BYTE, NULL);
+#else
+                        ret = pifs_write(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
+                                         PIFS_ENTRY_SIZE_BYTE);
+#endif
                     }
                     found = TRUE;
                 }
