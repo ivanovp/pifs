@@ -26,6 +26,12 @@
 #define PIFS_DEBUG_LEVEL 3
 #include "pifs_debug.h"
 
+/**
+ * @brief pifs_opendir Open directory for listing.
+ *
+ * @param a_name Pointer to directory name. TODO currently name is omitted!
+ * @return Pointer to file system's directory.
+ */
 pifs_DIR * pifs_opendir(const char *a_name)
 {
     pifs_size_t  i;
@@ -50,12 +56,10 @@ pifs_DIR * pifs_opendir(const char *a_name)
 }
 
 /**
- * @brief pifs_find_entry Find entry in entry list.
+ * @brief pifs_readdir Read one directory entry from opened directory.
  *
- * @param a_name[in]    Pointer to name to find.
- * @param a_entry[out]  Pointer to entry to fill. NULL: clear entry.
- * @return PIFS_SUCCESS if entry found.
- * PIFS_ERROR_FILE_NOT_FOUND if entry not found.
+ * @param a_dirp Pointer to the opened directory.
+ * @return Entry if found or NULL.
  */
 struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
 {
@@ -100,6 +104,12 @@ struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
     return dirent;
 }
 
+/**
+ * @brief pifs_closedir Close opened directory.
+ *
+ * @param a_dirp Pointer to directory to close.
+ * @return 0 if successfully closed, -1 if directory was not opened.
+ */
 int pifs_closedir(pifs_DIR *a_dirp)
 {
     int           ret = -1;
