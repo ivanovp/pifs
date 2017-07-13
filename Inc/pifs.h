@@ -16,7 +16,7 @@
 #include "flash.h"
 #include "pifs_config.h"
 
-// FIXME handle endianness?
+// NOTE handle endianness?
 //#define PIFS_MAGIC              0x50494653u  /* PIFS */
 #define PIFS_MAGIC              0x53464950u  /* PIFS */
 #if PIFS_MAGIC == 0

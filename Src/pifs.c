@@ -314,6 +314,7 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
  * @param[in] a_block_address   Block address of header.
  * @param[in] a_page_address    Page address of header.
  * @param[in] a_header          Pointer to the header.
+ * @param[in] a_mark_pages      TRUE: mark management pages as used ones.
  * @return PIFS_SUCCESS if header successfully written.
  */
 pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
@@ -689,7 +690,7 @@ void pifs_internal_open(pifs_file_t * a_file,
                 {
                     /* Mark allocated pages to be released */
                     a_file->status = pifs_release_file_pages(a_file);
-                    a_file->is_size_changed = TRUE; /* FIXME when delta pages used! */
+                    a_file->is_size_changed = TRUE;
                 }
             }
             else

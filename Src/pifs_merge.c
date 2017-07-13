@@ -85,6 +85,11 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
                         }
                     }
                 }
+                else
+                {
+                    /* If no blocks found, it is not an error */
+                    ret = PIFS_SUCCESS;
+                }
                 /* Mark management block as free because */
                 /* #1 The old management blocks (primary) will be erased, */
                 /*    at the end of merge. */
@@ -445,6 +450,7 @@ pifs_status_t pifs_merge(void)
     }
 //    pifs_flush();
 //    exit(1);
+    PIFS_ASSERT(ret == PIFS_SUCCESS);
     PIFS_NOTICE_MSG("stop\r\n");
 
     return ret;
@@ -481,6 +487,7 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file)
         {
             if (free_data_pages == 0 && to_be_released_data_pages > 0)
             {
+                /* TODO check if at least one data block can be erased!!! */
                 merge = TRUE;
             }
             if (free_management_pages == 0 && to_be_released_management_pages > 0)
