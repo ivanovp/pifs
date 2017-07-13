@@ -38,7 +38,7 @@ pifs_status_t pifs_append_entry(pifs_entry_t * a_entry)
     pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
     pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
     bool_t               created = FALSE;
-    pifs_entry_t       * entry = (pifs_entry_t*) pifs.cache_page_buf;
+    pifs_entry_t         entry;
     pifs_size_t          i;
 
     /* Invert attribute bits */
@@ -48,14 +48,16 @@ pifs_status_t pifs_append_entry(pifs_entry_t * a_entry)
     {
         while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !created && ret == PIFS_SUCCESS)
         {
-            ret = pifs_read(ba, pa, 0, NULL, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
             for (i = 0; i < PIFS_ENTRY_PER_PAGE && !created && ret == PIFS_SUCCESS; i++)
             {
+                ret = pifs_read_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
+                                      PIFS_ENTRY_SIZE_BYTE);
                 /* Check if this area is used */
-                if (pifs_is_buffer_erased(&entry[i], sizeof(entry)))
+                if (pifs_is_buffer_erased(&entry, sizeof(entry)))
                 {
                     /* Empty entry found */
-                    ret = pifs_write(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, a_entry, sizeof(pifs_entry_t));
+                    ret = pifs_write_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, a_entry,
+                                           sizeof(pifs_entry_t), NULL);
                     if (ret == PIFS_SUCCESS)
                     {
                         created = TRUE;
@@ -96,7 +98,7 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
     pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
     pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
     bool_t               found = FALSE;
-    pifs_entry_t       * entry = (pifs_entry_t*) pifs.cache_page_buf;
+    pifs_entry_t         entry;
     pifs_size_t          i;
 
     /* Invert entry bits as it is stored inverted */
@@ -106,16 +108,18 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
     {
         while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !found && ret == PIFS_SUCCESS)
         {
-            ret = pifs_read(ba, pa, 0, NULL, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
             for (i = 0; i < PIFS_ENTRY_PER_PAGE && !found; i++)
             {
+                ret = pifs_read_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
+                                      PIFS_ENTRY_SIZE_BYTE);
                 /* Check if name matches */
-                if (strncmp((char*)entry[i].name, a_name, sizeof(entry[i].name)) == 0)
+                if (strncmp((char*)entry.name, a_name, sizeof(entry.name)) == 0)
                 {
                     /* Entry found */
                     /* Copy entry */
-                    memcpy(&entry[i], a_entry, sizeof(pifs_entry_t));
-                    ret = pifs_write(ba, pa, 0, NULL, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
+                    memcpy(&entry, a_entry, sizeof(pifs_entry_t));
+                    ret = pifs_write_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
+                                           PIFS_ENTRY_SIZE_BYTE, NULL);
                     found = TRUE;
                 }
             }
@@ -147,7 +151,7 @@ pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a
     pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
     pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
     bool_t               found = FALSE;
-    pifs_entry_t       * entry = (pifs_entry_t*) pifs.cache_page_buf;
+    pifs_entry_t         entry;
     pifs_size_t          i;
 
     while (ba < pifs.header.entry_list_address.block_address + PIFS_MANAGEMENT_BLOCKS
@@ -155,17 +159,18 @@ pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a
     {
         while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !found && ret == PIFS_SUCCESS)
         {
-            ret = pifs_read(ba, pa, 0, NULL, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
             for (i = 0; i < PIFS_ENTRY_PER_PAGE && !found; i++)
             {
+                ret = pifs_read_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
+                                      PIFS_ENTRY_SIZE_BYTE);
                 /* Check if name matches */
-                if (strncmp((char*)entry[i].name, a_name, sizeof(entry[i].name)) == 0)
+                if (strncmp((char*)entry.name, a_name, sizeof(entry.name)) == 0)
                 {
                     /* Entry found */
                     if (a_entry)
                     {
                         /* Copy entry */
-                        memcpy(a_entry, &entry[i], sizeof(pifs_entry_t));
+                        memcpy(a_entry, &entry, sizeof(pifs_entry_t));
                         /* Invert entry bits as it is stored inverted */
                         a_entry->attrib ^= PIFS_ATTRIB_ALL;
 
@@ -180,8 +185,9 @@ pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a
                     else
                     {
                         /* Clear entry */
-                        memset(&entry[i], PIFS_FLASH_PROGRAMMED_BYTE_VALUE, sizeof(pifs_entry_t));
-                        ret = pifs_write(ba, pa, 0, NULL, PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE);
+                        memset(&entry, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, sizeof(pifs_entry_t));
+                        ret = pifs_write_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
+                                               PIFS_ENTRY_SIZE_BYTE, NULL);
                     }
                     found = TRUE;
                 }

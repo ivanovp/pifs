@@ -750,12 +750,8 @@ void pifs_internal_open(pifs_file_t * a_file,
             if (a_file->status == PIFS_SUCCESS && free_data_pages > 0)
             {
                 /* File already exist */
-                a_file->status = pifs_clear_entry(a_filename); /* FIXME use delta pages! */
-                if (a_file->status == PIFS_SUCCESS)
-                {
-                    /* Mark allocated pages to be released */
-                    a_file->status = pifs_release_file_pages(a_file);
-                }
+                /* Mark allocated pages to be released */
+                a_file->status = pifs_release_file_pages(a_file);
                 a_file->is_size_changed = TRUE; /* FIXME when delta pages used! */
             }
             else
@@ -895,6 +891,7 @@ pifs_size_t pifs_fwrite(const void * a_data, pifs_size_t a_size, pifs_size_t a_c
     PIFS_NOTICE_MSG("filename: '%s'\r\n", file->entry.name);
     if (pifs.is_header_found && file && file->is_opened && file->mode_write)
     {
+        file->status = PIFS_SUCCESS;
         /* If opened in "a" mode always jump to end of file */
         if (file->mode_append && file->write_pos != file->entry.file_size)
         {
