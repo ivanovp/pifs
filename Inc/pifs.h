@@ -163,6 +163,10 @@ typedef uint32_t pifs_page_count_t;
 #define PIFS_FSBM_BITS_PER_PAGE_SHIFT   1
 #define PIFS_FSBM_BITS_PER_PAGE         (1u << PIFS_FSBM_BITS_PER_PAGE_SHIFT)
 
+#define PIFS_SET_ERRNO(status)          do { \
+        pifs_errno = status; \
+    } while (0)
+
 typedef enum
 {
     /**

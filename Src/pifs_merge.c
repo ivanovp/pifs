@@ -18,10 +18,12 @@
 #include "pifs_fsbm.h"
 #include "pifs_helper.h"
 #include "pifs_delta.h"
-#include "pifs_debug.h"
 #include "pifs_merge.h"
 #include "pifs_map.h"
 #include "buffer.h" /* DEBUG */
+
+#define PIFS_DEBUG_LEVEL    1
+#include "pifs_debug.h"
 
 /**
  * @brief pifs_copy_fsbm Copy free space bitmap and process to be released pages.

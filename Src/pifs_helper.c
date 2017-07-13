@@ -16,8 +16,10 @@
 #include "flash_config.h"
 #include "pifs.h"
 #include "pifs_helper.h"
-#include "pifs_debug.h"
 #include "buffer.h"
+
+#define PIFS_DEBUG_LEVEL 1
+#include "pifs_debug.h"
 
 #if PIFS_DEBUG_LEVEL >= 1
 /**

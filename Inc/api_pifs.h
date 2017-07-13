@@ -53,6 +53,8 @@ typedef enum
     PIFS_SEEK_END,
 } pifs_fseek_origin_t;
 
+extern int pifs_errno;
+
 pifs_status_t pifs_init(void);
 pifs_status_t pifs_delete(void);
 P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes);

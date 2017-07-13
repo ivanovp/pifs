@@ -21,8 +21,10 @@
 #include "pifs_entry.h"
 #include "pifs_map.h"
 #include "pifs_merge.h"
-#include "pifs_debug.h"
 #include "buffer.h" /* DEBUG */
+
+#define PIFS_DEBUG_LEVEL 5
+#include "pifs_debug.h"
 
 pifs_t pifs =
 {
@@ -33,6 +35,8 @@ pifs_t pifs =
     .cache_page_buf = { 0 },
     .cache_page_buf_is_dirty = FALSE
 };
+
+int pifs_errno = PIFS_SUCCESS;
 
 /**
  * @brief pifs_calc_header_checksum Calculate checksum of the file system header.
@@ -844,11 +848,9 @@ pifs_status_t pifs_get_file(pifs_file_t **a_file)
  */
 P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
 {
-    /* TODO search first free element of pifs.file[] */
     pifs_file_t  * file = NULL;
     pifs_status_t  ret;
 
-    /* TODO put return value to 'errno' */
     ret = pifs_get_file(&file);
     if (ret == PIFS_SUCCESS)
     {
@@ -859,6 +861,7 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
         pifs_internal_open(file, a_filename, a_modes);
     }
 
+    PIFS_SET_ERRNO(ret);
     return (P_FILE*) file;
 }
 
@@ -992,6 +995,7 @@ pifs_size_t pifs_fwrite(const void * a_data, pifs_size_t a_size, pifs_size_t a_c
         }
     }
 
+    PIFS_SET_ERRNO(file->status);
     return written_size;
 }
 
@@ -1108,6 +1112,7 @@ pifs_size_t pifs_fread(void * a_data, pifs_size_t a_size, pifs_size_t a_count, P
         }
     }
 
+    PIFS_SET_ERRNO(file->status);
     return read_size;
 }
 
@@ -1133,6 +1138,7 @@ int pifs_fclose(P_FILE * a_file)
         ret = 0;
     }
 
+    PIFS_SET_ERRNO(file->status);
     return ret;
 }
 
@@ -1260,6 +1266,7 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
         ret = file->status;
     }
 
+    PIFS_SET_ERRNO(file->status);
     return ret;
 }
 
@@ -1285,6 +1292,7 @@ void pifs_rewind(P_FILE * a_file)
         file->read_address = file->map_entry.address;
         file->read_page_count = file->map_entry.page_count;
     }
+    PIFS_SET_ERRNO(file->status);
 }
 
 /**
@@ -1315,6 +1323,7 @@ int pifs_remove(const pifs_char_t * a_filename)
         }
     }
 
+    PIFS_SET_ERRNO(ret);
     return ret;
 }
 
