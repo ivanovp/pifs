@@ -417,7 +417,7 @@ pifs_status_t pifs_merge(void)
     /* #8 */
     if (ret == PIFS_SUCCESS)
     {
-        PIFS_DEBUG_MSG("next management block: %i, ret: %i\r\n", next_mgmt_ba, ret);
+        PIFS_NOTICE_MSG("Next management block: %i, ret: %i\r\n", next_mgmt_ba, ret);
         /* Add next management block's address to the current header */
         ret = pifs_header_init(new_header_ba, new_header_pa, next_mgmt_ba, &pifs.header);
     }
@@ -471,6 +471,7 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file)
     pifs_size_t   to_be_released_data_pages = 0;
     bool_t        merge = FALSE;
     bool_t        is_free_map_entry = TRUE;
+    pifs_block_address_t to_be_released_ba;
 
     /* Get number of free management and data pages */
     ret = pifs_get_free_pages(&free_management_pages, &free_data_pages);
@@ -487,10 +488,19 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file)
         {
             if (free_data_pages == 0 && to_be_released_data_pages > 0)
             {
-                /* TODO check if at least one data block can be erased!!! */
-                merge = TRUE;
+                /* Check if at least one data block can be erased! */
+                /* Otherwise merging will be unmeaning. */
+                ret = pifs_find_to_be_released_block(1, PIFS_BLOCK_TYPE_DATA,
+                                                     PIFS_FLASH_BLOCK_RESERVED_NUM,
+                                                     &pifs.header,
+                                                     &to_be_released_ba);
+                if (ret == PIFS_SUCCESS)
+                {
+                    PIFS_NOTICE_MSG("To be released block: %i\r\n", to_be_released_ba);
+                    merge = TRUE;
+                }
             }
-            if (free_management_pages == 0 && to_be_released_management_pages > 0)
+            if (free_management_pages == 0 && to_be_released_management_pages > 0 && !merge)
             {
                 if (a_file)
                 {

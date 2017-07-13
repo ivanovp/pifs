@@ -237,7 +237,6 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_size_t          i = 0;
     pifs_block_address_t ba = a_block_address;
-    /* FIXME use random block? */
     PIFS_DEBUG_MSG("Creating managamenet block %s\r\n", pifs_ba_pa2str(a_block_address, a_page_address));
     a_header->magic = PIFS_MAGIC;
 #if ENABLE_PIFS_VERSION
@@ -521,6 +520,7 @@ pifs_status_t pifs_init(void)
         {
             /* No file system header found, so create brand new one */
             pifs.header.counter = 0;
+            /* FIXME use random block? */
 #if 1
             ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
 #else
