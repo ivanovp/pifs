@@ -155,7 +155,6 @@ bool_t pifs_is_page_to_be_released(pifs_block_address_t a_block_address,
     return !is_not_to_be_released;
 }
 
-
 /**
  * @brief pifs_mark_page Mark page(s) as used (or to be released) in free space
  * memory bitmap.
@@ -192,20 +191,20 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
         if (ret == PIFS_SUCCESS)
         {
             PIFS_ASSERT((bit_pos / PIFS_BYTE_BITS) < PIFS_FLASH_PAGE_SIZE_BYTE);
-            //            print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf), 0);
-            //            PIFS_DEBUG_MSG("-Free space byte:    0x%02X\r\n", pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS]);
+            //print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf), 0);
+            //PIFS_DEBUG_MSG("-Free space byte:    0x%02X\r\n", pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS]);
             is_free_space = pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << (bit_pos % PIFS_BYTE_BITS));
             is_not_to_be_released = pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << ((bit_pos % PIFS_BYTE_BITS) + 1));
-            //            PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", is_free_space);
-            //            PIFS_DEBUG_MSG("-Release space bit:  %i\r\n", is_not_to_be_released);
-            //            PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", (pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] >> (bit_pos % PIFS_BYTE_BITS)) & 1);
-            //            PIFS_DEBUG_MSG("-Release space bit:  %i\r\n", (pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] >> ((bit_pos % PIFS_BYTE_BITS) + 1)) & 1);
+            //PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", is_free_space);
+            //PIFS_DEBUG_MSG("-Release space bit:  %i\r\n", is_not_to_be_released);
+            //PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", (pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] >> (bit_pos % PIFS_BYTE_BITS)) & 1);
+            //PIFS_DEBUG_MSG("-Release space bit:  %i\r\n", (pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] >> ((bit_pos % PIFS_BYTE_BITS) + 1)) & 1);
             if (a_mark_used)
             {
                 /* Mark page used */
                 if (is_free_space)
                 {
-//                    PIFS_NOTICE_MSG("MARK %s\r\n", pifs_ba_pa2str(a_block_address, a_page_address));
+                    //PIFS_NOTICE_MSG("MARK %s\r\n", pifs_ba_pa2str(a_block_address, a_page_address));
                     /* Clear free bit */
                     pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] &= ~(1u << (bit_pos % PIFS_BYTE_BITS));
                 }
@@ -240,9 +239,9 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                     ret = PIFS_ERROR_INTERNAL_ALLOCATION;
                 }
             }
-            //            PIFS_DEBUG_MSG("+Free space byte:    0x%02X\r\n", pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS]);
-            //            PIFS_DEBUG_MSG("+Free space bit:     %i\r\n", (pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] >> (bit_pos % PIFS_BYTE_BITS)) & 1);
-            //            PIFS_DEBUG_MSG("+Release space bit:  %i\r\n", (pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] >> ((bit_pos % PIFS_BYTE_BITS) + 1)) & 1);
+            //PIFS_DEBUG_MSG("+Free space byte:    0x%02X\r\n", pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS]);
+            //PIFS_DEBUG_MSG("+Free space bit:     %i\r\n", (pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] >> (bit_pos % PIFS_BYTE_BITS)) & 1);
+            //PIFS_DEBUG_MSG("+Release space bit:  %i\r\n", (pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] >> ((bit_pos % PIFS_BYTE_BITS) + 1)) & 1);
             /* Write new status to cache */
             ret = pifs_write(ba, pa, 0, NULL, 0);
         }

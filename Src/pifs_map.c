@@ -235,3 +235,71 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
 
     return a_file->status;
 }
+
+/**
+ * @brief pifs_release_file_pages Mark file map and file's pages to be released.
+ *
+ * @param[in] a_file Pointer of file structure.
+ * @return TRUE: if all pages were succesfully marked to be released.
+ */
+pifs_status_t pifs_release_file_pages(pifs_file_t * a_file)
+{
+    pifs_block_address_t    ba = a_file->entry.first_map_address.block_address;
+    pifs_page_address_t     pa = a_file->entry.first_map_address.page_address;
+    pifs_block_address_t    mba;
+    pifs_page_address_t     mpa;
+    pifs_page_count_t       page_count;
+    pifs_size_t             i;
+    bool_t                  erased = FALSE;
+    pifs_page_offset_t      po = PIFS_MAP_HEADER_SIZE_BYTE;
+
+    PIFS_DEBUG_MSG("Searching in map entry at %s\r\n", pifs_ba_pa2str(ba, pa));
+
+    do
+    {
+        a_file->status = pifs_read(ba, pa, 0, &a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE);
+
+        if (a_file->status == PIFS_SUCCESS)
+        {
+            if (pifs_is_buffer_erased(&a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE))
+            {
+                PIFS_DEBUG_MSG("map header is empty!\r\n");
+            }
+            for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !erased && a_file->status == PIFS_SUCCESS; i++)
+            {
+                a_file->status = pifs_read(ba, pa, po, &a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
+                if (pifs_is_buffer_erased(&a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
+                {
+                    erased = TRUE;
+                }
+                else
+                {
+                    /* Map entry found */
+                    mba = a_file->map_entry.address.block_address;
+                    mpa = a_file->map_entry.address.page_address;
+                    page_count = a_file->map_entry.page_count;
+                    if (page_count && page_count < PIFS_PAGE_COUNT_INVALID)
+                    {
+                        PIFS_DEBUG_MSG("Release map entry %i pages %s\r\n", page_count,
+                                       pifs_ba_pa2str(mba, mpa));
+                        /* Mark pages to be released */
+                        a_file->status = pifs_mark_page(mba, mpa, page_count, FALSE);
+                    }
+                }
+                po += PIFS_MAP_ENTRY_SIZE_BYTE;
+            }
+        }
+        if (a_file->status == PIFS_SUCCESS)
+        {
+            /* Mark map page to be released */
+            a_file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, FALSE);
+            /* Jump to the next map page */
+            ba = a_file->map_header.next_map_address.block_address;
+            pa = a_file->map_header.next_map_address.page_address;
+            po = PIFS_MAP_HEADER_SIZE_BYTE;
+        }
+    } while (ba < PIFS_BLOCK_ADDRESS_INVALID && pa < PIFS_PAGE_ADDRESS_INVALID && a_file->status == PIFS_SUCCESS);
+
+    return a_file->status;
+}
+

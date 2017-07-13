@@ -25,5 +25,6 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
                                     pifs_block_address_t a_block_address,
                                     pifs_page_address_t a_page_address,
                                     pifs_page_count_t a_page_count);
+pifs_status_t pifs_release_file_pages(pifs_file_t * a_file);
 
 #endif /* _INCLUDE_PIFS_MAP_H_ */
