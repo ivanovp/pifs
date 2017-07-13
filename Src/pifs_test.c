@@ -14,8 +14,10 @@
 
 #include "api_pifs.h"
 #include "pifs.h"
-#include "pifs_debug.h"
 #include "buffer.h"
+
+#define PIFS_DEBUG_LEVEL    5
+#include "pifs_debug.h"
 
 #define ENABLE_SMALL_FILES_TEST       0
 #define ENABLE_FULL_WRITE_TEST        1

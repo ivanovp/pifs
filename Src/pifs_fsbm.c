@@ -18,7 +18,7 @@
 #include "pifs_fsbm.h"
 #include "pifs_helper.h"
 
-#define PIFS_DEBUG_LEVEL 1
+#define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
 
 /**
@@ -359,7 +359,8 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
     bool_t                  found = FALSE;
     pifs_size_t             byte_cntr = PIFS_FREE_SPACE_BITMAP_SIZE_BYTE;
     pifs_bit_pos_t          bit_pos = 0;
-    uint8_t                 mask = 1; /**< Mask for finding free page */
+    uint8_t                 mask = 1;  /**< Mask for finding free page */
+    uint8_t                 value = 1; /**< Value for finding free page */
 
     PIFS_ASSERT(pifs.is_header_found);
 
@@ -371,6 +372,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
     {
         /* Find to be released page */
         mask = 2;
+        value = 0;
     }
 
     (void)pifs_calc_free_space_pos(&a_find->header->free_space_bitmap_address,
@@ -387,7 +389,8 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
             {
                 /* TODO use free pages and to be released pages as well when
                  * looking for erasable blocks! */
-                if ((free_space_bitmap & mask) && pifs_is_block_type(fba, a_find->block_type, &pifs.header))
+                if ((free_space_bitmap & mask) == value
+                        && pifs_is_block_type(fba, a_find->block_type, &pifs.header))
                 {
 #if PIFS_CHECK_IF_PAGE_IS_ERASED
                     if (!a_find->is_free || pifs_is_page_erased(fba, fpa))
@@ -549,6 +552,7 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
     pifs_size_t             byte_cntr = PIFS_FREE_SPACE_BITMAP_SIZE_BYTE;
     pifs_bit_pos_t          bit_pos = 0;
     uint8_t                 mask = 1; /**< Mask for finding free page */
+    uint8_t                 value = 1; /**< Value for finding free page */
 
     PIFS_ASSERT(pifs.is_header_found);
 
@@ -556,6 +560,7 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
     {
         /* Find to be released page */
         mask = 2;
+        value = 0;
     }
 
     *a_management_page_count = 0;
@@ -575,7 +580,7 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
 #endif
             for (i = 0; i < (PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE); i++)
             {
-                if ((free_space_bitmap & mask))
+                if ((free_space_bitmap & mask) == value)
                 {
 #if PIFS_CHECK_IF_PAGE_IS_ERASED
                     if (!a_is_free || pifs_is_page_erased(fba, fpa))

@@ -22,7 +22,7 @@
 #include "pifs_map.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL    1
+#define PIFS_DEBUG_LEVEL    5
 #include "pifs_debug.h"
 
 /**
@@ -191,8 +191,9 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
                                                        &delta_ba, &delta_pa, NULL);
                             if (ret == PIFS_SUCCESS)
                             {
-                                PIFS_DEBUG_MSG("%s ->", pifs_address2str(&address));
-                                PIFS_DEBUG_MSG("%s\r\n", pifs_ba_pa2str(delta_ba, delta_pa));
+                                PIFS_DEBUG_MSG("delta %s -> %s\r\n",
+                                               pifs_address2str(&address),
+                                               pifs_ba_pa2str(delta_ba, delta_pa));
                                 ret = pifs_append_map_entry(&pifs.internal_file,
                                                       address.block_address,
                                                       address.page_address, 1); /* <<< one page added here */

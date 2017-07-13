@@ -19,7 +19,7 @@
 #include "pifs_helper.h"
 #include "pifs_delta.h"
 
-#define PIFS_DEBUG_LEVEL 1
+#define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
 
 /**
@@ -82,6 +82,7 @@ pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
     }
     if (a_file->status == PIFS_SUCCESS)
     {
+        PIFS_ASSERT(pifs_is_address_valid(&a_file->actual_map_address));
         a_file->status = pifs_read(a_file->actual_map_address.block_address,
                                    a_file->actual_map_address.page_address,
                                    PIFS_MAP_HEADER_SIZE_BYTE + a_file->map_entry_idx * PIFS_MAP_ENTRY_SIZE_BYTE,
