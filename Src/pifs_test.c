@@ -488,13 +488,16 @@ pifs_status_t pifs_test(void)
     {
         while (dirent = pifs_readdir(dir))
         {
-            printf("%s\r\n", dirent->d_name);
+            printf("%s\t%i\r\n", dirent->d_name, pifs_filesize(dirent->d_name));
         }
-        (void) pifs_closedir (dir);
+        if (pifs_closedir (dir) != 0)
+        {
+            printf("Cannot close directory!\r\n");
+        }
     }
     else
     {
-        perror ("Couldn't open the directory");
+        printf("Could not open the directory!\r\n");
     }
 #endif
 

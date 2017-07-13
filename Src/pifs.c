@@ -1275,3 +1275,21 @@ int pifs_ferror(P_FILE * a_file)
 
     return ret;
 }
+
+/**
+ * @brief pifs_filesize Get size of a file.
+ * @param[in] a_filename Pointer to the file name.
+ * @return File size in bytes or -1 if file not found.
+ */
+long int pifs_filesize(const pifs_char_t * a_filename)
+{
+    long int filesize = -1;
+    pifs_status_t status;
+    pifs_entry_t  entry;
+
+    status = pifs_find_entry(a_filename, &entry);
+    if (status == PIFS_SUCCESS)
+    {
+        filesize = entry.file_size;
+    }
+}

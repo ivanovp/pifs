@@ -56,10 +56,13 @@ typedef enum
 
 struct pifs_dirent
 {
+    /* TODO d_ino, d_off, d_reclen, d_type may be removed as it is not used by system */
+#if PIFS_OPTIMIZE_FOR_RAM == 0
     uint32_t d_ino;              /**< Unique ID of the file */
     uint32_t d_off;              /**< Offset of that directory entry in the actual file system directory */
     unsigned short int d_reclen; /**< Record length of this entry */
-    unsigned char d_type;
+    unsigned char d_type;        /**< Not supported */
+#endif
     char d_name[PIFS_FILENAME_LEN_MAX];
 };
 
@@ -79,6 +82,7 @@ void pifs_rewind(P_FILE * a_file);
 long int pifs_ftell(P_FILE * a_file);
 int pifs_remove(const pifs_char_t * a_filename);
 int pifs_ferror(P_FILE * a_file);
+long int pifs_filesize(const pifs_char_t * a_filename);
 pifs_DIR * pifs_opendir(const char *a_name);
 struct pifs_dirent * pifs_readdir(pifs_DIR *a_dirp);
 int pifs_closedir(pifs_DIR *a_dirp);
