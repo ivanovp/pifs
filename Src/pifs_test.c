@@ -103,7 +103,7 @@ pifs_status_t pifs_test(void)
 
     for (i = 0; i < PIFS_ENTRY_NUM_MAX / 2; i++)
     {
-        snprintf(filename, sizeof(filename), "tsm%lu.dat", i);
+        snprintf(filename, sizeof(filename), "small%lu.tst", i);
         file = pifs_fopen(filename, "w");
         if (file)
         {
@@ -125,7 +125,7 @@ pifs_status_t pifs_test(void)
     printf("-------------------------------------------------\r\n");
     printf("Full write test: writing file\r\n");
 
-    file = pifs_fopen("testfull.dat", "w");
+    file = pifs_fopen("fullwrite.tst", "w");
     if (file)
     {
         printf("File opened for writing\r\n");
@@ -156,7 +156,7 @@ pifs_status_t pifs_test(void)
     printf("-------------------------------------------------\r\n");
     printf("Full write test: reading file\r\n");
 
-    file = pifs_fopen("testfull.dat", "r");
+    file = pifs_fopen("fullwrite.tst", "r");
     if (file)
     {
         printf("File opened for reading\r\n");
@@ -178,7 +178,7 @@ pifs_status_t pifs_test(void)
         PIFS_ERROR_MSG("Cannot open file!\r\n");
     }
     pifs_fclose(file);
-    if (pifs_remove("testfull.dat") == 0)
+    if (pifs_remove("fullwrite.tst") == 0)
     {
         printf("File removed!\r\n");
     }
@@ -192,7 +192,7 @@ pifs_status_t pifs_test(void)
     printf("-------------------------------------------------\r\n");
     printf("Basic test: writing file\r\n");
 
-    file = pifs_fopen("testb.dat", "w");
+    file = pifs_fopen("basic.tst", "w");
     if (file)
     {
         printf("File opened for writing\r\n");
@@ -212,7 +212,7 @@ pifs_status_t pifs_test(void)
     printf("-------------------------------------------------\r\n");
     printf("Large test: writing file\r\n");
 
-    file = pifs_fopen("test.dat", "w");
+    file = pifs_fopen("large.tst", "w");
     if (file)
     {
         printf("File opened for writing\r\n");
@@ -234,7 +234,7 @@ pifs_status_t pifs_test(void)
     printf("-------------------------------------------------\r\n");
     printf("Fragment write test: writing file\r\n");
 
-    file = pifs_fopen("test2.dat", "w");
+    file = pifs_fopen("fragwr.tst", "w");
     if (file)
     {
         const size_t size_delta = 5;
@@ -256,7 +256,7 @@ pifs_status_t pifs_test(void)
     printf("-------------------------------------------------\r\n");
     printf("Fragment read test: writing file\r\n");
 
-    file = pifs_fopen("test3.dat", "w");
+    file = pifs_fopen("fragrd.tst", "w");
     if (file)
     {
         printf("File opened for writing\r\n");
@@ -274,7 +274,7 @@ pifs_status_t pifs_test(void)
     printf("-------------------------------------------------\r\n");
     printf("Seek read test: writing file\r\n");
 
-    file = pifs_fopen("tstseek1.dat", "w");
+    file = pifs_fopen("seekrd.tst", "w");
     if (file)
     {
         printf("File opened for writing\r\n");
@@ -295,7 +295,7 @@ pifs_status_t pifs_test(void)
 #if ENABLE_SEEK_WRITE_TEST
     printf("-------------------------------------------------\r\n");
     printf("Seek write test: writing file\r\n");
-    file = pifs_fopen("tstseek2.dat", "w");
+    file = pifs_fopen("seekwr.tst", "w");
     if (file)
     {
         printf("File opened for writing\r\n");
@@ -320,7 +320,7 @@ pifs_status_t pifs_test(void)
 
     for (i = 0; i < PIFS_ENTRY_NUM_MAX / 2; i++)
     {
-        snprintf(filename, sizeof(filename), "tsm%lu.dat", i);
+        snprintf(filename, sizeof(filename), "small%lu.tst", i);
         file = pifs_fopen(filename, "r");
         if (file)
         {
@@ -342,7 +342,7 @@ pifs_status_t pifs_test(void)
     printf("-------------------------------------------------\r\n");
     printf("Large test: reading file\r\n");
 
-    file = pifs_fopen("test.dat", "r");
+    file = pifs_fopen("large.tst", "r");
     if (file)
     {
         printf("File opened for reading\r\n");
@@ -364,7 +364,7 @@ pifs_status_t pifs_test(void)
     printf("-------------------------------------------------\r\n");
     printf("Basic test: reading file\r\n");
 
-    file = pifs_fopen("testb.dat", "r");
+    file = pifs_fopen("basic.tst", "r");
     if (file)
     {
         printf("File opened for reading\r\n");
@@ -384,7 +384,7 @@ pifs_status_t pifs_test(void)
     printf("Write fragment test: reading file\r\n");
 
     memset(test_buf_r, 0, sizeof(test_buf_r));
-    file = pifs_fopen("test2.dat", "r");
+    file = pifs_fopen("fragwr.tst", "r");
     if (file)
     {
         printf("File opened for reading\r\n");
@@ -404,7 +404,7 @@ pifs_status_t pifs_test(void)
     printf("Read fragment test: reading file\r\n");
 
     memset(test_buf_r, 0, sizeof(test_buf_r));
-    file = pifs_fopen("test3.dat", "r");
+    file = pifs_fopen("fragrd.tst", "r");
     if (file)
     {
         const size_t size_delta = 5;
@@ -427,7 +427,7 @@ pifs_status_t pifs_test(void)
     printf("-------------------------------------------------\r\n");
     printf("Seek read test: reading file\r\n");
 
-    file = pifs_fopen("tstseek1.dat", "r");
+    file = pifs_fopen("seekrd.tst", "r");
     if (file)
     {
         printf("File opened for reading\r\n");
@@ -460,7 +460,7 @@ pifs_status_t pifs_test(void)
     printf("-------------------------------------------------\r\n");
     printf("Seek write test: reading file\r\n");
 
-    file = pifs_fopen("tstseek2.dat", "r");
+    file = pifs_fopen("seekwr.tst", "r");
     if (file)
     {
         printf("File opened for reading\r\n");
