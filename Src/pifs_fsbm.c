@@ -18,7 +18,6 @@
 #include "pifs_fsbm.h"
 #include "pifs_helper.h"
 #include "pifs_debug.h"
-#include "buffer.h" /* DEBUG */
 
 /**
  * @brief pifs_calc_free_space_pos Calculate position of a page in free space

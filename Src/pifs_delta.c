@@ -19,7 +19,6 @@
 #include "pifs_helper.h"
 #include "pifs_delta.h"
 #include "pifs_debug.h"
-#include "buffer.h" /* DEBUG */
 
 /**
  * @brief pifs_read_delta_map_page Read delta map pages to memory buffer.

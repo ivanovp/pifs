@@ -329,10 +329,6 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
 pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                                 pifs_page_address_t a_page_address,
                                 pifs_header_t * a_header, bool_t a_mark_pages);
-pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
-                                    pifs_block_address_t a_block_address,
-                                    pifs_page_address_t a_page_address,
-                                    pifs_page_count_t a_page_count);
 void pifs_internal_open(pifs_file_t * a_file,
                         const pifs_char_t * a_filename,
                         const pifs_char_t * a_modes);
