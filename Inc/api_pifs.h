@@ -63,12 +63,14 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 int pifs_fclose(P_FILE * a_file);
 int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin);
 void pifs_rewind(P_FILE * a_file);
+long int pifs_ftell(P_FILE * a_file);
+int pifs_remove(const pifs_char_t * a_filename);
+int pifs_ferror(P_FILE * a_file);
+
 pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
                                   size_t * a_free_data_bytes,
                                   size_t * a_free_management_page_count,
                                   size_t * a_free_data_page_count);
-int pifs_remove(const pifs_char_t * a_filename);
-int pifs_ferror(P_FILE * a_file);
 #ifdef __cplusplus
 }
 #endif

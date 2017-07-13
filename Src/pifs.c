@@ -1301,6 +1301,26 @@ void pifs_rewind(P_FILE * a_file)
 }
 
 /**
+ * @brief pifs_ftell Get current position in file.
+ *
+ * @param[in] a_file Pointer to file.
+ * @return -1 if error or position in file.
+ */
+long int pifs_ftell(P_FILE * a_file)
+{
+    pifs_file_t * file = (pifs_file_t*) a_file;
+    long int pos = -1;
+
+    PIFS_NOTICE_MSG("filename: '%s'\r\n", file->entry.name);
+    if (pifs.is_header_found && file && file->is_opened)
+    {
+        pos = file->read_pos;
+    }
+
+    return pos;
+}
+
+/**
  * @brief pifs_remove Remove file.
  *
  * @param[in] a_filename Pointer to filename to be removed.

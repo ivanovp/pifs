@@ -434,7 +434,7 @@ pifs_status_t pifs_merge(void)
                 /* Do not create new file, as it has already done */
                 file->mode_create_new_file = FALSE;
                 pifs_internal_open(file, file->entry.name, NULL);
-                if (file->status == PIFS_SUCCESS)
+                if (file->status == PIFS_SUCCESS && file_pos[i])
                 {
                     /* Seek to the stored position */
                     pifs_fseek(file, file_pos[i], PIFS_SEEK_SET);
