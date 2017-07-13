@@ -292,19 +292,31 @@ typedef struct
 } pifs_file_t;
 
 /**
+ * Internal structure used by pifs_opendir(), pifs_listdir(), pifs_closedir().
+ */
+typedef struct
+{
+    bool_t         is_used  PIFS_BOOL_SIZE;
+    pifs_size_t    entry_page_index;
+    pifs_address_t entry_list_address;
+    pifs_size_t    entry_list_index;
+    pifs_dirent_t  directory_entry;
+} pifs_dir_t;
+
+/**
  * Actual status of file system.
  */
 typedef struct
 {
     pifs_address_t          header_address;
     bool_t                  is_header_found;
-    /** Actual header. */
-    pifs_header_t           header;
+    pifs_header_t           header;                                       /**< Actual header. */
     pifs_address_t          cache_page_buf_address;                       /**< Address of cache_page_buf */
     uint8_t                 cache_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];    /**< Flash page buffer for cache */
     bool_t                  cache_page_buf_is_dirty;
     pifs_file_t             file[PIFS_OPEN_FILE_NUM_MAX];                 /**< Opened files */
     pifs_file_t             internal_file;                                /**< Internally opened files */
+    pifs_dir_t              dir[PIFS_OPEN_DIR_NUM_MAX];                   /**< Opened directories */
     uint8_t                 delta_map_page_buf[PIFS_DELTA_MAP_PAGE_NUM][PIFS_FLASH_PAGE_SIZE_BYTE];
     bool_t                  delta_map_page_is_read PIFS_BOOL_SIZE;
     bool_t                  delta_map_page_is_dirty PIFS_BOOL_SIZE;

@@ -10,6 +10,7 @@
 #ifndef _INCLUDE_API_PIFS_H_
 #define _INCLUDE_API_PIFS_H_
 
+#include <stdint.h>
 #include "pifs_config.h"
 
 #ifdef __cplusplus
@@ -53,6 +54,18 @@ typedef enum
     PIFS_SEEK_END,
 } pifs_fseek_origin_t;
 
+struct pifs_dirent
+{
+    uint32_t d_ino;              /**< Unique ID of the file */
+    uint32_t d_off;              /**< Offset of that directory entry in the actual file system directory */
+    unsigned short int d_reclen; /**< Record length of this entry */
+    unsigned char d_type;
+    char d_name[PIFS_FILENAME_LEN_MAX];
+};
+
+typedef struct pifs_dirent pifs_dirent_t;
+typedef void * pifs_DIR;
+
 extern int pifs_errno;
 
 pifs_status_t pifs_init(void);
@@ -66,6 +79,9 @@ void pifs_rewind(P_FILE * a_file);
 long int pifs_ftell(P_FILE * a_file);
 int pifs_remove(const pifs_char_t * a_filename);
 int pifs_ferror(P_FILE * a_file);
+pifs_DIR * pifs_opendir(const char *a_name);
+struct pifs_dirent * pifs_readdir(pifs_DIR *a_dirp);
+int pifs_closedir(pifs_DIR *a_dirp);
 
 pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
                                   size_t * a_free_data_bytes,

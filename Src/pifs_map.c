@@ -19,7 +19,7 @@
 #include "pifs_helper.h"
 #include "pifs_delta.h"
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 3
 #include "pifs_debug.h"
 
 /**
@@ -151,8 +151,9 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
     bool_t                  empty_entry_found = FALSE;
     pifs_page_count_t       page_count_found = 0;
 
-    PIFS_DEBUG_MSG("Actual map address %s\r\n",
-                   pifs_address2str(&a_file->actual_map_address));
+    PIFS_NOTICE_MSG("Actual map address %s\r\n",
+                    pifs_address2str(&a_file->actual_map_address));
+    PIFS_ASSERT(pifs_is_address_valid(&a_file->actual_map_address));
     do
     {
         if (pifs_is_buffer_erased(&a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))

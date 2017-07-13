@@ -19,14 +19,17 @@
 #define PIFS_DEBUG_LEVEL    5
 #include "pifs_debug.h"
 
-#define ENABLE_SMALL_FILES_TEST       0
-#define ENABLE_FULL_WRITE_TEST        1
-#define ENABLE_BASIC_TEST             1
+#define ENABLE_SMALL_FILES_TEST       1
+#define ENABLE_FULL_WRITE_TEST        0
+#define ENABLE_BASIC_TEST             0
 #define ENABLE_LARGE_TEST             0
 #define ENABLE_WRITE_FRAGMENT_TEST    0
 #define ENABLE_READ_FRAGMENT_TEST     0
 #define ENABLE_SEEK_READ_TEST         0
 #define ENABLE_SEEK_WRITE_TEST        0
+#if ENABLE_SMALL_FILES_TEST
+#define ENABLE_LIST_DIRECTORY_TEST    1
+#endif
 
 #define TEST_FULL_PAGE_NUM            (PIFS_FLASH_PAGE_NUM_FS / 2)
 #define TEST_BUF_SIZE                 (PIFS_FLASH_PAGE_SIZE_BYTE * 2)
@@ -88,6 +91,8 @@ pifs_status_t pifs_test(void)
     size_t   testfull = 0;
     size_t   written_pages = 0;
     char     filename[32];
+    pifs_DIR * dir;
+    struct pifs_dirent * dirent;
 
     ret = pifs_init();
     PIFS_ASSERT(ret == PIFS_SUCCESS);
@@ -474,6 +479,23 @@ pifs_status_t pifs_test(void)
         PIFS_ERROR_MSG("Cannot open file!\r\n");
     }
     pifs_fclose(file);
+#endif
+#if ENABLE_LIST_DIRECTORY_TEST
+    printf("-------------------------------------------------\r\n");
+    printf("List directory test\r\n");
+    dir = pifs_opendir("/");
+    if (dir != NULL)
+    {
+        while (dirent = pifs_readdir(dir))
+        {
+            printf("%s\r\n", dirent->d_name);
+        }
+        (void) pifs_closedir (dir);
+    }
+    else
+    {
+        perror ("Couldn't open the directory");
+    }
 #endif
 
     printf("END OF TESTS\r\n");

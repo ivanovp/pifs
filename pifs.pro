@@ -3,18 +3,21 @@ CONFIG += console
 CONFIG -= qt
 
 include(other.pro)
-SOURCES += ./seek.c \
-./Src/buffer.c \
+SOURCES += ./Src/buffer.c \
 ./Src/flash.c \
 ./Src/flash_test.c \
 ./Src/pifs.c \
 ./Src/pifs_delta.c \
+./Src/pifs_dir.c \
 ./Src/pifs_entry.c \
 ./Src/pifs_fsbm.c \
 ./Src/pifs_helper.c \
 ./Src/pifs_map.c \
 ./Src/pifs_merge.c \
-./Src/pifs_test.c
+./Src/pifs_test.c \
+./test/append.c \
+./test/listdir.c \
+./test/seek.c
 
 HEADERS += ./Inc/api_pifs.h \
 ./Inc/buffer.h \
@@ -34,4 +37,5 @@ HEADERS += ./Inc/api_pifs.h \
 INCLUDEPATH += .
 INCLUDEPATH += ./Inc
 INCLUDEPATH += ./Src
+INCLUDEPATH += ./test
 
