@@ -225,9 +225,9 @@ pifs_status_t pifs_erase(pifs_block_address_t a_block_address)
 /**
  * @brief pifs_header_init Initialize file system's header.
  *
- * @param a_block_address[in]   Block address of header.
- * @param a_page_address[in]    Page address of header.
- * @param a_header[out]         Pointer to the header to be initialized.
+ * @param[in] a_block_address   Block address of header.
+ * @param[in] a_page_address    Page address of header.
+ * @param[out] a_header         Pointer to the header to be initialized.
  */
 pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
                                pifs_page_address_t a_page_address,
@@ -311,9 +311,9 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
 /**
  * @brief pifs_header_write Write file system header.
  *
- * @param a_block_address[in]   Block address of header.
- * @param a_page_address[in]    Page address of header.
- * @param a_header[in]          Pointer to the header.
+ * @param[in] a_block_address   Block address of header.
+ * @param[in] a_page_address    Page address of header.
+ * @param[in] a_header          Pointer to the header.
  * @return PIFS_SUCCESS if header successfully written.
  */
 pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
@@ -637,7 +637,7 @@ pifs_status_t pifs_delete(void)
 /**
  * @brief pifs_release_file_pages Mark file map and file's pages to be released.
  *
- * @param a_file[in] Pointer of file structure.
+ * @param[in] a_file Pointer of file structure.
  * @return TRUE: if all pages were succesfully marked to be released.
  */
 static pifs_status_t pifs_release_file_pages(pifs_file_t * a_file)
@@ -690,7 +690,6 @@ static pifs_status_t pifs_release_file_pages(pifs_file_t * a_file)
         if (a_file->status == PIFS_SUCCESS)
         {
             /* Mark map page to be released */
-            /* FIXME If PIFS_MAP_PAGE_NUM > 1, this can cause error?! */
             a_file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, FALSE);
             /* Jump to the next map page */
             ba = a_file->map_header.next_map_address.block_address;
@@ -764,8 +763,8 @@ void pifs_internal_open(pifs_file_t * a_file,
                 /* File does not exists, no problem, we'll create it */
                 a_file->status = PIFS_SUCCESS;
             }
-            /* Order of steps to create a a_file: */
-            /* #1 Find a free page for map of a_file */
+            /* Order of steps to create a file: */
+            /* #1 Find a free page for map of file */
             /* #2 Create entry of a_file, which contains the map's address */
             /* #3 Mark map page */
             if (a_file->status == PIFS_SUCCESS)

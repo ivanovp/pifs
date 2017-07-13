@@ -159,7 +159,7 @@ typedef uint32_t pifs_page_count_t;
 #error PIFS_MANAGEMENT_BLOCKS shall be 1 at minimum!
 #endif
 
-#define PIFS_MAP_PAGE_NUM               1   /**< Default number of map pages. Minimum: 1 */
+#define PIFS_MAP_PAGE_NUM               1   /**< Number of map pages. Fixed to 1! */
 #define PIFS_FSBM_BITS_PER_PAGE_SHIFT   1
 #define PIFS_FSBM_BITS_PER_PAGE         (1u << PIFS_FSBM_BITS_PER_PAGE_SHIFT)
 

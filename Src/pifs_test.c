@@ -21,7 +21,7 @@
 
 #define ENABLE_SMALL_FILES_TEST       0
 #define ENABLE_FULL_WRITE_TEST        1
-#define ENABLE_BASIC_TEST             0
+#define ENABLE_BASIC_TEST             1
 #define ENABLE_LARGE_TEST             0
 #define ENABLE_WRITE_FRAGMENT_TEST    0
 #define ENABLE_READ_FRAGMENT_TEST     0

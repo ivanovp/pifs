@@ -54,7 +54,7 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
         /* Read free space bitmap */
         ret = pifs_read(old_fsbm_ba, old_fsbm_pa, 0, &pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
 
-        PIFS_DEBUG_MSG("Free space bitmap:\r\n");
+        PIFS_DEBUG_MSG("Old free space bitmap:\r\n");
         print_buffer(pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE,
                      old_fsbm_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + old_fsbm_pa * PIFS_FLASH_PAGE_SIZE_BYTE);
 
@@ -118,6 +118,7 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
         if (ret == PIFS_SUCCESS)
         {
             ret = pifs_write(new_fsbm_ba, new_fsbm_pa, 0, &pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+            PIFS_DEBUG_MSG("New free space bitmap:\r\n");
             print_buffer(pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE,
                          new_fsbm_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + new_fsbm_pa * PIFS_FLASH_PAGE_SIZE_BYTE);
         }
@@ -297,7 +298,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
  * @brief pifs_merge Merge management and data pages. Erase to be released pages.
  *
  * Steps of merging:
- * #0 Close opened files.
+ * #0 Close opened files, but store actual file position.
  * #1 Erase next management blocks
  * #2 Initialize file system's header, but not write. Next management blocks'
  *    address is not initialized and checksum is not calculated.
@@ -312,7 +313,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
  * #8 Add next management block's address to the new file system header and
  *    calculate checksum.
  * #9 Update page of new file system header.
- * #10 Re-open files and seek to the previous position.
+ * #10 Re-open files and seek to the stored position.
  *     Therefore actual_map_address, map_header, etc. will be updated.
  *
  * @return PIFS_SUCCES when merge was successful.
@@ -338,6 +339,7 @@ pifs_status_t pifs_merge(void)
         file_is_opened[i] = file->is_opened;
         if (file_is_opened[i])
         {
+            /* Store position in file */
             file_pos[i] = file->read_pos;
             pifs_fclose(file);
         }
@@ -423,15 +425,18 @@ pifs_status_t pifs_merge(void)
     /* #10 */
     if (ret == PIFS_SUCCESS)
     {
+        /* Re-open files */
         for (i = 0; i < PIFS_OPEN_FILE_NUM_MAX; i++)
         {
             file = &pifs.file[i];
             if (file_is_opened[i])
             {
+                /* Do not create new file, as it has already done */
                 file->mode_create_new_file = FALSE;
                 pifs_internal_open(file, file->entry.name, NULL);
                 if (file->status == PIFS_SUCCESS)
                 {
+                    /* Seek to the stored position */
                     pifs_fseek(file, file_pos[i], PIFS_SEEK_SET);
                 }
             }
