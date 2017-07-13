@@ -1,9 +1,10 @@
 #!/bin/sh
+LOG=test.log
 rm flash.bin
+rm $LOG
 make
-./pifs
-hexdump -Cn 32768 flash.bin >1
-echo "##############################################################################"
-./pifs
-hexdump -Cn 32768 flash.bin >2
-
+for i in `seq 4`; do
+    ./pifs|tee -a $LOG
+    hexdump -Cn 32768 flash.bin >$i
+    echo "##############################################################################"|tee -a $LOG
+done
