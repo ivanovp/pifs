@@ -35,10 +35,14 @@
 #if TEST_BUF_SIZE < SEEK_TEST_POS
 #error SEEK_TEST_POS shall be less than TEST_BUF_SIZE!
 #endif
+#if PIFS_FILENAME_LEN_MAX < 12
+#error PIFS_FILENAME_LEN_MAX shall be at least 12!
+#endif
 
 #define PIFS_TEST_ERROR_MSG(...)    do { \
         printf("%s ERROR: ", __FUNCTION__); \
         printf(__VA_ARGS__); \
+        exit(-1); \
     } while (0);
 
 uint8_t test_buf_w[TEST_BUF_SIZE] __attribute__((aligned(4)));

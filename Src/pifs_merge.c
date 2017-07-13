@@ -445,6 +445,7 @@ pifs_status_t pifs_merge(void)
     }
 //    pifs_flush();
 //    exit(1);
+    PIFS_NOTICE_MSG("stop\r\n");
 
     return ret;
 }

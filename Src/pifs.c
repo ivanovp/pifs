@@ -888,7 +888,7 @@ pifs_size_t pifs_fwrite(const void * a_data, pifs_size_t a_size, pifs_size_t a_c
     pifs_page_offset_t   po = PIFS_PAGE_OFFSET_INVALID;
     bool_t               is_delta = FALSE;
 
-    PIFS_NOTICE_MSG("filename: '%s'\r\n", file->entry.name);
+    PIFS_NOTICE_MSG("filename: '%s', size: %i, count: %i\r\n", file->entry.name, a_size, a_count);
     if (pifs.is_header_found && file && file->is_opened && file->mode_write)
     {
         file->status = PIFS_SUCCESS;
@@ -1060,7 +1060,7 @@ pifs_size_t pifs_fread(void * a_data, pifs_size_t a_size, pifs_size_t a_count, P
     pifs_size_t          page_count = 0;
     pifs_page_offset_t   po;
 
-    PIFS_NOTICE_MSG("filename: '%s'\r\n", file->entry.name);
+    PIFS_NOTICE_MSG("filename: '%s', size: %i, count: %i\r\n", file->entry.name, a_size, a_count);
     if (pifs.is_header_found && file && file->is_opened && file->mode_read)
     {
         po = file->read_pos % PIFS_FLASH_PAGE_SIZE_BYTE;
@@ -1170,7 +1170,7 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
     pifs_page_offset_t  po;
     pifs_size_t         target_pos = 0;
 
-    PIFS_NOTICE_MSG("filename: '%s' offset: %i, origin: %i\r\n", file->entry.name, a_offset, a_origin);
+    PIFS_NOTICE_MSG("filename: '%s', offset: %i, origin: %i\r\n", file->entry.name, a_offset, a_origin);
     if (pifs.is_header_found && file && file->is_opened)
     {
         switch (a_origin)
