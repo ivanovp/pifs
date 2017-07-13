@@ -161,13 +161,14 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
 
     PIFS_NOTICE_MSG("start\r\n");
 
+    /* Re-create file in the new management block */
     pifs_internal_open(&pifs.internal_file, a_old_entry->name, "w");
 
     if (pifs.internal_file.status == PIFS_SUCCESS)
     {
         do
         {
-            /* Read map's header */
+            /* Read old map's header */
             ret = pifs_read(old_map_ba, old_map_pa, 0, &old_map_header, PIFS_MAP_HEADER_SIZE_BYTE);
             for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !end && ret == PIFS_SUCCESS; i++)
             {

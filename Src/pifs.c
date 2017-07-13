@@ -895,25 +895,32 @@ pifs_size_t pifs_fwrite(const void * a_data, pifs_size_t a_size, pifs_size_t a_c
     PIFS_NOTICE_MSG("filename: '%s'\r\n", file->entry.name);
     if (pifs.is_header_found && file && file->is_opened && file->mode_write)
     {
-        /* TODO if opened in "a" mode always jump to end of file! */
-        po = file->write_pos % PIFS_FLASH_PAGE_SIZE_BYTE;
-        /* Check if last page was not fully used up */
-        if (po)
+        /* If opened in "a" mode always jump to end of file */
+        if (file->mode_append && file->write_pos != file->entry.file_size)
         {
-            /* There is some space in the last page */
-            PIFS_ASSERT(pifs_is_address_valid(&file->write_address));
-            chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE - po);
-//            PIFS_DEBUG_MSG("--------> pos: %i po: %i data_size: %i chunk_size: %i\r\n",
-//                           file->write_pos, po, data_size, chunk_size);
-            file->status = pifs_write(file->write_address.block_address,
-                                      file->write_address.page_address,
-                                      po, data, chunk_size);
-//            pifs_print_cache();
-            if (file->status == PIFS_SUCCESS)
+            pifs_fseek(file, file->entry.file_size, PIFS_SEEK_SET);
+        }
+        if (file->status == PIFS_SUCCESS)
+        {
+            po = file->write_pos % PIFS_FLASH_PAGE_SIZE_BYTE;
+            /* Check if last page was not fully used up */
+            if (po)
             {
-                data += chunk_size;
-                data_size -= chunk_size;
-                written_size += chunk_size;
+                /* There is some space in the last page */
+                PIFS_ASSERT(pifs_is_address_valid(&file->write_address));
+                chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE - po);
+                //PIFS_DEBUG_MSG("--------> pos: %i po: %i data_size: %i chunk_size: %i\r\n",
+                //               file->write_pos, po, data_size, chunk_size);
+                file->status = pifs_write(file->write_address.block_address,
+                                          file->write_address.page_address,
+                                          po, data, chunk_size);
+                //pifs_print_cache();
+                if (file->status == PIFS_SUCCESS)
+                {
+                    data += chunk_size;
+                    data_size -= chunk_size;
+                    written_size += chunk_size;
+                }
             }
         }
 
