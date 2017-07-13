@@ -146,8 +146,7 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
  */
 static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
 {
-    pifs_status_t        ret = PIFS_SUCCESS;
-
+    pifs_status_t        ret = PIFS_ERROR;
     pifs_size_t          i;
     pifs_size_t          j;
     pifs_block_address_t old_map_ba = a_old_entry->first_map_address.block_address;
@@ -434,6 +433,7 @@ pifs_status_t pifs_merge(void)
             {
                 /* Do not create new file, as it has already done */
                 file->mode_create_new_file = FALSE;
+                file->mode_file_shall_exist = TRUE;
                 pifs_internal_open(file, file->entry.name, NULL);
                 if (file->status == PIFS_SUCCESS && file_pos[i])
                 {

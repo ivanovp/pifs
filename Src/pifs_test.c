@@ -19,13 +19,13 @@
 #define PIFS_DEBUG_LEVEL    5
 #include "pifs_debug.h"
 
-#define ENABLE_SMALL_FILES_TEST       1
-#define ENABLE_FULL_WRITE_TEST        0
+#define ENABLE_SMALL_FILES_TEST       0
+#define ENABLE_FULL_WRITE_TEST        1
 #define ENABLE_BASIC_TEST             1
-#define ENABLE_LARGE_TEST             1
-#define ENABLE_WRITE_FRAGMENT_TEST    1
-#define ENABLE_READ_FRAGMENT_TEST     1
-#define ENABLE_SEEK_READ_TEST         1
+#define ENABLE_LARGE_TEST             0
+#define ENABLE_WRITE_FRAGMENT_TEST    0
+#define ENABLE_READ_FRAGMENT_TEST     0
+#define ENABLE_SEEK_READ_TEST         0
 #define ENABLE_SEEK_WRITE_TEST        0
 #if ENABLE_SMALL_FILES_TEST
 #define ENABLE_LIST_DIRECTORY_TEST    1
