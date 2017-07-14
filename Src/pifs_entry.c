@@ -111,8 +111,6 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
     pifs_entry_t         entry;
     pifs_size_t          i;
 
-    /* Invert entry bits as it is stored inverted */
-    a_entry->attrib ^= PIFS_ATTRIB_ALL;
     while (ba < pifs.header.entry_list_address.block_address + PIFS_MANAGEMENT_BLOCKS
            && !found && ret == PIFS_SUCCESS)
     {
@@ -133,19 +131,27 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                     /* Entry found */
                     /* Copy entry */
 #if PIFS_USE_DELTA_FOR_ENTRIES
+                    /* Invert entry bits as it is stored inverted */
+                    a_entry->attrib ^= PIFS_ATTRIB_ALL;
                     ret = pifs_write_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, a_entry,
                                            PIFS_ENTRY_SIZE_BYTE, NULL);
+                    /* Invert entry bits as it is stored inverted */
+                    a_entry->attrib ^= PIFS_ATTRIB_ALL;
 #else
                     if (pifs_is_buffer_programmable(&entry, a_entry, PIFS_ENTRY_SIZE_BYTE))
                     {
                         PIFS_NOTICE_MSG("Entry can be updated\r\n");
+                        /* Invert entry bits as it is stored inverted */
+                        a_entry->attrib ^= PIFS_ATTRIB_ALL;
                         ret = pifs_write(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, a_entry,
                                          PIFS_ENTRY_SIZE_BYTE);
+                        /* Invert entry bits as it is stored inverted */
+                        a_entry->attrib ^= PIFS_ATTRIB_ALL;
                     }
                     else
                     {
-                        /* Clear entry */
                         PIFS_NOTICE_MSG("Entry CANNOT be updated!\r\n");
+                        /* Clear entry */
                         memset(&entry, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
                         ret = pifs_write(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
                                          PIFS_ENTRY_SIZE_BYTE);
