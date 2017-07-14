@@ -678,9 +678,7 @@ void pifs_internal_open(pifs_file_t * a_file,
         }
         if (a_file->mode_create_new_file)
         {
-            /* Deliberately avoiding return code */
-            (void)pifs_get_free_pages(&free_management_pages, &free_data_pages);
-            if (a_file->status == PIFS_SUCCESS && free_data_pages > 0)
+            if (a_file->status == PIFS_SUCCESS)
             {
                 /* File already exist */
 #if PIFS_USE_DELTA_FOR_ENTRIES == 0
@@ -698,6 +696,7 @@ void pifs_internal_open(pifs_file_t * a_file,
                 /* File does not exists, no problem, we'll create it */
                 a_file->status = PIFS_SUCCESS;
             }
+            a_file->status = pifs_merge_check(NULL);
             /* Order of steps to create a file: */
             /* #1 Find a free page for map of file */
             /* #2 Create entry of a_file, which contains the map's address */

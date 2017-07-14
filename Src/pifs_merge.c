@@ -526,6 +526,10 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file)
             /* Some pages could be erased, do data merge */
             ret = pifs_merge();
         }
+        else
+        {
+            PIFS_NOTICE_MSG("merge is not needed!\r\n");
+        }
     }
 
     return ret;

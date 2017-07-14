@@ -3,7 +3,7 @@ LOG=test.log
 rm flash.bin
 rm $LOG
 make
-for i in `seq 4`; do
+for i in `seq 8`; do
     echo "##############################################################################"|tee -a $LOG
     echo "### TEST $i"|tee -a $LOG
     echo "##############################################################################"|tee -a $LOG
