@@ -132,13 +132,28 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                 {
                     /* Entry found */
                     /* Copy entry */
-                    memcpy(&entry, a_entry, sizeof(pifs_entry_t));
 #if PIFS_USE_DELTA_FOR_ENTRIES
-                    ret = pifs_write_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
+                    ret = pifs_write_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, a_entry,
                                            PIFS_ENTRY_SIZE_BYTE, NULL);
 #else
-                    ret = pifs_write(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
-                                     PIFS_ENTRY_SIZE_BYTE);
+                    if (pifs_is_buffer_programmable(&entry, a_entry, PIFS_ENTRY_SIZE_BYTE))
+                    {
+                        PIFS_NOTICE_MSG("Entry can be updated\r\n");
+                        ret = pifs_write(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, a_entry,
+                                         PIFS_ENTRY_SIZE_BYTE);
+                    }
+                    else
+                    {
+                        /* Clear entry */
+                        PIFS_NOTICE_MSG("Entry CANNOT be updated!\r\n");
+                        memset(&entry, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
+                        ret = pifs_write(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
+                                         PIFS_ENTRY_SIZE_BYTE);
+                        if (ret == PIFS_SUCCESS)
+                        {
+                            ret = pifs_append_entry(a_entry);
+                        }
+                    }
 #endif
                     found = TRUE;
                 }

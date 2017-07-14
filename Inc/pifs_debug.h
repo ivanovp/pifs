@@ -15,15 +15,15 @@
 #include <stdlib.h>
 #include "common.h"
 
-#define PIFS_ASSERT(expression) do {                                                    \
-        if (!((expression)))                                                            \
-        {                                                                               \
-            fprintf(stderr, "ERROR: Assertion '%s' failed. File: %s, line: %i\r\n",     \
-                    TOSTR(expression),                                                  \
-                    __FILE__, __LINE__                                                  \
-                   );                                                                  \
-            exit(-1);                                                                   \
-        }                                                                               \
+#define PIFS_ASSERT(expression) do {                                       \
+        if (!((expression)))                                               \
+        {                                                                  \
+            printf("ERROR: Assertion '%s' failed. File: %s, line: %i\r\n", \
+                    TOSTR(expression),                                     \
+                    __FILE__, __LINE__                                     \
+                   );                                                      \
+            exit(-1);                                                      \
+        }                                                                  \
     } while (0);
 
 #if (PIFS_DEBUG_LEVEL >= 1)

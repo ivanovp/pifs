@@ -190,6 +190,47 @@ bool_t pifs_is_page_erased(pifs_block_address_t a_block_address,
 }
 
 /**
+ * @brief pifs_is_buffer_programmable Check if buffer is programmable or erase
+ * is needed.
+ *
+ * @param[in] a_orig_buf[in]    Pointer to original buffer.
+ * @param[in] a_new_buf[in]     Pointer to new buffer.
+ * @param[in] a_buf_size[in]    Size of buffer.
+ * @return TRUE: if buffer is programmable.
+ * FALSE: if buffer contains at least one programmed bit.
+ */
+bool_t pifs_is_buffer_programmable(const void * a_orig_buf, void * a_new_buf, pifs_size_t a_buf_size)
+{
+    uint8_t   * orig_buf = (uint8_t*) a_orig_buf;
+    uint8_t   * new_buf = (uint8_t*) a_new_buf;
+    pifs_size_t i;
+    bool_t      ret = TRUE;
+
+    for (i = 0; i < a_buf_size && ret; i++)
+    {
+        /* Checking if only bit programming is needed.
+         * When erased value if 0xFF, bit programming generates falling edge
+         * on data.
+         */
+#if PIFS_FLASH_ERASED_BYTE_VALUE == 0xFF
+        if ((orig_buf[i] ^ new_buf[i]) & new_buf[i])  /* Detecting rising edge */
+#else
+        if ((orig_buf[i] ^ new_buf[i]) & orig_buf[i]) /* Detecting falling edge */
+#endif
+        {
+            /* Bit erasing would be necessary to store the data,
+             * therefore it cannot be programmed.
+             */
+            ret = FALSE;
+            PIFS_DEBUG_MSG("Not programmable! orig: 0x%x new: 0x%X\r\n",
+                           orig_buf[i], new_buf[i]);
+        }
+    }
+
+    return ret;
+}
+
+/**
  * @brief pifs_parse_open_mode Parse string of open mode.
  *
  * @param a_file[in]    Pointer to file's internal structure.

@@ -1006,13 +1006,14 @@ pifs_size_t pifs_fread(void * a_data, pifs_size_t a_size, pifs_size_t a_count, P
             page_count = (data_size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
             while (page_count && file->status == PIFS_SUCCESS)
             {
-                PIFS_ASSERT(pifs_is_address_valid(&file->read_address));
                 chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE);
                 if (file->read_pos + chunk_size > file->entry.file_size)
                 {
                     chunk_size = file->entry.file_size - file->read_pos;
                 }
-                //PIFS_DEBUG_MSG("read %s\r\n", pifs_address2str(&file->read_address));
+                PIFS_NOTICE_MSG("read %s, chunk size: %i\r\n",
+                               pifs_address2str(&file->read_address), chunk_size);
+                PIFS_ASSERT(pifs_is_address_valid(&file->read_address));
                 file->status = pifs_read_delta(file->read_address.block_address,
                                                file->read_address.page_address,
                                                0, data, chunk_size);

@@ -248,7 +248,6 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
     bool_t               delta_needed = FALSE;
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
-    uint8_t            * buf = (uint8_t*) a_buf;
     pifs_block_address_t fba;
     pifs_page_address_t  fpa;
     pifs_page_count_t    page_count_found;
@@ -262,26 +261,8 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
     }
     if (ret == PIFS_SUCCESS)
     {
-        for (i = a_page_offset, j = 0; i < a_buf_size && !delta_needed; i++, j++)
-        {
-            /* Checking if only bit programming is needed.
-             * When erased value if 0xFF, bit programming generated falling edge
-             * on data.
-             */
-#if PIFS_FLASH_ERASED_BYTE_VALUE == 0xFF
-            if ((pifs.page_buf[i] ^ buf[j]) & buf[j])         /* Detecting rising edge */
-#else
-            if ((pifs.page_buf[i] ^ buf[j]) & pifs.cache_page_buf[i]) /* Detecting falling edge */
-#endif
-            {
-                /* Bit erasing would be necessary to store the data,
-                 * therefore a delta page is needed.
-                 */
-                delta_needed = TRUE;
-                PIFS_DEBUG_MSG("Delta page needed! orig: 0x%x new: 0x%X\r\n",
-                               pifs.page_buf[i], buf[j]);
-            }
-        }
+        delta_needed = !pifs_is_buffer_programmable(&pifs.page_buf[a_page_offset],
+                                                    a_buf, a_buf_size);
     }
     if (ret == PIFS_SUCCESS)
     {
