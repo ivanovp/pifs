@@ -150,10 +150,10 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
                     print_buffer(buf8, PIFS_FLASH_PAGE_SIZE_BYTE,
                                  a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
                                  + a_page_address * PIFS_FLASH_PAGE_SIZE_BYTE);
-                    FLASH_ERROR_MSG("Cannot program 0x%02X to 0x%02X. %s offset: %i\r\n",
+                    FLASH_ERROR_MSG("Cannot program 0x%02X to 0x%02X. %s offset: %i, 0x%02X\r\n",
                                     flash_page_buf[i], buf8[i],
                                     pifs_ba_pa2str(a_block_address, a_page_address),
-                                    a_page_offset + i );
+                                    a_page_offset + i, a_page_offset + i);
                     ret = PIFS_ERROR_FLASH_WRITE;
                 }
             }
