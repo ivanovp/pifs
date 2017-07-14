@@ -275,6 +275,7 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
         }
 #endif
     }
+    ba = a_next_mgmt_block_address;
 #if PIFS_MANAGEMENT_BLOCKS > 1
     for (i = 0; i < PIFS_MANAGEMENT_BLOCKS; i++)
 #endif

@@ -399,11 +399,18 @@ pifs_status_t pifs_merge(void)
     /* #7 */
     if (ret == PIFS_SUCCESS)
     {
-        /* Find next management blocks address after actual management block */
-        ret = pifs_find_free_block(PIFS_MANAGEMENT_BLOCKS, PIFS_BLOCK_TYPE_ANY,
-                                   new_header_ba + PIFS_MANAGEMENT_BLOCKS,
-                                   &pifs.header,
-                                   &next_mgmt_ba);
+        if (new_header_ba + PIFS_MANAGEMENT_BLOCKS < PIFS_FLASH_BLOCK_NUM_ALL)
+        {
+            /* Find next management blocks address after actual management block */
+            ret = pifs_find_free_block(PIFS_MANAGEMENT_BLOCKS, PIFS_BLOCK_TYPE_ANY,
+                                       new_header_ba + PIFS_MANAGEMENT_BLOCKS,
+                                       &pifs.header,
+                                       &next_mgmt_ba);
+        }
+        else
+        {
+            ret = PIFS_ERROR;
+        }
         if (ret != PIFS_SUCCESS)
         {
             /* No free blocks found, find next management blocks address */
