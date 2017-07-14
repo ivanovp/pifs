@@ -14,6 +14,7 @@
 #include "flash.h"
 #include "pifs_debug.h"
 #include "pifs_helper.h"
+#include "buffer.h"
 
 #define FLASH_DEBUG     1
 
@@ -141,6 +142,14 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
                 if (((buf8[i] ^ flash_page_buf[i]) & buf8[i]) != 0)
                 {
                     /* Error: cannot write data */
+                    printf("Original page:\r\n");
+                    print_buffer(flash_page_buf, PIFS_FLASH_PAGE_SIZE_BYTE,
+                                 a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
+                                 + a_page_address * PIFS_FLASH_PAGE_SIZE_BYTE);
+                    printf("New page:\r\n");
+                    print_buffer(buf8, PIFS_FLASH_PAGE_SIZE_BYTE,
+                                 a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
+                                 + a_page_address * PIFS_FLASH_PAGE_SIZE_BYTE);
                     FLASH_ERROR_MSG("Cannot program 0x%02X to 0x%02X. %s offset: %i\r\n",
                                     flash_page_buf[i], buf8[i],
                                     pifs_ba_pa2str(a_block_address, a_page_address),
