@@ -158,6 +158,15 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                         if (ret == PIFS_SUCCESS)
                         {
                             ret = pifs_append_entry(a_entry);
+                            if (ret == PIFS_ERROR_NO_MORE_SPACE)
+                            {
+                                /* If entry cannot be appended, merge the blocks */
+                                ret = pifs_merge();
+                                if (ret == PIFS_SUCCESS)
+                                {
+                                    ret = pifs_append_entry(a_entry);
+                                }
+                            }
                         }
                     }
 #endif

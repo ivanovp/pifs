@@ -366,6 +366,11 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
 #if PIFS_FLASH_BLOCK_RESERVED_NUM
     fba = PIFS_MAX(PIFS_FLASH_BLOCK_RESERVED_NUM, a_find->start_block_address);
 #endif
+    /* Check if start block address is valid */
+    if (fba >= PIFS_FLASH_BLOCK_NUM_ALL)
+    {
+        fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
+    }
 
     if (!a_find->is_free)
     {
