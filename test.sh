@@ -2,6 +2,7 @@
 LOG=test.log
 rm flash.bin
 rm $LOG
+make clean
 make
 for i in `seq --format="%02.0f" 16`; do
     echo "##############################################################################"|tee -a $LOG

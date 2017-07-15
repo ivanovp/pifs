@@ -369,6 +369,8 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
     /* Check if start block address is valid */
     if (fba >= PIFS_FLASH_BLOCK_NUM_ALL)
     {
+        PIFS_WARNING_MSG("Start block address corrected from %i to %i\r\n",
+                         fba, PIFS_FLASH_BLOCK_RESERVED_NUM);
         fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
     }
 
@@ -379,93 +381,96 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
         value = 0;
     }
 
-    (void)pifs_calc_free_space_pos(&a_find->header->free_space_bitmap_address,
+    ret = pifs_calc_free_space_pos(&a_find->header->free_space_bitmap_address,
                                    fba, fpa, &fsbm_ba, &fsbm_pa, &bit_pos);
-    po = bit_pos / PIFS_BYTE_BITS;
-
-    do
+    if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_read(fsbm_ba, fsbm_pa, po, &free_space_bitmap, sizeof(free_space_bitmap));
-        if (ret == PIFS_SUCCESS)
+        po = bit_pos / PIFS_BYTE_BITS;
+
+        do
         {
-            //            PIFS_DEBUG_MSG("%s %i 0x%X\r\n", pifs_ba_pa2str(ba, pa), po, free_space_bitmap);
-            for (i = 0; i < (PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE) && !found; i++)
+            ret = pifs_read(fsbm_ba, fsbm_pa, po, &free_space_bitmap, sizeof(free_space_bitmap));
+            if (ret == PIFS_SUCCESS)
             {
-                /* TODO use free pages and to be released pages as well when
-                 * looking for erasable blocks! */
-                if ((free_space_bitmap & mask) == value
-                        && pifs_is_block_type(fba, a_find->block_type, &pifs.header))
+                //PIFS_DEBUG_MSG("%s %i 0x%X\r\n", pifs_ba_pa2str(ba, pa), po, free_space_bitmap);
+                for (i = 0; i < (PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE) && !found; i++)
                 {
-#if PIFS_CHECK_IF_PAGE_IS_ERASED
-                    if (!a_find->is_free || pifs_is_page_erased(fba, fpa))
-#endif
+                    /* TODO use free pages and to be released pages as well when */
+                    /* looking for erasable blocks! */
+                    if ((free_space_bitmap & mask) == value
+                            && pifs_is_block_type(fba, a_find->block_type, &pifs.header))
                     {
-                        if (page_count_found == 0)
-                        {
-                            fba_start = fba;
-                            fpa_start = fpa;
-                        }
-                        page_count_found++;
-                        if (page_count_found >= a_find->page_count_minimum)
-                        {
-                            *a_block_address = fba_start;
-                            *a_page_address = fpa_start;
-                            *a_page_count_found = page_count_found;
-                        }
-                        if (page_count_found == a_find->page_count_desired)
-                        {
-                            found = TRUE;
-                        }
-                    }
 #if PIFS_CHECK_IF_PAGE_IS_ERASED
+                        if (!a_find->is_free || pifs_is_page_erased(fba, fpa))
+#endif
+                        {
+                            if (page_count_found == 0)
+                            {
+                                fba_start = fba;
+                                fpa_start = fpa;
+                            }
+                            page_count_found++;
+                            if (page_count_found >= a_find->page_count_minimum)
+                            {
+                                *a_block_address = fba_start;
+                                *a_page_address = fpa_start;
+                                *a_page_count_found = page_count_found;
+                            }
+                            if (page_count_found == a_find->page_count_desired)
+                            {
+                                found = TRUE;
+                            }
+                        }
+#if PIFS_CHECK_IF_PAGE_IS_ERASED
+                        else
+                        {
+                            PIFS_ERROR_MSG("Flash page should be erased, but it is not! %s\r\n", pifs_ba_pa2str(fba, fpa));
+                        }
+#endif
+                    }
                     else
                     {
-                        PIFS_ERROR_MSG("Flash page should be erased, but it is not! %s\r\n", pifs_ba_pa2str(fba, fpa));
+                        page_count_found = 0;
                     }
-#endif
-                }
-                else
-                {
-                    page_count_found = 0;
-                }
-                if (!found)
-                {
-                    free_space_bitmap >>= PIFS_FSBM_BITS_PER_PAGE;
-                    fpa++;
-                    if (fpa == PIFS_FLASH_PAGE_PER_BLOCK)
+                    if (!found)
                     {
-                        fpa = 0;
-                        fba++;
-                        if (a_find->is_same_block
-                                && (a_find->page_count_minimum < PIFS_FLASH_PAGE_PER_BLOCK
-                                || (fpa_start > 0 && a_find->page_count_desired > PIFS_FLASH_PAGE_PER_BLOCK)))
+                        free_space_bitmap >>= PIFS_FSBM_BITS_PER_PAGE;
+                        fpa++;
+                        if (fpa == PIFS_FLASH_PAGE_PER_BLOCK)
                         {
-                            page_count_found = 0;
+                            fpa = 0;
+                            fba++;
+                            if (a_find->is_same_block
+                                    && (a_find->page_count_minimum < PIFS_FLASH_PAGE_PER_BLOCK
+                                        || (fpa_start > 0 && a_find->page_count_desired >= PIFS_FLASH_PAGE_PER_BLOCK)))
+                            {
+                                page_count_found = 0;
+                            }
+                            if (fba >= PIFS_FLASH_BLOCK_NUM_ALL)
+                            {
+                                ret = PIFS_ERROR_NO_MORE_SPACE;
+                            }
                         }
-                        if (fba >= PIFS_FLASH_BLOCK_NUM_ALL)
+                    }
+                }
+                po++;
+                if (po == PIFS_FLASH_PAGE_SIZE_BYTE)
+                {
+                    po = 0;
+                    fsbm_pa++;
+                    if (fsbm_pa == PIFS_FLASH_PAGE_PER_BLOCK)
+                    {
+                        fsbm_pa = 0;
+                        fsbm_ba++;
+                        if (fsbm_ba >= PIFS_FLASH_BLOCK_NUM_ALL)
                         {
-                            ret = PIFS_ERROR_NO_MORE_SPACE;
+                            PIFS_FATAL_ERROR_MSG("End of flash! byte_cntr: %lu\r\n", byte_cntr);
                         }
                     }
                 }
             }
-            po++;
-            if (po == PIFS_FLASH_PAGE_SIZE_BYTE)
-            {
-                po = 0;
-                fsbm_pa++;
-                if (fsbm_pa == PIFS_FLASH_PAGE_PER_BLOCK)
-                {
-                    fsbm_pa = 0;
-                    fsbm_ba++;
-                    if (fsbm_ba >= PIFS_FLASH_BLOCK_NUM_ALL)
-                    {
-                        PIFS_FATAL_ERROR_MSG("End of flash! byte_cntr: %lu\r\n", byte_cntr);
-                    }
-                }
-            }
-        }
-    } while (byte_cntr-- > 0 && ret == PIFS_SUCCESS && !found);
+        } while (byte_cntr-- > 0 && ret == PIFS_SUCCESS && !found);
+    }
 
     if (ret == PIFS_SUCCESS && !found)
     {
