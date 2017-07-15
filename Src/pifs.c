@@ -33,7 +33,11 @@ pifs_t pifs =
     .header = { 0 },
     .cache_page_buf_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
     .cache_page_buf = { 0 },
-    .cache_page_buf_is_dirty = FALSE
+    .cache_page_buf_is_dirty = FALSE,
+    .delta_map_page_buf = { { 0 } },
+    .delta_map_page_is_read = FALSE,
+    .delta_map_page_is_dirty = FALSE,
+    .page_buf = { 0 }
 };
 
 int pifs_errno = PIFS_SUCCESS;
