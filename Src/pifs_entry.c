@@ -40,13 +40,14 @@ pifs_status_t pifs_append_entry(pifs_entry_t * a_entry)
     bool_t               created = FALSE;
     pifs_entry_t         entry;
     pifs_size_t          i;
+    pifs_size_t          page_cntr = PIFS_ENTRY_LIST_SIZE_PAGE;
 
     /* Invert attribute bits */
     a_entry->attrib ^= PIFS_ATTRIB_ALL;
     while (ba < pifs.header.entry_list_address.block_address + PIFS_MANAGEMENT_BLOCKS
-           && !created && ret == PIFS_SUCCESS)
+           && !created && ret == PIFS_SUCCESS && page_cntr)
     {
-        while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !created && ret == PIFS_SUCCESS)
+        while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !created && ret == PIFS_SUCCESS && page_cntr)
         {
             for (i = 0; i < PIFS_ENTRY_PER_PAGE && !created && ret == PIFS_SUCCESS; i++)
             {
@@ -80,6 +81,7 @@ pifs_status_t pifs_append_entry(pifs_entry_t * a_entry)
                 }
             }
             pa++;
+            page_cntr--;
         }
         ba++;
         pa = 0;
@@ -110,11 +112,12 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
     bool_t               found = FALSE;
     pifs_entry_t         entry;
     pifs_size_t          i;
+    pifs_size_t          page_cntr = PIFS_ENTRY_LIST_SIZE_PAGE;
 
     while (ba < pifs.header.entry_list_address.block_address + PIFS_MANAGEMENT_BLOCKS
-           && !found && ret == PIFS_SUCCESS)
+           && !found && ret == PIFS_SUCCESS && page_cntr)
     {
-        while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !found && ret == PIFS_SUCCESS)
+        while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !found && ret == PIFS_SUCCESS && page_cntr)
         {
             for (i = 0; i < PIFS_ENTRY_PER_PAGE && !found; i++)
             {
@@ -174,6 +177,7 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                 }
             }
             pa++;
+            page_cntr--;
         }
         pa = 0;
         ba++;
@@ -203,11 +207,12 @@ pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a
     bool_t               found = FALSE;
     pifs_entry_t         entry;
     pifs_size_t          i;
+    pifs_size_t          page_cntr = PIFS_ENTRY_LIST_SIZE_PAGE;
 
     while (ba < pifs.header.entry_list_address.block_address + PIFS_MANAGEMENT_BLOCKS
-           && !found && ret == PIFS_SUCCESS)
+           && !found && ret == PIFS_SUCCESS && page_cntr)
     {
-        while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !found && ret == PIFS_SUCCESS)
+        while (pa < PIFS_FLASH_PAGE_PER_BLOCK && !found && ret == PIFS_SUCCESS && page_cntr)
         {
             for (i = 0; i < PIFS_ENTRY_PER_PAGE && !found; i++)
             {
@@ -246,6 +251,7 @@ pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a
                 }
             }
             pa++;
+            page_cntr--;
         }
         pa = 0;
         ba++;

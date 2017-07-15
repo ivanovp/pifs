@@ -23,7 +23,7 @@
 #include "pifs_merge.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 3
+#define PIFS_DEBUG_LEVEL 5
 #include "pifs_debug.h"
 
 pifs_t pifs =

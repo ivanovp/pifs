@@ -18,7 +18,7 @@
 #include "pifs_fsbm.h"
 #include "pifs_helper.h"
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 3
 #include "pifs_debug.h"
 
 /**
@@ -180,6 +180,9 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
 
     while (a_page_count > 0 && ret == PIFS_SUCCESS)
     {
+        PIFS_DEBUG_MSG("Mark page %s as %s\r\n",
+                        pifs_ba_pa2str(a_block_address, a_page_address),
+                        a_mark_used ? "used" : "to be released");
         ret = pifs_calc_free_space_pos(&pifs.header.free_space_bitmap_address,
                                        a_block_address, a_page_address, &ba, &pa, &bit_pos);
         //        PIFS_DEBUG_MSG("BA%i/PA%i/BITPOS%i\r\n", ba, pa, bit_pos);

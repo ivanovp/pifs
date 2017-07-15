@@ -130,13 +130,6 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
             )
     {
         /* FIXME DEBUG CODE */
-        if (offset == 0x32d00)
-        {
-            printf("New page:\r\n");
-            print_buffer(buf8, PIFS_FLASH_PAGE_SIZE_BYTE,
-                         a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
-                         + a_page_address * PIFS_FLASH_PAGE_SIZE_BYTE);
-        }
         /* FIXME END OF DEBUG CODE */
         PIFS_ASSERT(fseek(flash_file, offset, SEEK_SET) == 0);
         /* Check if write is possible */
