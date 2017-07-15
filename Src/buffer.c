@@ -90,14 +90,14 @@ pifs_status_t compare_buffer(void * a_buf1, size_t a_buf_size, void * a_buf2)
         {
             BUFFER_ERROR_MSG("Mismatch at index %lu. Expected: 0x%02X, Read: 0x%02X\r\n",
                     i, buf1[i], buf2[i]);
-            ret = PIFS_ERROR;
+            ret = PIFS_ERROR_GENERAL;
 #if COMPARE_PRINT_FIRST_MISMATCH
             break;
 #endif
         }
     }
 
-    if (ret == PIFS_ERROR)
+    if (ret == PIFS_ERROR_GENERAL)
     {
         BUFFER_ERROR_MSG("a_buf1:\r\n");
         print_buffer(a_buf1, a_buf_size, 0);

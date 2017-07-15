@@ -211,6 +211,7 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                 else
                 {
                     /* The space has already allocated */
+                    pifs_print_cache();
                     PIFS_FATAL_ERROR_MSG("Page has already allocated! %s\r\n", pifs_ba_pa2str(a_block_address, a_page_address));
                     ret = PIFS_ERROR_INTERNAL_ALLOCATION;
                 }
@@ -228,6 +229,7 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                     else
                     {
                         /* The space has already marked to be released */
+                        pifs_print_cache();
                         PIFS_FATAL_ERROR_MSG("Page has already marked to be released %s\r\n", pifs_ba_pa2str(a_block_address, a_page_address));
                         ret = PIFS_ERROR_INTERNAL_ALLOCATION;
                     }
@@ -235,6 +237,7 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                 else
                 {
                     /* The space has not yet allocated */
+                    pifs_print_cache();
                     PIFS_FATAL_ERROR_MSG("Page has not yet allocated! %s\r\n", pifs_ba_pa2str(a_block_address, a_page_address));
                     ret = PIFS_ERROR_INTERNAL_ALLOCATION;
                 }
@@ -271,7 +274,7 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
  * @param[out] a_block_address     Block address of page(s).
  * @param[out] a_page_address      Page address of page(s).
  * @param[out] a_page_count_found  Number of free pages found.
- * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_GENERAL: if no free pages found.
  */
 pifs_status_t pifs_find_free_page(pifs_page_count_t a_page_count_desired,
                                   pifs_block_type_t a_block_type,
@@ -301,7 +304,7 @@ pifs_status_t pifs_find_free_page(pifs_page_count_t a_page_count_desired,
  * @param[out] a_block_address     Block address of page(s).
  * @param[out] a_page_address      Page address of page(s).
  * @param[out] a_page_count_found  Number of free pages found.
- * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_GENERAL: if no free pages found.
  */
 pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                              pifs_page_count_t a_page_count_desired,
@@ -337,14 +340,14 @@ pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
  * @param[out] a_block_address     Block address of page(s).
  * @param[out] a_page_address      Page address of page(s).
  * @param[out] a_page_count_found  Number of free pages found.
- * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_GENERAL: if no free pages found.
  */
 pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                                  pifs_block_address_t * a_block_address,
                                  pifs_page_address_t * a_page_address,
                                  pifs_page_count_t * a_page_count_found)
 {
-    pifs_status_t           ret = PIFS_ERROR;
+    pifs_status_t           ret = PIFS_ERROR_GENERAL;
     pifs_block_address_t    fba = a_find->start_block_address;
     pifs_page_address_t     fpa = 0;
     pifs_block_address_t    fba_start = PIFS_BLOCK_ADDRESS_INVALID;
@@ -542,13 +545,13 @@ pifs_status_t pifs_find_to_be_released_block(pifs_size_t a_block_count,
  * @param[out] a_management_page_count  Number of management pages found.
  * @param[out] a_data_page_count        Number of data pages found.
  *
- * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_GENERAL: if no free pages found.
  */
 pifs_status_t pifs_get_pages(bool_t a_is_free,
                              pifs_size_t * a_management_page_count,
                              pifs_size_t * a_data_page_count)
 {
-    pifs_status_t           ret = PIFS_ERROR;
+    pifs_status_t           ret = PIFS_ERROR_GENERAL;
     pifs_block_address_t    fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
     pifs_page_address_t     fpa = 0;
     pifs_block_address_t    ba = pifs.header.free_space_bitmap_address.block_address;
@@ -661,7 +664,7 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
  * @param[out] a_management_page_count  Number of management pages found.
  * @param[out] a_data_page_count        Number of data pages found.
  *
- * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_GENERAL: if no free pages found.
  */
 pifs_status_t pifs_get_to_be_released_pages(pifs_size_t * a_free_management_page_count,
                                             pifs_size_t * a_free_data_page_count)
@@ -675,7 +678,7 @@ pifs_status_t pifs_get_to_be_released_pages(pifs_size_t * a_free_management_page
  * @param[out] a_management_page_count  Number of management pages found.
  * @param[out] a_data_page_count        Number of data pages found.
  *
- * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_GENERAL: if no free pages found.
  */
 pifs_status_t pifs_get_free_pages(pifs_size_t * a_free_management_page_count,
                                   pifs_size_t * a_free_data_page_count)
@@ -686,14 +689,14 @@ pifs_status_t pifs_get_free_pages(pifs_size_t * a_free_management_page_count,
 /**
  * @brief pifs_get_free_space Find free page(s) in free space memory bitmap.
  *
- * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR: if no free pages found.
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_GENERAL: if no free pages found.
  */
 pifs_status_t pifs_get_free_space(pifs_size_t * a_free_management_bytes,
                                   pifs_size_t * a_free_data_bytes,
                                   pifs_size_t * a_free_management_page_count,
                                   pifs_size_t * a_free_data_page_count)
 {
-    pifs_status_t           ret = PIFS_ERROR;
+    pifs_status_t ret = PIFS_ERROR_GENERAL;
 
     ret = pifs_get_free_pages(a_free_management_page_count, a_free_data_page_count);
 
@@ -701,6 +704,39 @@ pifs_status_t pifs_get_free_space(pifs_size_t * a_free_management_bytes,
     {
         *a_free_management_bytes = *a_free_management_page_count * PIFS_FLASH_PAGE_SIZE_BYTE;
         *a_free_data_bytes = *a_free_data_page_count * PIFS_FLASH_PAGE_SIZE_BYTE;
+    }
+
+    return ret;
+}
+
+/**
+ * @brief pifs_check_free_space Debugging routine to check free space bitmap.
+ *
+ * @return
+ */
+pifs_status_t pifs_check_free_space(void)
+{
+    pifs_status_t        ret = PIFS_SUCCESS;
+    pifs_block_address_t ba;
+    pifs_page_address_t  pa;
+
+    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
+    {
+        for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
+        {
+            if (pifs_is_page_free(ba, pa) && !pifs_is_page_erased(ba, pa))
+            {
+                PIFS_WARNING_MSG("%s is marked free, but it is programmed!\r\n",
+                                 pifs_ba_pa2str(ba, pa));
+                ret = PIFS_ERROR_GENERAL;
+            }
+            if (pifs_is_page_to_be_released(ba, pa) && pifs_is_page_erased(ba, pa))
+            {
+                PIFS_WARNING_MSG("%s is marked to be released, but it is erased!\r\n",
+                                 pifs_ba_pa2str(ba, pa));
+                ret = PIFS_ERROR_GENERAL;
+            }
+        }
     }
 
     return ret;

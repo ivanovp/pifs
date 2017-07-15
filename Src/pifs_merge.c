@@ -35,7 +35,7 @@
  */
 static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t * a_new_header)
 {
-    pifs_status_t        ret = PIFS_ERROR;
+    pifs_status_t        ret = PIFS_ERROR_GENERAL;
     pifs_block_address_t fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
     pifs_page_address_t  fpa = 0;
     pifs_block_address_t old_fsbm_ba = a_old_header->free_space_bitmap_address.block_address;
@@ -151,7 +151,7 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
  */
 static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
 {
-    pifs_status_t        ret = PIFS_ERROR;
+    pifs_status_t        ret = PIFS_ERROR_GENERAL;
     pifs_size_t          i;
     pifs_size_t          j;
     pifs_block_address_t old_map_ba = a_old_entry->first_map_address.block_address;

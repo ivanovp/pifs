@@ -105,7 +105,7 @@ pifs_status_t pifs_read(pifs_block_address_t a_block_address,
                         void * const a_buf,
                         pifs_size_t a_buf_size)
 {
-    pifs_status_t ret = PIFS_ERROR;
+    pifs_status_t ret = PIFS_ERROR_GENERAL;
 
     if (a_block_address == pifs.cache_page_buf_address.block_address
             && a_page_address == pifs.cache_page_buf_address.page_address)
@@ -159,7 +159,7 @@ pifs_status_t pifs_write(pifs_block_address_t a_block_address,
                          const void * const a_buf,
                          pifs_size_t a_buf_size)
 {
-    pifs_status_t ret = PIFS_ERROR;
+    pifs_status_t ret = PIFS_ERROR_GENERAL;
 
     if (a_block_address == pifs.cache_page_buf_address.block_address
             && a_page_address == pifs.cache_page_buf_address.page_address)
@@ -207,7 +207,7 @@ pifs_status_t pifs_write(pifs_block_address_t a_block_address,
  */
 pifs_status_t pifs_erase(pifs_block_address_t a_block_address)
 {
-    pifs_status_t ret = PIFS_ERROR;
+    pifs_status_t ret = PIFS_ERROR_GENERAL;
 
     ret = pifs_flash_erase(a_block_address);
 
@@ -322,7 +322,7 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                                 pifs_header_t * a_header,
                                 bool_t a_mark_pages)
 {
-    pifs_status_t ret = PIFS_ERROR;
+    pifs_status_t ret = PIFS_ERROR_GENERAL;
     pifs_size_t   free_management_bytes;
     pifs_size_t   free_data_bytes;
     pifs_size_t   free_management_pages;
@@ -626,7 +626,7 @@ pifs_status_t pifs_init(void)
  */
 pifs_status_t pifs_delete(void)
 {
-    pifs_status_t ret = PIFS_ERROR;
+    pifs_status_t ret = PIFS_ERROR_GENERAL;
 
     /* Flush cache */
     ret = pifs_flush();
@@ -1076,7 +1076,7 @@ int pifs_fclose(P_FILE * a_file)
  */
 int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
 {
-    int                 ret = PIFS_ERROR;
+    int                 ret = PIFS_ERROR_GENERAL;
     pifs_file_t       * file = (pifs_file_t*) a_file;
     pifs_size_t         seek_size = 0;
     pifs_size_t         chunk_size = 0;

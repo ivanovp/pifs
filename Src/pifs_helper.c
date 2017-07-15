@@ -18,7 +18,7 @@
 #include "pifs_helper.h"
 #include "buffer.h"
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 3
 #include "pifs_debug.h"
 
 #if PIFS_DEBUG_LEVEL >= 1
@@ -83,7 +83,8 @@ char * pifs_byte2bin_str(uint8_t byte)
  */
 void pifs_print_cache(void)
 {
-#if PIFS_DEBUG_LEVEL >= 5
+#if PIFS_DEBUG_LEVEL >= 3
+    PIFS_NOTICE_MSG("Cache page buffer:\r\n");
     print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf),
                  pifs.cache_page_buf_address.block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
                  + pifs.cache_page_buf_address.page_address * PIFS_FLASH_PAGE_SIZE_BYTE);

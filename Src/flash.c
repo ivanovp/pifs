@@ -66,7 +66,7 @@ pifs_status_t pifs_flash_init(void)
 
 pifs_status_t pifs_flash_delete(void)
 {
-    pifs_status_t ret = PIFS_ERROR;
+    pifs_status_t ret = PIFS_ERROR_GENERAL;
 
     if (flash_file)
     {
@@ -129,6 +129,15 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
         #endif
             )
     {
+        /* FIXME DEBUG CODE */
+        if (offset == 0x32d00)
+        {
+            printf("New page:\r\n");
+            print_buffer(buf8, PIFS_FLASH_PAGE_SIZE_BYTE,
+                         a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
+                         + a_page_address * PIFS_FLASH_PAGE_SIZE_BYTE);
+        }
+        /* FIXME END OF DEBUG CODE */
         PIFS_ASSERT(fseek(flash_file, offset, SEEK_SET) == 0);
         /* Check if write is possible */
         read_count = fread(flash_page_buf, 1, a_buf_size, flash_file);
