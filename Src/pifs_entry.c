@@ -44,6 +44,7 @@ pifs_status_t pifs_append_entry(pifs_entry_t * a_entry)
 
     /* Invert attribute bits */
     a_entry->attrib ^= PIFS_ATTRIB_ALL;
+    /* TODO this while/while/for should be reworked! */
     while (ba < pifs.header.entry_list_address.block_address + PIFS_MANAGEMENT_BLOCKS
            && !created && ret == PIFS_SUCCESS && page_cntr)
     {
@@ -114,6 +115,7 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
     pifs_size_t          i;
     pifs_size_t          page_cntr = PIFS_ENTRY_LIST_SIZE_PAGE;
 
+    /* TODO this while/while/for should be reworked! */
     while (ba < pifs.header.entry_list_address.block_address + PIFS_MANAGEMENT_BLOCKS
            && !found && ret == PIFS_SUCCESS && page_cntr)
     {
@@ -209,6 +211,7 @@ pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a
     pifs_size_t          i;
     pifs_size_t          page_cntr = PIFS_ENTRY_LIST_SIZE_PAGE;
 
+    /* TODO this while/while/for should be reworked! */
     while (ba < pifs.header.entry_list_address.block_address + PIFS_MANAGEMENT_BLOCKS
            && !found && ret == PIFS_SUCCESS && page_cntr)
     {
