@@ -85,7 +85,8 @@ struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
                               dir->entry_list_index * PIFS_ENTRY_SIZE_BYTE, &entry,
                               PIFS_ENTRY_SIZE_BYTE);
 
-        if (!pifs_is_buffer_erased(&entry, PIFS_ENTRY_SIZE_BYTE)
+        if (ret == PIFS_SUCCESS
+                && !pifs_is_buffer_erased(&entry, PIFS_ENTRY_SIZE_BYTE)
                 && (entry.attrib != 0))
         {
             /* Copy entry */

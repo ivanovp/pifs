@@ -242,8 +242,6 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
                                bool_t * a_is_delta)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
-    pifs_size_t          i;
-    pifs_size_t          j;
     pifs_delta_entry_t   delta_entry;
     bool_t               delta_needed = FALSE;
     pifs_block_address_t ba;

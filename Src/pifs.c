@@ -651,8 +651,6 @@ void pifs_internal_open(pifs_file_t * a_file,
     pifs_block_address_t ba = PIFS_BLOCK_ADDRESS_INVALID;
     pifs_page_address_t  pa = PIFS_PAGE_ADDRESS_INVALID;
     pifs_page_count_t    page_count_found = 0;
-    pifs_size_t          free_management_pages = 0;
-    pifs_size_t          free_data_pages = 0;
 
     a_file->status = PIFS_SUCCESS;
     a_file->write_pos = 0;

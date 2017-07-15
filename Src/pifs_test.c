@@ -486,7 +486,7 @@ pifs_status_t pifs_test(void)
     dir = pifs_opendir("/");
     if (dir != NULL)
     {
-        while (dirent = pifs_readdir(dir))
+        while ((dirent = pifs_readdir(dir)))
         {
             printf("%s\t%i\r\n", dirent->d_name, pifs_filesize(dirent->d_name));
         }

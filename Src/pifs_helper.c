@@ -199,7 +199,7 @@ bool_t pifs_is_page_erased(pifs_block_address_t a_block_address,
  * @return TRUE: if buffer is programmable.
  * FALSE: if buffer contains at least one programmed bit.
  */
-bool_t pifs_is_buffer_programmable(const void * a_orig_buf, void * a_new_buf, pifs_size_t a_buf_size)
+bool_t pifs_is_buffer_programmable(const void * a_orig_buf, const void * a_new_buf, pifs_size_t a_buf_size)
 {
     uint8_t   * orig_buf = (uint8_t*) a_orig_buf;
     uint8_t   * new_buf = (uint8_t*) a_new_buf;
