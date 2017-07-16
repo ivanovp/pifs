@@ -418,6 +418,7 @@ pifs_status_t pifs_init(void)
     pifs_size_t          free_data_bytes;
     pifs_size_t          free_management_pages;
     pifs_size_t          free_data_pages;
+    pifs_size_t          i;
 
     pifs.header_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
     pifs.header_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
@@ -546,7 +547,18 @@ pifs_status_t pifs_init(void)
             ret = pifs_header_init(ba, pa, ba + PIFS_MANAGEMENT_BLOCKS, &pifs.header);
             if (ret == PIFS_SUCCESS)
             {
+#if 0
                 ret = pifs_erase(ba);
+#else
+                PIFS_INFO_MSG("Erasing all blocks");
+                for (i = PIFS_FLASH_BLOCK_RESERVED_NUM; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
+                {
+                    ret = pifs_flash_erase(i);
+                    PIFS_INFO_MSG(".");
+                    /* TODO mark bad blocks */
+                }
+                PIFS_INFO_MSG("\r\nDone\r\n.");
+#endif
             }
             if (ret == PIFS_SUCCESS)
             {
@@ -811,7 +823,7 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
  * @param[in] a_file    Pointer to file.
  * @return Number of data elements written.
  */
-pifs_size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
+size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 {
     pifs_file_t        * file = (pifs_file_t*) a_file;
     uint8_t            * data = (uint8_t*) a_data;
@@ -991,7 +1003,7 @@ void pifs_inc_read_address(pifs_file_t * a_file)
  * @param[in] a_file    Pointer to file.
  * @return Number of data elements read.
  */
-pifs_size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
+size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 {
     pifs_file_t        * file = (pifs_file_t*) a_file;
     uint8_t *            data = (uint8_t*) a_data;

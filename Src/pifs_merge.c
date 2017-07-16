@@ -56,8 +56,10 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
         ret = pifs_read(old_fsbm_ba, old_fsbm_pa, 0, &pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
 
         PIFS_DEBUG_MSG("Old free space bitmap:\r\n");
+#if PIFS_DEBUG_LEVEL >= 5
         print_buffer(pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE,
                      old_fsbm_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + old_fsbm_pa * PIFS_FLASH_PAGE_SIZE_BYTE);
+#endif
 
         for (i = 0; i < PIFS_FLASH_PAGE_SIZE_BYTE && ret == PIFS_SUCCESS; i++)
         {
@@ -125,8 +127,10 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
         {
             ret = pifs_write(new_fsbm_ba, new_fsbm_pa, 0, &pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
             PIFS_DEBUG_MSG("New free space bitmap:\r\n");
+#if PIFS_DEBUG_LEVEL >= 5
             print_buffer(pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE,
                          new_fsbm_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + new_fsbm_pa * PIFS_FLASH_PAGE_SIZE_BYTE);
+#endif
         }
 
         if (fba < PIFS_FLASH_BLOCK_NUM_ALL)
@@ -166,7 +170,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
 
     PIFS_NOTICE_MSG("start\r\n");
 
-    /* Re-create file in the new management block */
+    /* Re-create file PIFS_SIZE_ERASED block */
     pifs_internal_open(&pifs.internal_file, a_old_entry->name, "w", FALSE);
     pifs.internal_file.entry.file_size = a_old_entry->file_size;
     pifs.internal_file.entry.attrib = a_old_entry->attrib ^ PIFS_ATTRIB_ALL;
@@ -283,8 +287,10 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
                 if ((k % PIFS_ENTRY_PER_PAGE) == 0)
                 {
                     PIFS_NOTICE_MSG("%s\r\n", pifs_ba_pa2str(new_entry_list_ba, new_entry_list_pa));
+#if PIFS_DEBUG_LEVEL >= 5
                     print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf),
                                  new_entry_list_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + new_entry_list_pa * PIFS_FLASH_PAGE_SIZE_BYTE);
+#endif
                 }
             }
         }

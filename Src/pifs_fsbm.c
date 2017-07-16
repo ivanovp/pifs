@@ -698,10 +698,10 @@ pifs_status_t pifs_get_free_pages(pifs_size_t * a_free_management_page_count,
  *
  * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_GENERAL: if no free pages found.
  */
-pifs_status_t pifs_get_free_space(pifs_size_t * a_free_management_bytes,
-                                  pifs_size_t * a_free_data_bytes,
-                                  pifs_size_t * a_free_management_page_count,
-                                  pifs_size_t * a_free_data_page_count)
+pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
+                                  size_t * a_free_data_bytes,
+                                  size_t * a_free_management_page_count,
+                                  size_t * a_free_data_page_count)
 {
     pifs_status_t ret = PIFS_ERROR_GENERAL;
 

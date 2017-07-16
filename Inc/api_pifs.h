@@ -17,7 +17,7 @@
 extern "C" {
 #endif
 
-#define PIFS_EOF    (-1)
+#define PIFS_EOF            (-1)
 
 typedef enum
 {
