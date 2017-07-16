@@ -452,7 +452,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                             {
                                 page_count_found = 0;
                             }
-                            if (fba >= PIFS_FLASH_BLOCK_NUM_ALL)
+                            if (fba >= PIFS_FLASH_BLOCK_NUM_ALL && !page_count_found)
                             {
                                 ret = PIFS_ERROR_NO_MORE_SPACE;
                             }
@@ -478,7 +478,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
         } while (byte_cntr-- > 0 && ret == PIFS_SUCCESS && !found);
     }
 
-    if (ret == PIFS_SUCCESS && !found)
+    if (ret == PIFS_SUCCESS && !page_count_found)
     {
         ret = PIFS_ERROR_NO_MORE_SPACE;
     }
@@ -603,6 +603,10 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
                     {
                         if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA, &pifs.header))
                         {
+                            if (a_is_free)
+                            {
+//                                PIFS_NOTICE_MSG("%s data\r\n", pifs_ba_pa2str(fba, fpa));
+                            }
                             (*a_data_page_count)++;
                             found = TRUE;
                         }

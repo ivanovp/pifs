@@ -394,23 +394,20 @@ pifs_status_t pifs_check_filename(const pifs_char_t * a_filename)
     pifs_size_t       len = strlen(a_filename);
     const pifs_char_t invalid_chars[] = "\"'*,/:;<=>?[]|";
 
-    if (pifs.is_header_found)
+    if (len > 0)
     {
-        if (len > 0)
+        ret = PIFS_SUCCESS;
+        for (i = 0; i < len && ret == PIFS_SUCCESS; i++)
         {
-            ret = PIFS_SUCCESS;
-            for (i = 0; i < len && ret == PIFS_SUCCESS; i++)
+            if (strchr(invalid_chars, a_filename[i]) != NULL)
             {
-                if (strchr(invalid_chars, a_filename[i]) != NULL)
-                {
-                    ret = PIFS_ERROR_INVALID_FILE_NAME;
-                }
+                ret = PIFS_ERROR_INVALID_FILE_NAME;
             }
         }
-        else
-        {
-            ret = PIFS_ERROR_INVALID_FILE_NAME;
-        }
+    }
+    else
+    {
+        ret = PIFS_ERROR_INVALID_FILE_NAME;
     }
 
     return ret;

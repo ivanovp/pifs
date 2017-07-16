@@ -48,8 +48,6 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
     bool_t               mark_block_free = FALSE;
     pifs_block_address_t to_be_released_ba;
 
-    PIFS_ASSERT(pifs.is_header_found);
-
     do
     {
         /* Read free space bitmap */
@@ -349,6 +347,7 @@ pifs_status_t pifs_merge(void)
     pifs_size_t          file_pos[PIFS_OPEN_FILE_NUM_MAX] = { 0 };
 
     PIFS_NOTICE_MSG("start\r\n");
+    pifs.is_merging = TRUE;
     /* #0 */
     for (i = 0; i < PIFS_OPEN_FILE_NUM_MAX; i++)
     {
@@ -397,12 +396,14 @@ pifs_status_t pifs_merge(void)
     /* #6 */
     if (ret == PIFS_SUCCESS)
     {
+#if 0
         /* TODO this should be point 10! */
         /* Erase old management area */
         for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
         {
             ret = pifs_erase(old_header.management_blocks[i]);
         }
+#endif
         /* Reset delta map */
         memset(pifs.delta_map_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE,
                PIFS_DELTA_MAP_PAGE_NUM * PIFS_FLASH_PAGE_SIZE_BYTE);
@@ -440,7 +441,7 @@ pifs_status_t pifs_merge(void)
         /* Write new management area's header with next management block's address */
         ret = pifs_header_write(new_header_ba, new_header_pa, &pifs.header, FALSE);
     }
-#if 0
+#if 1
     /* #10 */
     if (ret == PIFS_SUCCESS)
     {
@@ -472,6 +473,7 @@ pifs_status_t pifs_merge(void)
             }
         }
     }
+    pifs.is_merging = FALSE;
     PIFS_ASSERT(ret == PIFS_SUCCESS);
     PIFS_NOTICE_MSG("stop\r\n");
 

@@ -310,7 +310,8 @@ typedef struct
 typedef struct
 {
     pifs_address_t          header_address;
-    bool_t                  is_header_found;
+    bool_t                  is_header_found PIFS_BOOL_SIZE;
+    bool_t                  is_merging PIFS_BOOL_SIZE;
     pifs_header_t           header;                                       /**< Actual header. */
     pifs_entry_t            entry;                                        /**< For merging */
     pifs_address_t          cache_page_buf_address;                       /**< Address of cache_page_buf */

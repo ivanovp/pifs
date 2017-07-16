@@ -30,6 +30,7 @@ pifs_t pifs =
 {
     .header_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
     .is_header_found = FALSE,
+    .is_merging = FALSE,
     .header = { 0 },
     .cache_page_buf_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
     .cache_page_buf = { 0 },
