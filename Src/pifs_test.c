@@ -151,6 +151,7 @@ pifs_status_t pifs_test(void)
     {
         PIFS_ERROR_MSG("Cannot open file!\r\n");
     }
+    PIFS_DEBUG_MSG("%i buffers written.\r\n", testfull);
     pifs_fclose(file);
 
     printf("-------------------------------------------------\r\n");
@@ -205,6 +206,24 @@ pifs_status_t pifs_test(void)
         PIFS_ERROR_MSG("Cannot open file!\r\n");
     }
     pifs_fclose(file);
+#if 0
+    printf("-------------------------------------------------\r\n");
+    printf("Basic test: writing file #2\r\n");
+
+    file = pifs_fopen("basic2.tst", "w");
+    if (file)
+    {
+        printf("File opened for writing\r\n");
+        generate_buffer(43);
+        //print_buffer(test_buf_w, sizeof(test_buf_w), 0);
+        written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+    }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot open file!\r\n");
+    }
+    pifs_fclose(file);
+#endif
 #endif
 
 

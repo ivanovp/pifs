@@ -254,54 +254,49 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_size_t          i;
     pifs_size_t          j;
-    pifs_size_t          entry_cntr;
+    pifs_size_t          k;
     pifs_block_address_t new_entry_list_ba = a_new_header->entry_list_address.block_address;
     pifs_page_address_t  new_entry_list_pa = a_new_header->entry_list_address.page_address;
     pifs_block_address_t old_entry_list_ba = a_old_header->entry_list_address.block_address;
     pifs_page_address_t  old_entry_list_pa = a_old_header->entry_list_address.page_address;
-    pifs_entry_t         entry; /* FIXME this might be too much data for stack */
+    pifs_entry_t       * entry = &pifs.entry;
 
     PIFS_NOTICE_MSG("start\r\n");
-    entry_cntr = 0;
-    do
+    for (j = 0; j < PIFS_ENTRY_LIST_SIZE_PAGE && ret == PIFS_SUCCESS; j++)
     {
-        for (i = 0, j = 0; i < PIFS_ENTRY_PER_PAGE && entry_cntr < PIFS_ENTRY_NUM_MAX; i++)
+        for (i = 0, k = 0; i < PIFS_ENTRY_PER_PAGE && ret == PIFS_SUCCESS; i++)
         {
-            ret = pifs_read(old_entry_list_ba, old_entry_list_pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
+            ret = pifs_read(old_entry_list_ba, old_entry_list_pa, i * PIFS_ENTRY_SIZE_BYTE, entry,
                             PIFS_ENTRY_SIZE_BYTE);
             /* Check if entry is valid */
-            if (!pifs_is_buffer_erased(&entry, PIFS_ENTRY_SIZE_BYTE))
+            if (!pifs_is_buffer_erased(entry, PIFS_ENTRY_SIZE_BYTE))
             {
                 PIFS_NOTICE_MSG("name: %s, size: %i, attrib: 0x%02X\r\n",
-                                entry.name, entry.file_size, entry.attrib);
+                                entry->name, entry->file_size, entry->attrib);
             }
-            if (!pifs_is_buffer_erased(&entry, PIFS_ENTRY_SIZE_BYTE)
-                    && (entry.attrib != 0))
+            if (!pifs_is_buffer_erased(entry, PIFS_ENTRY_SIZE_BYTE)
+                    && (entry->attrib != 0))
             {
                 /* Create file in the new management area and copy map */
-                ret = pifs_copy_map(&entry);
-                j++;
-                if ((j % PIFS_ENTRY_PER_PAGE) == 0)
+                ret = pifs_copy_map(entry);
+                k++;
+                if ((k % PIFS_ENTRY_PER_PAGE) == 0)
                 {
                     PIFS_NOTICE_MSG("%s\r\n", pifs_ba_pa2str(new_entry_list_ba, new_entry_list_pa));
                     print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf),
                                  new_entry_list_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + new_entry_list_pa * PIFS_FLASH_PAGE_SIZE_BYTE);
                 }
             }
-            entry_cntr++;
         }
-        if (entry_cntr < PIFS_ENTRY_NUM_MAX)
+        if (ret == PIFS_SUCCESS)
         {
-            if (ret == PIFS_SUCCESS)
-            {
-                ret = pifs_inc_ba_pa(&new_entry_list_ba, &new_entry_list_pa);
-            }
-            if (ret == PIFS_SUCCESS)
-            {
-                ret = pifs_inc_ba_pa(&old_entry_list_ba, &old_entry_list_pa);
-            }
+            ret = pifs_inc_ba_pa(&new_entry_list_ba, &new_entry_list_pa);
         }
-    } while (entry_cntr < PIFS_ENTRY_NUM_MAX && ret == PIFS_SUCCESS);
+        if (ret == PIFS_SUCCESS)
+        {
+            ret = pifs_inc_ba_pa(&old_entry_list_ba, &old_entry_list_pa);
+        }
+    }
 
     return ret;
 }
@@ -320,13 +315,15 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
  *    checksum shall not be written.
  * #5 Copy file entries from old to new management blocks. Maps are also copied,
  *    so map blocks are allocated from new management area (FSBM is needed).
- * #6 Erase delta page mirror in RAM.
+ * #6 Erase old management blocks. TODO: temporarily store that some of the
+ *    blocks cannot be used because merging is in progress pifs_find_page_adv().
+ *    Erase delta page mirror in RAM.
  * #7 Find free blocks for next management block in the new file system header.
  * #8 Add next management block's address to the new file system header and
  *    calculate checksum.
  * #9 Update page of new file system header. Checksum is written, so the new
  *    file system header is valid from this point.
- * #10 Erase old management blocks.
+ * #10 Erase old management blocks. TODO
  * #11 Re-open files and seek to the stored position.
  *     Therefore actual_map_address, map_header, etc. will be updated.
  *
@@ -394,6 +391,12 @@ pifs_status_t pifs_merge(void)
     /* #6 */
     if (ret == PIFS_SUCCESS)
     {
+        /* TODO this should be point 10! */
+        /* Erase old management area */
+        for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
+        {
+            ret = pifs_erase(old_header.management_blocks[i]);
+        }
         /* Reset delta map */
         memset(pifs.delta_map_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE,
                PIFS_DELTA_MAP_PAGE_NUM * PIFS_FLASH_PAGE_SIZE_BYTE);
@@ -431,6 +434,7 @@ pifs_status_t pifs_merge(void)
         /* Write new management area's header with next management block's address */
         ret = pifs_header_write(new_header_ba, new_header_pa, &pifs.header, FALSE);
     }
+#if 0
     /* #10 */
     if (ret == PIFS_SUCCESS)
     {
@@ -440,6 +444,7 @@ pifs_status_t pifs_merge(void)
             ret = pifs_erase(old_header.management_blocks[i]);
         }
     }
+#endif
     /* #11 */
     if (ret == PIFS_SUCCESS)
     {

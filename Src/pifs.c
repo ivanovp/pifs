@@ -331,6 +331,8 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
     pifs_size_t   free_data_bytes;
     pifs_size_t   free_management_pages;
     pifs_size_t   free_data_pages;
+    pifs_size_t   free_entries = 0;
+    pifs_size_t   to_be_released_entries = 0;
 
     ret = pifs_write(a_block_address, a_page_address, 0, a_header, sizeof(pifs_header_t));
     if (ret == PIFS_SUCCESS)
@@ -380,12 +382,21 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                   pifs_address2str(&a_header->free_space_bitmap_address));
     PIFS_INFO_MSG("Delta page map at %s\r\n",
                   pifs_address2str(&a_header->delta_map_address));
-    pifs_get_free_space(&free_management_bytes, &free_data_bytes,
-                        &free_management_pages, &free_data_pages);
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_get_free_space(&free_management_bytes, &free_data_bytes,
+                                  &free_management_pages, &free_data_pages);
+    }
     PIFS_INFO_MSG("Free data area:                     %lu bytes, %lu pages\r\n",
                   free_data_bytes, free_data_pages);
     PIFS_INFO_MSG("Free management area:               %lu bytes, %lu pages\r\n",
                   free_management_bytes, free_management_pages);
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_count_entries(&free_entries, &to_be_released_entries);
+        PIFS_NOTICE_MSG("free_entries: %lu, to_be_released_entries: %lu\r\n",
+                        free_entries, to_be_released_entries);
+    }
 
     return ret;
 }
@@ -701,7 +712,7 @@ void pifs_internal_open(pifs_file_t * a_file,
                 /* File does not exists, no problem, we'll create it */
                 a_file->status = PIFS_SUCCESS;
             }
-            if (a_is_merge_allowed && a_file->mode_write)
+            if (a_file->status == PIFS_SUCCESS && a_is_merge_allowed)
             {
                 a_file->status = pifs_merge_check(NULL);
             }
@@ -712,8 +723,8 @@ void pifs_internal_open(pifs_file_t * a_file,
             if (a_file->status == PIFS_SUCCESS)
             {
                 a_file->status = pifs_find_free_page(PIFS_MAP_PAGE_NUM,
-                                                   PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT,
-                                                   &ba, &pa, &page_count_found);
+                                                     PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT,
+                                                     &ba, &pa, &page_count_found);
             }
             if (a_file->status == PIFS_SUCCESS)
             {

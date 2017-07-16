@@ -128,21 +128,25 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                 a_entry->attrib ^= PIFS_ATTRIB_ALL;
                 ret = pifs_write_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, a_entry,
                                        PIFS_ENTRY_SIZE_BYTE, NULL);
-                /* Invert entry bits as it is stored inverted */
+                /* Restore entry bits */
                 a_entry->attrib ^= PIFS_ATTRIB_ALL;
 #else
+                /* Invert entry bits as it is stored inverted */
+                a_entry->attrib ^= PIFS_ATTRIB_ALL;
                 if (pifs_is_buffer_programmable(&entry, a_entry, PIFS_ENTRY_SIZE_BYTE))
                 {
                     PIFS_NOTICE_MSG("Entry can be updated\r\n");
-                    /* Invert entry bits as it is stored inverted */
-                    a_entry->attrib ^= PIFS_ATTRIB_ALL;
                     ret = pifs_write(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, a_entry,
                                      PIFS_ENTRY_SIZE_BYTE);
-                    /* Invert entry bits as it is stored inverted */
+                    /* Restore entry bits */
                     a_entry->attrib ^= PIFS_ATTRIB_ALL;
                 }
                 else
                 {
+                    PIFS_NOTICE_MSG("Original entry:\r\n");
+                    print_buffer(&entry, PIFS_ENTRY_SIZE_BYTE, 0);
+                    PIFS_NOTICE_MSG("New entry:\r\n");
+                    print_buffer(a_entry, PIFS_ENTRY_SIZE_BYTE, 0);
                     PIFS_NOTICE_MSG("Entry CANNOT be updated!\r\n");
                     /* Clear entry */
                     memset(&entry, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
@@ -150,6 +154,8 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                                      PIFS_ENTRY_SIZE_BYTE);
                     if (ret == PIFS_SUCCESS)
                     {
+                        /* Restore entry bits */
+                        a_entry->attrib ^= PIFS_ATTRIB_ALL;
                         ret = pifs_append_entry(a_entry);
                         if (ret == PIFS_ERROR_NO_MORE_SPACE)
                         {
@@ -159,6 +165,10 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                             {
                                 ret = pifs_append_entry(a_entry);
                             }
+                        }
+                        else
+                        {
+                            PIFS_NOTICE_MSG("Entry appended\r\n");
                         }
                     }
                 }
@@ -276,7 +286,6 @@ pifs_status_t pifs_count_entries(pifs_size_t * a_free_entry_count, pifs_size_t *
     pifs_size_t          free_entry_count = 0;
     pifs_size_t          to_be_released_entry_count = 0;
 
-    /* Invert attribute bits */
     for (j = 0; j < PIFS_ENTRY_LIST_SIZE_PAGE && ret == PIFS_SUCCESS; j++)
     {
         for (i = 0; i < PIFS_ENTRY_PER_PAGE && ret == PIFS_SUCCESS; i++)

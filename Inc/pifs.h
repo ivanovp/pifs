@@ -311,6 +311,7 @@ typedef struct
     pifs_address_t          header_address;
     bool_t                  is_header_found;
     pifs_header_t           header;                                       /**< Actual header. */
+    pifs_entry_t            entry;                                        /**< For merging */
     pifs_address_t          cache_page_buf_address;                       /**< Address of cache_page_buf */
     uint8_t                 cache_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];    /**< Flash page buffer for cache */
     bool_t                  cache_page_buf_is_dirty;
