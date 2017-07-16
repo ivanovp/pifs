@@ -90,12 +90,7 @@ struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
                 && (entry.attrib != 0))
         {
             /* Copy entry */
-#if PIFS_OPTIMIZE_FOR_RAM == 0
             dir->directory_entry.d_ino = dir->entry_list_index; /* FIXME Not unique, better calculation */
-            dir->directory_entry.d_off = dir->entry_list_index * PIFS_ENTRY_SIZE_BYTE;
-            dir->directory_entry.d_reclen = PIFS_ENTRY_SIZE_BYTE;
-            dir->directory_entry.d_type = 0;
-#endif
             strncpy(dir->directory_entry.d_name, entry.name, sizeof(dir->directory_entry.d_name));
             dirent = &dir->directory_entry;
         }

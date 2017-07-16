@@ -270,8 +270,7 @@ pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a
 
 /**
  * @brief pifs_clear_entry Find entry in entry list and invalidate it.
- * FIXME this function should not be used! pifs_write_delta() should be used
- * instead!
+ * This function shoudl be used only when a file is removed.
  *
  * @param a_name[in]    Pointer to name to find.
  * @return PIFS_SUCCESS if entry found and cleared.

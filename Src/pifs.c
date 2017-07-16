@@ -769,6 +769,15 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
     if (ret == PIFS_SUCCESS)
     {
         pifs_internal_open(file, a_filename, a_modes);
+        PIFS_NOTICE_MSG("status: %i is_opened: %i\r\n", file->status, file->is_opened);
+        if (file->status == PIFS_SUCCESS && file->is_opened)
+        {
+            PIFS_NOTICE_MSG("file size: %i\r\n", file->entry.file_size);
+        }
+        else
+        {
+            file = NULL;
+        }
     }
 
     PIFS_SET_ERRNO(ret);
@@ -905,7 +914,7 @@ pifs_size_t pifs_fwrite(const void * a_data, pifs_size_t a_size, pifs_size_t a_c
         {
             file->is_size_changed = TRUE;
             file->entry.file_size = file->write_pos;
-            PIFS_DEBUG_MSG("New file size: %i bytes\r\n", file->entry.file_size);
+            PIFS_DEBUG_MSG("File size increased to %i bytes\r\n", file->entry.file_size);
         }
         if (!file->mode_append)
         {

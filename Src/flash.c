@@ -129,8 +129,6 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
         #endif
             )
     {
-        /* FIXME DEBUG CODE */
-        /* FIXME END OF DEBUG CODE */
         PIFS_ASSERT(fseek(flash_file, offset, SEEK_SET) == 0);
         /* Check if write is possible */
         read_count = fread(flash_page_buf, 1, a_buf_size, flash_file);

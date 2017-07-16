@@ -413,7 +413,11 @@ pifs_status_t pifs_test(void)
         read_size = 0;
         for (i = 0; i < sizeof(test_buf_r); i += size_delta)
         {
-            read_size += pifs_fread(&test_buf_r[i], 1, size_delta, file);
+            read_size = pifs_fread(&test_buf_r[i], 1, size_delta, file);
+            if (read_size != size_delta)
+            {
+                PIFS_ERROR_MSG("Cannot read file: %i!\r\n", read_size);
+            }
         }
         check_buffers();
     }

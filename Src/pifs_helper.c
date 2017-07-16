@@ -398,7 +398,7 @@ pifs_status_t pifs_check_filename(const pifs_char_t * a_filename)
  * @param[out] a_file Pointer to pointer of file structure to fill.
  * @return PIFS_SUCCESS if unused file structure found.
  */
-pifs_status_t pifs_get_file(pifs_file_t **a_file)
+pifs_status_t pifs_get_file(pifs_file_t * * a_file)
 {
     pifs_status_t ret = PIFS_ERROR_NO_MORE_FILE_HANDLE;
     pifs_size_t   i;
@@ -410,10 +410,10 @@ pifs_status_t pifs_get_file(pifs_file_t **a_file)
         {
             file = &pifs.file[i];
             file->is_used = TRUE;
-            *a_file = file;
             ret = PIFS_SUCCESS;
         }
     }
+    *a_file = file;
 
     return ret;
 }

@@ -17,11 +17,6 @@
 extern "C" {
 #endif
 
-#define pfopen      pifs_open
-#define pfwrite     pifs_write
-#define pfread      pifs_read
-#define pfclose     pifs_close
-
 #define PIFS_EOF    (-1)
 
 typedef enum
@@ -54,16 +49,12 @@ typedef enum
     PIFS_SEEK_END,
 } pifs_fseek_origin_t;
 
+typedef uint32_t pifs_ino_t;
+
 struct pifs_dirent
 {
-    /* TODO d_ino, d_off, d_reclen, d_type may be removed as it is not used by system */
-#if PIFS_OPTIMIZE_FOR_RAM == 0
-    uint32_t d_ino;              /**< Unique ID of the file */
-    uint32_t d_off;              /**< Offset of that directory entry in the actual file system directory */
-    unsigned short int d_reclen; /**< Record length of this entry */
-    unsigned char d_type;        /**< Not supported */
-#endif
-    char d_name[PIFS_FILENAME_LEN_MAX];
+    pifs_ino_t  d_ino;                          /**< Unique ID of the file */
+    char        d_name[PIFS_FILENAME_LEN_MAX];  /**< File/directory name */
 };
 
 typedef struct pifs_dirent pifs_dirent_t;
