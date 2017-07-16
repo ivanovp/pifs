@@ -593,7 +593,7 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
                 printf("\r\n");
             }
 #endif
-            for (i = 0; i < (PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE); i++)
+            for (i = 0; i < (PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE) && !end; i++)
             {
                 if ((free_space_bitmap & mask) == value)
                 {
@@ -601,10 +601,10 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
                     if (!a_is_free || pifs_is_page_erased(fba, fpa))
 #endif
                     {
-                        found = TRUE;
                         if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA, &pifs.header))
                         {
                             (*a_data_page_count)++;
+                            found = TRUE;
                         }
                         else if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT, &pifs.header))
                         {
@@ -613,6 +613,7 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
                              * area is full.
                              */
                             (*a_management_page_count)++;
+                            found = TRUE;
                         }
                     }
 #if PIFS_CHECK_IF_PAGE_IS_ERASED
@@ -635,18 +636,21 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
                     }
                 }
             }
-            po++;
-            if (po == PIFS_FLASH_PAGE_SIZE_BYTE)
+            if (!end)
             {
-                po = 0;
-                pa++;
-                if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
+                po++;
+                if (po == PIFS_FLASH_PAGE_SIZE_BYTE)
                 {
-                    pa = 0;
-                    ba++;
-                    if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
+                    po = 0;
+                    pa++;
+                    if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
                     {
-                        PIFS_FATAL_ERROR_MSG("End of flash! byte_cntr: %lu\r\n", byte_cntr);
+                        pa = 0;
+                        ba++;
+                        if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
+                        {
+                            PIFS_FATAL_ERROR_MSG("End of flash! byte_cntr: %lu\r\n", byte_cntr);
+                        }
                     }
                 }
             }
