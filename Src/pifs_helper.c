@@ -232,6 +232,32 @@ bool_t pifs_is_buffer_programmable(const void * a_orig_buf, const void * a_new_b
 }
 
 /**
+ * @brief pifs_is_buffer_programmed Check if buffer's all bits are programmed.
+ *
+ * @param[in] a_buf[in]         Pointer to buffer.
+ * @param[in] a_buf_size[in]    Size of buffer.
+ * @return TRUE: if buffer is programmed.
+ * FALSE: if buffer contains at least one programmed bit.
+ */
+bool_t pifs_is_buffer_programmed(const void * a_buf, pifs_size_t a_buf_size)
+{
+    uint8_t   * buf = (uint8_t*) a_buf;
+    pifs_size_t i;
+    bool_t      ret = TRUE;
+
+    for (i = 0; i < a_buf_size && ret; i++)
+    {
+        if (buf[i] != PIFS_FLASH_PROGRAMMED_BYTE_VALUE)
+        {
+            ret = FALSE;
+        }
+    }
+
+    return ret;
+}
+
+
+/**
  * @brief pifs_parse_open_mode Parse string of open mode.
  *
  * @param a_file[in]    Pointer to file's internal structure.

@@ -643,13 +643,15 @@ pifs_status_t pifs_delete(void)
 /**
  * @brief pifs_internal_open Internally used function to open a file.
  *
- * @param[in] a_file        Pointer to internal file structure.
- * @param[in] a_filename    Pointer to file name.
- * @param[in] a_modes       Pointer to open mode. NULL: open with existing modes.
+ * @param[in] a_file                Pointer to internal file structure.
+ * @param[in] a_filename            Pointer to file name.
+ * @param[in] a_modes               Pointer to open mode. NULL: open with existing modes.
+ * @param[in] a_is_merge_allowed    TRUE: merge can be started.
  */
 void pifs_internal_open(pifs_file_t * a_file,
                         const pifs_char_t * a_filename,
-                        const pifs_char_t * a_modes)
+                        const pifs_char_t * a_modes,
+                        bool_t a_is_merge_allowed)
 {
     pifs_entry_t       * entry = &a_file->entry;
     pifs_block_address_t ba = PIFS_BLOCK_ADDRESS_INVALID;
@@ -699,7 +701,10 @@ void pifs_internal_open(pifs_file_t * a_file,
                 /* File does not exists, no problem, we'll create it */
                 a_file->status = PIFS_SUCCESS;
             }
-            a_file->status = pifs_merge_check(NULL);
+            if (a_is_merge_allowed && a_file->mode_write)
+            {
+                a_file->status = pifs_merge_check(NULL);
+            }
             /* Order of steps to create a file: */
             /* #1 Find a free page for map of file */
             /* #2 Create entry of a_file, which contains the map's address */
@@ -731,11 +736,13 @@ void pifs_internal_open(pifs_file_t * a_file,
                 else
                 {
                     PIFS_DEBUG_MSG("Cannot create entry!\r\n");
+                    PIFS_SET_ERRNO(PIFS_ERROR_NO_MORE_ENTRY);
                 }
             }
             else
             {
                 PIFS_DEBUG_MSG("No free page found!\r\n");
+                PIFS_SET_ERRNO(PIFS_ERROR_NO_MORE_SPACE);
             }
         }
         if (a_file->is_opened)
@@ -768,7 +775,7 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
     }
     if (ret == PIFS_SUCCESS)
     {
-        pifs_internal_open(file, a_filename, a_modes);
+        pifs_internal_open(file, a_filename, a_modes, TRUE);
         PIFS_NOTICE_MSG("status: %i is_opened: %i\r\n", file->status, file->is_opened);
         if (file->status == PIFS_SUCCESS && file->is_opened)
         {
@@ -1267,7 +1274,7 @@ int pifs_remove(const pifs_char_t * a_filename)
     if (ret == PIFS_SUCCESS)
     {
         ret = PIFS_ERROR_FILE_NOT_FOUND;
-        pifs_internal_open(&pifs.internal_file, a_filename, "r");
+        pifs_internal_open(&pifs.internal_file, a_filename, "r", FALSE);
         if (pifs.internal_file.is_opened)
         {
             /* File already exist */

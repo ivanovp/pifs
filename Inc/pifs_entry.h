@@ -21,5 +21,6 @@ pifs_status_t pifs_append_entry(pifs_entry_t * a_entry);
 pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const a_entry);
 pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a_entry);
 pifs_status_t pifs_clear_entry(const pifs_char_t * a_name);
+pifs_status_t pifs_count_entries(pifs_size_t * a_free_entry_count, pifs_size_t * a_to_be_released_entry_count);
 
 #endif /* _INCLUDE_PIFS_ENTRY_H_ */

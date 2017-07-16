@@ -19,6 +19,7 @@
 #include "pifs_helper.h"
 #include "pifs_delta.h"
 #include "pifs_merge.h"
+#include "pifs_entry.h"
 #include "pifs_map.h"
 #include "buffer.h" /* DEBUG */
 
@@ -166,7 +167,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
     PIFS_NOTICE_MSG("start\r\n");
 
     /* Re-create file in the new management block */
-    pifs_internal_open(&pifs.internal_file, a_old_entry->name, "w");
+    pifs_internal_open(&pifs.internal_file, a_old_entry->name, "w", FALSE);
     pifs.internal_file.entry.file_size = a_old_entry->file_size;
     pifs.internal_file.entry.attrib = a_old_entry->attrib ^ PIFS_ATTRIB_ALL;
     if (pifs.internal_file.entry.file_size > 0 && pifs.internal_file.entry.file_size != PIFS_FILE_SIZE_ERASED)
@@ -313,18 +314,20 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
  * #1 Erase next management blocks
  * #2 Initialize file system's header, but not write. Next management blocks'
  *    address is not initialized and checksum is not calculated.
- * #3 Copy free space bitmap from old management blocks to new ones and
+ * #3 Copy free space bitmap (FSBM) from old management blocks to new ones and
  *    erase to be released blocks. New free space bitmap will be updated.
- * #4 Write new management blocks. Address of next management blocks is not
- *    initialized.
+ * #4 Write new management blocks. Address of next management blocks and
+ *    checksum shall not be written.
  * #5 Copy file entries from old to new management blocks. Maps are also copied,
  *    so map blocks are allocated from new management area (FSBM is needed).
- * #6 Erase old management blocks. Erase delta page mirror in RAM.
+ * #6 Erase delta page mirror in RAM.
  * #7 Find free blocks for next management block in the new file system header.
  * #8 Add next management block's address to the new file system header and
  *    calculate checksum.
- * #9 Update page of new file system header.
- * #10 Re-open files and seek to the stored position.
+ * #9 Update page of new file system header. Checksum is written, so the new
+ *    file system header is valid from this point.
+ * #10 Erase old management blocks.
+ * #11 Re-open files and seek to the stored position.
  *     Therefore actual_map_address, map_header, etc. will be updated.
  *
  * @return PIFS_SUCCES when merge was successful.
@@ -391,11 +394,6 @@ pifs_status_t pifs_merge(void)
     /* #6 */
     if (ret == PIFS_SUCCESS)
     {
-        /* Erase old management area */
-        for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
-        {
-            ret = pifs_erase(old_header.management_blocks[i]);
-        }
         /* Reset delta map */
         memset(pifs.delta_map_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE,
                PIFS_DELTA_MAP_PAGE_NUM * PIFS_FLASH_PAGE_SIZE_BYTE);
@@ -436,6 +434,15 @@ pifs_status_t pifs_merge(void)
     /* #10 */
     if (ret == PIFS_SUCCESS)
     {
+        /* Erase old management area */
+        for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
+        {
+            ret = pifs_erase(old_header.management_blocks[i]);
+        }
+    }
+    /* #11 */
+    if (ret == PIFS_SUCCESS)
+    {
         /* Re-open files */
         for (i = 0; i < PIFS_OPEN_FILE_NUM_MAX; i++)
         {
@@ -445,7 +452,7 @@ pifs_status_t pifs_merge(void)
                 /* Do not create new file, as it has already done */
                 file->mode_create_new_file = FALSE;
                 file->mode_file_shall_exist = TRUE;
-                pifs_internal_open(file, file->entry.name, NULL);
+                pifs_internal_open(file, file->entry.name, NULL, FALSE);
                 if (file->status == PIFS_SUCCESS && file_pos[i])
                 {
                     /* Seek to the stored position */
@@ -454,8 +461,6 @@ pifs_status_t pifs_merge(void)
             }
         }
     }
-//    pifs_flush();
-//    exit(1);
     PIFS_ASSERT(ret == PIFS_SUCCESS);
     PIFS_NOTICE_MSG("stop\r\n");
 
@@ -478,52 +483,65 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file)
     bool_t        merge = FALSE;
     bool_t        is_free_map_entry = TRUE;
     pifs_block_address_t to_be_released_ba;
+    pifs_size_t   free_entries = 0;
+    pifs_size_t   to_be_released_entries = 0;
 
     /* Get number of free management and data pages */
     ret = pifs_get_free_pages(&free_management_pages, &free_data_pages);
     PIFS_NOTICE_MSG("free_data_pages: %lu, free_management_pages: %lu\r\n",
                     free_data_pages, free_management_pages);
-    if (ret == PIFS_SUCCESS && (free_data_pages == 0 || free_management_pages == 0))
+    if (ret == PIFS_SUCCESS)
     {
-        /* Get number of erasable pages */
-        ret = pifs_get_to_be_released_pages(&to_be_released_management_pages,
-                                            &to_be_released_data_pages);
-        PIFS_NOTICE_MSG("to_be_released_data_pages: %lu, to_be_released_management_pages: %lu\r\n",
-                        to_be_released_data_pages, to_be_released_management_pages);
-        if (ret == PIFS_SUCCESS)
+        ret = pifs_count_entries(&free_entries, &to_be_released_entries);
+        PIFS_NOTICE_MSG("free_entries: %lu, to_be_released_entries: %lu\r\n",
+                        free_entries, to_be_released_entries);
+    }
+    if (ret == PIFS_SUCCESS && (free_data_pages == 0 || free_management_pages == 0 || free_entries == 0))
+    {
+        if (free_entries == 0 && to_be_released_entries > 0)
         {
-            if (free_data_pages == 0 && to_be_released_data_pages > 0)
+            merge = TRUE;
+        }
+        if (!merge)
+        {
+            /* Get number of erasable pages */
+            ret = pifs_get_to_be_released_pages(&to_be_released_management_pages,
+                                                &to_be_released_data_pages);
+            PIFS_NOTICE_MSG("to_be_released_data_pages: %lu, to_be_released_management_pages: %lu\r\n",
+                            to_be_released_data_pages, to_be_released_management_pages);
+            if (ret == PIFS_SUCCESS)
             {
-                /* Check if at least one data block can be erased! */
-                /* Otherwise merging will be unmeaning. */
-                ret = pifs_find_to_be_released_block(1, PIFS_BLOCK_TYPE_DATA,
-                                                     PIFS_FLASH_BLOCK_RESERVED_NUM,
-                                                     &pifs.header,
-                                                     &to_be_released_ba);
-                if (ret == PIFS_SUCCESS)
+                if (free_data_pages == 0 && to_be_released_data_pages > 0)
                 {
-                    PIFS_NOTICE_MSG("To be released block: %i\r\n", to_be_released_ba);
-                    merge = TRUE;
-                }
-            }
-            if (free_management_pages == 0 && to_be_released_management_pages > 0 && !merge)
-            {
-                if (a_file)
-                {
-                    /*
-                     * If free_management_pages is 0, number of free map entries
-                     * are to be checked. If there is free entry in the actual
-                     * map, no merge is needed.
-                     */
-                    ret = pifs_is_free_map_entry(a_file, &is_free_map_entry);
-                    if (ret == PIFS_SUCCESS && !is_free_map_entry)
+                    /* Check if at least one data block can be erased! */
+                    /* Otherwise merging will be unmeaning. */
+                    ret = pifs_find_to_be_released_block(1, PIFS_BLOCK_TYPE_DATA,
+                                                         PIFS_FLASH_BLOCK_RESERVED_NUM,
+                                                         &pifs.header,
+                                                         &to_be_released_ba);
+                    if (ret == PIFS_SUCCESS)
                     {
+                        PIFS_NOTICE_MSG("To be released block: %i\r\n", to_be_released_ba);
                         merge = TRUE;
                     }
                 }
-                else
+                if (free_management_pages == 0 && to_be_released_management_pages > 0 && !merge)
                 {
-                    merge = TRUE;
+                    if (a_file)
+                    {
+                        /* If free_management_pages is 0, number of free map entries */
+                        /* are to be checked. If there is free entry in the actual */
+                        /* map, no merge is needed. */
+                        ret = pifs_is_free_map_entry(a_file, &is_free_map_entry);
+                        if (ret == PIFS_SUCCESS && !is_free_map_entry)
+                        {
+                            merge = TRUE;
+                        }
+                    }
+                    else
+                    {
+                        merge = TRUE;
+                    }
                 }
             }
         }
