@@ -811,7 +811,7 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
  * @param[in] a_file    Pointer to file.
  * @return Number of data elements written.
  */
-pifs_size_t pifs_fwrite(const void * a_data, pifs_size_t a_size, pifs_size_t a_count, P_FILE * a_file)
+pifs_size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 {
     pifs_file_t        * file = (pifs_file_t*) a_file;
     uint8_t            * data = (uint8_t*) a_data;
@@ -991,7 +991,7 @@ void pifs_inc_read_address(pifs_file_t * a_file)
  * @param[in] a_file    Pointer to file.
  * @return Number of data elements read.
  */
-pifs_size_t pifs_fread(void * a_data, pifs_size_t a_size, pifs_size_t a_count, P_FILE * a_file)
+pifs_size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 {
     pifs_file_t        * file = (pifs_file_t*) a_file;
     uint8_t *            data = (uint8_t*) a_data;
