@@ -478,7 +478,7 @@ pifs_status_t pifs_merge(void)
  * @param[in] a_file Pointer to actual file or NULL.
  * @return PIFS_SUCCESS if merge was not necessary or merge was successfull.
  */
-pifs_status_t pifs_merge_check(pifs_file_t * a_file)
+pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_count_minimum)
 {
     pifs_status_t ret = PIFS_SUCCESS;
     pifs_size_t   free_management_pages = 0;
@@ -501,7 +501,7 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file)
         PIFS_NOTICE_MSG("free_entries: %lu, to_be_released_entries: %lu\r\n",
                         free_entries, to_be_released_entries);
     }
-    if (ret == PIFS_SUCCESS && (free_data_pages == 0 || free_management_pages == 0 || free_entries == 0))
+    if (ret == PIFS_SUCCESS && (free_data_pages < a_data_page_count_minimum || free_management_pages == 0 || free_entries == 0))
     {
         if (free_entries == 0 && to_be_released_entries > 0)
         {
@@ -516,7 +516,8 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file)
                             to_be_released_data_pages, to_be_released_management_pages);
             if (ret == PIFS_SUCCESS)
             {
-                if (free_data_pages == 0 && to_be_released_data_pages > 0)
+                if (free_data_pages < a_data_page_count_minimum
+                        && to_be_released_data_pages >= a_data_page_count_minimum)
                 {
                     /* Check if at least one data block can be erased! */
                     /* Otherwise merging will be unmeaning. */

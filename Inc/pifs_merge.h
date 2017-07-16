@@ -18,6 +18,6 @@
 #include "pifs.h"
 
 pifs_status_t pifs_merge(void);
-pifs_status_t pifs_merge_check(pifs_file_t * a_file);
+pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_count_minimum);
 
 #endif /* _INCLUDE_PIFS_MERGE_H_ */

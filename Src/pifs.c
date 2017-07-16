@@ -714,7 +714,7 @@ void pifs_internal_open(pifs_file_t * a_file,
             }
             if (a_file->status == PIFS_SUCCESS && a_is_merge_allowed)
             {
-                a_file->status = pifs_merge_check(NULL);
+                a_file->status = pifs_merge_check(NULL, 1);
             }
             /* Order of steps to create a file: */
             /* #1 Find a free page for map of file */
@@ -866,12 +866,12 @@ pifs_size_t pifs_fwrite(const void * a_data, pifs_size_t a_size, pifs_size_t a_c
         {
             if (file->status == PIFS_SUCCESS)
             {
+                page_count_needed = (data_size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
                 /* Check if merge needed and do it if necessary */
-                file->status = pifs_merge_check(a_file);
+                file->status = pifs_merge_check(a_file, page_count_needed);
             }
             if (file->status == PIFS_SUCCESS)
             {
-                page_count_needed = (data_size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
                 do
                 {
                     page_count_needed_limited = page_count_needed;
