@@ -65,49 +65,6 @@ void check_buffers()
     }
 }
 
-void pifs_info(void)
-{
-    size_t        free_management_bytes;
-    size_t        free_data_bytes;
-    size_t        free_management_pages;
-    size_t        free_data_pages;
-    size_t        to_be_released_management_bytes;
-    size_t        to_be_released_data_bytes;
-    size_t        to_be_released_management_pages;
-    size_t        to_be_released_data_pages;
-    pifs_size_t   free_entries = 0;
-    pifs_size_t   to_be_released_entries = 0;
-    pifs_status_t ret;
-
-    ret = pifs_get_free_space(&free_management_bytes, &free_data_bytes,
-                              &free_management_pages, &free_data_pages);
-    if (ret == PIFS_SUCCESS)
-    {
-        PIFS_INFO_MSG("Free data area:                     %lu bytes, %lu pages\r\n",
-                      free_data_bytes, free_data_pages);
-        PIFS_INFO_MSG("Free management area:               %lu bytes, %lu pages\r\n",
-                      free_management_bytes, free_management_pages);
-    }
-    ret = pifs_get_to_be_released_space(&to_be_released_management_bytes, &to_be_released_data_bytes,
-                              &to_be_released_management_pages, &to_be_released_data_pages);
-    if (ret == PIFS_SUCCESS)
-    {
-        PIFS_INFO_MSG("To be released data area:           %lu bytes, %lu pages\r\n",
-                      to_be_released_data_bytes, to_be_released_data_pages);
-        PIFS_INFO_MSG("To be released management area:     %lu bytes, %lu pages\r\n",
-                      to_be_released_management_bytes, to_be_released_management_pages);
-    }
-    if (ret == PIFS_SUCCESS)
-    {
-        ret = pifs_count_entries(&free_entries, &to_be_released_entries);
-    }
-    if (ret == PIFS_SUCCESS)
-    {
-        PIFS_INFO_MSG("Free entries:                       %lu\r\n", free_entries);
-        PIFS_INFO_MSG("To be released entries:             %lu\r\n", to_be_released_entries);
-    }
-}
-
 pifs_status_t pifs_test(void)
 {
     pifs_status_t ret = PIFS_ERROR_FLASH_INIT;
@@ -553,7 +510,7 @@ pifs_status_t pifs_test(void)
 #endif
 
     printf("END OF TESTS\r\n");
-    pifs_info();
+    pifs_print_free_space_info();
 //    ret = pifs_delete();
 //    PIFS_ASSERT(ret == PIFS_SUCCESS);
 

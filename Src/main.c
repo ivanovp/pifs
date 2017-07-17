@@ -17,18 +17,41 @@
 #include "pifs.h"
 #include "buffer.h"
 #include "term.h"
+#include "parser.h"
 
 #define PIFS_DEBUG_LEVEL    5
 #include "pifs_debug.h"
 
-int main(void)
+int main(int argc, char **argv)
 {
+    int  i;
+    char args[256] = { 0 };
+
     srand(time(0));
     pifs_init();
-    term_init();
-    while (1)
+    if (argc < 2)
     {
-        term_task();
+        term_init();
+        /* No arguments */
+        while (1)
+        {
+            term_task();
+        }
+    }
+    else
+    {
+        PARSER_init(parserCommands);
+        /* Process arguments */
+        for (i = 1; i < argc; i++)
+        {
+            if (i != 1)
+            {
+                strncat(args, " ", sizeof(args));
+            }
+            strncat(args, argv[i], sizeof(args));
+        }
+//        printf("Arguments: [%s]\r\n", args);
+        PARSER_process(args, strlen(args));
     }
 
     return 0;

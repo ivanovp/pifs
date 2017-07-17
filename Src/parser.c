@@ -69,9 +69,7 @@ bool_t PARSER_process (const char* command, size_t size)
     uint8_t pureCmdLen;
     char *params;
 
-    (void) size;
-
-    //UART1_printf ("command: [%s]\r\n", command);
+    //printf ("command: [%s]\r\n", command);
     // looking for parameters
     if ((params = strchr (command, ' ')))
     {
@@ -92,16 +90,16 @@ bool_t PARSER_process (const char* command, size_t size)
     }
     else
     {
-        if (strlen (command) > PARSER_MAX_COMMAND_LENGTH)
+        if (strnlen (command, size) > PARSER_MAX_COMMAND_LENGTH)
         {
             printf ("Command is too long!\r\n");
             return FALSE;
         }
         strncpy (pureCmd, command, sizeof (pureCmd));
     }
-    //UART1_printf ("pureCmd: [%s]\r\n", pureCmd);
-    //UART1_printf ("pureCmd len: %i\r\n", strlen (pureCmd));
-    //UART1_printf ("PARSER_parserCommandSize: %i\r\n", PARSER_parserCommandSize);
+    //printf ("pureCmd: [%s]\r\n", pureCmd);
+    //printf ("pureCmd len: %i\r\n", strlen (pureCmd));
+    //printf ("PARSER_parserCommandSize: %i\r\n", PARSER_parserCommandSize);
     for (i = 0; i < PARSER_parserCommandSize && !found; ++i)
     {
         if (!strncmp (pureCmd, PARSER_parserCommand[i].command, sizeof (pureCmd)))

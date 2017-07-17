@@ -1,4 +1,4 @@
-APP_NAME = pifs_test
+APP_NAME = pifs
 
 ENABLE_CROSS_COMPILE = 0
 

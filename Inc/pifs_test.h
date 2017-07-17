@@ -14,7 +14,6 @@
 
 #include "common.h"
 
-void pifs_info(void);
 pifs_status_t pifs_test(void);
 
 #endif /* _INCLUDE_PIFS_TEST_H_ */

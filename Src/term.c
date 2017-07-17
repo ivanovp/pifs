@@ -97,7 +97,16 @@ void cmdPifsInfo (char* command, char* params)
     (void) command;
     (void) params;
 
-    pifs_info();
+    pifs_print_fs_info();
+    pifs_print_header_info();
+}
+
+void cmdFreeSpaceInfo (char* command, char* params)
+{
+    (void) command;
+    (void) params;
+
+    pifs_print_free_space_info();
 }
 
 /**
@@ -152,7 +161,7 @@ void cmdHelp (char *command, char *params)
     printf ("\r\n");
 }
 
-static parserCommand_t parserCommands[] =
+parserCommand_t parserCommands[] =
 {
     //command       brief help                          callback function
     {"erase",       "Erase flash",                      cmdErase},
@@ -164,6 +173,7 @@ static parserCommand_t parserCommands[] =
     {"rm",          "Remove file",                      cmdRemove},
     {"del",         "Remove file",                      cmdRemove},
     {"i",           "Print info of Pi file system",     cmdPifsInfo},
+    {"f",           "Print info of free space",         cmdFreeSpaceInfo},
     {"quit",        "Quit",                             cmdQuit},
     {"q",           "Quit",                             cmdQuit},
     {"noprompt",    "Prompt will not be displayed",     cmdNoPrompt},

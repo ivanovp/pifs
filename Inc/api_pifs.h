@@ -63,6 +63,9 @@ typedef void * pifs_DIR;
 
 extern int pifs_errno;
 
+void pifs_print_fs_info(void);
+void pifs_print_header_info(void);
+void pifs_print_free_space_info(void);
 pifs_status_t pifs_init(void);
 pifs_status_t pifs_delete(void);
 P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes);

@@ -13,6 +13,9 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "parser.h"
+
+extern parserCommand_t parserCommands[];
 
 void term_init (void);
 void term_task (void);

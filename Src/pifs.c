@@ -23,7 +23,7 @@
 #include "pifs_merge.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 5
+#define PIFS_DEBUG_LEVEL 4
 #include "pifs_debug.h"
 
 pifs_t pifs =
@@ -409,40 +409,10 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
 }
 
 /**
- * @brief pifs_init Initialize flash driver and file system.
- *
- * @return PIFS_SUCCESS if FS successfully initialized.
+ * @brief pifs_fs_info Print information about flash memory and filesystem.
  */
-pifs_status_t pifs_init(void)
+void pifs_print_fs_info(void)
 {
-    pifs_status_t        ret = PIFS_SUCCESS;
-    pifs_block_address_t ba;
-    pifs_page_address_t  pa;
-    pifs_header_t        header;
-    pifs_header_t        prev_header;
-    pifs_checksum_t      checksum;
-    pifs_size_t          free_management_bytes;
-    pifs_size_t          free_data_bytes;
-    pifs_size_t          free_management_pages;
-    pifs_size_t          free_data_pages;
-    pifs_size_t          i;
-
-    pifs.header_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
-    pifs.header_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
-    pifs.is_header_found = FALSE;
-    pifs.cache_page_buf_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
-    pifs.cache_page_buf_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
-    pifs.cache_page_buf_is_dirty = FALSE;
-
-    if (PIFS_ENTRY_SIZE_BYTE > PIFS_FLASH_PAGE_SIZE_BYTE)
-    {
-        PIFS_ERROR_MSG("Entry size (%lu) is larger than flash page (%u)!\r\n"
-                       "Change PIFS_FILENAME_LEN_MAX to %lu!\r\n",
-                       PIFS_ENTRY_SIZE_BYTE, PIFS_FLASH_PAGE_SIZE_BYTE,
-                       PIFS_FILENAME_LEN_MAX - (PIFS_ENTRY_SIZE_BYTE - PIFS_FLASH_PAGE_SIZE_BYTE));
-        ret = PIFS_ERROR_CONFIGURATION;
-    }
-
     PIFS_INFO_MSG("Geometry of flash memory\r\n");
     PIFS_INFO_MSG("------------------------\r\n");
     PIFS_INFO_MSG("Size of flash memory (all):         %i bytes, %i KiB\r\n", PIFS_FLASH_SIZE_BYTE_ALL, PIFS_FLASH_SIZE_BYTE_ALL / 1024);
@@ -479,6 +449,102 @@ pifs_status_t pifs_init(void)
                    PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_BLOCK_SIZE_BYTE,
                    PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_PAGE_PER_BLOCK);
     PIFS_INFO_MSG("\r\n");
+}
+
+void pifs_print_header_info(void)
+{
+    PIFS_INFO_MSG("Counter: %i\r\n",
+                  pifs.header.counter);
+    PIFS_INFO_MSG("Entry list at %s\r\n",
+                  pifs_address2str(&pifs.header.entry_list_address));
+    PIFS_INFO_MSG("Free space bitmap at %s\r\n",
+                  pifs_address2str(&pifs.header.free_space_bitmap_address));
+    PIFS_INFO_MSG("Delta page map at %s\r\n",
+                  pifs_address2str(&pifs.header.delta_map_address));
+}
+
+void pifs_print_free_space_info(void)
+{
+    size_t        free_management_bytes;
+    size_t        free_data_bytes;
+    size_t        free_management_pages;
+    size_t        free_data_pages;
+    size_t        to_be_released_management_bytes;
+    size_t        to_be_released_data_bytes;
+    size_t        to_be_released_management_pages;
+    size_t        to_be_released_data_pages;
+    pifs_size_t   free_entries = 0;
+    pifs_size_t   to_be_released_entries = 0;
+    pifs_status_t ret;
+
+    ret = pifs_get_free_space(&free_management_bytes, &free_data_bytes,
+                              &free_management_pages, &free_data_pages);
+    if (ret == PIFS_SUCCESS)
+    {
+        PIFS_INFO_MSG("Free data area:                     %lu bytes, %lu pages\r\n",
+                      free_data_bytes, free_data_pages);
+        PIFS_INFO_MSG("Free management area:               %lu bytes, %lu pages\r\n",
+                      free_management_bytes, free_management_pages);
+    }
+    ret = pifs_get_to_be_released_space(&to_be_released_management_bytes, &to_be_released_data_bytes,
+                              &to_be_released_management_pages, &to_be_released_data_pages);
+    if (ret == PIFS_SUCCESS)
+    {
+        PIFS_INFO_MSG("To be released data area:           %lu bytes, %lu pages\r\n",
+                      to_be_released_data_bytes, to_be_released_data_pages);
+        PIFS_INFO_MSG("To be released management area:     %lu bytes, %lu pages\r\n",
+                      to_be_released_management_bytes, to_be_released_management_pages);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_count_entries(&free_entries, &to_be_released_entries);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        PIFS_INFO_MSG("Free entries:                       %lu\r\n", free_entries);
+        PIFS_INFO_MSG("To be released entries:             %lu\r\n", to_be_released_entries);
+    }
+}
+
+
+/**
+ * @brief pifs_init Initialize flash driver and file system.
+ *
+ * @return PIFS_SUCCESS if FS successfully initialized.
+ */
+pifs_status_t pifs_init(void)
+{
+    pifs_status_t        ret = PIFS_SUCCESS;
+    pifs_block_address_t ba;
+    pifs_page_address_t  pa;
+    pifs_header_t        header;
+    pifs_header_t        prev_header;
+    pifs_checksum_t      checksum;
+    pifs_size_t          free_management_bytes;
+    pifs_size_t          free_data_bytes;
+    pifs_size_t          free_management_pages;
+    pifs_size_t          free_data_pages;
+    pifs_size_t          i;
+
+    pifs.header_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
+    pifs.header_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
+    pifs.is_header_found = FALSE;
+    pifs.cache_page_buf_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
+    pifs.cache_page_buf_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
+    pifs.cache_page_buf_is_dirty = FALSE;
+
+#if PIFS_DEBUG_LEVEL >= 5
+    pifs_print_fs_info();
+#endif
+
+    if (PIFS_ENTRY_SIZE_BYTE > PIFS_FLASH_PAGE_SIZE_BYTE)
+    {
+        PIFS_ERROR_MSG("Entry size (%lu) is larger than flash page (%u)!\r\n"
+                       "Change PIFS_FILENAME_LEN_MAX to %lu!\r\n",
+                       PIFS_ENTRY_SIZE_BYTE, PIFS_FLASH_PAGE_SIZE_BYTE,
+                       PIFS_FILENAME_LEN_MAX - (PIFS_ENTRY_SIZE_BYTE - PIFS_FLASH_PAGE_SIZE_BYTE));
+        ret = PIFS_ERROR_CONFIGURATION;
+    }
 
     if ((PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE + PIFS_DELTA_MAP_PAGE_NUM) > PIFS_FLASH_PAGE_PER_BLOCK * PIFS_MANAGEMENT_BLOCKS)
     {
@@ -577,20 +643,10 @@ pifs_status_t pifs_init(void)
 #if PIFS_DEBUG_LEVEL >= 6
             print_buffer(&pifs.header, sizeof(pifs.header), 0);
 #endif
-            PIFS_INFO_MSG("Counter: %i\r\n",
-                            pifs.header.counter);
-            PIFS_INFO_MSG("Entry list at %s\r\n",
-                          pifs_address2str(&pifs.header.entry_list_address));
-            PIFS_INFO_MSG("Free space bitmap at %s\r\n",
-                          pifs_address2str(&pifs.header.free_space_bitmap_address));
-            PIFS_INFO_MSG("Delta page map at %s\r\n",
-                          pifs_address2str(&pifs.header.delta_map_address));
-            pifs_get_free_space(&free_management_bytes, &free_data_bytes,
-                                &free_management_pages, &free_data_pages);
-            PIFS_INFO_MSG("Free data area:                     %lu bytes, %lu pages\r\n",
-                          free_data_bytes, free_data_pages);
-            PIFS_INFO_MSG("Free management area:               %lu bytes, %lu pages\r\n",
-                          free_management_bytes, free_management_pages);
+#if PIFS_DEBUG_LEVEL >= 5
+            pifs_print_header_info();
+            pifs_print_free_space_info();
+#endif
 
 #if PIFS_DEBUG_LEVEL >= 6
             {
