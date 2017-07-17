@@ -51,8 +51,37 @@ pifs_DIR * pifs_opendir(const char *a_name)
             dir->entry_list_index = 0;
         }
     }
+    if (dir == NULL)
+    {
+        PIFS_SET_ERRNO(PIFS_ERROR_NO_MORE_RESOURCE);
+    }
 
     return (pifs_DIR*) dir;
+}
+
+/**
+ * @brief pifs_inc_entry Increase directory entry's pointer.
+ *
+ * @param[in] a_dir Pointer to directory structure.
+ * @return
+ */
+static pifs_status_t pifs_inc_entry(pifs_dir_t * a_dir)
+{
+    pifs_status_t ret = PIFS_SUCCESS;
+
+    a_dir->entry_list_index++;
+    if (a_dir->entry_list_index >= PIFS_ENTRY_PER_PAGE)
+    {
+        a_dir->entry_list_index = 0;
+        pifs_inc_address(&a_dir->entry_list_address);
+        a_dir->entry_page_index++;
+        if (a_dir->entry_page_index < PIFS_ENTRY_LIST_SIZE_PAGE)
+        {
+            ret = PIFS_ERROR_NO_MORE_ENTRY;
+        }
+    }
+
+    return ret;
 }
 
 /**
@@ -68,34 +97,38 @@ struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
     pifs_entry_t    entry;
     pifs_dirent_t * dirent = NULL;
 
-    if (dir->entry_list_index >= PIFS_ENTRY_PER_PAGE)
+#if PIFS_USE_DELTA_FOR_ENTRIES
+    ret = pifs_read_delta(dir->entry_list_address.block_address,
+                          dir->entry_list_address.page_address,
+                          dir->entry_list_index * PIFS_ENTRY_SIZE_BYTE, &entry,
+                          PIFS_ENTRY_SIZE_BYTE);
+#else
+    do
     {
-        dir->entry_list_index = 0;
-        dir->entry_list_address.page_address++;
-    }
-    if (dir->entry_list_address.page_address >= PIFS_FLASH_PAGE_PER_BLOCK)
-    {
-        dir->entry_list_address.page_address = 0;
-        dir->entry_list_address.block_address++;
-    }
-    if (dir->entry_list_address.block_address < pifs.header.entry_list_address.block_address + PIFS_MANAGEMENT_BLOCKS)
-    {
-        ret = pifs_read_delta(dir->entry_list_address.block_address,
-                              dir->entry_list_address.page_address,
-                              dir->entry_list_index * PIFS_ENTRY_SIZE_BYTE, &entry,
-                              PIFS_ENTRY_SIZE_BYTE);
-
-        if (ret == PIFS_SUCCESS
-                && !pifs_is_buffer_erased(&entry, PIFS_ENTRY_SIZE_BYTE)
-                && (entry.attrib != 0))
+        ret = pifs_read(dir->entry_list_address.block_address,
+                        dir->entry_list_address.page_address,
+                        dir->entry_list_index * PIFS_ENTRY_SIZE_BYTE, &entry,
+                        PIFS_ENTRY_SIZE_BYTE);
+        if (ret == PIFS_SUCCESS && entry.attrib == PIFS_FLASH_PROGRAMMED_BYTE_VALUE)
         {
-            /* Copy entry */
-            dir->directory_entry.d_ino = dir->entry_list_index; /* FIXME Not unique, better calculation */
-            strncpy(dir->directory_entry.d_name, entry.name, sizeof(dir->directory_entry.d_name));
-            dirent = &dir->directory_entry;
+            ret = pifs_inc_entry(dir);
         }
-        dir->entry_list_index++;
+    } while (ret == PIFS_SUCCESS && entry.attrib == PIFS_FLASH_PROGRAMMED_BYTE_VALUE);
+#endif
+    if (ret == PIFS_SUCCESS
+            && !pifs_is_buffer_erased(&entry, PIFS_ENTRY_SIZE_BYTE)
+            && (entry.attrib != 0))
+    {
+        /* Copy entry */
+        dir->directory_entry.d_ino = dir->entry_list_index; /* FIXME Not unique, better calculation */
+        strncpy(dir->directory_entry.d_name, entry.name, sizeof(dir->directory_entry.d_name));
+        dirent = &dir->directory_entry;
     }
+    if (ret == PIFS_SUCCESS)
+    {
+        pifs_inc_entry(dir);
+    }
+    PIFS_SET_ERRNO(ret);
 
     return dirent;
 }

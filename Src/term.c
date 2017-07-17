@@ -46,6 +46,52 @@ void cmdTestPifs (char* command, char* params)
     pifs_test();
 }
 
+void cmdListDir (char* command, char* params)
+{
+    char               * path = "/";
+    pifs_DIR           * dir;
+    struct pifs_dirent * dirent;
+
+    (void) command;
+
+    if (params)
+    {
+        path = params;
+    }
+    printf("List directory '%s'\r\n", path);
+    dir = pifs_opendir(path);
+    if (dir != NULL)
+    {
+        while ((dirent = pifs_readdir(dir)))
+        {
+            printf("%-32s  %i\r\n", dirent->d_name, pifs_filesize(dirent->d_name));
+        }
+        if (pifs_closedir (dir) != 0)
+        {
+            printf("Cannot close directory!\r\n");
+        }
+    }
+    else
+    {
+        printf("Could not open the directory!\r\n");
+    }
+}
+
+void cmdRemove (char* command, char* params)
+{
+    (void) command;
+
+    printf("Remove file '%s'\r\n", params);
+    if (pifs_remove(params) == PIFS_SUCCESS)
+    {
+        printf("File removed\r\n");
+    }
+    else
+    {
+        printf("ERROR: Cannot remove file!\r\n");
+    }
+}
+
 void cmdPifsInfo (char* command, char* params)
 {
     (void) command;
@@ -113,6 +159,10 @@ static parserCommand_t parserCommands[] =
     {"e",           "Erase flash",                      cmdErase},
     {"tf",          "Test flash",                       cmdTestFlash},
     {"tp",          "Test Pi file system",              cmdTestPifs},
+    {"ls",          "List directory",                   cmdListDir},
+    {"dir",         "List directory",                   cmdListDir},
+    {"rm",          "Remove file",                      cmdRemove},
+    {"del",         "Remove file",                      cmdRemove},
     {"i",           "Print info of Pi file system",     cmdPifsInfo},
     {"quit",        "Quit",                             cmdQuit},
     {"q",           "Quit",                             cmdQuit},
@@ -136,12 +186,24 @@ void printPrompt (void)
 bool_t getLine(uint8_t * a_buf, size_t a_buf_size)
 {
     size_t len;
+    bool_t is_removed = FALSE;
     fgets((char*)a_buf, a_buf_size, stdin);
-    len = strlen((char*)a_buf);
-    if (a_buf[len - 1] == ASCII_LF)
+    do
     {
-        a_buf[len - 1] = 0;
-    }
+        is_removed = FALSE;
+        len = strlen((char*)a_buf);
+        if (a_buf[len - 1] == ASCII_LF)
+        {
+            a_buf[len - 1] = 0;
+            is_removed = TRUE;
+        }
+        len = strlen((char*)a_buf);
+        if (a_buf[len - 1] == ASCII_CR)
+        {
+            a_buf[len - 1] = 0;
+            is_removed = TRUE;
+        }
+    } while (is_removed);
 //    print_buffer(a_buf, a_buf_size, 0);
     return TRUE;
 }

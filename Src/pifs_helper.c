@@ -347,7 +347,7 @@ pifs_status_t pifs_inc_address(pifs_address_t * a_address)
             ret = PIFS_ERROR_INTERNAL_RANGE;
         }
     }
-    PIFS_NOTICE_MSG("%s\r\n", pifs_address2str(a_address));
+    PIFS_DEBUG_MSG("%s\r\n", pifs_address2str(a_address));
 
     return ret;
 }
@@ -377,7 +377,7 @@ pifs_status_t pifs_inc_ba_pa(pifs_block_address_t * a_block_address,
             ret = PIFS_ERROR_INTERNAL_RANGE;
         }
     }
-//    PIFS_NOTICE_MSG("%s\r\n", pifs_ba_pa2str(*a_block_address, *a_page_address));
+    PIFS_DEBUG_MSG("%s\r\n", pifs_ba_pa2str(*a_block_address, *a_page_address));
 
     return ret;
 }
@@ -421,7 +421,7 @@ pifs_status_t pifs_check_filename(const pifs_char_t * a_filename)
  */
 pifs_status_t pifs_get_file(pifs_file_t * * a_file)
 {
-    pifs_status_t ret = PIFS_ERROR_NO_MORE_FILE_HANDLE;
+    pifs_status_t ret = PIFS_ERROR_NO_MORE_RESOURCE;
     pifs_size_t   i;
     pifs_file_t * file = NULL;
 
