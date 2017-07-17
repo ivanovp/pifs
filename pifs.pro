@@ -27,6 +27,7 @@ HEADERS += ./Inc/api_pifs.h \
 ./Inc/common.h \
 ./Inc/flash.h \
 ./Inc/flash_config.h \
+./Inc/flash_test.h \
 ./Inc/parser.h \
 ./Inc/pifs.h \
 ./Inc/pifs_config.h \
@@ -38,6 +39,7 @@ HEADERS += ./Inc/api_pifs.h \
 ./Inc/pifs_helper.h \
 ./Inc/pifs_map.h \
 ./Inc/pifs_merge.h \
+./Inc/pifs_test.h \
 ./Inc/term.h
 
 INCLUDEPATH += .

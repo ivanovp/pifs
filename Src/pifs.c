@@ -388,13 +388,19 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
         ret = pifs_get_free_space(&free_management_bytes, &free_data_bytes,
                                   &free_management_pages, &free_data_pages);
     }
-    PIFS_INFO_MSG("Free data area:                     %lu bytes, %lu pages\r\n",
-                  free_data_bytes, free_data_pages);
-    PIFS_INFO_MSG("Free management area:               %lu bytes, %lu pages\r\n",
-                  free_management_bytes, free_management_pages);
+    if (ret == PIFS_SUCCESS)
+    {
+        PIFS_INFO_MSG("Free data area:                     %lu bytes, %lu pages\r\n",
+                      free_data_bytes, free_data_pages);
+        PIFS_INFO_MSG("Free management area:               %lu bytes, %lu pages\r\n",
+                      free_management_bytes, free_management_pages);
+    }
     if (ret == PIFS_SUCCESS)
     {
         ret = pifs_count_entries(&free_entries, &to_be_released_entries);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
         PIFS_NOTICE_MSG("free_entries: %lu, to_be_released_entries: %lu\r\n",
                         free_entries, to_be_released_entries);
     }
@@ -551,11 +557,10 @@ pifs_status_t pifs_init(void)
 #if 0
                 ret = pifs_erase(ba);
 #else
-                PIFS_INFO_MSG("Erasing all blocks");
+                PIFS_INFO_MSG("Erasing all blocks ");
                 for (i = PIFS_FLASH_BLOCK_RESERVED_NUM; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
                 {
                     ret = pifs_flash_erase(i);
-                    PIFS_INFO_MSG(".");
                     /* TODO mark bad blocks */
                 }
                 PIFS_INFO_MSG("\r\nDone\r\n.");

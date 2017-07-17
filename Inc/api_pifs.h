@@ -83,6 +83,10 @@ pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
                                   size_t * a_free_data_bytes,
                                   size_t * a_free_management_page_count,
                                   size_t * a_free_data_page_count);
+pifs_status_t pifs_get_to_be_released_space(size_t * a_to_be_released_management_bytes,
+                                            size_t * a_to_be_released_data_bytes,
+                                            size_t * a_to_be_released_management_page_count,
+                                            size_t * a_to_be_released_data_page_count);
 #ifdef __cplusplus
 }
 #endif

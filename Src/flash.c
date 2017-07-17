@@ -39,6 +39,7 @@ pifs_status_t pifs_flash_init(void)
     pifs_status_t ret = PIFS_ERROR_FLASH_INIT;
     pifs_block_address_t ba;
 
+    PIFS_ASSERT(flash_file == NULL);
     flash_file = fopen(FLASH_EMU_FILENAME, "rb+");
     if (flash_file)
     {

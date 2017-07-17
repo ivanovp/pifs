@@ -13,10 +13,46 @@
 
 #include "parser.h"
 #include "buffer.h"
+#include "flash.h"
+#include "flash_test.h"
+#include "pifs_test.h"
+#include "api_pifs.h"
 
 #define CMD_BUF_SIZE  128
 
 bool_t promptIsEnabled = TRUE;
+
+void cmdErase (char* command, char* params)
+{
+    (void) command;
+    (void) params;
+
+    flash_erase_all();
+}
+
+void cmdTestFlash (char* command, char* params)
+{
+    (void) command;
+    (void) params;
+
+    flash_test();
+}
+
+void cmdTestPifs (char* command, char* params)
+{
+    (void) command;
+    (void) params;
+
+    pifs_test();
+}
+
+void cmdPifsInfo (char* command, char* params)
+{
+    (void) command;
+    (void) params;
+
+    pifs_info();
+}
 
 /**
  * Disable printing of prompt.
@@ -73,6 +109,11 @@ void cmdHelp (char *command, char *params)
 static parserCommand_t parserCommands[] =
 {
     //command       brief help                          callback function
+    {"erase",       "Erase flash",                      cmdErase},
+    {"e",           "Erase flash",                      cmdErase},
+    {"tf",          "Test flash",                       cmdTestFlash},
+    {"tp",          "Test Pi file system",              cmdTestPifs},
+    {"i",           "Print info of Pi file system",     cmdPifsInfo},
     {"quit",        "Quit",                             cmdQuit},
     {"q",           "Quit",                             cmdQuit},
     {"noprompt",    "Prompt will not be displayed",     cmdNoPrompt},

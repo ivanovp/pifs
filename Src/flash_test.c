@@ -243,16 +243,16 @@ pifs_status_t flash_test(void)
     printf("Number of pages/block:              %i\r\n", PIFS_FLASH_PAGE_PER_BLOCK);
     printf("Size of page:                       %i byte\r\n", PIFS_FLASH_PAGE_SIZE_BYTE);
 
-    ret = pifs_flash_init();
-    PIFS_ASSERT(ret == PIFS_SUCCESS);
+//    ret = pifs_flash_init();
+//    PIFS_ASSERT(ret == PIFS_SUCCESS);
 
     ret = flash_test_erase_program();
     ret = flash_test_random_write();
     ret = flash_test_addressable();
     ret = flash_test_pattern();
 
-    ret = pifs_flash_delete();
-    PIFS_ASSERT(ret == PIFS_SUCCESS);
+//    ret = pifs_flash_delete();
+//    PIFS_ASSERT(ret == PIFS_SUCCESS);
 
     return ret;
 }

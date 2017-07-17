@@ -33,6 +33,7 @@ SRC_CPP =
 SRC_C =
 SRC_C += ./Src/buffer.c
 SRC_C += ./Src/flash.c
+SRC_C += ./Src/flash_test.c
 SRC_C += ./Src/main.c
 SRC_C += ./Src/parser.c
 SRC_C += ./Src/pifs.c

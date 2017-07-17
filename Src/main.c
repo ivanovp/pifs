@@ -12,6 +12,7 @@
 #include <time.h>
 #include <string.h>
 
+#include "flash.h"
 #include "api_pifs.h"
 #include "pifs.h"
 #include "buffer.h"
@@ -23,6 +24,7 @@
 int main(void)
 {
     srand(time(0));
+    pifs_init();
     term_init();
     while (1)
     {
