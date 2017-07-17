@@ -58,12 +58,33 @@ void cmdListDir (char* command, char* params)
     char               * path = "/";
     pifs_DIR           * dir;
     struct pifs_dirent * dirent;
+    char               * param;
+    bool_t               long_list = FALSE;
+    bool_t               examine = FALSE;
 
     (void) command;
+    (void) params;
 
-    if (params)
+    while ((param = PARSER_getNextParam()))
     {
-        path = params;
+        if (param[0] == '-')
+        {
+            switch (param[1])
+            {
+                case 'l':
+                    long_list = TRUE;
+                    break;
+                case 'e':
+                    examine = TRUE;
+                    break;
+                default:
+                    printf("Unknown switch: %c\r\n", param[1]);
+            }
+        }
+        else
+        {
+            path = param;
+        }
     }
     printf("List directory '%s'\r\n", path);
     dir = pifs_opendir(path);
@@ -71,7 +92,16 @@ void cmdListDir (char* command, char* params)
     {
         while ((dirent = pifs_readdir(dir)))
         {
-            printf("%-32s  %i\r\n", dirent->d_name, pifs_filesize(dirent->d_name));
+            printf("%-32s", dirent->d_name);
+            if (long_list)
+            {
+                printf("  %8i", pifs_filesize(dirent->d_name));
+            }
+            if (examine)
+            {
+                printf("  %s", pifs_ba_pa2str(dirent->d_first_map_block_address, dirent->d_first_map_page_address));
+            }
+            printf("\r\n");
         }
         if (pifs_closedir (dir) != 0)
         {
