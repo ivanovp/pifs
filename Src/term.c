@@ -8,6 +8,7 @@
  * Licence:     GPL
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -15,14 +16,15 @@
 #include "buffer.h"
 #include "flash.h"
 #include "flash_test.h"
-#include "pifs_test.h"
 #include "api_pifs.h"
+#include "pifs_test.h"
+#include "pifs_helper.h"
 
 #define CMD_BUF_SIZE  128
 
 bool_t promptIsEnabled = TRUE;
-static char buf_r[512];
-static char buf_w[512];
+static char buf_r[PIFS_FLASH_PAGE_SIZE_BYTE];
+static char buf_w[PIFS_FLASH_PAGE_SIZE_BYTE];
 
 void cmdErase (char* command, char* params)
 {
@@ -206,6 +208,48 @@ void cmdCreateFile (char* command, char* params)
     }
 }
 
+void cmdDumpPage (char* command, char* params)
+{
+    unsigned long int    addr = 0;
+    pifs_block_address_t ba;
+    pifs_page_address_t  pa;
+    pifs_page_offset_t   po;
+    pifs_status_t        ret;
+
+    (void) command;
+
+    if (params)
+    {
+        //printf("Params: [%s]\r\n", params);
+        addr = strtoul(params, NULL, 0);
+        //printf("Addr: 0x%X\r\n", addr);
+        po = addr % PIFS_FLASH_PAGE_SIZE_BYTE;
+        pa = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) % PIFS_FLASH_PAGE_PER_BLOCK;
+        ba = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) / PIFS_FLASH_PAGE_PER_BLOCK;
+        printf("Dump page %s\r\n", pifs_ba_pa2str(ba, pa));
+        if (ba < PIFS_FLASH_BLOCK_NUM_ALL)
+        {
+            ret = pifs_flash_read(ba, pa, po, buf_r, sizeof(buf_r));
+            if (ret == PIFS_SUCCESS)
+            {
+                print_buffer(buf_r, sizeof(buf_r), addr);
+            }
+            else
+            {
+                printf("ERROR: Cannot read from flash memory!\r\n");
+            }
+        }
+        else
+        {
+            printf("ERROR: Invalid address!\r\n");
+        }
+    }
+    else
+    {
+        printf("ERROR: Missing parameter!\r\n");
+    }
+}
+
 void cmdPifsInfo (char* command, char* params)
 {
     (void) command;
@@ -289,9 +333,12 @@ parserCommand_t parserCommands[] =
     {"rm",          "Remove file",                      cmdRemove},
     {"del",         "Remove file",                      cmdRemove},
     {"dump",        "Dump file in hexadecimal format",  cmdDumpFile},
+    {"d",           "Dump file in hexadecimal format",  cmdDumpFile},
     {"cat",         "Read file",                        cmdReadFile},
     {"type",        "Read file",                        cmdReadFile},
     {"create",      "Create file",                      cmdCreateFile},
+    {"dumpp",       "Dump page in hexadecimal format",  cmdDumpPage},
+    {"dp",          "Dump page in hexadecimal format",  cmdDumpPage},
     {"info",        "Print info of Pi file system",     cmdPifsInfo},
     {"i",           "Print info of Pi file system",     cmdPifsInfo},
     {"free",        "Print info of free space",         cmdFreeSpaceInfo},
