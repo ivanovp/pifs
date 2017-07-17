@@ -699,7 +699,7 @@ pifs_status_t pifs_get_free_pages(pifs_size_t * a_free_management_page_count,
 
 /**
  * @brief pifs_get_free_space Find free page(s) in free space memory bitmap.
- * TODO to be released pages shall be added to the free space!
+ * To be released pages are added to the free space.
  *
  * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_GENERAL: if no free pages found.
  */
@@ -709,11 +709,20 @@ pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
                                   size_t * a_free_data_page_count)
 {
     pifs_status_t ret = PIFS_ERROR_GENERAL;
+    size_t        to_be_released_management_page_count;
+    size_t        to_be_released_data_page_count;
 
     ret = pifs_get_free_pages(a_free_management_page_count, a_free_data_page_count);
 
     if (ret == PIFS_SUCCESS)
     {
+        ret = pifs_get_to_be_released_pages(&to_be_released_management_page_count,
+                                            &to_be_released_data_page_count);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        *a_free_management_page_count += to_be_released_management_page_count;
+        *a_free_data_page_count += to_be_released_data_page_count;
         *a_free_management_bytes = *a_free_management_page_count * PIFS_FLASH_PAGE_SIZE_BYTE;
         *a_free_data_bytes = *a_free_data_page_count * PIFS_FLASH_PAGE_SIZE_BYTE;
     }
