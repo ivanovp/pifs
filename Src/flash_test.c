@@ -30,7 +30,7 @@ pifs_status_t flash_erase_all(void)
     pifs_block_address_t i;
     pifs_status_t ret = PIFS_SUCCESS;
 
-    printf("Erasing all blocks");
+    printf("Erasing all blocks ");
     for (i = PIFS_FLASH_BLOCK_RESERVED_NUM; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
     {
         ret = pifs_flash_erase(i);
@@ -53,7 +53,7 @@ pifs_status_t flash_test_erase_program(void)
     ret = pifs_flash_erase(ba);
     PIFS_ASSERT(ret == PIFS_SUCCESS);
 
-    printf("Block %i", ba + 1);
+    printf("Block %i ", ba + 1);
     for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
     {
         putchar('.');
@@ -107,7 +107,7 @@ pifs_status_t flash_test_random_write(void)
     printf("Testing random data write...\r\n");
     for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < ba_max; ba++)
     {
-        printf("Block %i/%i", ba + 1, ba_max);
+        printf("Block %i/%i ", ba + 1, ba_max);
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
             //printf("Block %i/%i, page %i/%i\r\n", ba + 1, ba_max, pa, PIFS_FLASH_PAGE_PER_BLOCK);
@@ -159,7 +159,7 @@ pifs_status_t flash_test_pattern(void)
     {
         pattern = pattern_arr[ba & ((sizeof(pattern_arr) / sizeof(pattern_arr[0])) - 1)];
         printf("Pattern: 0x%08X\r\n", pattern);
-        printf("Block %i/%i", ba + 1, ba_max);
+        printf("Block %i/%i ", ba + 1, ba_max);
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
             //printf("Block %i/%i, page %i/%i\r\n", ba, PIFS_FLASH_BLOCK_NUM_ALL, pa, PIFS_FLASH_PAGE_PER_BLOCK);
@@ -195,7 +195,7 @@ pifs_status_t flash_test_addressable(void)
     printf("Writing...\r\n");
     for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
     {
-        printf("Block %i/%i", ba + 1, PIFS_FLASH_BLOCK_NUM_ALL);
+        printf("Block %i/%i ", ba + 1, PIFS_FLASH_BLOCK_NUM_ALL);
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
             //printf("Block %i/%i, page %i/%i\r\n", ba, PIFS_FLASH_BLOCK_NUM_ALL, pa, PIFS_FLASH_PAGE_PER_BLOCK);
@@ -211,7 +211,7 @@ pifs_status_t flash_test_addressable(void)
     printf("Reading...\r\n");
     for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
     {
-        printf("Block %i/%i", ba + 1, PIFS_FLASH_BLOCK_NUM_ALL);
+        printf("Block %i/%i ", ba + 1, PIFS_FLASH_BLOCK_NUM_ALL);
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
             //printf("Block %i/%i, page %i/%i\r\n", ba, PIFS_FLASH_BLOCK_NUM_ALL, pa, PIFS_FLASH_PAGE_PER_BLOCK);

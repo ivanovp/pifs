@@ -168,7 +168,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
 
     PIFS_NOTICE_MSG("start\r\n");
 
-    /* Re-create file PIFS_SIZE_ERASED block */
+    /* Re-create file in the new management block */
     pifs_internal_open(&pifs.internal_file, a_old_entry->name, "w", FALSE);
     pifs.internal_file.entry.file_size = a_old_entry->file_size;
     pifs.internal_file.entry.attrib = a_old_entry->attrib ^ PIFS_ATTRIB_ALL;
