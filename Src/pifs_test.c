@@ -533,6 +533,7 @@ pifs_status_t pifs_test(void)
     return ret;
 }
 
+#if 0
 int main(void)
 {
     srand(time(0));
@@ -540,4 +541,4 @@ int main(void)
 
     return 0;
 }
-
+#endif

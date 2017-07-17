@@ -257,10 +257,11 @@ pifs_status_t flash_test(void)
     return ret;
 }
 
+#if 0
 int main(void)
 {
     flash_test();
 
     return 0;
 }
-
+#endif
