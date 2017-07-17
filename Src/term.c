@@ -65,6 +65,12 @@ void cmdListDir (char* command, char* params)
     (void) command;
     (void) params;
 
+    if (strcmp(command, "l") == 0)
+    {
+        long_list = TRUE;
+        examine = TRUE;
+    }
+
     while ((param = PARSER_getNextParam()))
     {
         if (param[0] == '-')
@@ -248,38 +254,103 @@ void cmdDumpPage (char* command, char* params)
     pifs_page_address_t  pa;
     pifs_page_offset_t   po;
     pifs_status_t        ret;
+    char               * param;
+    pifs_size_t          cntr = 1;
 
     (void) command;
 
     if (params)
     {
         //printf("Params: [%s]\r\n", params);
+        param = PARSER_getNextParam();
+        addr = strtoul(param, NULL, 0);
+        param = PARSER_getNextParam();
+        if (param)
+        {
+            cntr = strtoul(param, NULL, 0);
+        }
+        //printf("Addr: 0x%X\r\n", addr);
+        po = addr % PIFS_FLASH_PAGE_SIZE_BYTE;
+        pa = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) % PIFS_FLASH_PAGE_PER_BLOCK;
+        ba = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) / PIFS_FLASH_PAGE_PER_BLOCK;
+        do
+        {
+            printf("Dump page %s\r\n", pifs_ba_pa2str(ba, pa));
+            if (ba < PIFS_FLASH_BLOCK_NUM_ALL)
+            {
+                ret = pifs_flash_read(ba, pa, po, buf_r, sizeof(buf_r));
+                if (ret == PIFS_SUCCESS)
+                {
+                    print_buffer(buf_r, sizeof(buf_r), addr);
+                }
+                else
+                {
+                    printf("ERROR: Cannot read from flash memory!\r\n");
+                }
+            }
+            else
+            {
+                printf("ERROR: Invalid address!\r\n");
+            }
+            pifs_inc_ba_pa(&ba, &pa);
+        } while (--cntr);
+    }
+    else
+    {
+        printf("ERROR: Missing parameter!\r\n");
+    }
+}
+
+void cmdMap (char* command, char* params)
+{
+    unsigned long int    addr = 0;
+    pifs_block_address_t ba;
+    pifs_page_address_t  pa;
+    pifs_page_offset_t   po;
+    pifs_status_t        ret;
+    pifs_map_header_t    map_header;
+    pifs_map_entry_t     map_entry;
+    size_t               i;
+    bool_t               end = FALSE;
+
+    (void) command;
+
+    if (params)
+    {
         addr = strtoul(params, NULL, 0);
         //printf("Addr: 0x%X\r\n", addr);
         po = addr % PIFS_FLASH_PAGE_SIZE_BYTE;
         pa = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) % PIFS_FLASH_PAGE_PER_BLOCK;
         ba = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) / PIFS_FLASH_PAGE_PER_BLOCK;
-        printf("Dump page %s\r\n", pifs_ba_pa2str(ba, pa));
-        if (ba < PIFS_FLASH_BLOCK_NUM_ALL)
+        printf("Map page %s\r\n\r\n", pifs_ba_pa2str(ba, pa));
+
+        ret = pifs_read(ba, pa, po, &map_header, PIFS_MAP_HEADER_SIZE_BYTE);
+        if (ret == PIFS_SUCCESS)
         {
-            ret = pifs_flash_read(ba, pa, po, buf_r, sizeof(buf_r));
-            if (ret == PIFS_SUCCESS)
+            printf("Previous map: %s\r\n", pifs_address2str(&map_header.prev_map_address));
+            printf("Next map:     %s\r\n\r\n", pifs_address2str(&map_header.prev_map_address));
+
+            for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !end && ret == PIFS_SUCCESS; i++)
             {
-                print_buffer(buf_r, sizeof(buf_r), addr);
-            }
-            else
-            {
-                printf("ERROR: Cannot read from flash memory!\r\n");
+                /* Go through all map entries in the page */
+                ret = pifs_read(ba, pa, PIFS_MAP_HEADER_SIZE_BYTE + i * PIFS_MAP_ENTRY_SIZE_BYTE,
+                                &map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
+                if (ret == PIFS_SUCCESS)
+                {
+                    if (!pifs_is_buffer_erased(&map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
+                    {
+                        printf("%s  page count: %i\r\n",
+                               pifs_address2str(&map_entry.address),
+                               map_entry.page_count);
+                    }
+                    else
+                    {
+                        /* Map entry is unused */
+                        end = TRUE;
+                    }
+                }
             }
         }
-        else
-        {
-            printf("ERROR: Invalid address!\r\n");
-        }
-    }
-    else
-    {
-        printf("ERROR: Missing parameter!\r\n");
     }
 }
 
@@ -379,6 +450,7 @@ parserCommand_t parserCommands[] =
     {"tp",          "Test Pi file system",              cmdTestPifs},
     {"tstpifs",     "Test Pi file system",              cmdTestPifs},
     {"ls",          "List directory",                   cmdListDir},
+    {"l",           "List directory",                   cmdListDir},
 #if ENABLE_DOS_ALIAS
     {"dir",         "List directory",                   cmdListDir},
 #endif
@@ -386,15 +458,17 @@ parserCommand_t parserCommands[] =
 #if ENABLE_DOS_ALIAS
     {"del",         "Remove file",                      cmdRemove},
 #endif
-    {"dump",        "Dump file in hexadecimal format",  cmdDumpFile},
-    {"d",           "Dump file in hexadecimal format",  cmdDumpFile},
+    {"dumpf",       "Dump file in hexadecimal format",  cmdDumpFile},
+    {"df",          "Dump file in hexadecimal format",  cmdDumpFile},
     {"cat",         "Read file",                        cmdReadFile},
 #if ENABLE_DOS_ALIAS
     {"type",        "Read file",                        cmdReadFile},
 #endif
     {"create",      "Create file, write until 'q'",     cmdCreateFile},
-    {"dumpp",       "Dump page in hexadecimal format",  cmdDumpPage},
-    {"dp",          "Dump page in hexadecimal format",  cmdDumpPage},
+    {"dump",        "Dump page in hexadecimal format",  cmdDumpPage},
+    {"d",           "Dump page in hexadecimal format",  cmdDumpPage},
+    {"map",         "Print map page",                   cmdMap},
+    {"m",           "Print map page",                   cmdMap},
     {"info",        "Print info of Pi file system",     cmdPifsInfo},
     {"i",           "Print info of Pi file system",     cmdPifsInfo},
     {"free",        "Print info of free space",         cmdFreeSpaceInfo},
