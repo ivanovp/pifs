@@ -319,15 +319,13 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
  *    checksum shall not be written.
  * #5 Copy file entries from old to new management blocks. Maps are also copied,
  *    so map blocks are allocated from new management area (FSBM is needed).
- * #6 Erase old management blocks. TODO: temporarily store that some of the
- *    blocks cannot be used because merging is in progress pifs_find_page_adv().
- *    Erase delta page mirror in RAM.
+ * #6 Erase delta page mirror in RAM.
  * #7 Find free blocks for next management block in the new file system header.
  * #8 Add next management block's address to the new file system header and
  *    calculate checksum.
  * #9 Update page of new file system header. Checksum is written, so the new
  *    file system header is valid from this point.
- * #10 Erase old management blocks. TODO
+ * #10 Erase old management blocks.
  * #11 Re-open files and seek to the stored position.
  *     Therefore actual_map_address, map_header, etc. will be updated.
  *
@@ -396,14 +394,6 @@ pifs_status_t pifs_merge(void)
     /* #6 */
     if (ret == PIFS_SUCCESS)
     {
-#if 0
-        /* TODO this should be point 10! */
-        /* Erase old management area */
-        for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
-        {
-            ret = pifs_erase(old_header.management_blocks[i]);
-        }
-#endif
         /* Reset delta map */
         memset(pifs.delta_map_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE,
                PIFS_DELTA_MAP_PAGE_NUM * PIFS_FLASH_PAGE_SIZE_BYTE);
@@ -441,7 +431,6 @@ pifs_status_t pifs_merge(void)
         /* Write new management area's header with next management block's address */
         ret = pifs_header_write(new_header_ba, new_header_pa, &pifs.header, FALSE);
     }
-#if 1
     /* #10 */
     if (ret == PIFS_SUCCESS)
     {
@@ -451,7 +440,6 @@ pifs_status_t pifs_merge(void)
             ret = pifs_erase(old_header.management_blocks[i]);
         }
     }
-#endif
     /* #11 */
     if (ret == PIFS_SUCCESS)
     {
