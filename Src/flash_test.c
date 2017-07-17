@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-06-15 14:59:50 ivanovp {Time-stamp}
+ * Last modify: 2017-07-17 11:34:37 ivanovp {Time-stamp}
  * Licence:     GPL
  */
 #include <stdio.h>
@@ -13,6 +13,7 @@
 
 #include "flash.h"
 #include "api_pifs.h"
+#include "pifs.h"
 #include "pifs_debug.h"
 #include "buffer.h"
 
@@ -29,11 +30,14 @@ pifs_status_t flash_erase_all(void)
     pifs_block_address_t i;
     pifs_status_t ret = PIFS_SUCCESS;
 
+    printf("Erasing all blocks");
     for (i = PIFS_FLASH_BLOCK_RESERVED_NUM; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
     {
         ret = pifs_flash_erase(i);
+        putchar('.');
         /* TODO mark bad blocks */
     }
+    printf("\r\nDone.\r\n");
 
     return ret;
 }
@@ -44,13 +48,16 @@ pifs_status_t flash_test_erase_program(void)
     pifs_block_address_t ba;
     pifs_page_address_t pa;
 
-    printf("Testing erase and program... ");
+    printf("Testing erase and program...\r\n");
     ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
     ret = pifs_flash_erase(ba);
     PIFS_ASSERT(ret == PIFS_SUCCESS);
 
+    printf("Block %i", ba + 1);
     for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
     {
+        putchar('.');
+        //printf("Page %i/%i\r\n", pa, PIFS_FLASH_PAGE_PER_BLOCK);
         /* Program bit 0 (clear bit 0) */
         fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SIMPLE_BYTE, 0xFE);
         ret = pifs_flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
@@ -72,14 +79,15 @@ pifs_status_t flash_test_erase_program(void)
 
         ret = compare_buffer(test_buf_w, sizeof(test_buf_w), test_buf_r);
         PIFS_ASSERT(ret == PIFS_SUCCESS);
-
+#if 0
         /* Testing program error detection */
         /* Try to Un-program bit 0, which should not be possible */
         test_buf_w[PIFS_FLASH_PAGE_SIZE_BYTE - 1] = 0xF1;
         ret = pifs_flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
         PIFS_ASSERT(ret == PIFS_ERROR_FLASH_WRITE);
+#endif
     }
-    printf("Done.\r\n");
+    printf("\r\nDone.\r\n");
 
     return ret;
 }
@@ -88,18 +96,21 @@ pifs_status_t flash_test_random_write(void)
 {
     pifs_status_t ret;
     pifs_block_address_t ba;
+    pifs_block_address_t ba_max;
     pifs_page_address_t pa;
 
-    printf("Erasing all blocks... ");
     ret = flash_erase_all();
     PIFS_ASSERT(ret == PIFS_SUCCESS);
-    printf("Done.\r\n");
-    
-    printf("Testing random data write... ");
-    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
+
+    ba_max = PIFS_MIN(PIFS_FLASH_BLOCK_RESERVED_NUM + 2, PIFS_FLASH_BLOCK_NUM_ALL);
+
+    printf("Testing random data write...\r\n");
+    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < ba_max; ba++)
     {
+        printf("Block %i/%i", ba + 1, ba_max);
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
+            //printf("Block %i/%i, page %i/%i\r\n", ba + 1, ba_max, pa, PIFS_FLASH_PAGE_PER_BLOCK);
             fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_RANDOM, 0);
             ret = pifs_flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
             PIFS_ASSERT(ret == PIFS_SUCCESS);
@@ -109,7 +120,10 @@ pifs_status_t flash_test_random_write(void)
 
             ret = compare_buffer(test_buf_w, sizeof(test_buf_w), test_buf_r);
             PIFS_ASSERT(ret == PIFS_SUCCESS);
+            putchar('.');
         }
+        putchar(ASCII_CR);
+        putchar(ASCII_LF);
     }
     printf("Done.\r\n");
 
@@ -120,6 +134,7 @@ pifs_status_t flash_test_pattern(void)
 {
     pifs_status_t ret;
     pifs_block_address_t ba;
+    pifs_block_address_t ba_max;
     pifs_page_address_t pa;
     uint32_t pattern;
     const uint32_t pattern_arr[8] =
@@ -134,18 +149,20 @@ pifs_status_t flash_test_pattern(void)
         0xA55AA55A
     };
 
-    printf("Erasing all blocks... ");
     ret = flash_erase_all();
     PIFS_ASSERT(ret == PIFS_SUCCESS);
-    printf("Done.\r\n");
-    
-    printf("Testing pattern write... ");
-    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
+
+    ba_max = PIFS_MIN((sizeof(pattern_arr) / sizeof(pattern_arr[0])), PIFS_FLASH_BLOCK_NUM_ALL);
+
+    printf("Testing pattern write...\r\n");
+    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < ba_max; ba++)
     {
         pattern = pattern_arr[ba & ((sizeof(pattern_arr) / sizeof(pattern_arr[0])) - 1)];
         printf("Pattern: 0x%08X\r\n", pattern);
+        printf("Block %i/%i", ba + 1, ba_max);
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
+            //printf("Block %i/%i, page %i/%i\r\n", ba, PIFS_FLASH_BLOCK_NUM_ALL, pa, PIFS_FLASH_PAGE_PER_BLOCK);
             fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SIMPLE_DWORD, pattern);
             ret = pifs_flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
             PIFS_ASSERT(ret == PIFS_SUCCESS);
@@ -155,7 +172,10 @@ pifs_status_t flash_test_pattern(void)
 
             ret = compare_buffer(test_buf_w, sizeof(test_buf_w), test_buf_r);
             PIFS_ASSERT(ret == PIFS_SUCCESS);
+            putchar('.');
         }
+        putchar(ASCII_CR);
+        putchar(ASCII_LF);
     }
     printf("Done.\r\n");
 
@@ -168,26 +188,33 @@ pifs_status_t flash_test_addressable(void)
     pifs_block_address_t ba;
     pifs_page_address_t pa;
 
-    printf("Erasing all blocks... ");
     ret = flash_erase_all();
     PIFS_ASSERT(ret == PIFS_SUCCESS);
-    printf("Done.\r\n");
 
-    printf("Testing whole memory area is addressable... ");
+    printf("Testing whole memory area is addressable...\r\n");
+    printf("Writing...\r\n");
     for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
     {
+        printf("Block %i/%i", ba + 1, PIFS_FLASH_BLOCK_NUM_ALL);
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
+            //printf("Block %i/%i, page %i/%i\r\n", ba, PIFS_FLASH_BLOCK_NUM_ALL, pa, PIFS_FLASH_PAGE_PER_BLOCK);
             fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SEQUENCE_DWORD, ((uint32_t)ba << 16) | pa);
             ret = pifs_flash_write(ba, pa, 0, test_buf_w, sizeof(test_buf_w));
             PIFS_ASSERT(ret == PIFS_SUCCESS);
+            putchar('.');
         }
+        putchar(ASCII_CR);
+        putchar(ASCII_LF);
     }
     
+    printf("Reading...\r\n");
     for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
     {
+        printf("Block %i/%i", ba + 1, PIFS_FLASH_BLOCK_NUM_ALL);
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
+            //printf("Block %i/%i, page %i/%i\r\n", ba, PIFS_FLASH_BLOCK_NUM_ALL, pa, PIFS_FLASH_PAGE_PER_BLOCK);
             fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SEQUENCE_DWORD, ((uint32_t)ba << 16) | pa);
             
             ret = pifs_flash_read(ba, pa, 0, test_buf_r, sizeof(test_buf_r));
@@ -195,7 +222,10 @@ pifs_status_t flash_test_addressable(void)
 
             ret = compare_buffer(test_buf_w, sizeof(test_buf_w), test_buf_r);
             PIFS_ASSERT(ret == PIFS_SUCCESS);
+            putchar('.');
         }
+        putchar(ASCII_CR);
+        putchar(ASCII_LF);
     }
     printf("Done.\r\n");
 
