@@ -25,7 +25,12 @@ typedef unsigned char bool_t;
 #define TOSTR(s)    XSTR(s)
 #define XSTR(s)     #s
 
-#define ASCII_CR    (13)
-#define ASCII_LF    (10)
+#define ASCII_CR            (13)
+#define ASCII_LF            (10)
+#define ASCII_SPACE         (' ')
+#define ASCII_BACKSPACE     (8)
+#define ASCII_TAB           ('\t')
+#define ASCII_QUOTE         ('"')
+#define ASCII_APOSTROPHE    ('\'')
 
 #endif /* _INCLUDE_COMMON_H_ */

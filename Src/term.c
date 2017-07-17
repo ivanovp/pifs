@@ -20,9 +20,12 @@
 #include "pifs_test.h"
 #include "pifs_helper.h"
 
-#define CMD_BUF_SIZE  128
+#define ENABLE_DOS_ALIAS    0
+#define CMD_BUF_SIZE        128
 
 bool_t promptIsEnabled = TRUE;
+static uint8_t buf[CMD_BUF_SIZE] = { 0 };     /* Current input from the serial line */
+static uint8_t prevBuf[CMD_BUF_SIZE] = { 0 }; /* Previous input from the serial line */
 static char buf_r[PIFS_FLASH_PAGE_SIZE_BYTE];
 static char buf_w[PIFS_FLASH_PAGE_SIZE_BYTE];
 
@@ -194,7 +197,7 @@ void cmdCreateFile (char* command, char* params)
                 {
                     written = pifs_fwrite(buf_w, 1, read, file);
                 }
-            } while (read && written == read);
+            } while (read && written == read && buf_w[0] != 'q');
             pifs_fclose(file);
         }
         else
@@ -280,6 +283,23 @@ void cmdNoPrompt (char* command, char* params)
 }
 
 /**
+ * Test parameter handling.
+ */
+void cmdParamTest (char* command, char* params)
+{
+    char * param;
+    (void) command;
+
+
+    printf("Params: %s\r\n", params);
+    while ((param = PARSER_getNextParam()))
+    {
+        printf("Param: [%s]\r\n", param);
+    }
+    printf("Params: %s\r\n", params);
+}
+
+/**
  * Quit from program.
  */
 void cmdQuit (char* command, char* params)
@@ -329,14 +349,20 @@ parserCommand_t parserCommands[] =
     {"tp",          "Test Pi file system",              cmdTestPifs},
     {"tstpifs",     "Test Pi file system",              cmdTestPifs},
     {"ls",          "List directory",                   cmdListDir},
+#if ENABLE_DOS_ALIAS
     {"dir",         "List directory",                   cmdListDir},
+#endif
     {"rm",          "Remove file",                      cmdRemove},
+#if ENABLE_DOS_ALIAS
     {"del",         "Remove file",                      cmdRemove},
+#endif
     {"dump",        "Dump file in hexadecimal format",  cmdDumpFile},
     {"d",           "Dump file in hexadecimal format",  cmdDumpFile},
     {"cat",         "Read file",                        cmdReadFile},
+#if ENABLE_DOS_ALIAS
     {"type",        "Read file",                        cmdReadFile},
-    {"create",      "Create file",                      cmdCreateFile},
+#endif
+    {"create",      "Create file, write until 'q'",     cmdCreateFile},
     {"dumpp",       "Dump page in hexadecimal format",  cmdDumpPage},
     {"dp",          "Dump page in hexadecimal format",  cmdDumpPage},
     {"info",        "Print info of Pi file system",     cmdPifsInfo},
@@ -346,6 +372,7 @@ parserCommand_t parserCommands[] =
     {"quit",        "Quit",                             cmdQuit},
     {"q",           "Quit",                             cmdQuit},
     {"noprompt",    "Prompt will not be displayed",     cmdNoPrompt},
+    {"p",           "Parameter test",                   cmdParamTest},
     {"help",        "Print help",                       cmdHelp},
     {"?",           "Print help",                       cmdHelp},
     {NULL,          NULL,                               NULL}   // end of command list
@@ -398,10 +425,7 @@ void term_init (void)
  * Check UART input buffer for new data. It will call parser if new command has got.
  */
 void term_task (void)
-{
-    uint8_t buf[CMD_BUF_SIZE] = { 0 };            /* Current input from the serial line */
-    static uint8_t prevBuf[CMD_BUF_SIZE] = { 0 }; /* Previous input from the serial line */
-    
+{ 
     if (getLine (buf, sizeof (buf)))           /* Check if enter was pressed */
     {
         //printf ("buf: [%s]\r\n", buf);

@@ -22,6 +22,10 @@ parserCommand_t *PARSER_parserCommand = NULL;
  * Number of commands in PARSER_parserCommand. This variable is initialized by PARSER_init()!
  */
 uint16_t PARSER_parserCommandSize = 0; 
+static char * actualParam;
+static char * params;
+static uint32_t paramIdx;
+static uint32_t paramSize;
 
 /**
  * Count number of elements in the command array.
@@ -37,6 +41,82 @@ uint16_t PARSER_getSize (const parserCommand_t* commands)
     uint16_t i;
     for (i = 0; i < PARSER_MAX_COMMAND_ITEMS && commands[i].command; i++);
     return i;
+}
+
+static void PARSER_paramInit(char * a_params, uint32_t a_paramMaxSize)
+{
+    bool_t exit = FALSE;
+
+    actualParam = a_params;
+    params = a_params;
+    paramIdx = 0;
+    if (a_params != NULL)
+    {
+        paramSize = strnlen(a_params, a_paramMaxSize);
+        /* Check if parameters start with whitespace */
+        if (a_params[0] == ASCII_SPACE || a_params[0] == ASCII_TAB)
+        {
+            for (; paramIdx < paramSize && !exit; paramIdx++)
+            {
+                if (params[paramIdx] != ASCII_SPACE && params[paramIdx] != ASCII_TAB)
+                {
+                    actualParam = &params[paramIdx];
+                    exit = TRUE;
+                }
+            }
+        }
+    }
+    else
+    {
+        paramSize = 0;
+    }
+}
+
+char * PARSER_getNextParam(void)
+{
+    char  * ret = actualParam;
+    bool_t  endOfString = FALSE;
+    bool_t  exit = FALSE;
+    bool_t  isInString = FALSE;
+    char    strChr; /* '"' or '\"' */
+
+    actualParam = NULL;
+    for (; paramIdx < paramSize && !exit; paramIdx++)
+    {
+        if (!isInString)
+        {
+            /* Normal, not inside string */
+            if (!endOfString && (params[paramIdx] == ASCII_APOSTROPHE || params[paramIdx] == ASCII_QUOTE))
+            {
+                isInString = TRUE;
+                strChr = params[paramIdx];
+//                params[paramIdx] = 0;
+            }
+            else if (params[paramIdx] == ASCII_SPACE || params[paramIdx] == ASCII_TAB)
+            {
+                params[paramIdx] = 0;
+                endOfString = TRUE;
+            }
+            else if (endOfString)
+            {
+                actualParam = &params[paramIdx];
+                paramIdx--;
+                exit = TRUE;
+            }
+        }
+        else
+        {
+            /* Inside string */
+            if (params[paramIdx] == strChr)
+            {
+//                params[paramIdx] = 0;
+                endOfString = TRUE;
+                isInString = FALSE;
+            }
+        }
+    }
+
+    return ret;
 }
 
 /**
@@ -106,6 +186,7 @@ bool_t PARSER_process (const char* command, size_t size)
         {
             //UART1_printf ("callback found: %s\r\n", PARSER_parserCommand[i].command);
             found = TRUE;
+            PARSER_paramInit(params, size - pureCmdLen);
             (PARSER_parserCommand[i].commandHandlerCallback) (pureCmd, params);
         }
     }

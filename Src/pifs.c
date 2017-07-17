@@ -413,54 +413,54 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
  */
 void pifs_print_fs_info(void)
 {
-    PIFS_INFO_MSG("Geometry of flash memory\r\n");
-    PIFS_INFO_MSG("------------------------\r\n");
-    PIFS_INFO_MSG("Size of flash memory (all):         %i bytes, %i KiB\r\n", PIFS_FLASH_SIZE_BYTE_ALL, PIFS_FLASH_SIZE_BYTE_ALL / 1024);
-    PIFS_INFO_MSG("Size of flash memory (used by FS):  %i bytes, %i KiB\r\n", PIFS_FLASH_SIZE_BYTE_FS, PIFS_FLASH_SIZE_BYTE_ALL / 1024);
-    PIFS_INFO_MSG("Size of block:                      %i bytes\r\n", PIFS_FLASH_BLOCK_SIZE_BYTE);
-    PIFS_INFO_MSG("Size of page:                       %i bytes\r\n", PIFS_FLASH_PAGE_SIZE_BYTE);
-    PIFS_INFO_MSG("Number of blocks (all):             %i\r\n", PIFS_FLASH_BLOCK_NUM_ALL);
-    PIFS_INFO_MSG("Number of blocks (used by FS)):     %i\r\n", PIFS_FLASH_BLOCK_NUM_FS);
-    PIFS_INFO_MSG("Number of pages/block:              %i\r\n", PIFS_FLASH_PAGE_PER_BLOCK);
-    PIFS_INFO_MSG("Number of pages (all):              %i\r\n", PIFS_FLASH_PAGE_NUM_ALL);
-    PIFS_INFO_MSG("Number of pages (used by FS)):      %i\r\n", PIFS_FLASH_PAGE_NUM_FS);
-    PIFS_INFO_MSG("\r\n");
-    PIFS_INFO_MSG("Geometry of file system\r\n");
-    PIFS_INFO_MSG("-----------------------\r\n");
-    PIFS_INFO_MSG("Block address size:                 %lu bytes\r\n", sizeof(pifs_block_address_t));
-    PIFS_INFO_MSG("Page address size:                  %lu bytes\r\n", sizeof(pifs_page_address_t));
-    PIFS_INFO_MSG("Header size:                        %lu bytes, %lu pages\r\n", PIFS_HEADER_SIZE_BYTE, PIFS_HEADER_SIZE_PAGE);
-    PIFS_INFO_MSG("Entry size:                         %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE);
-    PIFS_INFO_MSG("Entry size in a page:               %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE * PIFS_ENTRY_PER_PAGE);
-    PIFS_INFO_MSG("Entry list size:                    %lu bytes, %lu pages\r\n", PIFS_ENTRY_LIST_SIZE_BYTE, PIFS_ENTRY_LIST_SIZE_PAGE);
-    PIFS_INFO_MSG("Free space bitmap size:             %u bytes, %u pages\r\n", PIFS_FREE_SPACE_BITMAP_SIZE_BYTE, PIFS_FREE_SPACE_BITMAP_SIZE_PAGE);
-    PIFS_INFO_MSG("Map header size:                    %lu bytes\r\n", PIFS_MAP_HEADER_SIZE_BYTE);
-    PIFS_INFO_MSG("Map entry size:                     %lu bytes\r\n", PIFS_MAP_ENTRY_SIZE_BYTE);
-    PIFS_INFO_MSG("Number of map entries/page:         %lu\r\n", PIFS_MAP_ENTRY_PER_PAGE);
-//    PIFS_INFO_MSG("Delta header size:                  %lu bytes\r\n", PIFS_DELTA_HEADER_SIZE_BYTE);
-    PIFS_INFO_MSG("Delta entry size:                   %lu bytes\r\n", PIFS_DELTA_ENTRY_SIZE_BYTE);
-    PIFS_INFO_MSG("Number of delta entries/page:       %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE);
-    PIFS_INFO_MSG("Number of delta entries:            %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE * PIFS_DELTA_MAP_PAGE_NUM);
-    PIFS_INFO_MSG("Delta map size:                     %u bytes, %u pages\r\n", PIFS_DELTA_MAP_PAGE_NUM * PIFS_FLASH_PAGE_SIZE_BYTE, PIFS_DELTA_MAP_PAGE_NUM);
-    PIFS_INFO_MSG("Full reserved area for management:  %i bytes, %i pages\r\n",
-                   PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_BLOCK_SIZE_BYTE,
-                   PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_PAGE_PER_BLOCK);
-    PIFS_INFO_MSG("Size of management area:            %i bytes, %i pages\r\n",
-                   PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_BLOCK_SIZE_BYTE,
-                   PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_PAGE_PER_BLOCK);
-    PIFS_INFO_MSG("\r\n");
+    printf("Geometry of flash memory\r\n");
+    printf("------------------------\r\n");
+    printf("Size of flash memory (all):         %i bytes, %i KiB\r\n", PIFS_FLASH_SIZE_BYTE_ALL, PIFS_FLASH_SIZE_BYTE_ALL / 1024);
+    printf("Size of flash memory (used by FS):  %i bytes, %i KiB\r\n", PIFS_FLASH_SIZE_BYTE_FS, PIFS_FLASH_SIZE_BYTE_ALL / 1024);
+    printf("Size of block:                      %i bytes\r\n", PIFS_FLASH_BLOCK_SIZE_BYTE);
+    printf("Size of page:                       %i bytes\r\n", PIFS_FLASH_PAGE_SIZE_BYTE);
+    printf("Number of blocks (all):             %i\r\n", PIFS_FLASH_BLOCK_NUM_ALL);
+    printf("Number of blocks (used by FS)):     %i\r\n", PIFS_FLASH_BLOCK_NUM_FS);
+    printf("Number of pages/block:              %i\r\n", PIFS_FLASH_PAGE_PER_BLOCK);
+    printf("Number of pages (all):              %i\r\n", PIFS_FLASH_PAGE_NUM_ALL);
+    printf("Number of pages (used by FS)):      %i\r\n", PIFS_FLASH_PAGE_NUM_FS);
+    printf("\r\n");
+    printf("Geometry of file system\r\n");
+    printf("-----------------------\r\n");
+    printf("Block address size:                 %lu bytes\r\n", sizeof(pifs_block_address_t));
+    printf("Page address size:                  %lu bytes\r\n", sizeof(pifs_page_address_t));
+    printf("Header size:                        %lu bytes, %lu pages\r\n", PIFS_HEADER_SIZE_BYTE, PIFS_HEADER_SIZE_PAGE);
+    printf("Entry size:                         %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE);
+    printf("Entry size in a page:               %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE * PIFS_ENTRY_PER_PAGE);
+    printf("Entry list size:                    %lu bytes, %lu pages\r\n", PIFS_ENTRY_LIST_SIZE_BYTE, PIFS_ENTRY_LIST_SIZE_PAGE);
+    printf("Free space bitmap size:             %u bytes, %u pages\r\n", PIFS_FREE_SPACE_BITMAP_SIZE_BYTE, PIFS_FREE_SPACE_BITMAP_SIZE_PAGE);
+    printf("Map header size:                    %lu bytes\r\n", PIFS_MAP_HEADER_SIZE_BYTE);
+    printf("Map entry size:                     %lu bytes\r\n", PIFS_MAP_ENTRY_SIZE_BYTE);
+    printf("Number of map entries/page:         %lu\r\n", PIFS_MAP_ENTRY_PER_PAGE);
+    //    printf("Delta header size:                  %lu bytes\r\n", PIFS_DELTA_HEADER_SIZE_BYTE);
+    printf("Delta entry size:                   %lu bytes\r\n", PIFS_DELTA_ENTRY_SIZE_BYTE);
+    printf("Number of delta entries/page:       %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE);
+    printf("Number of delta entries:            %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE * PIFS_DELTA_MAP_PAGE_NUM);
+    printf("Delta map size:                     %u bytes, %u pages\r\n", PIFS_DELTA_MAP_PAGE_NUM * PIFS_FLASH_PAGE_SIZE_BYTE, PIFS_DELTA_MAP_PAGE_NUM);
+    printf("Full reserved area for management:  %i bytes, %i pages\r\n",
+           PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_BLOCK_SIZE_BYTE,
+           PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_PAGE_PER_BLOCK);
+    printf("Size of management area:            %i bytes, %i pages\r\n",
+           PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_BLOCK_SIZE_BYTE,
+           PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_PAGE_PER_BLOCK);
+    printf("\r\n");
 }
 
 void pifs_print_header_info(void)
 {
-    PIFS_INFO_MSG("Counter: %i\r\n",
-                  pifs.header.counter);
-    PIFS_INFO_MSG("Entry list at %s\r\n",
-                  pifs_address2str(&pifs.header.entry_list_address));
-    PIFS_INFO_MSG("Free space bitmap at %s\r\n",
-                  pifs_address2str(&pifs.header.free_space_bitmap_address));
-    PIFS_INFO_MSG("Delta page map at %s\r\n",
-                  pifs_address2str(&pifs.header.delta_map_address));
+    printf("Counter: %i\r\n",
+           pifs.header.counter);
+    printf("Entry list at %s\r\n",
+           pifs_address2str(&pifs.header.entry_list_address));
+    printf("Free space bitmap at %s\r\n",
+           pifs_address2str(&pifs.header.free_space_bitmap_address));
+    printf("Delta page map at %s\r\n",
+           pifs_address2str(&pifs.header.delta_map_address));
 }
 
 void pifs_print_free_space_info(void)
@@ -481,19 +481,19 @@ void pifs_print_free_space_info(void)
                               &free_management_pages, &free_data_pages);
     if (ret == PIFS_SUCCESS)
     {
-        PIFS_INFO_MSG("Free data area:                     %lu bytes, %lu pages\r\n",
-                      free_data_bytes, free_data_pages);
-        PIFS_INFO_MSG("Free management area:               %lu bytes, %lu pages\r\n",
-                      free_management_bytes, free_management_pages);
+        printf("Free data area:                     %lu bytes, %lu pages\r\n",
+               free_data_bytes, free_data_pages);
+        printf("Free management area:               %lu bytes, %lu pages\r\n",
+               free_management_bytes, free_management_pages);
     }
     ret = pifs_get_to_be_released_space(&to_be_released_management_bytes, &to_be_released_data_bytes,
-                              &to_be_released_management_pages, &to_be_released_data_pages);
+                                        &to_be_released_management_pages, &to_be_released_data_pages);
     if (ret == PIFS_SUCCESS)
     {
-        PIFS_INFO_MSG("To be released data area:           %lu bytes, %lu pages\r\n",
-                      to_be_released_data_bytes, to_be_released_data_pages);
-        PIFS_INFO_MSG("To be released management area:     %lu bytes, %lu pages\r\n",
-                      to_be_released_management_bytes, to_be_released_management_pages);
+        printf("To be released data area:           %lu bytes, %lu pages\r\n",
+               to_be_released_data_bytes, to_be_released_data_pages);
+        printf("To be released management area:     %lu bytes, %lu pages\r\n",
+               to_be_released_management_bytes, to_be_released_management_pages);
     }
     if (ret == PIFS_SUCCESS)
     {
@@ -501,8 +501,8 @@ void pifs_print_free_space_info(void)
     }
     if (ret == PIFS_SUCCESS)
     {
-        PIFS_INFO_MSG("Free entries:                       %lu\r\n", free_entries);
-        PIFS_INFO_MSG("To be released entries:             %lu\r\n", to_be_released_entries);
+        printf("Free entries:                       %lu\r\n", free_entries);
+        printf("To be released entries:             %lu\r\n", to_be_released_entries);
     }
 }
 
