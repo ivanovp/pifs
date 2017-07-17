@@ -21,6 +21,8 @@
 #define CMD_BUF_SIZE  128
 
 bool_t promptIsEnabled = TRUE;
+static char buf_r[512];
+static char buf_w[512];
 
 void cmdErase (char* command, char* params)
 {
@@ -81,14 +83,126 @@ void cmdRemove (char* command, char* params)
 {
     (void) command;
 
-    printf("Remove file '%s'\r\n", params);
-    if (pifs_remove(params) == PIFS_SUCCESS)
+    if (params)
     {
-        printf("File removed\r\n");
+        printf("Remove file '%s'\r\n", params);
+        if (pifs_remove(params) == PIFS_SUCCESS)
+        {
+            printf("File removed\r\n");
+        }
+        else
+        {
+            printf("ERROR: Cannot remove file!\r\n");
+        }
     }
     else
     {
-        printf("ERROR: Cannot remove file!\r\n");
+        printf("ERROR: Missing parameter!\r\n");
+    }
+}
+
+void cmdDumpFile (char* command, char* params)
+{
+    P_FILE * file;
+    size_t   read;
+    uint32_t addr = 0;
+
+    (void) command;
+
+    if (params)
+    {
+        printf("Dump file '%s'\r\n", params);
+        file = pifs_fopen(params, "r");
+        if (file)
+        {
+            do
+            {
+                read = pifs_fread(buf_r, 1, sizeof(buf_r), file);
+                if (read > 0)
+                {
+                    print_buffer(buf_r, read, addr);
+                    addr += read;
+                }
+            } while (read > 0);
+            pifs_fclose(file);
+        }
+        else
+        {
+            printf("ERROR: Cannot open file!\r\n");
+        }
+    }
+    else
+    {
+        printf("ERROR: Missing parameter!\r\n");
+    }
+}
+
+void cmdReadFile (char* command, char* params)
+{
+    P_FILE * file;
+    size_t   read;
+
+    (void) command;
+
+    if (params)
+    {
+        printf("Read file '%s'\r\n", params);
+        file = pifs_fopen(params, "r");
+        if (file)
+        {
+            do
+            {
+                read = pifs_fread(buf_r, 1, sizeof(buf_r), file);
+                if (read > 0)
+                {
+                    fwrite(buf_r, 1, read, stdout);
+                }
+            } while (read > 0);
+            pifs_fclose(file);
+        }
+        else
+        {
+            printf("ERROR: Cannot open file!\r\n");
+        }
+    }
+    else
+    {
+        printf("ERROR: Missing parameter!\r\n");
+    }
+}
+
+void cmdCreateFile (char* command, char* params)
+{
+    P_FILE * file;
+    size_t   read;
+    size_t   written;
+
+    (void) command;
+
+    if (params)
+    {
+        printf("Create file '%s'\r\n", params);
+        file = pifs_fopen(params, "w");
+        if (file)
+        {
+            do
+            {
+                read = fread(buf_w, 1, sizeof(buf_w), stdin);
+                if (read)
+                {
+                    written = pifs_fwrite(buf_w, 1, read, file);
+                }
+            } while (read && written == read);
+            pifs_fclose(file);
+        }
+        else
+        {
+            printf("ERROR: Cannot open file!\r\n");
+        }
+    }
+    else
+    {
+        printf("ERROR: Missing parameter!\r\n");
     }
 }
 
@@ -174,6 +288,10 @@ parserCommand_t parserCommands[] =
     {"dir",         "List directory",                   cmdListDir},
     {"rm",          "Remove file",                      cmdRemove},
     {"del",         "Remove file",                      cmdRemove},
+    {"dump",        "Dump file in hexadecimal format",  cmdDumpFile},
+    {"cat",         "Read file",                        cmdReadFile},
+    {"type",        "Read file",                        cmdReadFile},
+    {"create",      "Create file",                      cmdCreateFile},
     {"info",        "Print info of Pi file system",     cmdPifsInfo},
     {"i",           "Print info of Pi file system",     cmdPifsInfo},
     {"free",        "Print info of free space",         cmdFreeSpaceInfo},

@@ -31,8 +31,8 @@ int main(int argc, char **argv)
     pifs_init();
     if (argc < 2)
     {
-        term_init();
         /* No arguments */
+        term_init();
         while (1)
         {
             term_task();
@@ -40,8 +40,8 @@ int main(int argc, char **argv)
     }
     else
     {
-        PARSER_init(parserCommands);
         /* Process arguments */
+        PARSER_init(parserCommands);
         for (i = 1; i < argc; i++)
         {
             if (i != 1)

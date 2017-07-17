@@ -520,10 +520,6 @@ pifs_status_t pifs_init(void)
     pifs_header_t        header;
     pifs_header_t        prev_header;
     pifs_checksum_t      checksum;
-    pifs_size_t          free_management_bytes;
-    pifs_size_t          free_data_bytes;
-    pifs_size_t          free_management_pages;
-    pifs_size_t          free_data_pages;
     pifs_size_t          i;
 
     pifs.header_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
@@ -1016,7 +1012,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
     }
 
     PIFS_SET_ERRNO(file->status);
-    return written_size;
+    return written_size / a_size;
 }
 
 /**
@@ -1078,6 +1074,10 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
     PIFS_NOTICE_MSG("filename: '%s', size: %i, count: %i\r\n", file->entry.name, a_size, a_count);
     if (pifs.is_header_found && file && file->is_opened && file->mode_read)
     {
+        if (file->read_pos + data_size > file->entry.file_size)
+        {
+            data_size = file->entry.file_size - file->read_pos;
+        }
         po = file->read_pos % PIFS_FLASH_PAGE_SIZE_BYTE;
         /* Check if last page was not fully read */
         if (po)
@@ -1086,8 +1086,8 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
             //          PIFS_DEBUG_MSG("po != 0  %s\r\n", pifs_address2str(&file->read_address));
             PIFS_ASSERT(pifs_is_address_valid(&file->read_address));
             chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE - po);
-            //          PIFS_DEBUG_MSG("--------> pos: %i po: %i data_size: %i chunk_size: %i\r\n",
-            //                         file->read_pos, po, data_size, chunk_size);
+            PIFS_DEBUG_MSG("--------> pos: %i po: %i data_size: %i chunk_size: %i\r\n",
+                           file->read_pos, po, data_size, chunk_size);
             file->status = pifs_read_delta(file->read_address.block_address,
                                            file->read_address.page_address,
                                            po, data, chunk_size);
@@ -1114,8 +1114,8 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
                 {
                     chunk_size = file->entry.file_size - file->read_pos;
                 }
-                PIFS_NOTICE_MSG("read %s, chunk size: %i\r\n",
-                               pifs_address2str(&file->read_address), chunk_size);
+                PIFS_NOTICE_MSG("read %s, page_count: %i, chunk size: %i\r\n",
+                               pifs_address2str(&file->read_address), page_count, chunk_size);
                 PIFS_ASSERT(pifs_is_address_valid(&file->read_address));
                 file->status = pifs_read_delta(file->read_address.block_address,
                                                file->read_address.page_address,
@@ -1139,7 +1139,7 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
     }
 
     PIFS_SET_ERRNO(file->status);
-    return read_size;
+    return read_size / a_size;
 }
 
 /**
