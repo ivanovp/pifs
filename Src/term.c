@@ -19,6 +19,7 @@
 #include "api_pifs.h"
 #include "pifs_test.h"
 #include "pifs_helper.h"
+#include "pifs_delta.h"
 
 #define ENABLE_DOS_ALIAS    0
 #define CMD_BUF_SIZE        128
@@ -285,7 +286,7 @@ void cmdDumpPage (char* command, char* params)
                 }
                 else
                 {
-                    printf("ERROR: Cannot read from flash memory!\r\n");
+                    printf("ERROR: Cannot read from flash memory, error code: %i!\r\n", ret);
                 }
             }
             else
@@ -350,6 +351,42 @@ void cmdMap (char* command, char* params)
                     }
                 }
             }
+        }
+        else
+        {
+            printf("ERROR: Cannot read page, error code: %i\r\n", ret);
+        }
+    }
+}
+
+void cmdFindDelta (char* command, char* params)
+{
+    unsigned long int    addr = 0;
+    pifs_block_address_t ba;
+    pifs_page_address_t  pa;
+    pifs_status_t        ret;
+    pifs_block_address_t dba;
+    pifs_page_address_t  dpa;
+    bool_t               is_map_full;
+
+    (void) command;
+
+    if (params)
+    {
+        addr = strtoul(params, NULL, 0);
+        //printf("Addr: 0x%X\r\n", addr);
+        pa = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) % PIFS_FLASH_PAGE_PER_BLOCK;
+        ba = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) / PIFS_FLASH_PAGE_PER_BLOCK;
+        printf("Find delta of page %s\r\n", pifs_ba_pa2str(ba, pa));
+        ret = pifs_find_delta_page(ba, pa, &dba, &dpa, &is_map_full);
+        if (ret == PIFS_SUCCESS)
+        {
+            printf("                -> %s\r\n\r\nMap is full: %i\r\n",
+                   pifs_ba_pa2str(dba, dpa), is_map_full);
+        }
+        else
+        {
+            printf("ERROR: Cannot find delta page, error code: %i\r\n", ret);
         }
     }
 }
@@ -469,6 +506,7 @@ parserCommand_t parserCommands[] =
     {"d",           "Dump page in hexadecimal format",  cmdDumpPage},
     {"map",         "Print map page",                   cmdMap},
     {"m",           "Print map page",                   cmdMap},
+    {"fd",          "Find delta pages of a page",       cmdFindDelta},
     {"info",        "Print info of Pi file system",     cmdPifsInfo},
     {"i",           "Print info of Pi file system",     cmdPifsInfo},
     {"free",        "Print info of free space",         cmdFreeSpaceInfo},
