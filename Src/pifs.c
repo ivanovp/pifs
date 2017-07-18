@@ -1068,6 +1068,9 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
     {
         if (file->read_pos + data_size > file->entry.file_size)
         {
+            PIFS_WARNING_MSG("Trying to read more than file size: %i, file size: %i\r\n",
+                             file->read_pos + data_size,
+                             file->entry.file_size);
             data_size = file->entry.file_size - file->read_pos;
         }
         po = file->read_pos % PIFS_FLASH_PAGE_SIZE_BYTE;

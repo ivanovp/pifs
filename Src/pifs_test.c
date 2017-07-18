@@ -436,6 +436,7 @@ pifs_status_t pifs_test_wfragment_r(void)
     return ret;
 }
 
+const size_t size_delta = 5;
 
 pifs_status_t pifs_test_rfragment_w(void)
 {
@@ -452,6 +453,12 @@ pifs_status_t pifs_test_rfragment_w(void)
         printf("File opened for writing\r\n");
         generate_buffer(3);
         written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+        written_size += pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+        if (written_size != sizeof(test_buf_w) * 2)
+        {
+            PIFS_TEST_ERROR_MSG("Cannot write file!\r\n");
+            ret = PIFS_ERROR_GENERAL;
+        }
         if (pifs_fclose(file))
         {
             PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
@@ -481,7 +488,6 @@ pifs_status_t pifs_test_rfragment_r(void)
     file = pifs_fopen("fragrd.tst", "r");
     if (file)
     {
-        const size_t size_delta = 5;
         printf("File opened for reading\r\n");
         generate_buffer(3);
         read_size = 0;
