@@ -716,12 +716,12 @@ pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
     *a_free_data_page_count = 0;
     ret = pifs_get_free_pages(a_free_management_page_count, a_free_data_page_count);
 
-    if (ret == PIFS_SUCCESS || PIFS_ERROR_NO_MORE_SPACE)
+    if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
     {
         ret = pifs_get_to_be_released_pages(&to_be_released_management_page_count,
                                             &to_be_released_data_page_count);
     }
-    if (ret == PIFS_SUCCESS || PIFS_ERROR_NO_MORE_SPACE)
+    if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
     {
         *a_free_management_page_count += to_be_released_management_page_count;
         *a_free_data_page_count += to_be_released_data_page_count;

@@ -460,21 +460,21 @@ void pifs_print_header_info(void)
 
 void pifs_print_free_space_info(void)
 {
-    size_t        free_management_bytes;
-    size_t        free_data_bytes;
-    size_t        free_management_pages;
-    size_t        free_data_pages;
-    size_t        to_be_released_management_bytes;
-    size_t        to_be_released_data_bytes;
-    size_t        to_be_released_management_pages;
-    size_t        to_be_released_data_pages;
+    size_t        free_management_bytes = 0;
+    size_t        free_data_bytes = 0;
+    size_t        free_management_pages = 0;
+    size_t        free_data_pages = 0;
+    size_t        to_be_released_management_bytes = 0;
+    size_t        to_be_released_data_bytes = 0;
+    size_t        to_be_released_management_pages = 0;
+    size_t        to_be_released_data_pages = 0;
     pifs_size_t   free_entries = 0;
     pifs_size_t   to_be_released_entries = 0;
     pifs_status_t ret;
 
     ret = pifs_get_free_space(&free_management_bytes, &free_data_bytes,
                               &free_management_pages, &free_data_pages);
-    if (ret == PIFS_SUCCESS)
+    if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
     {
         printf("Free data area:                     %lu bytes, %lu pages\r\n",
                free_data_bytes, free_data_pages);
@@ -483,18 +483,18 @@ void pifs_print_free_space_info(void)
     }
     ret = pifs_get_to_be_released_space(&to_be_released_management_bytes, &to_be_released_data_bytes,
                                         &to_be_released_management_pages, &to_be_released_data_pages);
-    if (ret == PIFS_SUCCESS)
+    if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
     {
         printf("To be released data area:           %lu bytes, %lu pages\r\n",
                to_be_released_data_bytes, to_be_released_data_pages);
         printf("To be released management area:     %lu bytes, %lu pages\r\n",
                to_be_released_management_bytes, to_be_released_management_pages);
     }
-    if (ret == PIFS_SUCCESS)
+    if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
     {
         ret = pifs_count_entries(&free_entries, &to_be_released_entries);
     }
-    if (ret == PIFS_SUCCESS)
+    if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
     {
         printf("Free entries:                       %lu\r\n", free_entries);
         printf("To be released entries:             %lu\r\n", to_be_released_entries);
