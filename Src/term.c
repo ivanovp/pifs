@@ -63,6 +63,24 @@ void cmdTestPifs (char* command, char* params)
     pifs_test();
 }
 
+void cmdTestPifsSmall (char* command, char* params)
+{
+    (void) command;
+    (void) params;
+
+    pifs_test_small_w();
+    pifs_test_small_r();
+}
+
+void cmdTestPifsLarge (char* command, char* params)
+{
+    (void) command;
+    (void) params;
+
+    pifs_test_large_w();
+    pifs_test_large_r();
+}
+
 void cmdListDir (char* command, char* params)
 {
     char               * path = "/";
@@ -493,8 +511,10 @@ parserCommand_t parserCommands[] =
     {"e",           "Erase flash",                      cmdErase},
     {"tf",          "Test flash",                       cmdTestFlash},
     {"tstflash",    "Test flash",                       cmdTestFlash},
-    {"tp",          "Test Pi file system",              cmdTestPifs},
-    {"tstpifs",     "Test Pi file system",              cmdTestPifs},
+    {"tp",          "Test Pi file system: all",         cmdTestPifs},
+    {"tstpifs",     "Test Pi file system: all",         cmdTestPifs},
+    {"ts",          "Test Pi file system: small files", cmdTestPifsSmall},
+    {"tl",          "Test Pi file system: large file",  cmdTestPifsLarge},
     {"ls",          "List directory",                   cmdListDir},
     {"l",           "List directory",                   cmdListDir},
 #if ENABLE_DOS_ALIAS
