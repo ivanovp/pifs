@@ -600,6 +600,7 @@ pifs_status_t pifs_init(void)
         else
         {
             /* No file system header found, so create brand new one */
+            PIFS_WARNING_MSG("No file system header found, creating...\r\n");
             pifs.header.counter = 0;
             /* FIXME use random block? */
 #if 1
@@ -611,17 +612,13 @@ pifs_status_t pifs_init(void)
             ret = pifs_header_init(ba, pa, ba + PIFS_MANAGEMENT_BLOCKS, &pifs.header);
             if (ret == PIFS_SUCCESS)
             {
-#if 0
-                ret = pifs_erase(ba);
-#else
-                PIFS_INFO_MSG("Erasing all blocks...\r\n");
+                PIFS_WARNING_MSG("Erasing all blocks...\r\n");
                 for (i = PIFS_FLASH_BLOCK_RESERVED_NUM; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
                 {
                     ret = pifs_flash_erase(i);
                     /* TODO mark bad blocks */
                 }
-                PIFS_INFO_MSG("Done.\r\n");
-#endif
+                PIFS_WARNING_MSG("Done.\r\n");
             }
             if (ret == PIFS_SUCCESS)
             {

@@ -89,13 +89,13 @@ pifs_status_t pifs_test_small_w(void)
             written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
             if (pifs_fclose(file))
             {
-                PIFS_ERROR_MSG("ERROR: Cannot close file!\r\n");
+                PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
                 ret = PIFS_ERROR_GENERAL;
             }
         }
         else
         {
-            PIFS_ERROR_MSG("ERROR: Cannot open file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
     }
@@ -127,13 +127,13 @@ pifs_status_t pifs_test_small_r(void)
             check_buffers();
             if (pifs_fclose(file))
             {
-                PIFS_ERROR_MSG("ERROR: Cannot close file!\r\n");
+                PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
                 ret = PIFS_ERROR_GENERAL;
             }
         }
         else
         {
-            PIFS_ERROR_MSG("ERROR: Cannot open file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
     }
@@ -170,14 +170,14 @@ pifs_status_t pifs_test_full_w(void)
         }
         if (pifs_fclose(file))
         {
-            PIFS_ERROR_MSG("ERROR: Cannot close file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
         PIFS_DEBUG_MSG("%i buffers written.\r\n", testfull_written_buffers);
     }
     else
     {
-        PIFS_ERROR_MSG("ERROR: Cannot open file!\r\n");
+        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
         ret = PIFS_ERROR_GENERAL;
     }
 
@@ -213,13 +213,13 @@ pifs_status_t pifs_test_full_r(void)
         }
         if (pifs_fclose(file))
         {
-            PIFS_ERROR_MSG("ERROR: Cannot close file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
     }
     else
     {
-        PIFS_ERROR_MSG("ERROR: Cannot open file!\r\n");
+        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
         ret = PIFS_ERROR_GENERAL;
     }
     if (pifs_remove("fullwrite.tst") == 0)
@@ -228,7 +228,7 @@ pifs_status_t pifs_test_full_r(void)
     }
     else
     {
-        printf("ERROR: Cannot remove file!\r\n");
+        printf("Cannot remove file!\r\n");
         ret = PIFS_ERROR_GENERAL;
     }
 
@@ -253,13 +253,13 @@ pifs_status_t pifs_test_basic_w(void)
         written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
         if (pifs_fclose(file))
         {
-            PIFS_ERROR_MSG("ERROR: Cannot close file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
     }
     else
     {
-        PIFS_ERROR_MSG("ERROR: Cannot open file!\r\n");
+        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
     }
 
     return ret;
@@ -284,13 +284,13 @@ pifs_status_t pifs_test_basic_r(void)
         check_buffers();
         if (pifs_fclose(file))
         {
-            PIFS_ERROR_MSG("ERROR: Cannot close file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
     }
     else
     {
-        PIFS_ERROR_MSG("ERROR: Cannot open file!\r\n");
+        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
     }
 
     return ret;
@@ -318,13 +318,13 @@ pifs_status_t pifs_test_large_w(void)
         }
         if (pifs_fclose(file))
         {
-            PIFS_ERROR_MSG("ERROR: Cannot close file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
     }
     else
     {
-        PIFS_ERROR_MSG("ERROR: Cannot open file!\r\n");
+        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
         ret = PIFS_ERROR_GENERAL;
     }
 
@@ -354,13 +354,13 @@ pifs_status_t pifs_test_large_r(void)
         }
         if (pifs_fclose(file))
         {
-            PIFS_ERROR_MSG("ERROR: Cannot close file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
     }
     else
     {
-        PIFS_ERROR_MSG("ERROR: Cannot open file!\r\n");
+        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
         ret = PIFS_ERROR_GENERAL;
     }
 
@@ -390,13 +390,13 @@ pifs_status_t pifs_test_wfragment_w(void)
         }
         if (pifs_fclose(file))
         {
-            PIFS_ERROR_MSG("ERROR: Cannot close file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
     }
     else
     {
-        PIFS_ERROR_MSG("ERROR: Cannot open file!\r\n");
+        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
         ret = PIFS_ERROR_GENERAL;
     }
 
@@ -423,13 +423,13 @@ pifs_status_t pifs_test_wfragment_r(void)
         check_buffers();
         if (pifs_fclose(file))
         {
-            PIFS_ERROR_MSG("ERROR: Cannot close file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
     }
     else
     {
-        PIFS_ERROR_MSG("ERROR: Cannot open file!\r\n");
+        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
         ret = PIFS_ERROR_GENERAL;
     }
 
@@ -454,13 +454,13 @@ pifs_status_t pifs_test_rfragment_w(void)
         written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
         if (pifs_fclose(file))
         {
-            PIFS_ERROR_MSG("ERROR: Cannot close file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
     }
     else
     {
-        PIFS_ERROR_MSG("ERROR: Cannot open file!\r\n");
+        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
         ret = PIFS_ERROR_GENERAL;
     }
 
@@ -490,19 +490,19 @@ pifs_status_t pifs_test_rfragment_r(void)
             read_size = pifs_fread(&test_buf_r[i], 1, size_delta, file);
             if (read_size != size_delta)
             {
-                PIFS_ERROR_MSG("ERROR: Cannot read file: %i!\r\n", read_size);
+                PIFS_TEST_ERROR_MSG("Cannot read file: %i, i: %i!\r\n", read_size, i);
             }
         }
         check_buffers();
         if (pifs_fclose(file))
         {
-            PIFS_ERROR_MSG("ERROR: Cannot close file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
     }
     else
     {
-        PIFS_ERROR_MSG("ERROR: Cannot open file!\r\n");
+        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
     }
 
     return ret;
@@ -526,18 +526,18 @@ pifs_status_t pifs_test_rseek_w(void)
         written_size += pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
         if (written_size != 2 * sizeof(test_buf_w))
         {
-            printf("ERROR: Cannot write\r\n");
+            printf("Cannot write\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
         if (pifs_fclose(file))
         {
-            PIFS_ERROR_MSG("ERROR: Cannot close file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
     }
     else
     {
-        PIFS_ERROR_MSG("ERROR: Cannot open file!\r\n");
+        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
         ret = PIFS_ERROR_GENERAL;
     }
 
@@ -560,30 +560,30 @@ pifs_status_t pifs_test_rseek_r(void)
         generate_buffer(7);
         if (pifs_fseek(file, SEEK_TEST_POS, PIFS_SEEK_SET))
         {
-            printf("ERROR: Cannot seek!\r\n");
+            printf("Cannot seek!\r\n");
         }
         read_size = pifs_fread(&test_buf_r[SEEK_TEST_POS], 1, sizeof(test_buf_r) - SEEK_TEST_POS, file);
         if (pifs_fseek(file, -sizeof(test_buf_r), PIFS_SEEK_CUR))
         {
-            printf("ERROR: Cannot seek!\r\n");
+            printf("Cannot seek!\r\n");
         }
         read_size = pifs_fread(test_buf_r, 1, SEEK_TEST_POS, file);
         check_buffers();
         if (pifs_fseek(file, -sizeof(test_buf_r), PIFS_SEEK_END))
         {
-            printf("ERROR: Cannot seek!\r\n");
+            printf("Cannot seek!\r\n");
         }
         read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
         check_buffers();
         if (pifs_fclose(file))
         {
-            PIFS_ERROR_MSG("ERROR: Cannot close file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
     }
     else
     {
-        PIFS_ERROR_MSG("ERROR: Cannot open file!\r\n");
+        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
         ret = PIFS_ERROR_GENERAL;
     }
 
@@ -607,13 +607,13 @@ pifs_status_t pifs_test_wseek_w(void)
         written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
         if (pifs_fclose(file))
         {
-            PIFS_ERROR_MSG("ERROR: Cannot close file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
     }
     else
     {
-        PIFS_ERROR_MSG("ERROR: Cannot open file!\r\n");
+        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
         ret = PIFS_ERROR_GENERAL;
     }
 
@@ -644,13 +644,13 @@ pifs_status_t pifs_test_wseek_r(void)
         check_buffers();
         if (pifs_fclose(file))
         {
-            PIFS_ERROR_MSG("ERROR: Cannot close file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
     }
     else
     {
-        PIFS_ERROR_MSG("ERROR: Cannot open file!\r\n");
+        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
         ret = PIFS_ERROR_GENERAL;
     }
 
@@ -674,13 +674,13 @@ pifs_status_t pifs_test_list_dir(void)
         }
         if (pifs_closedir (dir) != 0)
         {
-            printf("ERROR: Cannot close directory!\r\n");
+            printf("Cannot close directory!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
     }
     else
     {
-        printf("ERROR: Could not open the directory!\r\n");
+        printf("Could not open the directory!\r\n");
     }
 
     return ret;
@@ -698,6 +698,7 @@ pifs_status_t pifs_test(void)
 
 #if ENABLE_FULL_WRITE_TEST
     pifs_test_full_w();
+    pifs_test_full_r();
 #endif
 
 #if ENABLE_BASIC_TEST
