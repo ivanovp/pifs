@@ -328,10 +328,10 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                                 bool_t a_mark_pages)
 {
     pifs_status_t ret = PIFS_ERROR_GENERAL;
-    pifs_size_t   free_management_bytes;
-    pifs_size_t   free_data_bytes;
-    pifs_size_t   free_management_pages;
-    pifs_size_t   free_data_pages;
+    pifs_size_t   free_management_bytes = 0;
+    pifs_size_t   free_data_bytes = 0;
+    pifs_size_t   free_management_pages = 0;
+    pifs_size_t   free_data_pages = 0;
     pifs_size_t   free_entries = 0;
     pifs_size_t   to_be_released_entries = 0;
 
@@ -385,22 +385,17 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                   pifs_address2str(&a_header->delta_map_address));
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_get_free_space(&free_management_bytes, &free_data_bytes,
+        /* Deliberately avoiding return code, it is not an error */
+        /* if there is no more space */
+        (void)pifs_get_free_space(&free_management_bytes, &free_data_bytes,
                                   &free_management_pages, &free_data_pages);
-    }
-    if (ret == PIFS_SUCCESS)
-    {
         PIFS_INFO_MSG("Free data area:                     %lu bytes, %lu pages\r\n",
                       free_data_bytes, free_data_pages);
         PIFS_INFO_MSG("Free management area:               %lu bytes, %lu pages\r\n",
                       free_management_bytes, free_management_pages);
-    }
-    if (ret == PIFS_SUCCESS)
-    {
-        ret = pifs_count_entries(&free_entries, &to_be_released_entries);
-    }
-    if (ret == PIFS_SUCCESS)
-    {
+        /* Deliberately avoiding return code, it is not an error */
+        /* if there is no more space */
+        (void)pifs_count_entries(&free_entries, &to_be_released_entries);
         PIFS_NOTICE_MSG("free_entries: %lu, to_be_released_entries: %lu\r\n",
                         free_entries, to_be_released_entries);
     }
@@ -619,13 +614,13 @@ pifs_status_t pifs_init(void)
 #if 0
                 ret = pifs_erase(ba);
 #else
-                PIFS_INFO_MSG("Erasing all blocks ");
+                PIFS_INFO_MSG("Erasing all blocks...\r\n");
                 for (i = PIFS_FLASH_BLOCK_RESERVED_NUM; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
                 {
                     ret = pifs_flash_erase(i);
                     /* TODO mark bad blocks */
                 }
-                PIFS_INFO_MSG("\r\nDone\r\n.");
+                PIFS_INFO_MSG("Done.\r\n");
 #endif
             }
             if (ret == PIFS_SUCCESS)

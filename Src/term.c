@@ -35,7 +35,11 @@ void cmdErase (char* command, char* params)
     (void) command;
     (void) params;
 
+    pifs_delete();
+    pifs_flash_init();
     flash_erase_all();
+    pifs_flash_delete();
+    pifs_init();
 }
 
 void cmdTestFlash (char* command, char* params)
@@ -43,7 +47,12 @@ void cmdTestFlash (char* command, char* params)
     (void) command;
     (void) params;
 
+    pifs_delete();
+    pifs_flash_init();
     flash_test();
+    flash_erase_all();
+    pifs_flash_delete();
+    pifs_init();
 }
 
 void cmdTestPifs (char* command, char* params)
