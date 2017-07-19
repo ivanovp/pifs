@@ -31,6 +31,8 @@ static uint8_t prevBuf[CMD_BUF_SIZE] = { 0 }; /* Previous input from the serial 
 static char buf_r[PIFS_FLASH_PAGE_SIZE_BYTE];
 static char buf_w[PIFS_FLASH_PAGE_SIZE_BYTE];
 
+bool_t getLine(uint8_t * a_buf, size_t a_buf_size);
+
 char * yesNo(bool_t expression)
 {
     if (expression)
@@ -166,6 +168,9 @@ void cmdDebug (char* command, char* params)
     pifs_status_t ret;
     pifs_block_address_t ba;
 
+    (void) command;
+    (void) params;
+
     printf("Find to be released block...\r\n");
     ba = PIFS_BLOCK_ADDRESS_INVALID;
     ret = pifs_find_to_be_released_block(1, PIFS_BLOCK_TYPE_DATA, PIFS_FLASH_BLOCK_RESERVED_NUM,
@@ -183,7 +188,6 @@ void cmdListDir (char* command, char* params)
     bool_t               long_list = FALSE;
     bool_t               examine = FALSE;
 
-    (void) command;
     (void) params;
 
     if (strcmp(command, "l") == 0)
@@ -395,7 +399,14 @@ void cmdCreateFile (char* command, char* params)
         {
             do
             {
-                read = fread(buf_w, 1, sizeof(buf_w), stdin);
+                /* Wait until text is entered */
+                while (!getLine((uint8_t*)buf_w, sizeof(buf_w)))
+                {
+                }
+                /* Append CR LF */
+                strncat(buf_w, "\r\n", sizeof(buf_w));
+                read = strlen(buf_w);
+                //print_buffer(buf_w, read, 0);
                 if (read)
                 {
                     written = pifs_fwrite(buf_w, 1, read, file);
