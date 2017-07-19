@@ -96,26 +96,26 @@ void pifs_calc_address(pifs_bit_pos_t a_bit_pos,
  * @param[in] value     Value to be checked.
  * @return TRUE: page is free or to be released.
  */
-bool_t pifs_check_bits(bool_t is_free, uint8_t value)
+static inline bool_t pifs_check_bits(bool_t a_is_free, uint8_t a_bits)
 {
-    bool_t ret;
+    bool_t        ret;
+    const uint8_t mask_free = 1;              /**< Mask for finding free page */
+    const uint8_t value_free = 1;             /**< Value for finding free page */
+    const uint8_t mask_to_be_released = 2;    /**< Mask for finding to be released page */
+    const uint8_t value_to_be_released = 0;   /**< Value for finding to be released page */
 
-    uint8_t mask_free = 1;              /**< Mask for finding free page */
-    uint8_t value_free = 1;             /**< Value for finding free page */
-    uint8_t mask_to_be_released = 2;    /**< Mask for finding to be released page */
-    uint8_t value_to_be_released = 0;   /**< Value for finding to be released page */
-
-//    printf("free: %i value: %i ", is_free, value & 3);
-    if (is_free)
+    if (a_is_free)
     {
-        ret = (value & mask_free) == value_free;
+        /* Looking for free page */
+        ret = (a_bits & mask_free) == value_free;
     }
     else
     {
-        ret = (value & mask_to_be_released) == value_to_be_released
-                ||  (value & mask_free) == value_free;
+        /* Looking to be released page, but free pages are also considered */
+        /* as to be releaed pages */
+        ret = (a_bits & mask_to_be_released) == value_to_be_released
+                ||  (a_bits & mask_free) == value_free;
     }
-//    printf("ret: %i\r\n", ret);
 
     return ret;
 }
