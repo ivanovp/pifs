@@ -53,6 +53,7 @@ int main(int argc, char **argv)
 //        printf("Arguments: [%s]\r\n", args);
         PARSER_process(args, strlen(args));
     }
+    pifs_delete();
 
     return 0;
 }

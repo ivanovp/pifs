@@ -520,6 +520,14 @@ void cmdFreeSpaceInfo (char* command, char* params)
     pifs_print_free_space_info();
 }
 
+void cmdFlashStat (char* command, char* params)
+{
+    (void) command;
+    (void) params;
+
+    pifs_flash_print_stat();
+}
+
 /**
  * Disable printing of prompt.
  */
@@ -558,6 +566,7 @@ void cmdQuit (char* command, char* params)
     (void) params;
 
     printf("Quitting...\r\n");
+    pifs_delete();
     exit(0);
 }
 
@@ -628,6 +637,7 @@ parserCommand_t parserCommands[] =
     {"i",           "Print info of Pi file system",     cmdPifsInfo},
     {"free",        "Print info of free space",         cmdFreeSpaceInfo},
     {"f",           "Print info of free space",         cmdFreeSpaceInfo},
+    {"fs",          "Print flash's statistics",         cmdFlashStat},
     {"quit",        "Quit",                             cmdQuit},
     {"q",           "Quit",                             cmdQuit},
     {"noprompt",    "Prompt will not be displayed",     cmdNoPrompt},

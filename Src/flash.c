@@ -30,9 +30,19 @@
 #endif
 
 #define FLASH_EMU_FILENAME      "flash.bin" /**< Name of memory file */
+#define FLASH_STAT_FILENAME     "flash.stt" /**< Name of statistics file */
+
+typedef struct
+{
+    size_t read_cntr;
+    size_t write_cntr;
+    size_t erase_cntr;
+} flash_page_stat_t;
 
 static FILE * flash_file = NULL;
+static FILE * stat_file = NULL;
 static uint8_t flash_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE] = { 0 };
+static flash_page_stat_t flash_stat[PIFS_FLASH_BLOCK_NUM_ALL][PIFS_FLASH_PAGE_PER_BLOCK] = { { 0 } };
 
 pifs_status_t pifs_flash_init(void)
 {
@@ -43,8 +53,19 @@ pifs_status_t pifs_flash_init(void)
     flash_file = fopen(FLASH_EMU_FILENAME, "rb+");
     if (flash_file)
     {
-        /* Memory file already exists */
-        ret = PIFS_SUCCESS;
+        stat_file = fopen(FLASH_STAT_FILENAME, "rb+");
+        if (stat_file)
+        {
+            /* Memory and statistics file already exists */
+            if (fread(flash_stat, 1, sizeof(flash_stat), stat_file) == sizeof(flash_stat))
+            {
+                ret = PIFS_SUCCESS;
+            }
+        }
+        else
+        {
+            FLASH_ERROR_MSG("Flash file exists, but statistics file is missing!\r\n");
+        }
     }
     else
     {
@@ -52,13 +73,26 @@ pifs_status_t pifs_flash_init(void)
         flash_file = fopen(FLASH_EMU_FILENAME, "wb+");
         if (flash_file)
         {
+            ret = PIFS_SUCCESS;
             /* Erase whole memory */
-            for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
+            for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL && ret == PIFS_SUCCESS; ba++)
             {
                 ret = pifs_flash_erase(ba);
             }
 
-            ret = PIFS_SUCCESS;
+            if (ret == PIFS_SUCCESS)
+            {
+                stat_file = fopen(FLASH_STAT_FILENAME, "wb+");
+                if (!stat_file)
+                {
+                    FLASH_ERROR_MSG("Cannot create statistics file!\r\n");
+                    ret = PIFS_ERROR_FLASH_INIT;
+                }
+            }
+        }
+        else
+        {
+            FLASH_ERROR_MSG("Cannot create flash file!\r\n");
         }
     }
 
@@ -69,6 +103,7 @@ pifs_status_t pifs_flash_delete(void)
 {
     pifs_status_t ret = PIFS_ERROR_GENERAL;
 
+    pifs_flash_print_stat();
     if (flash_file)
     {
         if (!fclose(flash_file))
@@ -76,6 +111,19 @@ pifs_status_t pifs_flash_delete(void)
             ret = PIFS_SUCCESS;
         }
         flash_file = NULL;
+    }
+    if (stat_file)
+    {
+        ret = PIFS_ERROR_GENERAL;
+
+        fseek(stat_file, 0, SEEK_SET);
+        if (fwrite(flash_stat, 1, sizeof(flash_stat), stat_file) == sizeof(flash_stat))
+        {
+            if (!fclose(stat_file))
+            {
+                ret = PIFS_SUCCESS;
+            }
+        }
     }
 
     return ret;
@@ -102,6 +150,7 @@ pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address, pifs_page_ad
         {
             ret = PIFS_SUCCESS;
         }
+        flash_stat[a_block_address][a_page_address].read_cntr++;
     }
     else
     {
@@ -158,6 +207,7 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
                     ret = PIFS_ERROR_FLASH_WRITE;
                 }
             }
+            flash_stat[a_block_address][a_page_address].write_cntr++;
         }
         if (ret == PIFS_SUCCESS)
         {
@@ -203,6 +253,7 @@ pifs_status_t pifs_flash_erase(pifs_block_address_t a_block_address)
                 ret = PIFS_ERROR_FLASH_ERASE;
                 break;
             }
+            flash_stat[a_block_address][i].erase_cntr++;
         }
     }
     else
@@ -214,3 +265,63 @@ pifs_status_t pifs_flash_erase(pifs_block_address_t a_block_address)
     return ret;
 }
 
+void pifs_flash_print_stat(void)
+{
+    pifs_block_address_t ba;
+    pifs_page_address_t  pa;
+    flash_page_stat_t    min = { SIZE_MAX, SIZE_MAX, SIZE_MAX };
+    flash_page_stat_t    max = { 0, 0, 0 };
+    float                erase_sum = 0;
+    float                read_sum = 0;
+    float                write_sum = 0;
+    float                avg_erase = 0;
+    float                avg_read = 0;
+    float                avg_write = 0;
+
+    for (ba = 0; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
+    {
+        printf("Block %i erase count: %i\r\n", ba, flash_stat[ba][0].erase_cntr);
+        for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
+        {
+            erase_sum += flash_stat[ba][pa].erase_cntr;
+            read_sum += flash_stat[ba][pa].read_cntr;
+            write_sum += flash_stat[ba][pa].write_cntr;
+            if (flash_stat[ba][pa].erase_cntr < min.erase_cntr)
+            {
+                min.erase_cntr = flash_stat[ba][pa].erase_cntr;
+            }
+            if (flash_stat[ba][pa].read_cntr < min.read_cntr)
+            {
+                min.read_cntr = flash_stat[ba][pa].read_cntr;
+            }
+            if (flash_stat[ba][pa].write_cntr < min.write_cntr)
+            {
+                min.write_cntr = flash_stat[ba][pa].write_cntr;
+            }
+            if (flash_stat[ba][pa].erase_cntr > max.erase_cntr)
+            {
+                max.erase_cntr = flash_stat[ba][pa].erase_cntr;
+            }
+            if (flash_stat[ba][pa].read_cntr > max.read_cntr)
+            {
+                max.read_cntr = flash_stat[ba][pa].read_cntr;
+            }
+            if (flash_stat[ba][pa].write_cntr > max.write_cntr)
+            {
+                max.write_cntr = flash_stat[ba][pa].write_cntr;
+            }
+        }
+    }
+
+    avg_erase = erase_sum / PIFS_FLASH_PAGE_NUM_ALL;
+    avg_read = read_sum / PIFS_FLASH_PAGE_NUM_ALL;
+    avg_write = write_sum / PIFS_FLASH_PAGE_NUM_ALL;
+
+    printf("\r\n");
+    printf("                    Min |    Average |        Max\r\n");
+    printf("------------------------+------------+-----------\r\n");
+    printf("Erase count  %10i | %10.1f | %10i\r\n", min.erase_cntr, avg_erase, max.erase_cntr);
+    printf("Read count   %10i | %10.1f | %10i\r\n", min.read_cntr, avg_read, max.read_cntr);
+    printf("Write count  %10i | %10.1f | %10i\r\n", min.write_cntr, avg_write, max.write_cntr);
+    printf("\r\n");
+}
