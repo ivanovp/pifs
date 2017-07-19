@@ -18,7 +18,7 @@
 #include "pifs_fsbm.h"
 #include "pifs_helper.h"
 
-#define PIFS_DEBUG_LEVEL 3
+#define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
 
 /**

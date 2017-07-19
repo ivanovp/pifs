@@ -278,9 +278,15 @@ void pifs_flash_print_stat(void)
     float                avg_read = 0;
     float                avg_write = 0;
 
+    printf("Flash statistics\r\n");
+    printf("================\r\n");
+    printf("\r\n");
+
+    printf("Block | Erase count\r\n");
+    printf("------+------------\r\n");
     for (ba = 0; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
     {
-        printf("Block %i erase count: %i\r\n", ba, flash_stat[ba][0].erase_cntr);
+        printf("%-5i | %i\r\n", ba, flash_stat[ba][0].erase_cntr);
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
             erase_sum += flash_stat[ba][pa].erase_cntr;
