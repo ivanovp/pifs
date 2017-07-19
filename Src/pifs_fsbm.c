@@ -401,6 +401,10 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                 //PIFS_DEBUG_MSG("%s %i 0x%X\r\n", pifs_ba_pa2str(ba, pa), po, free_space_bitmap);
                 for (i = 0; i < (PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE) && !found; i++)
                 {
+                    if (fba == 5 && fpa == 255)
+                    {
+                        printf("HERE!\r\n");
+                    }
                     /* TODO use free pages and to be released pages as well when */
                     /* looking for erasable blocks! */
                     if ((free_space_bitmap & mask) == value
@@ -410,6 +414,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                         if (!a_find->is_free || pifs_is_page_erased(fba, fpa))
 #endif
                         {
+                            PIFS_DEBUG_MSG("Free page %s\r\n", pifs_ba_pa2str(fba, fpa));
                             if (page_count_found == 0)
                             {
                                 fba_start = fba;
@@ -605,7 +610,7 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
                         {
                             if (a_is_free)
                             {
-//                                PIFS_NOTICE_MSG("%s data\r\n", pifs_ba_pa2str(fba, fpa));
+                                PIFS_NOTICE_MSG("%s data\r\n", pifs_ba_pa2str(fba, fpa));
                             }
                             (*a_data_page_count)++;
                             found = TRUE;
@@ -646,16 +651,7 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
                 if (po == PIFS_FLASH_PAGE_SIZE_BYTE)
                 {
                     po = 0;
-                    pa++;
-                    if (pa == PIFS_FLASH_PAGE_PER_BLOCK)
-                    {
-                        pa = 0;
-                        ba++;
-                        if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
-                        {
-                            PIFS_FATAL_ERROR_MSG("End of flash! byte_cntr: %lu\r\n", byte_cntr);
-                        }
-                    }
+                    ret = pifs_inc_ba_pa(&ba, &pa);
                 }
             }
         }

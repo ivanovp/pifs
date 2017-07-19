@@ -20,6 +20,7 @@
 #include "pifs_test.h"
 #include "pifs_helper.h"
 #include "pifs_delta.h"
+#include "pifs_fsbm.h"
 
 #define ENABLE_DOS_ALIAS    0
 #define CMD_BUF_SIZE        128
@@ -29,6 +30,18 @@ static uint8_t buf[CMD_BUF_SIZE] = { 0 };     /* Current input from the serial l
 static uint8_t prevBuf[CMD_BUF_SIZE] = { 0 }; /* Previous input from the serial line */
 static char buf_r[PIFS_FLASH_PAGE_SIZE_BYTE];
 static char buf_w[PIFS_FLASH_PAGE_SIZE_BYTE];
+
+char * yesNo(bool_t expression)
+{
+    if (expression)
+    {
+        return "Yes";
+    }
+    else
+    {
+        return "No";
+    }
+}
 
 void cmdErase (char* command, char* params)
 {
@@ -63,6 +76,15 @@ void cmdTestPifs (char* command, char* params)
     pifs_test();
 }
 
+void cmdTestPifsBasic (char* command, char* params)
+{
+    (void) command;
+    (void) params;
+
+    pifs_test_basic_w();
+    pifs_test_basic_r();
+}
+
 void cmdTestPifsSmall (char* command, char* params)
 {
     (void) command;
@@ -79,6 +101,54 @@ void cmdTestPifsLarge (char* command, char* params)
 
     pifs_test_large_w();
     pifs_test_large_r();
+}
+
+void cmdCheckPage (char* command, char* params)
+{
+    unsigned long int    addr = 0;
+    pifs_block_address_t ba;
+    pifs_page_address_t  pa;
+    pifs_page_offset_t   po;
+    char               * param;
+    pifs_size_t          cntr = 1;
+
+    (void) command;
+
+    if (params)
+    {
+        //printf("Params: [%s]\r\n", params);
+        param = PARSER_getNextParam();
+        addr = strtoul(param, NULL, 0);
+        param = PARSER_getNextParam();
+        if (param)
+        {
+            cntr = strtoul(param, NULL, 0);
+        }
+        //printf("Addr: 0x%X\r\n", addr);
+        po = addr % PIFS_FLASH_PAGE_SIZE_BYTE;
+        pa = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) % PIFS_FLASH_PAGE_PER_BLOCK;
+        ba = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) / PIFS_FLASH_PAGE_PER_BLOCK;
+        printf("Page                    Free    TBR     Erased\r\n");
+        do
+        {
+            printf("%-24s", pifs_ba_pa2str(ba, pa));
+            if (ba < PIFS_FLASH_BLOCK_NUM_ALL)
+            {
+                printf("%-8s", yesNo(pifs_is_page_free(ba, pa)));
+                printf("%-8s", yesNo(pifs_is_page_to_be_released(ba, pa)));
+                printf("%-8s\r\n", yesNo(pifs_is_page_erased(ba, pa)));
+            }
+            else
+            {
+                printf("ERROR: Invalid address!\r\n");
+            }
+            pifs_inc_ba_pa(&ba, &pa);
+        } while (--cntr);
+    }
+    else
+    {
+        printf("ERROR: Missing parameter!\r\n");
+    }
 }
 
 void cmdListDir (char* command, char* params)
@@ -513,8 +583,10 @@ parserCommand_t parserCommands[] =
     {"tstflash",    "Test flash",                       cmdTestFlash},
     {"tp",          "Test Pi file system: all",         cmdTestPifs},
     {"tstpifs",     "Test Pi file system: all",         cmdTestPifs},
+    {"tb",          "Test Pi file system: basic",       cmdTestPifsBasic},
     {"ts",          "Test Pi file system: small files", cmdTestPifsSmall},
     {"tl",          "Test Pi file system: large file",  cmdTestPifsLarge},
+    {"c",           "Check if page is free/to be released/erased", cmdCheckPage},
     {"ls",          "List directory",                   cmdListDir},
     {"l",           "List directory",                   cmdListDir},
 #if ENABLE_DOS_ALIAS

@@ -526,6 +526,12 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
                         PIFS_NOTICE_MSG("To be released block: %i\r\n", to_be_released_ba);
                         merge = TRUE;
                     }
+                    else
+                    {
+                        /* It is not an error when there are no to be released */
+                        /* blocks */
+                        ret = PIFS_SUCCESS;
+                    }
                 }
                 if (free_management_pages == 0 && to_be_released_management_pages > 0 && !merge)
                 {
