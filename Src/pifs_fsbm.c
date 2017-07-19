@@ -87,6 +87,40 @@ void pifs_calc_address(pifs_bit_pos_t a_bit_pos,
 }
 
 /**
+ * @brief pifs_check_bits Check bits in free space bitmap.
+ * Every page has 2 bits.
+ * Bit 0 shows if page is free or allocated.
+ * Bit 1 shows if page shall be released or not.
+ *
+ * @param[in] is_free   TRUE: check if page is free, FALSE: check if page is to be released or free.
+ * @param[in] value     Value to be checked.
+ * @return TRUE: page is free or to be released.
+ */
+bool_t pifs_check_bits(bool_t is_free, uint8_t value)
+{
+    bool_t ret;
+
+    uint8_t mask_free = 1;              /**< Mask for finding free page */
+    uint8_t value_free = 1;             /**< Value for finding free page */
+    uint8_t mask_to_be_released = 2;    /**< Mask for finding to be released page */
+    uint8_t value_to_be_released = 0;   /**< Value for finding to be released page */
+
+//    printf("free: %i value: %i ", is_free, value & 3);
+    if (is_free)
+    {
+        ret = (value & mask_free) == value_free;
+    }
+    else
+    {
+        ret = (value & mask_to_be_released) == value_to_be_released
+                ||  (value & mask_free) == value_free;
+    }
+//    printf("ret: %i\r\n", ret);
+
+    return ret;
+}
+
+/**
  * @brief pifs_is_page_free Check if page is used.
  *
  * @param[in] a_block_address   Block address of page(s).
@@ -364,8 +398,6 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
     bool_t                  found = FALSE;
     pifs_size_t             byte_cntr = PIFS_FREE_SPACE_BITMAP_SIZE_BYTE;
     pifs_bit_pos_t          bit_pos = 0;
-    uint8_t                 mask = 1;  /**< Mask for finding free page */
-    uint8_t                 value = 1; /**< Value for finding free page */
 
     PIFS_ASSERT(pifs.is_header_found);
 
@@ -378,13 +410,6 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
         PIFS_WARNING_MSG("Start block address corrected from %i to %i\r\n",
                          fba, PIFS_FLASH_BLOCK_RESERVED_NUM);
         fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
-    }
-
-    if (!a_find->is_free)
-    {
-        /* Find to be released page */
-        mask = 2;
-        value = 0;
     }
 
     ret = pifs_calc_free_space_pos(&a_find->header->free_space_bitmap_address,
@@ -401,13 +426,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                 //PIFS_DEBUG_MSG("%s %i 0x%X\r\n", pifs_ba_pa2str(ba, pa), po, free_space_bitmap);
                 for (i = 0; i < (PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE) && !found; i++)
                 {
-                    if (fba == 5 && fpa == 255)
-                    {
-                        printf("HERE!\r\n");
-                    }
-                    /* TODO use free pages and to be released pages as well when */
-                    /* looking for erasable blocks! */
-                    if ((free_space_bitmap & mask) == value
+                    if (pifs_check_bits(a_find->is_free, free_space_bitmap)
                             && pifs_is_block_type(fba, a_find->block_type, &pifs.header))
                     {
 #if PIFS_CHECK_IF_PAGE_IS_ERASED
@@ -610,7 +629,7 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
                         {
                             if (a_is_free)
                             {
-                                PIFS_NOTICE_MSG("%s data\r\n", pifs_ba_pa2str(fba, fpa));
+                                //PIFS_NOTICE_MSG("%s data\r\n", pifs_ba_pa2str(fba, fpa));
                             }
                             (*a_data_page_count)++;
                             found = TRUE;
