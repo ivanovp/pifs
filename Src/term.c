@@ -103,6 +103,15 @@ void cmdTestPifsLarge (char* command, char* params)
     pifs_test_large_r();
 }
 
+void cmdTestPifsFull (char* command, char* params)
+{
+    (void) command;
+    (void) params;
+
+    pifs_test_full_w();
+    pifs_test_full_r();
+}
+
 void cmdCheckPage (char* command, char* params)
 {
     unsigned long int    addr = 0;
@@ -234,18 +243,64 @@ void cmdListDir (char* command, char* params)
 
 void cmdRemove (char* command, char* params)
 {
+    bool_t               all = FALSE;
+    char               * param;
+    char               * path = "/";
+    pifs_DIR           * dir;
+    struct pifs_dirent * dirent;
+
     (void) command;
 
     if (params)
     {
-        printf("Remove file '%s'\r\n", params);
-        if (pifs_remove(params) == PIFS_SUCCESS)
+        while ((param = PARSER_getNextParam()))
         {
-            printf("File removed\r\n");
+            if (param[0] == '-')
+            {
+                switch (param[1])
+                {
+                case 'a':
+                    all = TRUE;
+                    break;
+                default:
+                    printf("Unknown switch: %c\r\n", param[1]);
+                }
+            }
+            else
+            {
+                printf("Remove file '%s'... ", param);
+                if (pifs_remove(param) == PIFS_SUCCESS)
+                {
+                    printf("Done.\r\n");
+                }
+                else
+                {
+                    printf("ERROR: Cannot remove file!\r\n");
+                }
+            }
         }
-        else
+        if (all)
         {
-            printf("ERROR: Cannot remove file!\r\n");
+            dir = pifs_opendir(path);
+            if (dir != NULL)
+            {
+                while ((dirent = pifs_readdir(dir)))
+                {
+                    printf("Remove file '%s'... ", dirent->d_name);
+                    if (pifs_remove(dirent->d_name) == PIFS_SUCCESS)
+                    {
+                        printf("Done.\r\n");
+                    }
+                    else
+                    {
+                        printf("ERROR: Cannot remove file!\r\n");
+                    }
+                }
+                if (pifs_closedir (dir) != 0)
+                {
+                    printf("Cannot close directory!\r\n");
+                }
+            }
         }
     }
     else
@@ -603,13 +658,13 @@ parserCommand_t parserCommands[] =
     //command       brief help                          callback function
     {"erase",       "Erase flash",                      cmdErase},
     {"e",           "Erase flash",                      cmdErase},
-    {"tf",          "Test flash",                       cmdTestFlash},
     {"tstflash",    "Test flash",                       cmdTestFlash},
     {"tp",          "Test Pi file system: all",         cmdTestPifs},
     {"tstpifs",     "Test Pi file system: all",         cmdTestPifs},
     {"tb",          "Test Pi file system: basic",       cmdTestPifsBasic},
     {"ts",          "Test Pi file system: small files", cmdTestPifsSmall},
     {"tl",          "Test Pi file system: large file",  cmdTestPifsLarge},
+    {"tf",          "Test Pi file system: full write",  cmdTestPifsFull},
     {"c",           "Check if page is free/to be released/erased", cmdCheckPage},
     {"w",           "Debug command",                    cmdDebug},
     {"ls",          "List directory",                   cmdListDir},
