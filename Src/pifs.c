@@ -266,6 +266,10 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
     }
     a_header->delta_map_address.block_address = ba;
     a_header->delta_map_address.page_address = a_header->free_space_bitmap_address.page_address + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE;
+    if (a_header->delta_map_address.page_address + PIFS_DELTA_MAP_PAGE_NUM >= PIFS_FLASH_PAGE_PER_BLOCK)
+    {
+        ba += (a_header->delta_map_address.page_address + PIFS_DELTA_MAP_PAGE_NUM + PIFS_FLASH_PAGE_PER_BLOCK - 1) / PIFS_FLASH_PAGE_PER_BLOCK;
+    }
     ba = a_block_address;
 #if PIFS_MANAGEMENT_BLOCKS > 1
     for (i = 0; i < PIFS_MANAGEMENT_BLOCKS; i++)
@@ -432,11 +436,14 @@ void pifs_print_fs_info(void)
     printf("Map header size:                    %lu bytes\r\n", PIFS_MAP_HEADER_SIZE_BYTE);
     printf("Map entry size:                     %lu bytes\r\n", PIFS_MAP_ENTRY_SIZE_BYTE);
     printf("Number of map entries/page:         %lu\r\n", PIFS_MAP_ENTRY_PER_PAGE);
-    //    printf("Delta header size:                  %lu bytes\r\n", PIFS_DELTA_HEADER_SIZE_BYTE);
     printf("Delta entry size:                   %lu bytes\r\n", PIFS_DELTA_ENTRY_SIZE_BYTE);
     printf("Number of delta entries/page:       %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE);
     printf("Number of delta entries:            %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE * PIFS_DELTA_MAP_PAGE_NUM);
     printf("Delta map size:                     %u bytes, %u pages\r\n", PIFS_DELTA_MAP_PAGE_NUM * PIFS_FLASH_PAGE_SIZE_BYTE, PIFS_DELTA_MAP_PAGE_NUM);
+    printf("Wear level entry size:              %lu bytes\r\n", PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE);
+    printf("Number of wear level entries/page:  %lu\r\n", PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
+    printf("Number of wear level entries:       %lu\r\n", PIFS_FLASH_BLOCK_NUM_FS);
+    printf("Wear level map size:                %u bytes, %u pages\r\n", PIFS_WEAR_LEVEL_LIST_SIZE_BYTE, PIFS_WEAR_LEVEL_LIST_SIZE_PAGE);
     printf("Full reserved area for management:  %i bytes, %i pages\r\n",
            PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_BLOCK_SIZE_BYTE,
            PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_PAGE_PER_BLOCK);
@@ -1140,11 +1147,11 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 }
 
 /**
- * @brief pifs_fclose Close file. Works like fclose().
- * @param[in] a_file File to close.
+ * @brief pifs_fflush Flush cache, update file size.
+ * @param[in] a_file File to flush.
  * @return 0 if file close, PIFS_EOF if error occurred.
  */
-int pifs_fclose(P_FILE * a_file)
+int pifs_fflush(P_FILE * a_file)
 {
     int ret = PIFS_EOF;
     pifs_file_t * file = (pifs_file_t*) a_file;
@@ -1157,12 +1164,32 @@ int pifs_fclose(P_FILE * a_file)
             file->status = pifs_update_entry(file->entry.name, &file->entry);
         }
         pifs_flush();
-        file->is_opened = FALSE;
-        file->is_used = FALSE;
         ret = 0;
     }
 
     PIFS_SET_ERRNO(file->status);
+    return ret;
+}
+
+
+/**
+ * @brief pifs_fclose Close file. Works like fclose().
+ * @param[in] a_file File to close.
+ * @return 0 if file close, PIFS_EOF if error occurred.
+ */
+int pifs_fclose(P_FILE * a_file)
+{
+    int ret = PIFS_EOF;
+    pifs_file_t * file = (pifs_file_t*) a_file;
+
+    PIFS_NOTICE_MSG("filename: '%s'\r\n", file->entry.name);
+    ret = pifs_fflush(a_file);
+    if (ret == 0)
+    {
+        file->is_opened = FALSE;
+        file->is_used = FALSE;
+    }
+
     return ret;
 }
 

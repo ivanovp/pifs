@@ -20,7 +20,8 @@
 #define PIFS_PAGE_COUNT_SIZE            2u   /**< Size of page count variable of map entry in bytes. Valid values are 1, 2 and 4. */
 #define PIFS_OPTIMIZE_FOR_RAM           1u   /**< 1: Use less RAM, 0: Use more RAM, but faster code execution */
 #define PIFS_CHECK_IF_PAGE_IS_ERASED    0u   /**< 1: Check if page is erased */
-#define PIFS_DELTA_MAP_PAGE_NUM         1u   /**< Number of delta page maps */
+#define PIFS_DELTA_MAP_PAGE_NUM         2u   /**< Number of delta page maps */
+#define PIFS_WEAR_LEVEL_LIST_RAM        1u   /**< 1: Store wear level list in RAM, 0: read wear level list from flash memory */
 #define PIFS_USE_DELTA_FOR_ENTRIES      0u   /**< 1: Use delta pages for list entries, 0: don't use delta pages */
 
 

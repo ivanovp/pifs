@@ -37,6 +37,13 @@
 #define PIFS_ATTRIB_DELETED     0x80u
 #define PIFS_ATTRIB_ALL         UINT8_MAX
 
+/** Number of bits in a byte */
+#define PIFS_BYTE_BITS              8
+
+#define PIFS_MAP_PAGE_NUM               1   /**< Number of map pages. Fixed to 1! */
+#define PIFS_FSBM_BITS_PER_PAGE_SHIFT   1
+#define PIFS_FSBM_BITS_PER_PAGE         (1u << PIFS_FSBM_BITS_PER_PAGE_SHIFT)
+
 /******************************************************************************/
 /*** FILE SYSTEM HEADER                                                     ***/
 /******************************************************************************/
@@ -72,23 +79,25 @@
 /******************************************************************************/
 /** Size of free space bitmap in bytes.
  * Multiplied by two, because two bits are used per page */
-#define PIFS_FREE_SPACE_BITMAP_SIZE_BYTE    (2 * ((PIFS_FLASH_PAGE_NUM_FS + 7) / 8))
+#define PIFS_FREE_SPACE_BITMAP_SIZE_BYTE    (PIFS_FSBM_BITS_PER_PAGE * ((PIFS_FLASH_PAGE_NUM_FS + PIFS_BYTE_BITS - 1) / PIFS_BYTE_BITS))
 /** Size of free space bitmap in pages */
 #define PIFS_FREE_SPACE_BITMAP_SIZE_PAGE    ((PIFS_FREE_SPACE_BITMAP_SIZE_BYTE + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE)
 
 /******************************************************************************/
 /*** DELTA PAGES                                                            ***/
 /******************************************************************************/
-//#define PIFS_DELTA_HEADER_SIZE_BYTE         (sizeof(pifs_delta_header_t))
 #define PIFS_DELTA_ENTRY_SIZE_BYTE          (sizeof(pifs_delta_entry_t))
-
-//#define PIFS_DELTA_ENTRY_PER_PAGE           ((PIFS_FLASH_PAGE_SIZE_BYTE - PIFS_DELTA_HEADER_SIZE_BYTE) / PIFS_DELTA_ENTRY_SIZE_BYTE)
 #define PIFS_DELTA_ENTRY_PER_PAGE           (PIFS_FLASH_PAGE_SIZE_BYTE / PIFS_DELTA_ENTRY_SIZE_BYTE)
 
 /******************************************************************************/
+/*** WEAR LEVEL LIST                                                        ***/
+/******************************************************************************/
+#define PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE     (sizeof(pifs_wear_level_entry_t))
+#define PIFS_WEAR_LEVEL_ENTRY_PER_PAGE      (PIFS_FLASH_PAGE_SIZE_BYTE / PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE)
+#define PIFS_WEAR_LEVEL_LIST_SIZE_BYTE      (PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE * PIFS_FLASH_BLOCK_NUM_FS)
+#define PIFS_WEAR_LEVEL_LIST_SIZE_PAGE      ((PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE + PIFS_FLASH_PAGE_SIZE_BYTE - 1 ) / PIFS_FLASH_PAGE_SIZE_BYTE)
 
-/** Number of bits in a byte */
-#define PIFS_BYTE_BITS              8
+/******************************************************************************/
 
 #if PIFS_OPTIMIZE_FOR_RAM
 #define PIFS_BOOL_SIZE              : 1
@@ -167,10 +176,6 @@ typedef uint32_t pifs_page_count_t;
 #define PIFS_INVERT_ATTRIBUTE_BITS      0
 #endif
 
-#define PIFS_MAP_PAGE_NUM               1   /**< Number of map pages. Fixed to 1! */
-#define PIFS_FSBM_BITS_PER_PAGE_SHIFT   1
-#define PIFS_FSBM_BITS_PER_PAGE         (1u << PIFS_FSBM_BITS_PER_PAGE_SHIFT)
-
 #define PIFS_SET_ERRNO(status)          do { \
         pifs_errno = status; \
     } while (0)
@@ -221,6 +226,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_address_t          free_space_bitmap_address;
     pifs_address_t          entry_list_address;
     pifs_address_t          delta_map_address;
+    pifs_address_t          wear_level_list_address;
     /** Checksum shall be the last element! */
     pifs_checksum_t         checksum;
 } pifs_header_t;
@@ -257,10 +263,12 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_page_count_t       page_count;
 } pifs_map_entry_t;
 
+typedef uint16_t pifs_wear_level_entry_t;
+
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
-    uint16_t                erase_cntr[PIFS_FLASH_BLOCK_NUM_FS];
-} pifs_wear_level_t;
+    pifs_wear_level_entry_t wear_level[PIFS_FLASH_BLOCK_NUM_FS];
+} pifs_wear_level_list_t;
 
 /**
  * Delta page.
@@ -333,6 +341,9 @@ typedef struct
     bool_t                  delta_map_page_is_dirty PIFS_BOOL_SIZE;
     /* General page buffer */
     uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];           /**< Flash page buffer */
+#if PIFS_WEAR_LEVEL_LIST_RAM
+    pifs_wear_level_list_t  wear_level_list;
+#endif
 } pifs_t;
 
 extern pifs_t pifs;
