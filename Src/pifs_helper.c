@@ -392,6 +392,8 @@ pifs_status_t pifs_check_filename(const pifs_char_t * a_filename)
     pifs_status_t     ret = PIFS_ERROR_NOT_INITIALIZED;
     pifs_size_t       i;
     pifs_size_t       len = strlen(a_filename);
+    /* TODO exclude forward slash (/) from invalid chars */
+    /* when directory simulation is needed! */
     const pifs_char_t invalid_chars[] = "\"'*,/:;<=>?[]|";
 
     if (len > 0)
