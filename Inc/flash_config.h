@@ -21,6 +21,9 @@
 #define FLASH_TYPE_W25Q32BV_4K      8   /**< 4 KiB sector mode */
 #define FLASH_TYPE_W25Q32BV_32K     9   /**< 32 KiB sector mode */
 #define FLASH_TYPE_W25Q32BV_64K     10  /**< 64 KiB sector mode */
+#define FLASH_TYPE_W25Q256FV_4K     11  /**< 4 KiB sector mode */
+#define FLASH_TYPE_W25Q256FV_32K    12  /**< 32 KiB sector mode */
+#define FLASH_TYPE_W25Q256FV_64K    13  /**< 64 KiB sector mode */
 
 /** Type of emulated flash memory */
 #define FLASH_TYPE                  FLASH_TYPE_M25P40
@@ -102,6 +105,14 @@
 #define PIFS_FLASH_PAGE_PER_BLOCK           256u    /**< Number of pages in a block */
 #define PIFS_FLASH_PAGE_SIZE_BYTE           256u    /**< Size of a page in bytes */
 #define PIFS_FLASH_PAGE_SIZE_SPARE          0u      /**< Number of spare bytes in a page */
+#elif FLASH_TYPE == FLASH_TYPE_W25Q256FV_64K
+/* Geometry of Winbond W25Q256FV */
+#define PIFS_FLASH_BLOCK_NUM_ALL            512u    /**< Number of blocks in flash memory */
+#define PIFS_FLASH_BLOCK_RESERVED_NUM       0u      /**< Index of first block to use by the file system */
+#define PIFS_FLASH_PAGE_PER_BLOCK           256u    /**< Number of pages in a block */
+#define PIFS_FLASH_PAGE_SIZE_BYTE           256u    /**< Size of a page in bytes */
+#define PIFS_FLASH_PAGE_SIZE_SPARE          0u      /**< Number of spare bytes in a page */
+#define PIFS_FLASH_4BYTE_ADDRESS            1
 #endif
 
 #define PIFS_FLASH_ERASED_BYTE_VALUE        0xFFu

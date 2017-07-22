@@ -247,15 +247,10 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_page_count_t       page_count;
 } pifs_map_entry_t;
 
-#if 0
-/**
- * Delta pages' header.
- */
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
-    pifs_address_t          next_delta_address;
-} pifs_delta_header_t;
-#endif
+    uint16_t                erase_cntr[PIFS_FLASH_BLOCK_NUM_FS];
+} pifs_wear_level_t;
 
 /**
  * Delta page.

@@ -42,7 +42,7 @@ typedef struct
 static FILE * flash_file = NULL;
 static FILE * stat_file = NULL;
 static uint8_t flash_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE] = { 0 };
-static flash_page_stat_t flash_stat[PIFS_FLASH_BLOCK_NUM_ALL][PIFS_FLASH_PAGE_PER_BLOCK] = { { 0 } };
+static flash_page_stat_t flash_stat[PIFS_FLASH_BLOCK_NUM_ALL][PIFS_FLASH_PAGE_PER_BLOCK] = { { { 0  } } };
 
 pifs_status_t pifs_flash_init(void)
 {
