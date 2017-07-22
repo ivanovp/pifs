@@ -329,6 +329,7 @@ void pifs_parse_open_mode(pifs_file_t * a_file, const pifs_char_t * a_modes)
  * @brief pifs_inc_address Increment address.
  *
  * @param[in] a_address Pointer to address to increment.
+ *
  * @return PIFS_SUCCESS if successfully incremented.
  * PIFS_ERROR_INTERNAL_RANGE if end of flash is reached.
  */
@@ -346,6 +347,34 @@ pifs_status_t pifs_inc_address(pifs_address_t * a_address)
             PIFS_ERROR_MSG("End of flash: %s\r\n", pifs_address2str(a_address));
             ret = PIFS_ERROR_INTERNAL_RANGE;
         }
+    }
+    PIFS_DEBUG_MSG("%s\r\n", pifs_address2str(a_address));
+
+    return ret;
+}
+
+/**
+ * @brief pifs_add_address Add page count to an address.
+ *
+ * @param[in] a_address     Pointer to address to increment.
+ * @param[in] a_page_count  Number of pages to add.
+ *
+ * @return PIFS_SUCCESS if successfully added.
+ * PIFS_ERROR_INTERNAL_RANGE if end of flash is reached.
+ */
+pifs_status_t pifs_add_address(pifs_address_t * a_address, pifs_size_t a_page_count)
+{
+    pifs_status_t ret = PIFS_SUCCESS;
+    pifs_size_t   pa = a_address->page_address;
+
+    pa += a_page_count;
+    a_address->block_address += pa / PIFS_FLASH_PAGE_PER_BLOCK;
+    pa %= PIFS_FLASH_PAGE_PER_BLOCK;
+    a_address->page_address = pa;
+    if (a_address->block_address >= PIFS_FLASH_BLOCK_NUM_ALL)
+    {
+        PIFS_ERROR_MSG("End of flash: %s\r\n", pifs_address2str(a_address));
+        ret = PIFS_ERROR_INTERNAL_RANGE;
     }
     PIFS_DEBUG_MSG("%s\r\n", pifs_address2str(a_address));
 
@@ -376,6 +405,37 @@ pifs_status_t pifs_inc_ba_pa(pifs_block_address_t * a_block_address,
                            pifs_ba_pa2str(*a_block_address, *a_page_address));
             ret = PIFS_ERROR_INTERNAL_RANGE;
         }
+    }
+    PIFS_DEBUG_MSG("%s\r\n", pifs_ba_pa2str(*a_block_address, *a_page_address));
+
+    return ret;
+}
+
+/**
+ * @brief pifs_add_ba_pa Add address.
+ * @param[in] a_block_address  Pointer to block address to add.
+ * @param[in] a_page_address   Pointer to page address to addr.
+ * @param[in] a_page_count     Number of pages to add.
+ *
+ * @return PIFS_SUCCESS if successfully added.
+ * PIFS_ERROR_INTERNAL_RANGE if end of flash is reached.
+ */
+pifs_status_t pifs_add_ba_pa(pifs_block_address_t * a_block_address,
+                             pifs_page_address_t * a_page_address,
+                             pifs_size_t a_page_count)
+{
+    pifs_status_t ret = PIFS_SUCCESS;
+    pifs_size_t   pa = (*a_page_address);
+
+    pa += a_page_count;
+    (*a_block_address) += pa / PIFS_FLASH_PAGE_PER_BLOCK;
+    pa %= PIFS_FLASH_PAGE_PER_BLOCK;
+    *a_page_address = pa;
+    if (*a_block_address >= PIFS_FLASH_BLOCK_NUM_ALL)
+    {
+        PIFS_ERROR_MSG("End of flash: %s\r\n",
+                       pifs_ba_pa2str(*a_block_address, *a_page_address));
+        ret = PIFS_ERROR_INTERNAL_RANGE;
     }
     PIFS_DEBUG_MSG("%s\r\n", pifs_ba_pa2str(*a_block_address, *a_page_address));
 
