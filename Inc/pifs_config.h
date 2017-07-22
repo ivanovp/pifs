@@ -14,6 +14,7 @@
 #define PIFS_OPEN_DIR_NUM_MAX           2u   /**< Maximum number of opened directories */
 #define PIFS_FILENAME_LEN_MAX           32u  /**< Maximum length of file name */
 #define PIFS_ENTRY_NUM_MAX              254u /**< Maximum number of files and directories */
+#define PIFS_ENABLE_ATTRIBUTE           1u   /**< 1: Use attribute field of files, 0: don't use attribute field */
 #define PIFS_MANAGEMENT_BLOCKS          1u   /**< Number of management blocks. Minimum: 1 (Allocated area is twice of this number.) */
 #define PIFS_CHECKSUM_SIZE              4u   /**< Size of checksum variable in bytes. Valid values are 1, 2 and 4. */
 #define PIFS_PAGE_COUNT_SIZE            2u   /**< Size of page count variable of map entry in bytes. Valid values are 1, 2 and 4. */
@@ -21,6 +22,7 @@
 #define PIFS_CHECK_IF_PAGE_IS_ERASED    0u   /**< 1: Check if page is erased */
 #define PIFS_DELTA_MAP_PAGE_NUM         1u   /**< Number of delta page maps */
 #define PIFS_USE_DELTA_FOR_ENTRIES      0u   /**< 1: Use delta pages for list entries, 0: don't use delta pages */
+
 
 #define PIFS_PACKED_ATTRIBUTE           __attribute__((packed))
 

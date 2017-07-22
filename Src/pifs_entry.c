@@ -42,8 +42,10 @@ pifs_status_t pifs_append_entry(pifs_entry_t * a_entry)
     pifs_size_t          i;
     pifs_size_t          j;
 
+#if PIFS_ENABLE_ATTRIBUTE && PIFS_INVERT_ATTRIBUTE_BITS
     /* Invert attribute bits */
     a_entry->attrib ^= PIFS_ATTRIB_ALL;
+#endif
     for (j = 0; j < PIFS_ENTRY_LIST_SIZE_PAGE && !created && ret == PIFS_SUCCESS; j++)
     {
         for (i = 0; i < PIFS_ENTRY_PER_PAGE && !created && ret == PIFS_SUCCESS; i++)
@@ -83,8 +85,10 @@ pifs_status_t pifs_append_entry(pifs_entry_t * a_entry)
     {
         ret = PIFS_ERROR_NO_MORE_SPACE;
     }
+#if PIFS_ENABLE_ATTRIBUTE && PIFS_INVERT_ATTRIBUTE_BITS
     /* Restore attribute bits */
     a_entry->attrib ^= PIFS_ATTRIB_ALL;
+#endif
 
     return ret;
 }
@@ -124,22 +128,30 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                 /* Entry found */
                 /* Copy entry */
 #if PIFS_USE_DELTA_FOR_ENTRIES
+#if PIFS_ENABLE_ATTRIBUTE && PIFS_INVERT_ATTRIBUTE_BITS
                 /* Invert entry bits as it is stored inverted */
                 a_entry->attrib ^= PIFS_ATTRIB_ALL;
+#endif
                 ret = pifs_write_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, a_entry,
                                        PIFS_ENTRY_SIZE_BYTE, NULL);
+#if PIFS_ENABLE_ATTRIBUTE && PIFS_INVERT_ATTRIBUTE_BITS
                 /* Restore entry bits */
                 a_entry->attrib ^= PIFS_ATTRIB_ALL;
+#endif
 #else
+#if PIFS_ENABLE_ATTRIBUTE && PIFS_INVERT_ATTRIBUTE_BITS
                 /* Invert entry bits as it is stored inverted */
                 a_entry->attrib ^= PIFS_ATTRIB_ALL;
+#endif
                 if (pifs_is_buffer_programmable(&entry, a_entry, PIFS_ENTRY_SIZE_BYTE))
                 {
                     PIFS_NOTICE_MSG("Entry can be updated\r\n");
                     ret = pifs_write(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, a_entry,
                                      PIFS_ENTRY_SIZE_BYTE);
+#if PIFS_ENABLE_ATTRIBUTE && PIFS_INVERT_ATTRIBUTE_BITS
                     /* Restore entry bits */
                     a_entry->attrib ^= PIFS_ATTRIB_ALL;
+#endif
                 }
                 else
                 {
@@ -154,8 +166,10 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                                      PIFS_ENTRY_SIZE_BYTE);
                     if (ret == PIFS_SUCCESS)
                     {
+#if PIFS_ENABLE_ATTRIBUTE && PIFS_INVERT_ATTRIBUTE_BITS
                         /* Restore entry bits */
                         a_entry->attrib ^= PIFS_ATTRIB_ALL;
+#endif
                         ret = pifs_append_entry(a_entry);
                         if (ret == PIFS_ERROR_NO_MORE_SPACE)
                         {
@@ -224,8 +238,10 @@ pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a
                 {
                     /* Copy entry */
                     memcpy(a_entry, &entry, sizeof(pifs_entry_t));
+#if PIFS_ENABLE_ATTRIBUTE && PIFS_INVERT_ATTRIBUTE_BITS
                     /* Invert entry bits as it is stored inverted */
                     a_entry->attrib ^= PIFS_ATTRIB_ALL;
+#endif
                     PIFS_DEBUG_MSG("file size: %i bytes\r\n", a_entry->file_size);
                 }
                 else

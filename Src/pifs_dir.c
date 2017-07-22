@@ -109,15 +109,15 @@ struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
                         dir->entry_list_address.page_address,
                         dir->entry_list_index * PIFS_ENTRY_SIZE_BYTE, &entry,
                         PIFS_ENTRY_SIZE_BYTE);
-        if (ret == PIFS_SUCCESS && entry.attrib == PIFS_FLASH_PROGRAMMED_BYTE_VALUE)
+        if (ret == PIFS_SUCCESS && entry.name[0] == PIFS_FLASH_PROGRAMMED_BYTE_VALUE)
         {
             ret = pifs_inc_entry(dir);
         }
-    } while (ret == PIFS_SUCCESS && entry.attrib == PIFS_FLASH_PROGRAMMED_BYTE_VALUE);
+    } while (ret == PIFS_SUCCESS && entry.name[0] == PIFS_FLASH_PROGRAMMED_BYTE_VALUE);
 #endif
     if (ret == PIFS_SUCCESS
             && !pifs_is_buffer_erased(&entry, PIFS_ENTRY_SIZE_BYTE)
-            && (entry.attrib != 0))
+            && (entry.name[0] != PIFS_FLASH_PROGRAMMED_BYTE_VALUE))
     {
         /* Copy entry */
         dir->directory_entry.d_ino = entry.first_map_address.block_address * PIFS_FLASH_BLOCK_SIZE_BYTE

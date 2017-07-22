@@ -159,6 +159,13 @@ typedef uint32_t pifs_page_count_t;
 #if PIFS_MANAGEMENT_BLOCKS < 1
 #error PIFS_MANAGEMENT_BLOCKS shall be 1 at minimum!
 #endif
+#if PIFS_FLASH_ERASED_BYTE_VALUE == 0xFF
+/* If erased value is 0xFF, invert attribute bits. */
+/* Therefore bits can be updated in the existing entry, no new entry is needed. */
+#define PIFS_INVERT_ATTRIBUTE_BITS      1
+#else
+#define PIFS_INVERT_ATTRIBUTE_BITS      0
+#endif
 
 #define PIFS_MAP_PAGE_NUM               1   /**< Number of map pages. Fixed to 1! */
 #define PIFS_FSBM_BITS_PER_PAGE_SHIFT   1
@@ -224,7 +231,10 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
     pifs_char_t             name[PIFS_FILENAME_LEN_MAX];
+#if PIFS_ENABLE_ATTRIBUTE
     uint8_t                 attrib;
+#endif
+    /* TODO implement file date and time! modified, created, etc? */
     pifs_address_t          first_map_address;  /**< First map page's address */
     pifs_file_size_t        file_size;          /**< Bytes written to file */
 } pifs_entry_t;
@@ -309,15 +319,19 @@ typedef struct
     bool_t                  is_merging PIFS_BOOL_SIZE;
     pifs_header_t           header;                                       /**< Actual header. */
     pifs_entry_t            entry;                                        /**< For merging */
+    /* Page cache */
     pifs_address_t          cache_page_buf_address;                       /**< Address of cache_page_buf */
     uint8_t                 cache_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];    /**< Flash page buffer for cache */
     bool_t                  cache_page_buf_is_dirty;
+    /* Opened files and directories */
     pifs_file_t             file[PIFS_OPEN_FILE_NUM_MAX];                 /**< Opened files */
     pifs_file_t             internal_file;                                /**< Internally opened files */
     pifs_dir_t              dir[PIFS_OPEN_DIR_NUM_MAX];                   /**< Opened directories */
+    /* Delta pages */
     uint8_t                 delta_map_page_buf[PIFS_DELTA_MAP_PAGE_NUM][PIFS_FLASH_PAGE_SIZE_BYTE];
     bool_t                  delta_map_page_is_read PIFS_BOOL_SIZE;
     bool_t                  delta_map_page_is_dirty PIFS_BOOL_SIZE;
+    /* General page buffer */
     uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];           /**< Flash page buffer */
 } pifs_t;
 

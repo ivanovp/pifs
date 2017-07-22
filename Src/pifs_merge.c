@@ -171,7 +171,9 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
     /* Re-create file in the new management block */
     pifs_internal_open(&pifs.internal_file, a_old_entry->name, "w", FALSE);
     pifs.internal_file.entry.file_size = a_old_entry->file_size;
+#if PIFS_ENABLE_ATTRIBUTE
     pifs.internal_file.entry.attrib = a_old_entry->attrib ^ PIFS_ATTRIB_ALL;
+#endif
     if (pifs.internal_file.entry.file_size > 0 && pifs.internal_file.entry.file_size != PIFS_FILE_SIZE_ERASED)
     {
         pifs.internal_file.is_size_changed = TRUE;
@@ -277,7 +279,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
                                 entry->name, entry->file_size, entry->attrib);
             }
             if (!pifs_is_buffer_erased(entry, PIFS_ENTRY_SIZE_BYTE)
-                    && (entry->attrib != 0))
+                    && (entry->name[0] != PIFS_FLASH_PROGRAMMED_BYTE_VALUE))
             {
                 /* Create file in the new management area and copy map */
                 ret = pifs_copy_map(entry);

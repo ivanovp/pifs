@@ -793,7 +793,9 @@ void pifs_internal_open(pifs_file_t * a_file,
                 PIFS_DEBUG_MSG("Map page: %u free page found %s\r\n", page_count_found, pifs_ba_pa2str(ba, pa));
                 memset(entry, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
                 strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
+#if PIFS_ENABLE_ATTRIBUTE
                 entry->attrib = PIFS_ATTRIB_ARCHIVE;
+#endif
                 entry->first_map_address.block_address = ba;
                 entry->first_map_address.page_address = pa;
                 a_file->status = pifs_append_entry(entry);
