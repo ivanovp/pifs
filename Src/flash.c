@@ -307,6 +307,7 @@ void pifs_flash_print_stat(void)
     float                std_dev[FLASH_STAT_CNTR_NUM] = { 0 };
 
     /* Calculate median of counters then standard devitation */
+    /* TODO for erase, all values in the [pa] array are the same! Optimization? */
     for (i = 0; i < FLASH_STAT_CNTR_NUM; i++)
     {
         const size_t flash_stat_array_size = sizeof(flash_stat_temp) / sizeof(flash_stat_temp[0]);
