@@ -75,7 +75,7 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
                     {
                         if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA, a_old_header))
                         {
-                            ret = pifs_erase(fba);
+                            ret = pifs_erase(fba, a_old_header, a_new_header);
                             /* Block erased, it can be marked as free */
                             mark_block_free = TRUE;
                             PIFS_NOTICE_MSG("Block %i erased\r\n", fba);
@@ -363,7 +363,7 @@ pifs_status_t pifs_merge(void)
     /* #1 */
     for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
     {
-        ret = pifs_erase(pifs.header.next_management_blocks[i]);
+        ret = pifs_erase(pifs.header.next_management_blocks[i], &old_header, &new_header);
     }
     /* #2 */
     if (ret == PIFS_SUCCESS)
@@ -439,7 +439,7 @@ pifs_status_t pifs_merge(void)
         /* Erase old management area */
         for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
         {
-            ret = pifs_erase(old_header.management_blocks[i]);
+            ret = pifs_erase(old_header.management_blocks[i], &old_header, &new_header);
         }
     }
     /* #11 */

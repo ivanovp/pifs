@@ -210,9 +210,10 @@ pifs_status_t pifs_write(pifs_block_address_t a_block_address,
  * @param[in] a_block_address   Block address of page to erase.
  * @return PIFS_SUCCESS if data erased successfully.
  */
-pifs_status_t pifs_erase(pifs_block_address_t a_block_address)
+pifs_status_t pifs_erase(pifs_block_address_t a_block_address, pifs_header_t * a_old_header, pifs_header_t * a_new_header)
 {
-    pifs_status_t ret = PIFS_ERROR_GENERAL;
+    pifs_status_t           ret = PIFS_ERROR_GENERAL;
+    pifs_wear_level_entry_t wear_level;
 
     ret = pifs_flash_erase(a_block_address);
 
@@ -222,6 +223,19 @@ pifs_status_t pifs_erase(pifs_block_address_t a_block_address)
         pifs.cache_page_buf_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
         pifs.cache_page_buf_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
         pifs.cache_page_buf_is_dirty = FALSE;
+    }
+
+#if 0
+    if (ret == PIFS_SUCCESS)
+    {
+        /* Get actual wear level */
+        ret = pifs_get_wear_level(a_block_address, a_old_header, &wear_level);
+    }
+#endif
+    if (ret == PIFS_SUCCESS)
+    {
+        /* Increase wear level */
+//        ret = pifs_write_wear_level(a_block_address, a_new_header, wear_level + 1);
     }
 
     return ret;
@@ -315,6 +329,189 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
 }
 
 /**
+ * @brief pifs_wear_level_list_init Write initial wear level list with all
+ * zeros.
+ *
+ * @return PIFS_SUCCES if written successfully.
+ */
+pifs_status_t pifs_wear_level_list_init(void)
+{
+    pifs_status_t             ret = PIFS_SUCCESS;
+    pifs_size_t               i;
+    pifs_address_t            address;
+    pifs_wear_level_entry_t * wear_level_entry = pifs.page_buf;
+
+    address = pifs.header.wear_level_list_address;
+    for (i = 0; i < PIFS_WEAR_LEVEL_ENTRY_PER_PAGE; i++)
+    {
+        wear_level_entry[i].wear_level_cntr = 0;
+        wear_level_entry[i].wear_level_bits = PIFS_FLASH_ERASED_BYTE_VALUE;
+    }
+
+    for (i = 0; i < PIFS_WEAR_LEVEL_LIST_SIZE_PAGE && ret == PIFS_SUCCESS; i++)
+    {
+        PIFS_WARNING_MSG("%s\r\n", pifs_address2str(&address));
+        ret = pifs_write(address.block_address, address.page_address, 0,
+                         pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+        if (ret == PIFS_SUCCESS)
+        {
+            ret = pifs_inc_address(&address);
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * @brief pifs_get_wear_level Get wear level of a block.
+ *
+ * @param[in] a_block_address   Address of block.
+ * @param[in] a_header          File system's header.
+ * @param[out] a_wear_level     Erase count.
+ * @return PIFS_SUCCESS if wear level successfully read.
+ */
+pifs_status_t pifs_get_wear_level(pifs_block_address_t a_block_address,
+                                  pifs_header_t * a_header,
+                                  pifs_wear_level_entry_t * a_wear_level)
+{
+    pifs_status_t        ret = PIFS_SUCCESS;
+    pifs_address_t       address;
+    pifs_size_t          po;
+    pifs_size_t          i;
+
+    address = a_header->wear_level_list_address;
+    po = a_block_address * PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE;
+    ret = pifs_add_address(&address, po / PIFS_FLASH_PAGE_SIZE_BYTE);
+    if (ret == PIFS_SUCCESS)
+    {
+        po %= PIFS_FLASH_PAGE_SIZE_BYTE;
+        ret = pifs_read(address.block_address, address.page_address, po,
+                        a_wear_level, PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE);
+        /* Add wear_level_bits to wear_level_count! */
+        for (i = 0; i < sizeof(a_wear_level->wear_level_bits) / PIFS_BYTE_BITS; i++)
+        {
+#if PIFS_FLASH_ERASED_BYTE_VALUE == 0xFF
+            if (!(a_wear_level->wear_level_bits & 1))
+#else
+            if (a_wear_level->wear_level_bits & 1)
+#endif
+            {
+                a_wear_level->wear_level_cntr++;
+            }
+            a_wear_level->wear_level_bits >>= 1;
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * @brief pifs_inc_wear_level_level Increment wear level of a block.
+ *
+ * @param[in] a_block_address   Address of block.
+ * @param[in] a_header          File system's header.
+ * @param[out] a_wear_level     Erase count.
+ * @return PIFS_SUCCESS if wear level successfully read.
+ */
+pifs_status_t pifs_inc_wear_level_level(pifs_block_address_t a_block_address,
+                                  pifs_header_t * a_header,
+                                  pifs_wear_level_entry_t * a_wear_level)
+{
+    pifs_status_t        ret = PIFS_SUCCESS;
+    pifs_address_t       address;
+    pifs_size_t          po;
+    pifs_size_t          i;
+
+    address = a_header->wear_level_list_address;
+    po = a_block_address * PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE;
+    ret = pifs_add_address(&address, po / PIFS_FLASH_PAGE_SIZE_BYTE);
+    if (ret == PIFS_SUCCESS)
+    {
+        po %= PIFS_FLASH_PAGE_SIZE_BYTE;
+        ret = pifs_read(address.block_address, address.page_address, po,
+                         a_wear_level, PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE);
+        if (ret == PIFS_SUCCESS)
+        {
+            for (i = 0; i < sizeof(a_wear_level->wear_level_bits) / PIFS_BYTE_BITS; i++)
+            {
+#if PIFS_FLASH_ERASED_BYTE_VALUE == 0xFF
+                if (a_wear_level->wear_level_bits & (1u << i))
+#else
+                if (!(a_wear_level->wear_level_bits & (1u << i)))
+#endif
+                {
+                    a_wear_level->wear_level_bits ^= 1u << i;
+                }
+            }
+            ret = pifs_write(address.block_address, address.page_address, po,
+                             a_wear_level, PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE);
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * @brief pifs_write_wear_level_level Increment wear level of a block.
+ *
+ * @param[in] a_block_address   Address of block.
+ * @param[in] a_header          File system's header.
+ * @param[out] a_wear_level     Erase count.
+ * @return PIFS_SUCCESS if wear level successfully read.
+ */
+pifs_status_t pifs_write_wear_level_level(pifs_block_address_t a_block_address,
+                                  pifs_header_t * a_header,
+                                  pifs_wear_level_entry_t * a_wear_level)
+{
+    pifs_status_t        ret = PIFS_SUCCESS;
+    pifs_address_t       address;
+    pifs_size_t          po;
+    pifs_size_t          i;
+
+    address = a_header->wear_level_list_address;
+    po = a_block_address * PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE;
+    ret = pifs_add_address(&address, po / PIFS_FLASH_PAGE_SIZE_BYTE);
+    if (ret == PIFS_SUCCESS)
+    {
+        po %= PIFS_FLASH_PAGE_SIZE_BYTE;
+        ret = pifs_write(address.block_address, address.page_address, po,
+                         a_wear_level, PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE);
+    }
+
+    return ret;
+
+}
+
+/**
+ * @brief pifs_wear_level_list_copy Copy wear level list.
+ *
+ * @return PIFS_SUCCES if written successfully.
+ */
+pifs_status_t pifs_wear_level_list_copy(pifs_header_t * a_old_header, pifs_header_t * a_new_header)
+{
+    pifs_status_t             ret = PIFS_SUCCESS;
+    pifs_block_address_t      ba;
+    pifs_size_t               i;
+    pifs_size_t               j;
+    pifs_address_t            address;
+    pifs_wear_level_entry_t   wear_level_entry;
+
+    address = a_new_header->wear_level_list_address;
+    for (ba = 0; ba < PIFS_FLASH_BLOCK_NUM_FS && ret == PIFS_SUCCESS; i++)
+    {
+        ret = pifs_get_wear_level(ba, a_old_header, &wear_level_entry);
+        if (ret == PIFS_SUCCESS)
+        {
+            wear_level_entry.wear_level_bits = PIFS_FLASH_ERASED_BYTE_VALUE;
+            ret = pifs_write_wear_level_level(ba, a_new_header, &wear_level_entry);
+        }
+    }
+
+    return ret;
+}
+
+
+/**
  * @brief pifs_header_write Write file system header.
  *
  * @param[in] a_block_address   Block address of header.
@@ -342,6 +539,11 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
         pifs.is_header_found = TRUE;
         pifs.header_address.block_address = a_block_address;
         pifs.header_address.page_address = a_page_address;
+        if (a_header->counter == 0)
+        {
+            /* Initialize wear level list for the very first header */
+            ret = pifs_wear_level_list_init();
+        }
     }
     if (a_mark_pages)
     {
@@ -374,6 +576,13 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
             ret = pifs_mark_page(a_header->delta_map_address.block_address,
                                  a_header->delta_map_address.page_address,
                                  PIFS_DELTA_MAP_PAGE_NUM, TRUE);
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            /* Mark wear level list as used */
+            ret = pifs_mark_page(a_header->wear_level_list_address.block_address,
+                                 a_header->wear_level_list_address.page_address,
+                                 PIFS_WEAR_LEVEL_LIST_SIZE_PAGE, TRUE);
         }
     }
     PIFS_INFO_MSG("Counter: %i\r\n",
