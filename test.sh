@@ -1,6 +1,7 @@
 #!/bin/sh
 LOG=test.log
 rm flash.bin
+rm flash.stt
 rm $LOG
 make clean
 make

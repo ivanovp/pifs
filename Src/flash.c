@@ -9,6 +9,7 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "api_pifs.h"
 #include "flash.h"
@@ -31,18 +32,16 @@
 
 #define FLASH_EMU_FILENAME      "flash.bin" /**< Name of memory file */
 #define FLASH_STAT_FILENAME     "flash.stt" /**< Name of statistics file */
-
-typedef struct
-{
-    size_t read_cntr;
-    size_t write_cntr;
-    size_t erase_cntr;
-} flash_page_stat_t;
+#define FLASH_STAT_READ_CNTR    0
+#define FLASH_STAT_WRITE_CNTR   1
+#define FLASH_STAT_ERASE_CNTR   2
+#define FLASH_STAT_CNTR_NUM     3   /**< Number of counters */
 
 static FILE * flash_file = NULL;
 static FILE * stat_file = NULL;
 static uint8_t flash_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE] = { 0 };
-static flash_page_stat_t flash_stat[PIFS_FLASH_BLOCK_NUM_ALL][PIFS_FLASH_PAGE_PER_BLOCK] = { { { 0  } } };
+static size_t flash_stat[FLASH_STAT_CNTR_NUM][PIFS_FLASH_BLOCK_NUM_ALL][PIFS_FLASH_PAGE_PER_BLOCK] = { { { 0  } } };
+static size_t flash_stat_temp[PIFS_FLASH_BLOCK_NUM_ALL * PIFS_FLASH_PAGE_PER_BLOCK] = { 0 };
 
 pifs_status_t pifs_flash_init(void)
 {
@@ -150,7 +149,7 @@ pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address, pifs_page_ad
         {
             ret = PIFS_SUCCESS;
         }
-        flash_stat[a_block_address][a_page_address].read_cntr++;
+        flash_stat[FLASH_STAT_READ_CNTR][a_block_address][a_page_address]++;
     }
     else
     {
@@ -207,7 +206,7 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
                     ret = PIFS_ERROR_FLASH_WRITE;
                 }
             }
-            flash_stat[a_block_address][a_page_address].write_cntr++;
+            flash_stat[FLASH_STAT_WRITE_CNTR][a_block_address][a_page_address]++;
         }
         if (ret == PIFS_SUCCESS)
         {
@@ -253,7 +252,7 @@ pifs_status_t pifs_flash_erase(pifs_block_address_t a_block_address)
                 ret = PIFS_ERROR_FLASH_ERASE;
                 break;
             }
-            flash_stat[a_block_address][i].erase_cntr++;
+            flash_stat[FLASH_STAT_ERASE_CNTR][a_block_address][i]++;
         }
     }
     else
@@ -265,18 +264,76 @@ pifs_status_t pifs_flash_erase(pifs_block_address_t a_block_address)
     return ret;
 }
 
+void pifs_flash_sort(size_t * a_array, size_t a_array_size)
+{
+    size_t i;
+    size_t temp;
+    bool_t exchanged;
+
+    do
+    {
+        exchanged = FALSE;
+        for (i = 0; i < a_array_size - 1; i++)
+        {
+            if (a_array[i] > a_array[i + 1])
+            {
+                temp = a_array[i + 1];
+                a_array[i + 1] = a_array[i];
+                a_array[i] = temp;
+                exchanged = TRUE;
+            }
+        }
+    } while (exchanged);
+
+#if 0
+    for (i = 0; i < a_array_size - 1; i++)
+    {
+        printf("%i\r\n", a_array[i]);
+    }
+    printf("----------\r\n");
+#endif
+}
+
 void pifs_flash_print_stat(void)
 {
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
-    flash_page_stat_t    min = { SIZE_MAX, SIZE_MAX, SIZE_MAX };
-    flash_page_stat_t    max = { 0, 0, 0 };
-    float                erase_sum = 0;
-    float                read_sum = 0;
-    float                write_sum = 0;
-    float                avg_erase = 0;
-    float                avg_read = 0;
-    float                avg_write = 0;
+    size_t               i;
+    size_t               min[FLASH_STAT_CNTR_NUM] = { SIZE_MAX, SIZE_MAX, SIZE_MAX };
+    size_t               max[FLASH_STAT_CNTR_NUM] = { 0 };
+    float                sum[FLASH_STAT_CNTR_NUM] = { 0 };
+    float                avg[FLASH_STAT_CNTR_NUM] = { 0 };
+    float                median[FLASH_STAT_CNTR_NUM] = { 0 };
+    float                std_dev[FLASH_STAT_CNTR_NUM] = { 0 };
+
+    /* Calculate median of counters then standard devitation */
+    for (i = 0; i < FLASH_STAT_CNTR_NUM; i++)
+    {
+        const size_t flash_stat_array_size = sizeof(flash_stat_temp) / sizeof(flash_stat_temp[0]);
+        float summa;
+        for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
+        {
+            for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
+            {
+                flash_stat_temp[ba * PIFS_FLASH_PAGE_PER_BLOCK + pa] = flash_stat[i][ba][pa];
+            }
+        }
+        pifs_flash_sort(flash_stat_temp, flash_stat_array_size);
+        summa = flash_stat_temp[flash_stat_array_size / 2 - 1]
+                + flash_stat_temp[flash_stat_array_size / 2];
+        median[i] = summa / 2.0;
+
+        /* Calculate sum */
+        for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
+        {
+            for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
+            {
+                std_dev[i] += pow(flash_stat[i][ba][pa] - median[i], 2);
+            }
+        }
+        /* Calculate standard deviation */
+        std_dev[i] = sqrt(std_dev[i] / (PIFS_FLASH_BLOCK_NUM_FS * PIFS_FLASH_PAGE_PER_BLOCK));
+    }
 
     printf("Flash statistics\r\n");
     printf("================\r\n");
@@ -286,48 +343,40 @@ void pifs_flash_print_stat(void)
     printf("------+------------\r\n");
     for (ba = 0; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
     {
-        printf("%-5i | %i\r\n", ba, flash_stat[ba][0].erase_cntr);
+        printf("%-5i | %i\r\n", ba, flash_stat[FLASH_STAT_ERASE_CNTR][ba][0]);
         for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
         {
-            erase_sum += flash_stat[ba][pa].erase_cntr;
-            read_sum += flash_stat[ba][pa].read_cntr;
-            write_sum += flash_stat[ba][pa].write_cntr;
-            if (flash_stat[ba][pa].erase_cntr < min.erase_cntr)
+            for (i = 0; i < FLASH_STAT_CNTR_NUM; i++)
             {
-                min.erase_cntr = flash_stat[ba][pa].erase_cntr;
-            }
-            if (flash_stat[ba][pa].read_cntr < min.read_cntr)
-            {
-                min.read_cntr = flash_stat[ba][pa].read_cntr;
-            }
-            if (flash_stat[ba][pa].write_cntr < min.write_cntr)
-            {
-                min.write_cntr = flash_stat[ba][pa].write_cntr;
-            }
-            if (flash_stat[ba][pa].erase_cntr > max.erase_cntr)
-            {
-                max.erase_cntr = flash_stat[ba][pa].erase_cntr;
-            }
-            if (flash_stat[ba][pa].read_cntr > max.read_cntr)
-            {
-                max.read_cntr = flash_stat[ba][pa].read_cntr;
-            }
-            if (flash_stat[ba][pa].write_cntr > max.write_cntr)
-            {
-                max.write_cntr = flash_stat[ba][pa].write_cntr;
+                sum[i] += flash_stat[i][ba][pa];
+                if (flash_stat[i][ba][pa] < min[i])
+                {
+                    min[i] = flash_stat[i][ba][pa];
+                }
+                if (flash_stat[i][ba][pa] > max[i])
+                {
+                    max[i] = flash_stat[i][ba][pa];
+                }
             }
         }
     }
 
-    avg_erase = erase_sum / PIFS_FLASH_PAGE_NUM_ALL;
-    avg_read = read_sum / PIFS_FLASH_PAGE_NUM_ALL;
-    avg_write = write_sum / PIFS_FLASH_PAGE_NUM_ALL;
+    for (i = 0; i < FLASH_STAT_CNTR_NUM; i++)
+    {
+        avg[i] = sum[i] / PIFS_FLASH_PAGE_NUM_ALL;
+    }
 
     printf("\r\n");
-    printf("                    Min |    Average |        Max\r\n");
-    printf("------------------------+------------+-----------\r\n");
-    printf("Erase count  %10i | %10.1f | %10i\r\n", min.erase_cntr, avg_erase, max.erase_cntr);
-    printf("Read count   %10i | %10.1f | %10i\r\n", min.read_cntr, avg_read, max.read_cntr);
-    printf("Write count  %10i | %10.1f | %10i\r\n", min.write_cntr, avg_write, max.write_cntr);
+    printf("Count |      Min |  Average |      Max |  Std dev |   Median\r\n");
+    printf("------+----------+----------+----------+----------+---------\r\n");
+    printf("Erase | %8i | %8.1f | %8i | %8.1f | %8.1f\r\n", min[FLASH_STAT_ERASE_CNTR],
+           avg[FLASH_STAT_ERASE_CNTR], max[FLASH_STAT_ERASE_CNTR],
+           std_dev[FLASH_STAT_ERASE_CNTR], median[FLASH_STAT_ERASE_CNTR]);
+    printf("Read  | %8i | %8.1f | %8i | %8.1f | %8.1f\r\n", min[FLASH_STAT_READ_CNTR],
+           avg[FLASH_STAT_READ_CNTR], max[FLASH_STAT_READ_CNTR],
+           std_dev[FLASH_STAT_WRITE_CNTR], median[FLASH_STAT_WRITE_CNTR]);
+    printf("Write | %8i | %8.1f | %8i | %8.1f | %8.1f\r\n", min[FLASH_STAT_WRITE_CNTR],
+           avg[FLASH_STAT_WRITE_CNTR], max[FLASH_STAT_WRITE_CNTR],
+           std_dev[FLASH_STAT_WRITE_CNTR], median[FLASH_STAT_WRITE_CNTR]);
     printf("\r\n");
 }
