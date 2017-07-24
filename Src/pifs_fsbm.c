@@ -512,7 +512,6 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
 
 pifs_status_t pifs_find_free_block(pifs_size_t a_block_count,
                                    pifs_block_type_t a_block_type,
-                                   pifs_block_address_t a_start_block_address,
                                    pifs_header_t *a_header,
                                    pifs_block_address_t * a_block_address)
 {
@@ -527,12 +526,24 @@ pifs_status_t pifs_find_free_block(pifs_size_t a_block_count,
     find.block_type = a_block_type;
     find.is_free = TRUE;
     find.is_same_block = TRUE;
-    find.start_block_address = a_start_block_address;
     find.header = a_header;
 
-    ret = pifs_find_page_adv(&find, &ba, &pa, &page_count);
+    ret = pifs_get_least_weared_block(a_header, &find.start_block_address);
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_find_page_adv(&find, &ba, &pa, &page_count);
+        if (ret != PIFS_SUCCESS)
+        {
+            /* Try again */
+            find.start_block_address = PIFS_FLASH_BLOCK_RESERVED_NUM;
+            ret = pifs_find_page_adv(&find, &ba, &pa, &page_count);
+        }
+    }
 
-    *a_block_address = ba;
+    if (ret == PIFS_SUCCESS)
+    {
+        *a_block_address = ba;
+    }
 
     return ret;
 }

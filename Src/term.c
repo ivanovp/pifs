@@ -172,14 +172,14 @@ void cmdWearLevel (char* command, char* params)
     (void) command;
     (void) params;
 
-    printf("Block | Wear level\r\n");
-    printf("------+-----------\r\n");
+    printf("Block | Erase count\r\n");
+    printf("------+------------\r\n");
     for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
          ba < PIFS_FLASH_BLOCK_NUM_ALL && ret == PIFS_SUCCESS;
          ba++)
     {
         ret = pifs_get_wear_level(ba, &pifs.header, &wear_level);
-        printf("%4i | %i\r\n", ba, wear_level.wear_level_cntr);
+        printf("%5i | %i\r\n", ba, wear_level.wear_level_cntr);
     }
 }
 

@@ -159,6 +159,12 @@ typedef uint32_t pifs_page_count_t;
 #error PIFS_PAGE_COUNT_SIZE is invalid! Valid values are 1, 2 or 4.
 #endif
 
+typedef uint16_t pifs_wear_level_cntr_t;
+#define PIFS_WEAR_LEVEL_CNTR_MAX    (UINT16_MAX)
+
+typedef uint8_t pifs_wear_level_bits_t;
+#define PIFS_WEAR_LEVEL_BITS_ERASED (UINT8_MAX)
+
 #if PIFS_MANAGEMENT_BLOCKS >= PIFS_FLASH_BLOCK_NUM_FS
 #error PIFS_MANAGEMENT_BLOCKS is greater than PIFS_FLASH_BLOCK_NUM_FS!
 #endif
@@ -265,8 +271,8 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
-    uint16_t                wear_level_cntr;
-    uint8_t                 wear_level_bits;
+    pifs_wear_level_cntr_t wear_level_cntr;
+    pifs_wear_level_bits_t wear_level_bits;
 } pifs_wear_level_entry_t;
 
 typedef struct PIFS_PACKED_ATTRIBUTE
@@ -379,6 +385,7 @@ pifs_status_t pifs_write_wear_level(pifs_block_address_t a_block_address,
                                     pifs_header_t * a_header,
                                     pifs_wear_level_entry_t * a_wear_level);
 pifs_status_t pifs_copy_wear_level_list(pifs_header_t * a_old_header, pifs_header_t * a_new_header);
+pifs_status_t pifs_get_least_weared_block(pifs_header_t * a_header, pifs_block_address_t * a_block_address);
 pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                                 pifs_page_address_t a_page_address,
                                 pifs_header_t * a_header, bool_t a_mark_pages);

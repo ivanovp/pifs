@@ -520,6 +520,39 @@ pifs_status_t pifs_copy_wear_level_list(pifs_header_t * a_old_header, pifs_heade
     return ret;
 }
 
+/**
+ * @brief pifs_get_least_weared_block Get least weared block.
+ *
+ * @return PIFS_SUCCES if written successfully.
+ */
+pifs_status_t pifs_get_least_weared_block(pifs_header_t * a_header, pifs_block_address_t * a_block_address)
+{
+    pifs_status_t             ret = PIFS_SUCCESS;
+    pifs_block_address_t      ba;
+    pifs_wear_level_entry_t   wear_level_entry;
+    pifs_wear_level_cntr_t    wear_level_cntr_min = PIFS_WEAR_LEVEL_CNTR_MAX;
+    pifs_block_address_t      ba_min = PIFS_FLASH_BLOCK_RESERVED_NUM;
+
+    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_FS && ret == PIFS_SUCCESS; ba++)
+    {
+        ret = pifs_get_wear_level(ba, a_header, &wear_level_entry);
+        if (ret == PIFS_SUCCESS && wear_level_entry.wear_level_cntr < wear_level_cntr_min)
+        {
+            ba_min = ba;
+            wear_level_cntr_min = wear_level_entry.wear_level_cntr;
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        PIFS_WARNING_MSG("BA%i\r\n", ba_min);
+        *a_block_address = ba_min;
+    }
+
+    return ret;
+}
+
+
 
 /**
  * @brief pifs_header_write Write file system header.
