@@ -119,7 +119,7 @@ void cmdCheckPage (char* command, char* params)
     unsigned long int    addr = 0;
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
-    pifs_page_offset_t   po;
+    //pifs_page_offset_t   po;
     char               * param;
     pifs_size_t          cntr = 1;
 
@@ -136,7 +136,7 @@ void cmdCheckPage (char* command, char* params)
             cntr = strtoul(param, NULL, 0);
         }
         //printf("Addr: 0x%X\r\n", addr);
-        po = addr % PIFS_FLASH_PAGE_SIZE_BYTE;
+        //po = addr % PIFS_FLASH_PAGE_SIZE_BYTE;
         pa = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) % PIFS_FLASH_PAGE_PER_BLOCK;
         ba = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) / PIFS_FLASH_PAGE_PER_BLOCK;
         printf("Page                    Free    TBR     Erased\r\n");
@@ -160,6 +160,26 @@ void cmdCheckPage (char* command, char* params)
     else
     {
         printf("ERROR: Missing parameter!\r\n");
+    }
+}
+
+void cmdWearLevel (char* command, char* params)
+{
+    pifs_block_address_t    ba;
+    pifs_wear_level_entry_t wear_level;
+    pifs_status_t           ret = PIFS_SUCCESS;
+
+    (void) command;
+    (void) params;
+
+    printf("Block | Wear level\r\n");
+    printf("------+-----------\r\n");
+    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
+         ba < PIFS_FLASH_BLOCK_NUM_ALL && ret == PIFS_SUCCESS;
+         ba++)
+    {
+        ret = pifs_get_wear_level(ba, &pifs.header, &wear_level);
+        printf("%4i | %i\r\n", ba, wear_level.wear_level_cntr);
     }
 }
 
@@ -677,7 +697,8 @@ parserCommand_t parserCommands[] =
     {"tl",          "Test Pi file system: large file",  cmdTestPifsLarge},
     {"tf",          "Test Pi file system: full write",  cmdTestPifsFull},
     {"c",           "Check if page is free/to be released/erased", cmdCheckPage},
-    {"w",           "Debug command",                    cmdDebug},
+    {"w",           "Print wear level list",            cmdWearLevel},
+    {"y",           "Debug command",                    cmdDebug},
     {"ls",          "List directory",                   cmdListDir},
     {"l",           "List directory",                   cmdListDir},
 #if ENABLE_DOS_ALIAS

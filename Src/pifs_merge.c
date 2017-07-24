@@ -315,20 +315,21 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
  * #1 Erase next management blocks
  * #2 Initialize file system's header, but not write. Next management blocks'
  *    address is not initialized and checksum is not calculated.
- * #3 Copy free space bitmap (FSBM) from old management blocks to new ones and
+ * #3 Copy wear level list.
+ * #4 Copy free space bitmap (FSBM) from old management blocks to new ones and
  *    erase to be released blocks. New free space bitmap will be updated.
- * #4 Write new management blocks. Address of next management blocks and
+ * #5 Write new management blocks. Address of next management blocks and
  *    checksum shall not be written.
- * #5 Copy file entries from old to new management blocks. Maps are also copied,
+ * #6 Copy file entries from old to new management blocks. Maps are also copied,
  *    so map blocks are allocated from new management area (FSBM is needed).
- * #6 Erase delta page mirror in RAM.
- * #7 Find free blocks for next management block in the new file system header.
- * #8 Add next management block's address to the new file system header and
+ * #7 Erase delta page mirror in RAM.
+ * #8 Find free blocks for next management block in the new file system header.
+ * #9 Add next management block's address to the new file system header and
  *    calculate checksum.
- * #9 Update page of new file system header. Checksum is written, so the new
+ * #10 Update page of new file system header. Checksum is written, so the new
  *    file system header is valid from this point.
- * #10 Erase old management blocks.
- * #11 Re-open files and seek to the stored position.
+ * #11 Erase old management blocks.
+ * #12 Re-open files and seek to the stored position.
  *     Therefore actual_map_address, map_header, etc. will be updated.
  *
  * @return PIFS_SUCCES when merge was successful.
@@ -346,7 +347,7 @@ pifs_status_t pifs_merge(void)
     bool_t               file_is_opened[PIFS_OPEN_FILE_NUM_MAX] = { 0 };
     pifs_size_t          file_pos[PIFS_OPEN_FILE_NUM_MAX] = { 0 };
 
-    PIFS_NOTICE_MSG("start\r\n");
+    PIFS_WARNING_MSG("start\r\n");
     pifs.is_merging = TRUE;
     /* #0 */
     for (i = 0; i < PIFS_OPEN_FILE_NUM_MAX; i++)
@@ -363,7 +364,7 @@ pifs_status_t pifs_merge(void)
     /* #1 */
     for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
     {
-        ret = pifs_erase(pifs.header.next_management_blocks[i], &old_header, &new_header);
+        ret = pifs_erase(pifs.header.next_management_blocks[i], NULL, NULL);
     }
     /* #2 */
     if (ret == PIFS_SUCCESS)
@@ -376,10 +377,20 @@ pifs_status_t pifs_merge(void)
     /* #3 */
     if (ret == PIFS_SUCCESS)
     {
+        /* Copy wear level list */
+        ret = pifs_copy_wear_level_list(&old_header, &new_header);
+    }
+    for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
+    {
+        ret = pifs_inc_wear_level(new_header.management_blocks[i], &new_header);
+    }
+    /* #4 */
+    if (ret == PIFS_SUCCESS)
+    {
         /* Copy free space bitmap */
         ret = pifs_copy_fsbm(&old_header, &new_header);
     }
-    /* #4 */
+    /* #5 */
     if (ret == PIFS_SUCCESS)
     {
         /* Activate new file system header */
@@ -387,13 +398,13 @@ pifs_status_t pifs_merge(void)
         /* Write new management area's header */
         ret = pifs_header_write(new_header_ba, new_header_pa, &pifs.header, TRUE);
     }
-    /* #5 */
+    /* #6 */
     if (ret == PIFS_SUCCESS)
     {
         /* Copy file entry list and process deltas */
         ret = pifs_copy_entry_list(&old_header, &new_header);
     }
-    /* #6 */
+    /* #7 */
     if (ret == PIFS_SUCCESS)
     {
         /* Reset delta map */
@@ -402,7 +413,7 @@ pifs_status_t pifs_merge(void)
         pifs.delta_map_page_is_dirty = FALSE;
         pifs.delta_map_page_is_read = FALSE;
     }
-    /* #7 */
+    /* #8 */
     if (ret == PIFS_SUCCESS)
     {
         /* Find next management blocks address after actual management block */
@@ -420,20 +431,20 @@ pifs_status_t pifs_merge(void)
                                        &next_mgmt_ba);
         }
     }
-    /* #8 */
+    /* #9 */
     if (ret == PIFS_SUCCESS)
     {
         PIFS_NOTICE_MSG("Next management block: %i, ret: %i\r\n", next_mgmt_ba, ret);
         /* Add next management block's address to the current header */
         ret = pifs_header_init(new_header_ba, new_header_pa, next_mgmt_ba, &pifs.header);
     }
-    /* #9 */
+    /* #10 */
     if (ret == PIFS_SUCCESS)
     {
         /* Write new management area's header with next management block's address */
         ret = pifs_header_write(new_header_ba, new_header_pa, &pifs.header, FALSE);
     }
-    /* #10 */
+    /* #11 */
     if (ret == PIFS_SUCCESS)
     {
         /* Erase old management area */
@@ -442,7 +453,7 @@ pifs_status_t pifs_merge(void)
             ret = pifs_erase(old_header.management_blocks[i], &old_header, &new_header);
         }
     }
-    /* #11 */
+    /* #12 */
     if (ret == PIFS_SUCCESS)
     {
         /* Re-open files */
@@ -465,7 +476,7 @@ pifs_status_t pifs_merge(void)
     }
     pifs.is_merging = FALSE;
     PIFS_ASSERT(ret == PIFS_SUCCESS);
-    PIFS_NOTICE_MSG("stop\r\n");
+    PIFS_WARNING_MSG("stop\r\n");
 
     return ret;
 }

@@ -169,15 +169,15 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
     {
         PIFS_DEBUG_MSG("End of map, new map will be created\r\n");
         a_file->status = pifs_find_free_page(PIFS_MAP_PAGE_NUM,
-                                        PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT,
-                                        &ba, &pa, &page_count_found);
+                                             PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT,
+                                             &ba, &pa, &page_count_found);
         if (a_file->status == PIFS_SUCCESS)
         {
             a_file->status = pifs_read(a_file->actual_map_address.block_address,
-                                        a_file->actual_map_address.page_address,
-                                        0,
-                                        &a_file->map_header,
-                                        PIFS_MAP_HEADER_SIZE_BYTE);
+                                       a_file->actual_map_address.page_address,
+                                       0,
+                                       &a_file->map_header,
+                                       PIFS_MAP_HEADER_SIZE_BYTE);
         }
         if (a_file->status == PIFS_SUCCESS)
         {

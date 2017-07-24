@@ -369,9 +369,16 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
                                pifs_page_address_t a_page_address,
                                pifs_block_address_t a_next_mgmt_block_address,
                                pifs_header_t * a_header);
+pifs_status_t pifs_wear_level_list_init(void);
 pifs_status_t pifs_get_wear_level(pifs_block_address_t a_block_address,
                                   pifs_header_t * a_header,
                                   pifs_wear_level_entry_t * a_wear_level);
+pifs_status_t pifs_inc_wear_level(pifs_block_address_t a_block_address,
+                                  pifs_header_t * a_header);
+pifs_status_t pifs_write_wear_level(pifs_block_address_t a_block_address,
+                                    pifs_header_t * a_header,
+                                    pifs_wear_level_entry_t * a_wear_level);
+pifs_status_t pifs_copy_wear_level_list(pifs_header_t * a_old_header, pifs_header_t * a_new_header);
 pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                                 pifs_page_address_t a_page_address,
                                 pifs_header_t * a_header, bool_t a_mark_pages);
