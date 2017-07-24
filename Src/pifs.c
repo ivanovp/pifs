@@ -413,8 +413,7 @@ pifs_status_t pifs_get_wear_level(pifs_block_address_t a_block_address,
  *
  * @param[in] a_block_address   Address of block.
  * @param[in] a_header          File system's header.
- * @param[out] a_wear_level     Erase count.
- * @return PIFS_SUCCESS if wear level successfully read.
+ * @return PIFS_SUCCESS if wear level successfully incremented.
  */
 pifs_status_t pifs_inc_wear_level(pifs_block_address_t a_block_address,
                                   pifs_header_t * a_header)
@@ -467,7 +466,7 @@ pifs_status_t pifs_inc_wear_level(pifs_block_address_t a_block_address,
  * @param[in] a_block_address   Address of block.
  * @param[in] a_header          File system's header.
  * @param[out] a_wear_level     Erase count.
- * @return PIFS_SUCCESS if wear level successfully read.
+ * @return PIFS_SUCCESS if wear level successfully written.
  */
 pifs_status_t pifs_write_wear_level(pifs_block_address_t a_block_address,
                                     pifs_header_t * a_header,
@@ -499,7 +498,7 @@ pifs_status_t pifs_write_wear_level(pifs_block_address_t a_block_address,
 /**
  * @brief pifs_wear_level_list_copy Copy wear level list.
  *
- * @return PIFS_SUCCES if written successfully.
+ * @return PIFS_SUCCES if copied successfully.
  */
 pifs_status_t pifs_copy_wear_level_list(pifs_header_t * a_old_header, pifs_header_t * a_new_header)
 {
@@ -523,7 +522,7 @@ pifs_status_t pifs_copy_wear_level_list(pifs_header_t * a_old_header, pifs_heade
 /**
  * @brief pifs_get_least_weared_block Get least weared block.
  *
- * @return PIFS_SUCCES if written successfully.
+ * @return PIFS_SUCCES if get successfully.
  */
 pifs_status_t pifs_get_least_weared_block(pifs_header_t * a_header, pifs_block_address_t * a_block_address)
 {
