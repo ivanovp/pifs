@@ -538,7 +538,7 @@ void cmdMap (char* command, char* params)
         if (ret == PIFS_SUCCESS)
         {
             printf("Previous map: %s\r\n", pifs_address2str(&map_header.prev_map_address));
-            printf("Next map:     %s\r\n\r\n", pifs_address2str(&map_header.prev_map_address));
+            printf("Next map:     %s\r\n\r\n", pifs_address2str(&map_header.next_map_address));
 
             for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !end && ret == PIFS_SUCCESS; i++)
             {

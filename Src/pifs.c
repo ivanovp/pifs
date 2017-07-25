@@ -279,40 +279,8 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
         /* Not enough space for management pages */
         ret = PIFS_ERROR_CONFIGURATION;
     }
-#if PIFS_MANAGEMENT_BLOCKS > 1
-    for (i = 0; i < PIFS_MANAGEMENT_BLOCKS; i++)
-#endif
-    {
-        a_header->management_blocks[i] = ba;
-        ba++;
-#if PIFS_MANAGEMENT_BLOCKS > 1
-        if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
-        {
-            ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
-        }
-#endif
-    }
-    ba = a_next_mgmt_block_address;
-#if PIFS_MANAGEMENT_BLOCKS > 1
-    for (i = 0; i < PIFS_MANAGEMENT_BLOCKS; i++)
-#endif
-    {
-        if (a_next_mgmt_block_address != PIFS_BLOCK_ADDRESS_ERASED)
-        {
-            a_header->next_management_blocks[i] = ba;
-#if PIFS_MANAGEMENT_BLOCKS > 1
-            ba++;
-            if (ba >= PIFS_FLASH_BLOCK_NUM_ALL)
-            {
-                ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
-            }
-#endif
-        }
-        else
-        {
-            a_header->next_management_blocks[i] = PIFS_BLOCK_ADDRESS_ERASED;
-        }
-    }
+    a_header->management_block_address = ba;
+    a_header->next_management_block_address = a_next_mgmt_block_address;
     if (a_next_mgmt_block_address != PIFS_BLOCK_ADDRESS_ERASED)
     {
         a_header->checksum = pifs_calc_header_checksum(a_header);
@@ -596,8 +564,6 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                                  a_page_address,
                                  PIFS_HEADER_SIZE_PAGE, TRUE);
         }
-        /* FIXME this may not be the right function to mark entry list and
-         * free space bitmap. */
         if (ret == PIFS_SUCCESS)
         {
             /* Mark entry list as used */

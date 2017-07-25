@@ -364,13 +364,13 @@ pifs_status_t pifs_merge(void)
     /* #1 */
     for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
     {
-        ret = pifs_erase(pifs.header.next_management_blocks[i], NULL, NULL);
+        ret = pifs_erase(pifs.header.next_management_block_address + i, NULL, NULL);
     }
     /* #2 */
     if (ret == PIFS_SUCCESS)
     {
         new_header.counter = old_header.counter;
-        new_header_ba = old_header.next_management_blocks[0];
+        new_header_ba = old_header.next_management_block_address;
         new_header_pa = 0;
         ret = pifs_header_init(new_header_ba, new_header_pa, PIFS_BLOCK_ADDRESS_ERASED, &new_header);
     }
@@ -382,7 +382,7 @@ pifs_status_t pifs_merge(void)
     }
     for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
     {
-        ret = pifs_inc_wear_level(new_header.management_blocks[i], &new_header);
+        ret = pifs_inc_wear_level(new_header.management_block_address + i, &new_header);
     }
     /* #4 */
     if (ret == PIFS_SUCCESS)
@@ -452,7 +452,7 @@ pifs_status_t pifs_merge(void)
         /* Erase old management area */
         for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
         {
-            ret = pifs_erase(old_header.management_blocks[i], &old_header, &new_header);
+            ret = pifs_erase(old_header.management_block_address + i, &old_header, &new_header);
         }
     }
     /* #12 */
