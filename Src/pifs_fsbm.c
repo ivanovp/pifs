@@ -412,6 +412,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
         fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
     }
 
+    *a_page_count_found = 0;
     ret = pifs_calc_free_space_pos(&a_find->header->free_space_bitmap_address,
                                    fba, fpa, &fsbm_ba, &fsbm_pa, &bit_pos);
     if (ret == PIFS_SUCCESS)
@@ -445,6 +446,8 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                                 *a_block_address = fba_start;
                                 *a_page_address = fpa_start;
                                 *a_page_count_found = page_count_found;
+                                PIFS_DEBUG_MSG("page_count_found: %i, %s\r\n", page_count_found,
+                                               pifs_ba_pa2str(fba_start, fpa_start));
                             }
                             if (page_count_found == a_find->page_count_desired)
                             {
@@ -476,7 +479,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                             {
                                 page_count_found = 0;
                             }
-                            if (fba >= PIFS_FLASH_BLOCK_NUM_ALL && !page_count_found)
+                            if (fba >= PIFS_FLASH_BLOCK_NUM_ALL && !(*a_page_count_found))
                             {
                                 ret = PIFS_ERROR_NO_MORE_SPACE;
                             }
@@ -499,10 +502,10 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                     }
                 }
             }
-        } while (byte_cntr-- > 0 && ret == PIFS_SUCCESS && !found);
+        } while (byte_cntr-- > 0 && ret == PIFS_SUCCESS && !found && fba < PIFS_FLASH_BLOCK_NUM_ALL);
     }
 
-    if (ret == PIFS_SUCCESS && !page_count_found)
+    if (ret == PIFS_SUCCESS && !(*a_page_count_found))
     {
         ret = PIFS_ERROR_NO_MORE_SPACE;
     }

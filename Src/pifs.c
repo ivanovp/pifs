@@ -23,7 +23,7 @@
 #include "pifs_merge.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 5
 #include "pifs_debug.h"
 
 pifs_t pifs =
@@ -1011,7 +1011,17 @@ void pifs_internal_open(pifs_file_t * a_file,
 #if PIFS_DEBUG_LEVEL >= 6
             print_buffer(entry, sizeof(pifs_entry_t), 0);
 #endif
-            a_file->is_opened = TRUE;
+            /* Check if file size is valid or file is opened during merge */
+            if ((a_file->entry.file_size < PIFS_FILE_SIZE_ERASED && a_is_merge_allowed)
+                    || !a_is_merge_allowed)
+            {
+                a_file->is_opened = TRUE;
+            }
+            else
+            {
+                PIFS_DEBUG_MSG("File size of %s is invalid!\r\n", a_filename);
+                a_file->status = PIFS_ERROR_FILE_NOT_FOUND;
+            }
         }
         if (a_file->mode_create_new_file)
         {
@@ -1203,8 +1213,8 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                         page_count_needed_limited = PIFS_PAGE_COUNT_INVALID - 1;
                     }
                     file->status = pifs_find_free_page(page_count_needed_limited,
-                                                  PIFS_BLOCK_TYPE_DATA,
-                                                  &ba, &pa, &page_count_found);
+                                                       PIFS_BLOCK_TYPE_DATA,
+                                                       &ba, &pa, &page_count_found);
                     PIFS_DEBUG_MSG("%u pages found. %s, status: %i\r\n",
                                    page_count_found, pifs_ba_pa2str(ba, pa), file->status);
                     if (file->status == PIFS_SUCCESS)
@@ -1411,6 +1421,8 @@ int pifs_fflush(P_FILE * a_file)
     PIFS_NOTICE_MSG("filename: '%s'\r\n", file->entry.name);
     if (pifs.is_header_found && file && file->is_opened)
     {
+        PIFS_DEBUG_MSG("mode_write: %i, is_size_changed: %i\r\n",
+                       file->mode_write, file->is_size_changed);
         if (file->mode_write && file->is_size_changed)
         {
             file->status = pifs_update_entry(file->entry.name, &file->entry);
