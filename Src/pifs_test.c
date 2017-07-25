@@ -200,7 +200,7 @@ pifs_status_t pifs_test_full_r(void)
         printf("File opened for reading\r\n");
         for (i = 0; i < testfull_written_buffers; i++)
         {
-            printf("i: %i\r\n", i);
+            printf("%i/%i\r\n", i + 1, testfull_written_buffers);
             generate_buffer(i + 55);
             read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
             if (read_size != sizeof(test_buf_r))

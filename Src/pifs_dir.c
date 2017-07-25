@@ -73,7 +73,7 @@ static pifs_status_t pifs_inc_entry(pifs_dir_t * a_dir)
     if (a_dir->entry_list_index >= PIFS_ENTRY_PER_PAGE)
     {
         a_dir->entry_list_index = 0;
-        pifs_inc_address(&a_dir->entry_list_address);
+        (void)pifs_inc_address(&a_dir->entry_list_address);
         a_dir->entry_page_index++;
         if (a_dir->entry_page_index >= PIFS_ENTRY_LIST_SIZE_PAGE)
         {

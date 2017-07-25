@@ -217,7 +217,10 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
                             }
                             if (ret == PIFS_SUCCESS && j < map_entry.page_count)
                             {
-                                ret = pifs_inc_address(&address);
+                                /* Deliberately avoiding return code: */
+                                /* it is not an error if we reach the end of */
+                                /* flash memory */
+                                (void)pifs_inc_address(&address);
                             }
                         }
                     }

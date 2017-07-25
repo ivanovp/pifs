@@ -332,6 +332,7 @@ void pifs_parse_open_mode(pifs_file_t * a_file, const pifs_char_t * a_modes)
 
 /**
  * @brief pifs_inc_address Increment address.
+ * TODO think about return code handling when this function called!
  *
  * @param[in] a_address Pointer to address to increment.
  *

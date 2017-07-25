@@ -321,7 +321,7 @@ pifs_status_t pifs_wear_level_list_init(void)
                          pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
         if (ret == PIFS_SUCCESS)
         {
-            ret = pifs_inc_address(&address);
+            (void)pifs_inc_address(&address);
         }
     }
 
