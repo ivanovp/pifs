@@ -129,11 +129,19 @@ void cmdCheckPage (char* command, char* params)
     {
         //printf("Params: [%s]\r\n", params);
         param = PARSER_getNextParam();
-        addr = strtoul(param, NULL, 0);
-        param = PARSER_getNextParam();
-        if (param)
+        if (param[0] == '-' && param[1] == 'a')
         {
-            cntr = strtoul(param, NULL, 0);
+            addr = 0;
+            cntr = PIFS_FLASH_PAGE_NUM_ALL;
+        }
+        else
+        {
+            addr = strtoul(param, NULL, 0);
+            param = PARSER_getNextParam();
+            if (param)
+            {
+                cntr = strtoul(param, NULL, 0);
+            }
         }
         //printf("Addr: 0x%X\r\n", addr);
         //po = addr % PIFS_FLASH_PAGE_SIZE_BYTE;
@@ -154,7 +162,10 @@ void cmdCheckPage (char* command, char* params)
                 printf("ERROR: Invalid address!\r\n");
                 break;
             }
-            pifs_inc_ba_pa(&ba, &pa);
+            if (cntr > 1)
+            {
+                pifs_inc_ba_pa(&ba, &pa);
+            }
         } while (--cntr);
     }
     else
