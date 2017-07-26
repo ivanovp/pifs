@@ -660,13 +660,13 @@ pifs_status_t pifs_test_wseek_r(void)
     if (file)
     {
         printf("File opened for reading\r\n");
-        generate_buffer(8);
         /* First 100 byte shall be zero, due to fseek */
-        fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SEQUENCE_BYTE, 0);
-        read_size = pifs_fread(test_buf_r, 1, 100, file);
+        fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SIMPLE_BYTE, 0);
+        fill_buffer(test_buf_r, sizeof(test_buf_r), FILL_TYPE_SIMPLE_BYTE, 0);
+        read_size = pifs_fread(test_buf_r, 1, SEEK_TEST_POS, file);
         check_buffers();
 
-//        pifs_fseek(file, 100, PIFS_SEEK_SET);
+        generate_buffer(8);
         read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
         check_buffers();
         if (pifs_fclose(file))
