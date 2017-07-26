@@ -338,6 +338,8 @@ pifs_status_t pifs_find_free_page(pifs_page_count_t a_page_count_desired,
                              PIFS_FLASH_BLOCK_RESERVED_NUM,
                              a_block_address, a_page_address, a_page_count_found);
     }
+
+    return ret;
 }
 
 /**

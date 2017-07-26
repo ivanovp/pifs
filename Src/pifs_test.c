@@ -15,6 +15,7 @@
 #include "api_pifs.h"
 #include "pifs.h"
 #include "pifs_entry.h"
+#include "pifs_test.h"
 #include "buffer.h"
 
 #define PIFS_DEBUG_LEVEL    5

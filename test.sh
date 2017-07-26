@@ -5,6 +5,8 @@ rm flash.stt
 rm $LOG
 make clean
 make
+# Create a file
+./pifs tb staticwear.tst
 for i in `seq --format="%02.0f" 100`; do
     echo "##############################################################################"|tee -a $LOG
     echo "### TEST $i"|tee -a $LOG

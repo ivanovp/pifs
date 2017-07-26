@@ -118,6 +118,15 @@ void cmdTestPifsFull (char* command, char* params)
     pifs_test_full_r();
 }
 
+void cmdTestPifsSeek (char* command, char* params)
+{
+    (void) command;
+    (void) params;
+
+    pifs_test_rseek_w();
+    pifs_test_rseek_r();
+}
+
 void cmdCheckPage (char* command, char* params)
 {
     unsigned long int    addr = 0;
@@ -711,6 +720,7 @@ parserCommand_t parserCommands[] =
     {"ts",          "Test Pi file system: small files", cmdTestPifsSmall},
     {"tl",          "Test Pi file system: large file",  cmdTestPifsLarge},
     {"tf",          "Test Pi file system: full write",  cmdTestPifsFull},
+    {"tsk",         "Test Pi file system: seek",        cmdTestPifsSeek},
     {"c",           "Check if page is free/to be released/erased", cmdCheckPage},
     {"w",           "Print wear level list",            cmdWearLevel},
     {"y",           "Debug command",                    cmdDebug},
@@ -787,6 +797,11 @@ bool_t getLine(uint8_t * a_buf, size_t a_buf_size)
 
 void term_init (void)
 {
+    printf("Pi file system v%i.%i terminal\r\n",
+           PIFS_MAJOR_VERSION, PIFS_MINOR_VERSION);
+    printf("Compiled on " __DATE__ " " __TIME__ "\r\n");
+    printf("Copyright (C) Peter Ivanov <ivanovp@gmail.com>, 2017\r\n");
+    printf("\r\n");
     PARSER_init(parserCommands);
     printf ("Type 'help' to get assistance!\r\n\r\n");
     printPrompt();

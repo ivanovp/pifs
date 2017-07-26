@@ -23,7 +23,7 @@
 #include "pifs_merge.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 5
+#define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
 
 pifs_t pifs =
@@ -251,7 +251,6 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
                                pifs_header_t * a_header)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
-    pifs_size_t          i = 0;
     pifs_block_address_t ba = a_block_address;
     pifs_address_t       address;
     PIFS_DEBUG_MSG("Creating managamenet block %s\r\n", pifs_ba_pa2str(a_block_address, a_page_address));
@@ -512,7 +511,7 @@ pifs_status_t pifs_get_least_weared_block(pifs_header_t * a_header, pifs_block_a
 
     if (ret == PIFS_SUCCESS)
     {
-        PIFS_WARNING_MSG("BA%i\r\n", ba_min);
+        PIFS_NOTICE_MSG("BA%i\r\n", ba_min);
         *a_block_address = ba_min;
     }
 
@@ -1495,14 +1494,9 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
 
         if (target_pos > file->entry.file_size)
         {
-            if (file->mode_write)
-            {
-                /* TODO write non-existing data */
-            }
-            else if (file->mode_read)
-            {
-
-            }
+            PIFS_WARNING_MSG("Trying to seek position %i while file size is %i bytes\r\n",
+                             target_pos, file->entry.file_size);
+            data_size -= target_pos - file->entry.file_size;
         }
 
         po = file->read_pos % PIFS_FLASH_PAGE_SIZE_BYTE;
@@ -1544,6 +1538,26 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
         {
             file->write_pos = file->read_pos;
             file->write_address = file->read_address;
+        }
+        /* Check if we are at end of file and data needs to be written to reach */
+        /* target position */
+        if (target_pos > file->read_pos)
+        {
+            /* TODO value to write configurable or 0? */
+            memset(pifs.page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_FLASH_PAGE_SIZE_BYTE);
+            data_size = target_pos - file->read_pos;
+            page_count = (data_size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
+            while (page_count && file->status == PIFS_SUCCESS)
+            {
+                chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE);
+                file->status = pifs_fwrite(pifs.page_buf, 1, chunk_size, file);
+                data_size -= chunk_size;
+                page_count--;
+            }
+            if (data_size && file->status == PIFS_SUCCESS)
+            {
+                file->status = pifs_fwrite(pifs.page_buf, 1, data_size, file);
+            }
         }
         ret = file->status;
     }

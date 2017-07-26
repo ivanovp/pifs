@@ -23,7 +23,7 @@
 #include "pifs_map.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL    5
+#define PIFS_DEBUG_LEVEL    2
 #include "pifs_debug.h"
 
 /**
@@ -421,20 +421,8 @@ pifs_status_t pifs_merge(void)
     {
         /* Find next management blocks address */
         ret = pifs_find_free_block(PIFS_MANAGEMENT_BLOCKS, PIFS_BLOCK_TYPE_ANY,
-//                                   new_header_ba + PIFS_MANAGEMENT_BLOCKS,
                                    &pifs.header,
                                    &next_mgmt_ba);
-#if 0
-        if (ret != PIFS_SUCCESS)
-        {
-            /* No free blocks found, find next management blocks address */
-            /* anywhere */
-            ret = pifs_find_free_block(PIFS_MANAGEMENT_BLOCKS, PIFS_BLOCK_TYPE_ANY,
-                                       0,
-                                       &pifs.header,
-                                       &next_mgmt_ba);
-        }
-#endif
     }
     /* #9 */
     if (ret == PIFS_SUCCESS)
