@@ -40,6 +40,7 @@ typedef enum
     PIFS_ERROR_FLASH_GENERAL = 16,
     PIFS_ERROR_INTERNAL_ALLOCATION = 17,
     PIFS_ERROR_INTERNAL_RANGE = 18,
+    PIFS_ERROR_SEEK_NOT_POSSIBLE = 19,
 } pifs_status_t;
 
 typedef void P_FILE;

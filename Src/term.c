@@ -125,6 +125,8 @@ void cmdTestPifsSeek (char* command, char* params)
 
     pifs_test_rseek_w();
     pifs_test_rseek_r();
+    pifs_test_wseek_w();
+    pifs_test_wseek_r();
 }
 
 void cmdCheckPage (char* command, char* params)

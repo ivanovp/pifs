@@ -23,7 +23,7 @@
 #include "pifs_merge.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 3
 #include "pifs_debug.h"
 
 pifs_t pifs =
@@ -1442,13 +1442,16 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
     pifs_size_t         page_count = 0;
     pifs_page_offset_t  po;
     pifs_size_t         target_pos = 0;
+    pifs_size_t         file_size = 0;
 
-    PIFS_NOTICE_MSG("filename: '%s', offset: %i, origin: %i\r\n", file->entry.name, a_offset, a_origin);
+    PIFS_NOTICE_MSG("filename: '%s', offset: %i, origin: %i, read_pos: %i\r\n",
+                    file->entry.name, a_offset, a_origin, file->read_pos);
     if (pifs.is_header_found && file && file->is_opened)
     {
         switch (a_origin)
         {
             case PIFS_SEEK_CUR:
+                target_pos = file->read_pos + a_offset;
                 if (a_offset > 0)
                 {
                     data_size = a_offset;
@@ -1460,9 +1463,8 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
                     /* (if position is close to current position) */
                     /* go backward using map header's previous address entry */
                     data_size = file->read_pos + a_offset;
-                    pifs_rewind(file);
+                    pifs_rewind(file); /* Zeroing file->read_pos! */
                 }
-                target_pos = file->read_pos + a_offset;
                 break;
             case PIFS_SEEK_SET:
                 if ((long int)file->read_pos < a_offset)
@@ -1472,91 +1474,107 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
                 else
                 {
                     data_size = a_offset;
-                    pifs_rewind(file);
+                    pifs_rewind(file); /* Zeroing file->read_pos! */
                 }
                 target_pos = a_offset;
                 break;
             case PIFS_SEEK_END:
-                data_size = file->entry.file_size + a_offset;
-                if (data_size >= file->read_pos)
+                if (file->entry.file_size == PIFS_FILE_SIZE_ERASED)
                 {
-                    data_size -= file->read_pos;
+                    file->status = PIFS_ERROR_SEEK_NOT_POSSIBLE;
                 }
                 else
                 {
-                    pifs_rewind(file);
+                    data_size = file->entry.file_size + a_offset;
+                    if (data_size >= file->read_pos)
+                    {
+                        data_size -= file->read_pos;
+                    }
+                    else
+                    {
+                        pifs_rewind(file); /* Zeroing file->read_pos! */
+                    }
+                    target_pos = data_size;
                 }
-                target_pos = data_size;
                 break;
             default:
                 break;
         }
 
-        if (target_pos > file->entry.file_size)
+        if (file->status == PIFS_SUCCESS)
         {
-            PIFS_WARNING_MSG("Trying to seek position %i while file size is %i bytes\r\n",
-                             target_pos, file->entry.file_size);
-            data_size -= target_pos - file->entry.file_size;
-        }
+            if (file->entry.file_size != PIFS_FILE_SIZE_ERASED)
+            {
+                file_size = file->entry.file_size;
+            }
+            if (target_pos > file_size)
+            {
+                PIFS_WARNING_MSG("Trying to seek position %i while file size is %i bytes\r\n",
+                                 target_pos, file_size);
+                data_size -= target_pos - file_size;
+                PIFS_WARNING_MSG("data_size: %i bytes\r\n", data_size);
+            }
 
-        po = file->read_pos % PIFS_FLASH_PAGE_SIZE_BYTE;
-        /* Check if last page was not fully read */
-        if (po)
-        {
-            /* There is some data in the last page */
-            PIFS_ASSERT(pifs_is_address_valid(&file->read_address));
-            chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE - po);
-            if (file->status == PIFS_SUCCESS)
+            po = file->read_pos % PIFS_FLASH_PAGE_SIZE_BYTE;
+            /* Check if last page was not fully read */
+            if (po)
             {
-                data_size -= chunk_size;
-                seek_size += chunk_size;
-                if (po + chunk_size >= PIFS_FLASH_PAGE_SIZE_BYTE)
-                {
-                    pifs_inc_read_address(file);
-                }
-            }
-        }
-        if (file->status == PIFS_SUCCESS && data_size > 0)
-        {
-            page_count = (data_size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
-            while (page_count && file->status == PIFS_SUCCESS)
-            {
+                /* There is some data in the last page */
                 PIFS_ASSERT(pifs_is_address_valid(&file->read_address));
-                chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE);
-                //PIFS_DEBUG_MSG("read %s\r\n", pifs_address2str(&file->read_address));
-                if (file->status == PIFS_SUCCESS && chunk_size == PIFS_FLASH_PAGE_SIZE_BYTE)
+                chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE - po);
+                if (file->status == PIFS_SUCCESS)
                 {
-                    pifs_inc_read_address(file);
+                    data_size -= chunk_size;
+                    seek_size += chunk_size;
+                    if (po + chunk_size >= PIFS_FLASH_PAGE_SIZE_BYTE)
+                    {
+                        pifs_inc_read_address(file);
+                    }
                 }
-                data_size -= chunk_size;
-                seek_size += chunk_size;
-                page_count--;
             }
-        }
-        file->read_pos += seek_size;
-        if (!file->mode_append)
-        {
-            file->write_pos = file->read_pos;
-            file->write_address = file->read_address;
-        }
-        /* Check if we are at end of file and data needs to be written to reach */
-        /* target position */
-        if (target_pos > file->read_pos)
-        {
-            /* TODO value to write configurable or 0? */
-            memset(pifs.page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_FLASH_PAGE_SIZE_BYTE);
-            data_size = target_pos - file->read_pos;
-            page_count = (data_size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
-            while (page_count && file->status == PIFS_SUCCESS)
+            if (file->status == PIFS_SUCCESS && data_size > 0)
             {
-                chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE);
-                file->status = pifs_fwrite(pifs.page_buf, 1, chunk_size, file);
-                data_size -= chunk_size;
-                page_count--;
+                page_count = (data_size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
+                while (page_count && file->status == PIFS_SUCCESS)
+                {
+                    PIFS_ASSERT(pifs_is_address_valid(&file->read_address));
+                    chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE);
+                    //PIFS_DEBUG_MSG("read %s\r\n", pifs_address2str(&file->read_address));
+                    if (file->status == PIFS_SUCCESS && chunk_size == PIFS_FLASH_PAGE_SIZE_BYTE)
+                    {
+                        pifs_inc_read_address(file);
+                    }
+                    data_size -= chunk_size;
+                    seek_size += chunk_size;
+                    page_count--;
+                }
             }
-            if (data_size && file->status == PIFS_SUCCESS)
+            file->read_pos += seek_size;
+            if (!file->mode_append)
             {
-                file->status = pifs_fwrite(pifs.page_buf, 1, data_size, file);
+                file->write_pos = file->read_pos;
+                file->write_address = file->read_address;
+            }
+            /* Check if we are at end of file and data needs to be written to reach */
+            /* target position */
+            if (target_pos > file->read_pos)
+            {
+                /* TODO value to write configurable or 0? */
+//                memset(pifs.page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_FLASH_PAGE_SIZE_BYTE);
+                memset(pifs.page_buf, 0, PIFS_FLASH_PAGE_SIZE_BYTE);
+                data_size = target_pos - file->read_pos;
+                page_count = (data_size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
+                while (page_count && file->status == PIFS_SUCCESS)
+                {
+                    chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE);
+                    file->status = pifs_fwrite(pifs.page_buf, 1, chunk_size, file);
+                    data_size -= chunk_size;
+                    page_count--;
+                }
+                if (data_size && file->status == PIFS_SUCCESS)
+                {
+                    file->status = pifs_fwrite(pifs.page_buf, 1, data_size, file);
+                }
             }
         }
         ret = file->status;

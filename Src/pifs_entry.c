@@ -156,9 +156,13 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                 else
                 {
                     PIFS_NOTICE_MSG("Original entry:\r\n");
+#if PIFS_DEBUG_LEVEL >= 3
                     print_buffer(&entry, PIFS_ENTRY_SIZE_BYTE, 0);
+#endif
                     PIFS_NOTICE_MSG("New entry:\r\n");
+#if PIFS_DEBUG_LEVEL >= 3
                     print_buffer(a_entry, PIFS_ENTRY_SIZE_BYTE, 0);
+#endif
                     PIFS_NOTICE_MSG("Entry CANNOT be updated!\r\n");
                     /* Clear entry */
                     memset(&entry, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
