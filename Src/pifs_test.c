@@ -235,22 +235,32 @@ pifs_status_t pifs_test_full_r(void)
     return ret;
 }
 
-pifs_status_t pifs_test_basic_w(void)
+pifs_status_t pifs_test_basic_w(const char * a_filename)
 {
     pifs_status_t ret = PIFS_SUCCESS;
-    P_FILE * file;
-    size_t   written_size = 0;
+    const char  * filename = "basic.tst";
+    P_FILE      * file;
+    size_t        written_size = 0;
+
+    if (a_filename)
+    {
+        filename = a_filename;
+    }
 
     printf("-------------------------------------------------\r\n");
     printf("Basic test: writing file\r\n");
 
-    file = pifs_fopen("basic.tst", "w");
+    file = pifs_fopen(filename, "w");
     if (file)
     {
         printf("File opened for writing\r\n");
         generate_buffer(42);
         //print_buffer(test_buf_w, sizeof(test_buf_w), 0);
         written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+        if (written_size != sizeof(test_buf_w))
+        {
+            PIFS_TEST_ERROR_MSG("Cannot read file!\r\n");
+        }
         if (pifs_fclose(file))
         {
             PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
@@ -265,16 +275,22 @@ pifs_status_t pifs_test_basic_w(void)
     return ret;
 }
 
-pifs_status_t pifs_test_basic_r(void)
+pifs_status_t pifs_test_basic_r(const char * a_filename)
 {
     pifs_status_t ret = PIFS_SUCCESS;
-    P_FILE * file;
-    size_t   read_size = 0;
+    const char  * filename = "basic.tst";
+    P_FILE      * file;
+    size_t        read_size = 0;
+
+    if (a_filename)
+    {
+        filename = a_filename;
+    }
 
     printf("-------------------------------------------------\r\n");
     printf("Basic test: reading file\r\n");
 
-    file = pifs_fopen("basic.tst", "r");
+    file = pifs_fopen(filename, "r");
     if (file)
     {
         printf("File opened for reading\r\n");
@@ -712,7 +728,7 @@ pifs_status_t pifs_test(void)
 #endif
 
 #if ENABLE_BASIC_TEST
-    pifs_test_basic_w();
+    pifs_test_basic_w(NULL);
 #endif
 
 #if ENABLE_LARGE_TEST
@@ -748,7 +764,7 @@ pifs_status_t pifs_test(void)
 #endif
 
 #if ENABLE_BASIC_TEST
-    pifs_test_basic_r();
+    pifs_test_basic_r(NULL);
 #endif
 
 #if ENABLE_WRITE_FRAGMENT_TEST

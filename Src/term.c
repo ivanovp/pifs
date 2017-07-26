@@ -80,11 +80,15 @@ void cmdTestPifs (char* command, char* params)
 
 void cmdTestPifsBasic (char* command, char* params)
 {
+    char * param;
+
     (void) command;
     (void) params;
 
-    pifs_test_basic_w();
-    pifs_test_basic_r();
+    param = PARSER_getNextParam();
+
+    pifs_test_basic_w(param);
+    pifs_test_basic_r(param);
 }
 
 void cmdTestPifsSmall (char* command, char* params)
