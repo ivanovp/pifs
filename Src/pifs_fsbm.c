@@ -319,9 +319,25 @@ pifs_status_t pifs_find_free_page(pifs_page_count_t a_page_count_desired,
                                   pifs_page_address_t * a_page_address,
                                   pifs_page_count_t * a_page_count_found)
 {
-    return pifs_find_page(1, a_page_count_desired, a_block_type, TRUE, FALSE,
-                          PIFS_FLASH_BLOCK_RESERVED_NUM,
-                          a_block_address, a_page_address, a_page_count_found);
+    pifs_status_t        ret;
+    pifs_block_address_t ba;
+
+    /* Dynamic wear leveling */
+    ret = pifs_get_least_weared_block(&pifs.header, &ba);
+    if (ret == PIFS_SUCCESS)
+    {
+        /* Try to find free page in the least weared block */
+        ret = pifs_find_page(1, a_page_count_desired, a_block_type, TRUE, FALSE,
+                             ba,
+                             a_block_address, a_page_address, a_page_count_found);
+    }
+    if (ret != PIFS_SUCCESS)
+    {
+        /* No success, try to find page in anywhere */
+        ret = pifs_find_page(1, a_page_count_desired, a_block_type, TRUE, FALSE,
+                             PIFS_FLASH_BLOCK_RESERVED_NUM,
+                             a_block_address, a_page_address, a_page_count_found);
+    }
 }
 
 /**
@@ -531,16 +547,18 @@ pifs_status_t pifs_find_free_block(pifs_size_t a_block_count,
     find.is_same_block = TRUE;
     find.header = a_header;
 
+    /* Dynamic wear leveling */
     ret = pifs_get_least_weared_block(a_header, &find.start_block_address);
     if (ret == PIFS_SUCCESS)
     {
+        /* Try to find free page in the least weared block */
         ret = pifs_find_page_adv(&find, &ba, &pa, &page_count);
-        if (ret != PIFS_SUCCESS)
-        {
-            /* Try again */
-            find.start_block_address = PIFS_FLASH_BLOCK_RESERVED_NUM;
-            ret = pifs_find_page_adv(&find, &ba, &pa, &page_count);
-        }
+    }
+    if (ret != PIFS_SUCCESS)
+    {
+        /* Try again */
+        find.start_block_address = PIFS_FLASH_BLOCK_RESERVED_NUM;
+        ret = pifs_find_page_adv(&find, &ba, &pa, &page_count);
     }
 
     if (ret == PIFS_SUCCESS)
