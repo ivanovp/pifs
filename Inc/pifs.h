@@ -319,7 +319,7 @@ typedef struct
  */
 typedef struct
 {
-    bool_t         is_used  PIFS_BOOL_SIZE;
+    bool_t         is_used PIFS_BOOL_SIZE;
     pifs_size_t    entry_page_index;
     pifs_address_t entry_list_address;
     pifs_size_t    entry_list_index;
@@ -352,9 +352,6 @@ typedef struct
     /* pifs_copy_fsbm(), pifs_wear_level_list_init() */
     uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];           /**< Flash page buffer */
     uint8_t                 fseek_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];     /**< Flash page buffer */
-#if PIFS_WEAR_LEVEL_LIST_RAM
-    pifs_wear_level_list_t  wear_level_list;
-#endif
 } pifs_t;
 
 extern pifs_t pifs;

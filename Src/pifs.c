@@ -35,10 +35,14 @@ pifs_t pifs =
     .cache_page_buf_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
     .cache_page_buf = { 0 },
     .cache_page_buf_is_dirty = FALSE,
+    .file = { { 0 } },
+    .internal_file = { 0 },
+    .dir = { 0 },
     .delta_map_page_buf = { { 0 } },
     .delta_map_page_is_read = FALSE,
     .delta_map_page_is_dirty = FALSE,
-    .page_buf = { 0 }
+    .page_buf = { 0 },
+    .fseek_page_buf = { 0 },
 };
 
 int pifs_errno = PIFS_SUCCESS;
