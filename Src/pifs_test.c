@@ -620,6 +620,7 @@ pifs_status_t pifs_test_rseek_r(void)
 pifs_status_t pifs_test_wseek_w(void)
 {
     pifs_status_t ret = PIFS_SUCCESS;
+#if PIFS_ENABLE_FSEEK_BEYOND_FILE
     P_FILE * file;
     size_t   written_size = 0;
 
@@ -643,6 +644,7 @@ pifs_status_t pifs_test_wseek_w(void)
         PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
         ret = PIFS_ERROR_GENERAL;
     }
+#endif
 
     return ret;
 }
@@ -650,6 +652,7 @@ pifs_status_t pifs_test_wseek_w(void)
 pifs_status_t pifs_test_wseek_r(void)
 {
     pifs_status_t ret = PIFS_SUCCESS;
+#if PIFS_ENABLE_FSEEK_BEYOND_FILE
     P_FILE * file;
     size_t   read_size = 0;
 
@@ -680,6 +683,7 @@ pifs_status_t pifs_test_wseek_r(void)
         PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
         ret = PIFS_ERROR_GENERAL;
     }
+#endif
 
     return ret;
 }

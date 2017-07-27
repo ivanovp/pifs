@@ -109,20 +109,18 @@ pifs_status_t pifs_is_free_map_entry(pifs_file_t * a_file,
     pifs_block_address_t    ba = a_file->actual_map_address.block_address;
     pifs_page_address_t     pa = a_file->actual_map_address.page_address;
     bool_t                  empty_entry_found = FALSE;
-    pifs_map_entry_t      * map_entry = (pifs_map_entry_t*) &pifs.page_buf[PIFS_MAP_HEADER_SIZE_BYTE];
+    pifs_map_entry_t        map_entry;
     pifs_size_t             i;
 
     PIFS_DEBUG_MSG("Actual map address %s\r\n",
                    pifs_address2str(&a_file->actual_map_address));
-    a_file->status = pifs_read(ba, pa, 0, pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
-    if (a_file->status == PIFS_SUCCESS)
+    for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !empty_entry_found && a_file->status == PIFS_SUCCESS; i++)
     {
-        for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !empty_entry_found; i++)
+        a_file->status = pifs_read(ba, pa, i * PIFS_MAP_ENTRY_SIZE_BYTE,
+                                   &map_entry, PIFS_FLASH_PAGE_SIZE_BYTE);
+        if (pifs_is_buffer_erased(&map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
         {
-            if (pifs_is_buffer_erased(&map_entry[i], PIFS_MAP_ENTRY_SIZE_BYTE))
-            {
-                empty_entry_found = TRUE;
-            }
+            empty_entry_found = TRUE;
         }
     }
     PIFS_DEBUG_MSG("Empty entry found: %i\r\n", empty_entry_found);

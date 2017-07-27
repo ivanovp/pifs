@@ -23,7 +23,9 @@
 #define PIFS_DELTA_MAP_PAGE_NUM         2u   /**< Number of delta page maps */
 #define PIFS_WEAR_LEVEL_LIST_RAM        1u   /**< 1: Store wear level list in RAM, 0: read wear level list from flash memory */
 #define PIFS_USE_DELTA_FOR_ENTRIES      0u   /**< 1: Use delta pages for list entries, 0: don't use delta pages */
-
+#define PIFS_ENABLE_FSEEK_BEYOND_FILE   1u   /**< 1: Enable seeking beyond file size, 0: disable seeking beyond file size */
+#define PIFS_ENABLE_FSEEK_ERASED_VALUE  0u   /**< 1: Write 0xFF values when seeking beyond file size,
+                                                  0: write 0 values when seeking beyond file size (default). */
 
 #define PIFS_PACKED_ATTRIBUTE           __attribute__((packed))
 

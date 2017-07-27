@@ -666,6 +666,7 @@ void pifs_print_fs_info(void)
            PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_BLOCK_SIZE_BYTE,
            PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_PAGE_PER_BLOCK);
     printf("\r\n");
+    printf("File system in RAM:                 %lu bytes\r\n", sizeof(pifs_t));
 }
 
 void pifs_print_header_info(void)
@@ -1555,27 +1556,32 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
                 file->write_pos = file->read_pos;
                 file->write_address = file->read_address;
             }
+#if PIFS_ENABLE_FSEEK_BEYOND_FILE
             /* Check if we are at end of file and data needs to be written to reach */
             /* target position */
             if (target_pos > file->read_pos)
             {
                 /* TODO value to write configurable or 0? */
-//                memset(pifs.page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_FLASH_PAGE_SIZE_BYTE);
-                memset(pifs.page_buf, 0, PIFS_FLASH_PAGE_SIZE_BYTE);
+#if PIFS_ENABLE_FSEEK_ERASED_VALUE
+                memset(pifs.fseek_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_FLASH_PAGE_SIZE_BYTE);
+#else
+                memset(pifs.fseek_page_buf, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, PIFS_FLASH_PAGE_SIZE_BYTE);
+#endif
                 data_size = target_pos - file->read_pos;
                 page_count = (data_size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
                 while (page_count && file->status == PIFS_SUCCESS)
                 {
                     chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE);
-                    file->status = pifs_fwrite(pifs.page_buf, 1, chunk_size, file);
+                    file->status = pifs_fwrite(pifs.fseek_page_buf, 1, chunk_size, file);
                     data_size -= chunk_size;
                     page_count--;
                 }
                 if (data_size && file->status == PIFS_SUCCESS)
                 {
-                    file->status = pifs_fwrite(pifs.page_buf, 1, data_size, file);
+                    file->status = pifs_fwrite(pifs.fseek_page_buf, 1, data_size, file);
                 }
             }
+#endif
         }
         ret = file->status;
     }

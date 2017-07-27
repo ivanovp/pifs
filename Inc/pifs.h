@@ -348,8 +348,10 @@ typedef struct
     uint8_t                 delta_map_page_buf[PIFS_DELTA_MAP_PAGE_NUM][PIFS_FLASH_PAGE_SIZE_BYTE];
     bool_t                  delta_map_page_is_read PIFS_BOOL_SIZE;
     bool_t                  delta_map_page_is_dirty PIFS_BOOL_SIZE;
-    /* General page buffer */
+    /* General page buffer used by pifs_write_delta(), */
+    /* pifs_copy_fsbm(), pifs_wear_level_list_init() */
     uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];           /**< Flash page buffer */
+    uint8_t                 fseek_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];     /**< Flash page buffer */
 #if PIFS_WEAR_LEVEL_LIST_RAM
     pifs_wear_level_list_t  wear_level_list;
 #endif
