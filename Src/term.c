@@ -47,14 +47,65 @@ char * yesNo(bool_t expression)
 
 void cmdErase (char* command, char* params)
 {
-    (void) command;
-    (void) params;
+    unsigned long int    addr = 0;
+    pifs_block_address_t ba;
+    char               * param;
+    pifs_size_t          cntr = 1;
 
-    pifs_delete();
-    pifs_flash_init();
-    flash_erase_all();
-    pifs_flash_delete();
-    pifs_init();
+    (void) command;
+
+    if (params)
+    {
+        //printf("Params: [%s]\r\n", params);
+        param = PARSER_getNextParam();
+        if (param[0] == '-')
+        {
+            if (param[1] == 'a')
+            {
+                addr = PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE;
+                cntr = PIFS_FLASH_BLOCK_NUM_FS;
+            }
+            else if (param[1] == 'A')
+            {
+                addr = 0;
+                cntr = PIFS_FLASH_BLOCK_NUM_ALL;
+            }
+        }
+        else
+        {
+            addr = strtoul(param, NULL, 0);
+            param = PARSER_getNextParam();
+            if (param)
+            {
+                cntr = strtoul(param, NULL, 0);
+            }
+        }
+        //printf("Addr: 0x%X\r\n", addr);
+        //po = addr % PIFS_FLASH_PAGE_SIZE_BYTE;
+        ba = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) / PIFS_FLASH_PAGE_PER_BLOCK;
+
+        pifs_delete();
+        pifs_flash_init();
+        while (cntr--)
+        {
+            printf("Erasing block %i... ", ba);
+            if (pifs_flash_erase(ba) == PIFS_SUCCESS)
+            {
+                printf("Done.\r\n");
+            }
+            else
+            {
+                printf("Error!\r\n");
+            }
+            ba++;
+        }
+        pifs_flash_delete();
+        pifs_init();
+    }
+    else
+    {
+        printf("ERROR: Missing parameter!\r\n");
+    }
 }
 
 void cmdTestFlash (char* command, char* params)

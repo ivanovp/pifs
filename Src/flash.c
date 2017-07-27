@@ -102,7 +102,7 @@ pifs_status_t pifs_flash_delete(void)
 {
     pifs_status_t ret = PIFS_ERROR_GENERAL;
 
-    pifs_flash_print_stat();
+    //pifs_flash_print_stat();
     if (flash_file)
     {
         if (!fclose(flash_file))

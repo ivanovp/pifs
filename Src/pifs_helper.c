@@ -110,7 +110,6 @@ bool_t pifs_is_block_type(pifs_block_address_t a_block_address,
                           pifs_block_type_t a_block_type,
                           pifs_header_t * a_header)
 {
-    pifs_size_t          i = 0;
     bool_t               is_block_type = TRUE;
 
     if (a_block_type == PIFS_BLOCK_TYPE_ANY)
