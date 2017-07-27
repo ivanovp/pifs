@@ -556,7 +556,8 @@ void cmdDumpPage (char* command, char* params)
                 ret = pifs_flash_read(ba, pa, po, buf_r, sizeof(buf_r));
                 if (ret == PIFS_SUCCESS)
                 {
-                    print_buffer(buf_r, sizeof(buf_r), addr);
+                    print_buffer(buf_r, sizeof(buf_r), ba * PIFS_FLASH_BLOCK_SIZE_BYTE
+                                 + pa * PIFS_FLASH_PAGE_SIZE_BYTE + po);
                 }
                 else
                 {

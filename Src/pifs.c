@@ -319,7 +319,7 @@ pifs_status_t pifs_wear_level_list_init(void)
 
     for (i = 0; i < PIFS_WEAR_LEVEL_LIST_SIZE_PAGE && ret == PIFS_SUCCESS; i++)
     {
-        PIFS_NOTICE_MSG("%s\r\n", pifs_address2str(&address));
+        PIFS_WARNING_MSG("%s\r\n", pifs_address2str(&address));
         ret = pifs_write(address.block_address, address.page_address, 0,
                          pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
         if (ret == PIFS_SUCCESS)
@@ -350,15 +350,15 @@ pifs_status_t pifs_get_wear_level(pifs_block_address_t a_block_address,
 
 //    PIFS_NOTICE_MSG("Wear level list at %s\r\n", pifs_address2str(&a_header->wear_level_list_address));
     address = a_header->wear_level_list_address;
-    po = a_block_address * PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE;
-    ret = pifs_add_address(&address, po / PIFS_FLASH_PAGE_SIZE_BYTE);
+    po = (a_block_address % PIFS_WEAR_LEVEL_ENTRY_PER_PAGE) * PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE;
+//    PIFS_WARNING_MSG("po: %i ba: %i\r\n", po, a_block_address / PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
+    ret = pifs_add_address(&address, a_block_address / PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
     if (ret == PIFS_SUCCESS)
     {
-        po %= PIFS_FLASH_PAGE_SIZE_BYTE;
         ret = pifs_read(address.block_address, address.page_address, po,
                         a_wear_level, PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE);
 #if 0
-        PIFS_NOTICE_MSG("BA%i wear level counter: %i, bits: 0x%02X\r\n",
+        PIFS_WARNING_MSG("BA%i wear level counter: %i, bits: 0x%02X\r\n",
                          a_block_address,
                          a_wear_level->wear_level_cntr,
                          a_wear_level->wear_level_bits);
@@ -399,8 +399,9 @@ pifs_status_t pifs_inc_wear_level(pifs_block_address_t a_block_address,
 
 //    PIFS_NOTICE_MSG("Wear level list at %s\r\n", pifs_address2str(&a_header->wear_level_list_address));
     address = a_header->wear_level_list_address;
-    po = a_block_address * PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE;
-    ret = pifs_add_address(&address, po / PIFS_FLASH_PAGE_SIZE_BYTE);
+    po = (a_block_address % PIFS_WEAR_LEVEL_ENTRY_PER_PAGE) * PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE;
+//    PIFS_WARNING_MSG("po: %i ba: %i\r\n", po, a_block_address / PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
+    ret = pifs_add_address(&address, a_block_address / PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
     if (ret == PIFS_SUCCESS)
     {
         po %= PIFS_FLASH_PAGE_SIZE_BYTE;
@@ -451,8 +452,9 @@ pifs_status_t pifs_write_wear_level(pifs_block_address_t a_block_address,
 
 //    PIFS_NOTICE_MSG("Wear level list at %s\r\n", pifs_address2str(&a_header->wear_level_list_address));
     address = a_header->wear_level_list_address;
-    po = a_block_address * PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE;
-    ret = pifs_add_address(&address, po / PIFS_FLASH_PAGE_SIZE_BYTE);
+    po = (a_block_address % PIFS_WEAR_LEVEL_ENTRY_PER_PAGE) * PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE;
+//    PIFS_WARNING_MSG("po: %i ba: %i\r\n", po, a_block_address / PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
+    ret = pifs_add_address(&address, a_block_address / PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
     if (ret == PIFS_SUCCESS)
     {
         po %= PIFS_FLASH_PAGE_SIZE_BYTE;

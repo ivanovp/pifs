@@ -475,7 +475,12 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
 #if PIFS_CHECK_IF_PAGE_IS_ERASED
                         else
                         {
-                            PIFS_ERROR_MSG("Flash page should be erased, but it is not! %s\r\n", pifs_ba_pa2str(fba, fpa));
+                            PIFS_WARNING_MSG("Flash page should be erased, but it is not! %s\r\n", pifs_ba_pa2str(fba, fpa));
+                            /* TODO this two operation shall be in one function call */
+                            /* Mark page as used */
+                            (void)pifs_mark_page(fba, fpa, 1, TRUE);
+                            /* Mark page as to be released as this page should erased */
+                            (void)pifs_mark_page(fba, fpa, 1, FALSE);
                         }
 #endif
                     }
@@ -655,9 +660,9 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
             {
                 if ((free_space_bitmap & mask) == value)
                 {
-#if PIFS_CHECK_IF_PAGE_IS_ERASED
-                    if (!a_is_free || pifs_is_page_erased(fba, fpa))
-#endif
+//#if PIFS_CHECK_IF_PAGE_IS_ERASED
+//                    if (!a_is_free || pifs_is_page_erased(fba, fpa))
+//#endif
                     {
                         if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA, &pifs.header))
                         {
@@ -678,12 +683,12 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
                             found = TRUE;
                         }
                     }
-#if PIFS_CHECK_IF_PAGE_IS_ERASED
-                    else
-                    {
-                        PIFS_ERROR_MSG("Flash page should be erased, but it is not! %s\r\n", pifs_ba_pa2str(fba, fpa));
-                    }
-#endif
+//#if PIFS_CHECK_IF_PAGE_IS_ERASED
+//                    else
+//                    {
+//                        PIFS_ERROR_MSG("Flash page should be erased, but it is not! %s\r\n", pifs_ba_pa2str(fba, fpa));
+//                    }
+//#endif
                 }
                 free_space_bitmap >>= PIFS_FSBM_BITS_PER_PAGE;
                 bit_pos += PIFS_FSBM_BITS_PER_PAGE;
