@@ -149,22 +149,24 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
 
 /**
  * @brief pifs_copy_map Copy map of a file.
+ * It can compact map entries when pages are in sequence.
  * @param[in] a_old_entry Entry to be copied.
  * @return PIFS_SUCCESS if map was copied successfully.
  */
 static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
 {
     pifs_status_t        ret = PIFS_ERROR_GENERAL;
+    pifs_status_t        ret2;
     pifs_size_t          i;
     pifs_size_t          j;
     pifs_block_address_t old_map_ba = a_old_entry->first_map_address.block_address;
     pifs_page_address_t  old_map_pa = a_old_entry->first_map_address.page_address;
     pifs_map_header_t    old_map_header;
-    pifs_map_entry_t     map_entry;
+    pifs_map_entry_t     old_map_entry;
+    pifs_map_entry_t     new_map_entry;
     bool_t               end = FALSE;
-    pifs_block_address_t delta_ba;
-    pifs_page_address_t  delta_pa;
-    pifs_address_t       address;
+    pifs_address_t       delta_address;
+    pifs_address_t       test_address;
 
     PIFS_NOTICE_MSG("start\r\n");
 
@@ -181,6 +183,9 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
 
     if (pifs.internal_file.status == PIFS_SUCCESS)
     {
+        new_map_entry.address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
+        new_map_entry.address.page_address = PIFS_PAGE_ADDRESS_INVALID;
+        new_map_entry.page_count = 0;
         do
         {
             /* Read old map's header */
@@ -188,39 +193,73 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
             for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !end && ret == PIFS_SUCCESS; i++)
             {
                 /* Go through all map entries in the page */
-                ret = pifs_read(old_map_ba, old_map_pa, PIFS_MAP_HEADER_SIZE_BYTE + i * PIFS_MAP_ENTRY_SIZE_BYTE,
-                                &map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
+                ret = pifs_read(old_map_ba, old_map_pa,
+                                PIFS_MAP_HEADER_SIZE_BYTE + i * PIFS_MAP_ENTRY_SIZE_BYTE,
+                                &old_map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
                 if (ret == PIFS_SUCCESS)
                 {
-                    if (!pifs_is_buffer_erased(&map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
+                    if (!pifs_is_buffer_erased(&old_map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
                     {
+                        PIFS_DEBUG_MSG("old map entry %s, page_count: %i\r\n",
+                                       pifs_ba_pa2str(old_map_entry.address.block_address,
+                                                      old_map_entry.address.page_address),
+                                       old_map_entry.page_count);
                         /* Map entry is valid */
                         /* Check if original page was overwritten and */
                         /* delta page was used */
-                        /* TODO to be optimized: map entry entries are added */
-                        /* one by one, if data pages follow each other */
-                        /* 2 or more map entries can be added. */
-                        address = map_entry.address;
-                        for (j = 0; j < map_entry.page_count && ret == PIFS_SUCCESS; j++)
+                        /* If map entries are sequential pages then page_count */
+                        /* is increased. */
+                        for (j = 0; j < old_map_entry.page_count && ret == PIFS_SUCCESS; j++)
                         {
-                            ret = pifs_find_delta_page(address.block_address,
-                                                       address.page_address,
-                                                       &delta_ba, &delta_pa, NULL);
+                            ret = pifs_find_delta_page(old_map_entry.address.block_address,
+                                                       old_map_entry.address.page_address,
+                                                       &delta_address.block_address,
+                                                       &delta_address.page_address, NULL);
                             if (ret == PIFS_SUCCESS)
                             {
+#if 0
                                 PIFS_DEBUG_MSG("delta %s -> %s\r\n",
                                                pifs_address2str(&address),
-                                               pifs_ba_pa2str(delta_ba, delta_pa));
-                                ret = pifs_append_map_entry(&pifs.internal_file,
-                                                      address.block_address,
-                                                      address.page_address, 1); /* <<< one page added here */
+                                               pifs_ba_pa2str(delta_address.block_address,
+                                                              delta_address.page_address));
+#endif
+                                if (!new_map_entry.page_count)
+                                {
+                                    new_map_entry.address = delta_address;
+                                    new_map_entry.page_count = 1;
+                                    test_address = delta_address;
+                                }
+                                else
+                                {
+                                    ret2 = pifs_inc_address(&test_address);
+                                    if (ret2 != PIFS_SUCCESS
+                                            || test_address.block_address != delta_address.block_address
+                                            || test_address.page_address != delta_address.page_address)
+                                    {
+                                        PIFS_DEBUG_MSG("===> new map entry %s, page_count: %i\r\n",
+                                                       pifs_ba_pa2str(new_map_entry.address.block_address,
+                                                                      new_map_entry.address.page_address),
+                                                       new_map_entry.page_count);
+                                        ret = pifs_append_map_entry(&pifs.internal_file,
+                                                                    new_map_entry.address.block_address,
+                                                                    new_map_entry.address.page_address,
+                                                                    new_map_entry.page_count);
+                                        new_map_entry.address = delta_address;
+                                        new_map_entry.page_count = 1;
+                                        test_address = delta_address;
+                                    }
+                                    else
+                                    {
+                                        new_map_entry.page_count++;
+                                    }
+                                }
                             }
-                            if (ret == PIFS_SUCCESS && j < map_entry.page_count)
+                            if (ret == PIFS_SUCCESS && j < old_map_entry.page_count)
                             {
                                 /* Deliberately avoiding return code: */
                                 /* it is not an error if we reach the end of */
                                 /* flash memory */
-                                (void)pifs_inc_address(&address);
+                                (void)pifs_inc_address(&old_map_entry.address);
                             }
                         }
                     }
@@ -241,6 +280,20 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
                 end = TRUE;
             }
         } while (!end && ret == PIFS_SUCCESS);
+        /* Check if there is un-written map entry */
+        if (new_map_entry.page_count)
+        {
+            /* Write last map entry */
+            PIFS_DEBUG_MSG("Last new map entry %s, page_count: %i\r\n",
+                           pifs_ba_pa2str(new_map_entry.address.block_address,
+                                          new_map_entry.address.page_address),
+                           new_map_entry.page_count);
+            ret = pifs_append_map_entry(&pifs.internal_file,
+                                        new_map_entry.address.block_address,
+                                        new_map_entry.address.page_address,
+                                        new_map_entry.page_count);
+            new_map_entry.page_count = 0;
+        }
         /* Close internal file */
         ret = pifs_fclose(&pifs.internal_file);
         PIFS_ASSERT(ret == PIFS_SUCCESS);

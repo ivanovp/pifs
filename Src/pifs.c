@@ -23,7 +23,7 @@
 #include "pifs_merge.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 3
+#define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
 
 pifs_t pifs =
@@ -353,10 +353,12 @@ pifs_status_t pifs_get_wear_level(pifs_block_address_t a_block_address,
         po %= PIFS_FLASH_PAGE_SIZE_BYTE;
         ret = pifs_read(address.block_address, address.page_address, po,
                         a_wear_level, PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE);
+#if 0
         PIFS_NOTICE_MSG("BA%i wear level counter: %i, bits: 0x%02X\r\n",
                          a_block_address,
                          a_wear_level->wear_level_cntr,
                          a_wear_level->wear_level_bits);
+#endif
         /* Add wear_level_bits to wear_level_count! */
         for (i = 0; i < sizeof(a_wear_level->wear_level_bits) * PIFS_BYTE_BITS; i++)
         {
@@ -511,7 +513,7 @@ pifs_status_t pifs_get_least_weared_block(pifs_header_t * a_header, pifs_block_a
 
     if (ret == PIFS_SUCCESS)
     {
-        PIFS_NOTICE_MSG("BA%i\r\n", ba_min);
+//        PIFS_NOTICE_MSG("BA%i\r\n", ba_min);
         *a_block_address = ba_min;
     }
 
@@ -1387,8 +1389,9 @@ int pifs_fflush(P_FILE * a_file)
     PIFS_NOTICE_MSG("filename: '%s'\r\n", file->entry.name);
     if (pifs.is_header_found && file && file->is_opened)
     {
-        PIFS_DEBUG_MSG("mode_write: %i, is_size_changed: %i\r\n",
-                       file->mode_write, file->is_size_changed);
+        PIFS_DEBUG_MSG("mode_write: %i, is_size_changed: %i, file_size: %i\r\n",
+                       file->mode_write, file->is_size_changed,
+                       file->entry.file_size);
         if (file->mode_write && file->is_size_changed)
         {
             file->status = pifs_update_entry(file->entry.name, &file->entry);
@@ -1561,7 +1564,6 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
             /* target position */
             if (target_pos > file->read_pos)
             {
-                /* TODO value to write configurable or 0? */
 #if PIFS_ENABLE_FSEEK_ERASED_VALUE
                 memset(pifs.fseek_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_FLASH_PAGE_SIZE_BYTE);
 #else

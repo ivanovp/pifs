@@ -166,7 +166,7 @@ pifs_status_t pifs_test_full_w(void)
         printf("File opened for writing\r\n");
         for (i = 0; i < TEST_FULL_PAGE_NUM; i++)
         {
-            putchar('.');
+            printf("full_w: %i\r\n", i + 1);
             generate_buffer(i + 55);
 //            print_buffer(test_buf_w, sizeof(test_buf_w), 0);
             written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
@@ -209,7 +209,7 @@ pifs_status_t pifs_test_full_r(void)
         printf("File opened for reading\r\n");
         for (i = 0; i < testfull_written_buffers; i++)
         {
-            printf("%i/%i\r\n", i + 1, testfull_written_buffers);
+            printf("full_r: %i/%i\r\n", i + 1, testfull_written_buffers);
             generate_buffer(i + 55);
             read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
             if (read_size != sizeof(test_buf_r))
