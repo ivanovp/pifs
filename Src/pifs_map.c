@@ -117,7 +117,7 @@ pifs_status_t pifs_is_free_map_entry(pifs_file_t * a_file,
     for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !empty_entry_found && a_file->status == PIFS_SUCCESS; i++)
     {
         a_file->status = pifs_read(ba, pa, i * PIFS_MAP_ENTRY_SIZE_BYTE,
-                                   &map_entry, PIFS_FLASH_PAGE_SIZE_BYTE);
+                                   &map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
         if (pifs_is_buffer_erased(&map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
         {
             empty_entry_found = TRUE;
