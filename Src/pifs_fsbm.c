@@ -608,20 +608,24 @@ pifs_status_t pifs_find_to_be_released_block(pifs_size_t a_block_count,
  *
  * @param[in] a_is_free                 TRUE: find free page,
  *                                      FALSE: find to be released page.
+ * @param[in] a_start_block_address     Start block address. Example: PIFS_FLASH_BLOCK_RESERVED_NUM
+ * @param[in] a_block_count             Number of blocks. Example: PIFS_FLASH_BLOCK_NUM_FS
  * @param[out] a_management_page_count  Number of management pages found.
  * @param[out] a_data_page_count        Number of data pages found.
  *
  * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_GENERAL: if no free pages found.
  */
 pifs_status_t pifs_get_pages(bool_t a_is_free,
+                             pifs_block_address_t a_start_block_address,
+                             pifs_size_t a_block_count,
                              pifs_size_t * a_management_page_count,
                              pifs_size_t * a_data_page_count)
 {
     pifs_status_t           ret = PIFS_ERROR_GENERAL;
-    pifs_block_address_t    fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
+    pifs_block_address_t    fba = a_start_block_address;
     pifs_page_address_t     fpa = 0;
-    pifs_block_address_t    ba = pifs.header.free_space_bitmap_address.block_address;
-    pifs_page_address_t     pa = pifs.header.free_space_bitmap_address.page_address;
+    pifs_block_address_t    fsbm_ba = pifs.header.free_space_bitmap_address.block_address;
+    pifs_page_address_t     fsbm_pa = pifs.header.free_space_bitmap_address.page_address;
     pifs_page_offset_t      po = 0;
     pifs_size_t             i;
     uint8_t                 free_space_bitmap = 0;
@@ -644,76 +648,68 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
     *a_management_page_count = 0;
     *a_data_page_count = 0;
 
-    do
+    ret = pifs_calc_free_space_pos(&pifs.header.free_space_bitmap_address,
+                                   fba, fpa, &fsbm_ba, &fsbm_pa, &bit_pos);
+    if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_read(ba, pa, po, &free_space_bitmap, sizeof(free_space_bitmap));
-        if (ret == PIFS_SUCCESS)
+        po = bit_pos / PIFS_BYTE_BITS;
+
+        do
         {
+            ret = pifs_read(fsbm_ba, fsbm_pa, po, &free_space_bitmap, sizeof(free_space_bitmap));
+            if (ret == PIFS_SUCCESS)
+            {
 #if PIFS_DEBUG_LEVEL >= 6
-            printf("%s ", pifs_byte2bin_str(free_space_bitmap));
-            if (((po + 1) % 8) == 0)
-            {
-                printf("\r\n");
-            }
-#endif
-            for (i = 0; i < (PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE) && !end; i++)
-            {
-                if ((free_space_bitmap & mask) == value)
+                printf("%s ", pifs_byte2bin_str(free_space_bitmap));
+                if (((po + 1) % 8) == 0)
                 {
-//#if PIFS_CHECK_IF_PAGE_IS_ERASED
-//                    if (!a_is_free || pifs_is_page_erased(fba, fpa))
-//#endif
+                    printf("\r\n");
+                }
+#endif
+                for (i = 0; i < (PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE) && !end; i++)
+                {
+                    if ((free_space_bitmap & mask) == value)
                     {
                         if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA, &pifs.header))
                         {
-                            if (a_is_free)
-                            {
-                                //PIFS_NOTICE_MSG("%s data\r\n", pifs_ba_pa2str(fba, fpa));
-                            }
                             (*a_data_page_count)++;
                             found = TRUE;
                         }
                         else if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT, &pifs.header))
                         {
-                            /* Only count primary management, because secondary
-                             * management pages will be used when this management
-                             * area is full.
-                             */
+                            /* Only count primary management, because secondary */
+                            /* management pages will be used when this management */
+                            /* area is full. */
                             (*a_management_page_count)++;
                             found = TRUE;
                         }
                     }
-//#if PIFS_CHECK_IF_PAGE_IS_ERASED
-//                    else
-//                    {
-//                        PIFS_ERROR_MSG("Flash page should be erased, but it is not! %s\r\n", pifs_ba_pa2str(fba, fpa));
-//                    }
-//#endif
-                }
-                free_space_bitmap >>= PIFS_FSBM_BITS_PER_PAGE;
-                bit_pos += PIFS_FSBM_BITS_PER_PAGE;
-                fpa++;
-                if (fpa == PIFS_FLASH_PAGE_PER_BLOCK)
-                {
-                    fpa = 0;
-                    fba++;
-                    if (fba >= PIFS_FLASH_BLOCK_NUM_ALL)
+                    free_space_bitmap >>= PIFS_FSBM_BITS_PER_PAGE;
+                    bit_pos += PIFS_FSBM_BITS_PER_PAGE;
+                    fpa++;
+                    if (fpa == PIFS_FLASH_PAGE_PER_BLOCK)
                     {
-                        end = TRUE;
+                        fpa = 0;
+                        fba++;
+                        a_block_count--;
+                        if (fba >= PIFS_FLASH_BLOCK_NUM_ALL || !a_block_count)
+                        {
+                            end = TRUE;
+                        }
+                    }
+                }
+                if (!end)
+                {
+                    po++;
+                    if (po == PIFS_FLASH_PAGE_SIZE_BYTE)
+                    {
+                        po = 0;
+                        ret = pifs_inc_ba_pa(&fsbm_ba, &fsbm_pa);
                     }
                 }
             }
-            if (!end)
-            {
-                po++;
-                if (po == PIFS_FLASH_PAGE_SIZE_BYTE)
-                {
-                    po = 0;
-                    ret = pifs_inc_ba_pa(&ba, &pa);
-                }
-            }
-        }
-    } while (byte_cntr-- > 0 && ret == PIFS_SUCCESS && !end);
+        } while (byte_cntr-- > 0 && ret == PIFS_SUCCESS && !end);
+    }
 
     if (ret == PIFS_SUCCESS && !found)
     {
@@ -729,12 +725,15 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
  * @param[out] a_management_page_count  Number of management pages found.
  * @param[out] a_data_page_count        Number of data pages found.
  *
- * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_GENERAL: if no free pages found.
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_NO_MORE_SPACE: if no free pages found.
  */
 pifs_status_t pifs_get_to_be_released_pages(pifs_size_t * a_free_management_page_count,
                                             pifs_size_t * a_free_data_page_count)
 {
-    return pifs_get_pages(FALSE, a_free_management_page_count, a_free_data_page_count);
+    return pifs_get_pages(FALSE,
+                          PIFS_FLASH_BLOCK_RESERVED_NUM,
+                          PIFS_FLASH_BLOCK_NUM_FS,
+                          a_free_management_page_count, a_free_data_page_count);
 }
 
 /**
@@ -743,19 +742,22 @@ pifs_status_t pifs_get_to_be_released_pages(pifs_size_t * a_free_management_page
  * @param[out] a_management_page_count  Number of management pages found.
  * @param[out] a_data_page_count        Number of data pages found.
  *
- * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_GENERAL: if no free pages found.
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_NO_MORE_SPACE: if no free pages found.
  */
 pifs_status_t pifs_get_free_pages(pifs_size_t * a_free_management_page_count,
                                   pifs_size_t * a_free_data_page_count)
 {
-    return pifs_get_pages(TRUE, a_free_management_page_count, a_free_data_page_count);
+    return pifs_get_pages(TRUE,
+                          PIFS_FLASH_BLOCK_RESERVED_NUM,
+                          PIFS_FLASH_BLOCK_NUM_FS,
+                          a_free_management_page_count, a_free_data_page_count);
 }
 
 /**
  * @brief pifs_get_free_space Find free page(s) in free space memory bitmap.
  * To be released pages are added to the free space.
  *
- * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_GENERAL: if no free pages found.
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_NO_MORE_SPACE: if no free pages found.
  */
 pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
                                   size_t * a_free_data_bytes,

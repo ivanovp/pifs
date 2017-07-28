@@ -684,6 +684,96 @@ void cmdFreeSpaceInfo (char* command, char* params)
     pifs_print_free_space_info();
 }
 
+const char * block_type2str(pifs_block_address_t a_block_address)
+{
+    const char * str = "Data";
+    if (pifs_is_block_type(a_block_address, PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT, &pifs.header))
+    {
+        str = "PM";
+    }
+    else if (pifs_is_block_type(a_block_address, PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT, &pifs.header))
+    {
+        str = "SM";
+    }
+
+    return str;
+}
+
+void cmdBlockInfo (char* command, char* params)
+{
+    unsigned long int    addr = PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE;
+    pifs_block_address_t ba;
+    char               * param;
+    pifs_size_t          cntr = PIFS_FLASH_BLOCK_NUM_FS;
+    pifs_size_t          free_data_pages;
+    pifs_size_t          free_management_pages;
+    pifs_size_t          to_be_released_data_pages;
+    pifs_size_t          to_be_released_management_pages;
+    pifs_wear_level_entry_t wear_level;
+    pifs_status_t        ret = PIFS_SUCCESS;
+
+    (void) command;
+
+    if (params)
+    {
+        //printf("Params: [%s]\r\n", params);
+        param = PARSER_getNextParam();
+        if (param[0] == '-')
+        {
+            if (param[1] == 'a')
+            {
+                addr = PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE;
+                cntr = PIFS_FLASH_BLOCK_NUM_FS;
+            }
+        }
+        else
+        {
+            addr = strtoul(param, NULL, 0);
+            param = PARSER_getNextParam();
+            if (param)
+            {
+                cntr = strtoul(param, NULL, 0);
+            }
+        }
+    }
+    //printf("Addr: 0x%X\r\n", addr);
+    //po = addr % PIFS_FLASH_PAGE_SIZE_BYTE;
+    ba = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) / PIFS_FLASH_PAGE_PER_BLOCK;
+
+    printf("      | Type | Wear  | Free pages  | TBR pages\r\n");
+    printf("Block |      | Level | Data | Mgmt | Data | Mgmt\r\n");
+    printf("------+------+-------+------+------+------+------\r\n");
+    while (cntr-- && (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE))
+    {
+        ret = pifs_get_pages(TRUE, ba, 1, &free_management_pages, &free_data_pages);
+        if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
+        {
+            ret = pifs_get_pages(FALSE, ba, 1,
+                                 &to_be_released_management_pages,
+                                 &to_be_released_data_pages);
+        }
+        if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
+        {
+            ret = pifs_get_wear_level(ba, &pifs.header, &wear_level);
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            printf("%5i | %4s | %5i | %4i | %4i | %4i | %4i\r\n", ba,
+                   block_type2str(ba),
+                   wear_level.wear_level_cntr,
+                   free_data_pages,
+                   free_management_pages,
+                   to_be_released_data_pages,
+                   to_be_released_management_pages);
+        }
+        else
+        {
+            printf("ERROR: Cannot get page count or wear level!\r\n");
+        }
+        ba++;
+    }
+}
+
 void cmdFlashStat (char* command, char* params)
 {
     (void) command;
@@ -803,6 +893,7 @@ parserCommand_t parserCommands[] =
     {"i",           "Print info of Pi file system",     cmdPifsInfo},
     {"free",        "Print info of free space",         cmdFreeSpaceInfo},
     {"f",           "Print info of free space",         cmdFreeSpaceInfo},
+    {"bi",          "Print info of block",              cmdBlockInfo},
     {"fs",          "Print flash's statistics",         cmdFlashStat},
     {"quit",        "Quit",                             cmdQuit},
     {"q",           "Quit",                             cmdQuit},
