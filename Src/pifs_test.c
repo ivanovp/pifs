@@ -231,15 +231,6 @@ pifs_status_t pifs_test_full_r(void)
         PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
         ret = PIFS_ERROR_GENERAL;
     }
-    if (pifs_remove("fullwrite.tst") == 0)
-    {
-        printf("File removed!\r\n");
-    }
-    else
-    {
-        printf("Cannot remove file!\r\n");
-        ret = PIFS_ERROR_GENERAL;
-    }
 
     return ret;
 }
@@ -775,6 +766,15 @@ pifs_status_t pifs_test(void)
 #if ENABLE_FULL_WRITE_TEST
     pifs_test_full_w();
     pifs_test_full_r();
+    if (pifs_remove("fullwrite.tst") == 0)
+    {
+        printf("File removed!\r\n");
+    }
+    else
+    {
+        printf("Cannot remove file!\r\n");
+        ret = PIFS_ERROR_GENERAL;
+    }
 #endif
 
 #if ENABLE_BASIC_TEST

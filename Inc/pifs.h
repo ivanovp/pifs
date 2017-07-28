@@ -97,6 +97,10 @@
 #define PIFS_WEAR_LEVEL_LIST_SIZE_BYTE      (PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE * PIFS_FLASH_BLOCK_NUM_FS)
 #define PIFS_WEAR_LEVEL_LIST_SIZE_PAGE      ((PIFS_FLASH_BLOCK_NUM_FS + PIFS_WEAR_LEVEL_ENTRY_PER_PAGE - 1)/ PIFS_WEAR_LEVEL_ENTRY_PER_PAGE)
 
+#define PIFS_MAP_PAGES_RECOMENDED           (((PIFS_FLASH_PAGE_NUM_FS - PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_PAGE_PER_BLOCK) * PIFS_MAP_ENTRY_SIZE_BYTE + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE)
+
+#define PIFS_MANAGEMENT_PAGES_MIN           (PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE + PIFS_DELTA_MAP_PAGE_NUM + PIFS_WEAR_LEVEL_LIST_SIZE_PAGE)
+#define PIFS_MANAGEMENT_PAGES_RECOMMENDED   (PIFS_MANAGEMENT_PAGES_MIN + PIFS_MAP_PAGES_RECOMENDED)
 /******************************************************************************/
 
 #if PIFS_OPTIMIZE_FOR_RAM
@@ -133,30 +137,30 @@ typedef size_t pifs_size_t;
 typedef uint32_t pifs_file_size_t;
 #define PIFS_FILE_SIZE_ERASED       (UINT32_MAX)
 
-#ifndef PIFS_PAGE_COUNT_SIZE
-#if PIFS_FLASH_PAGE_PER_BLOCK < 255
-#define PIFS_PAGE_COUNT_SIZE        1
-#elif PIFS_FLASH_PAGE_PER_BLOCK < 65535
-#define PIFS_PAGE_COUNT_SIZE        2
-#elif PIFS_FLASH_PAGE_PER_BLOCK < 4294967295l
-#define PIFS_PAGE_COUNT_SIZE        4
-#endif
-#endif
-
 /**
  * This type affects the map entry size and the page count/map entry.
  */
-#if PIFS_PAGE_COUNT_SIZE == 1
+#if PIFS_MAP_PAGE_COUNT_SIZE == 1
+typedef uint8_t pifs_map_page_count_t;
+#define PIFS_MAP_PAGE_COUNT_INVALID (UINT8_MAX - 1)
+#elif PIFS_MAP_PAGE_COUNT_SIZE == 2
+typedef uint16_t pifs_map_page_count_t;
+#define PIFS_MAP_PAGE_COUNT_INVALID (UINT16_MAX - 1)
+#elif PIFS_MAP_PAGE_COUNT_SIZE == 4
+typedef uint32_t pifs_map_page_count_t;
+#define PIFS_MAP_PAGE_COUNT_INVALID (UINT32_MAX - 1)
+#else
+#error PIFS_MAP_PAGE_COUNT_SIZE is invalid! Valid values are 1, 2 or 4.
+#endif
+
+#if PIFS_FLASH_PAGE_NUM_FS < 255
 typedef uint8_t pifs_page_count_t;
 #define PIFS_PAGE_COUNT_INVALID (UINT8_MAX - 1)
-#elif PIFS_PAGE_COUNT_SIZE == 2
 typedef uint16_t pifs_page_count_t;
 #define PIFS_PAGE_COUNT_INVALID (UINT16_MAX - 1)
-#elif PIFS_PAGE_COUNT_SIZE == 4
+#elif PIFS_FLASH_PAGE_NUM_FS < 4294967295l
 typedef uint32_t pifs_page_count_t;
 #define PIFS_PAGE_COUNT_INVALID (UINT32_MAX - 1)
-#else
-#error PIFS_PAGE_COUNT_SIZE is invalid! Valid values are 1, 2 or 4.
 #endif
 
 typedef uint16_t pifs_wear_level_cntr_t;
@@ -265,7 +269,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
     pifs_address_t          address;
-    pifs_page_count_t       page_count;
+    pifs_map_page_count_t   page_count;
 } pifs_map_entry_t;
 
 typedef struct PIFS_PACKED_ATTRIBUTE

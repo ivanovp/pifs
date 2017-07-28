@@ -277,7 +277,7 @@ pifs_status_t pifs_release_file_pages(pifs_file_t * a_file)
                     mba = a_file->map_entry.address.block_address;
                     mpa = a_file->map_entry.address.page_address;
                     page_count = a_file->map_entry.page_count;
-                    if (page_count && page_count < PIFS_PAGE_COUNT_INVALID)
+                    if (page_count && page_count < PIFS_MAP_PAGE_COUNT_INVALID)
                     {
                         PIFS_DEBUG_MSG("Release map entry %i pages %s\r\n", page_count,
                                        pifs_ba_pa2str(mba, mpa));

@@ -234,7 +234,8 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
                                     ret2 = pifs_inc_address(&test_address);
                                     if (ret2 != PIFS_SUCCESS
                                             || test_address.block_address != delta_address.block_address
-                                            || test_address.page_address != delta_address.page_address)
+                                            || test_address.page_address != delta_address.page_address
+                                            || new_map_entry.page_count == PIFS_MAP_PAGE_COUNT_INVALID - 1)
                                     {
                                         PIFS_DEBUG_MSG("===> new map entry %s, page_count: %i\r\n",
                                                        pifs_ba_pa2str(new_map_entry.address.block_address,

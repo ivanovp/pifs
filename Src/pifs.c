@@ -667,6 +667,10 @@ void pifs_print_fs_info(void)
     printf("Number of wear level entries/page:  %lu\r\n", PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
     printf("Number of wear level entries:       %lu\r\n", PIFS_FLASH_BLOCK_NUM_FS);
     printf("Wear level map size:                %u bytes, %u pages\r\n", PIFS_WEAR_LEVEL_LIST_SIZE_BYTE, PIFS_WEAR_LEVEL_LIST_SIZE_PAGE);
+    printf("Minimum management area:            %lu pages, %lu blocks\r\n", PIFS_MANAGEMENT_PAGES_MIN,
+           (PIFS_MANAGEMENT_PAGES_MIN + PIFS_FLASH_PAGE_PER_BLOCK - 1) / PIFS_FLASH_PAGE_PER_BLOCK);
+    printf("Recommended management area:        %lu pages, %lu blocks\r\n", PIFS_MANAGEMENT_PAGES_RECOMMENDED,
+           (PIFS_MANAGEMENT_PAGES_RECOMMENDED + PIFS_FLASH_PAGE_PER_BLOCK - 1) / PIFS_FLASH_PAGE_PER_BLOCK);
     printf("Full reserved area for management:  %i bytes, %i pages\r\n",
            PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_BLOCK_SIZE_BYTE,
            PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_PAGE_PER_BLOCK);
@@ -770,13 +774,19 @@ pifs_status_t pifs_init(void)
         ret = PIFS_ERROR_CONFIGURATION;
     }
 
-    if ((PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE + PIFS_DELTA_MAP_PAGE_NUM + PIFS_WEAR_LEVEL_LIST_SIZE_PAGE) > PIFS_FLASH_PAGE_PER_BLOCK * PIFS_MANAGEMENT_BLOCKS)
+    if (PIFS_MANAGEMENT_PAGES_MIN > PIFS_FLASH_PAGE_PER_BLOCK * PIFS_MANAGEMENT_BLOCKS)
     {
         PIFS_ERROR_MSG("Cannot fit data in management block!\r\n");
         PIFS_ERROR_MSG("Decrease PIFS_ENTRY_NUM_MAX or PIFS_FILENAME_LEN_MAX or PIFS_DELTA_PAGES_NUM!\r\n");
         PIFS_ERROR_MSG("Or increase PIFS_MANAGEMENT_BLOCKS to %lu!\r\n",
-                       (PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE + PIFS_DELTA_MAP_PAGE_NUM + PIFS_FLASH_PAGE_PER_BLOCK - 1) / PIFS_FLASH_PAGE_PER_BLOCK);
+                       (PIFS_MANAGEMENT_PAGES_MIN + PIFS_FLASH_PAGE_PER_BLOCK - 1) / PIFS_FLASH_PAGE_PER_BLOCK);
         ret = PIFS_ERROR_CONFIGURATION;
+    }
+
+    if (PIFS_MANAGEMENT_PAGES_RECOMMENDED > PIFS_FLASH_PAGE_PER_BLOCK * PIFS_MANAGEMENT_BLOCKS)
+    {
+        PIFS_WARNING_MSG("Recommended PIFS_MANAGEMENT_BLOCKS is %lu!\r\n",
+                       (PIFS_MANAGEMENT_PAGES_RECOMMENDED + PIFS_FLASH_PAGE_PER_BLOCK - 1) / PIFS_FLASH_PAGE_PER_BLOCK);
     }
 
     if (((PIFS_FLASH_PAGE_SIZE_BYTE - (PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE)) / PIFS_ENTRY_PER_PAGE) > 0)
@@ -1182,9 +1192,9 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                 do
                 {
                     page_count_needed_limited = page_count_needed;
-                    if (page_count_needed_limited >= PIFS_PAGE_COUNT_INVALID)
+                    if (page_count_needed_limited >= PIFS_MAP_PAGE_COUNT_INVALID)
                     {
-                        page_count_needed_limited = PIFS_PAGE_COUNT_INVALID - 1;
+                        page_count_needed_limited = PIFS_MAP_PAGE_COUNT_INVALID - 1;
                     }
                     file->status = pifs_find_free_page(page_count_needed_limited,
                                                        PIFS_BLOCK_TYPE_DATA,
