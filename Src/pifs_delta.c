@@ -52,25 +52,20 @@ static pifs_status_t pifs_read_delta_map_page(void)
  *
  * @return PIFS_SUCCES if written successfully.
  */
-static pifs_status_t pifs_write_delta_map_page(pifs_size_t delta_map_page_idx)
+static pifs_status_t pifs_write_delta_map_page(pifs_size_t a_delta_map_page_idx)
 {
     pifs_block_address_t ba = pifs.header.delta_map_address.block_address;
     pifs_page_address_t  pa = pifs.header.delta_map_address.page_address;
     pifs_size_t          i;
     pifs_status_t        ret = PIFS_SUCCESS;
 
-    /* TODO calculate delta page address instead of increasing */
-    for (i = 0; i < PIFS_DELTA_MAP_PAGE_NUM && ret == PIFS_SUCCESS; i++)
+    if (a_delta_map_page_idx < PIFS_DELTA_MAP_PAGE_NUM)
     {
-        if (i == delta_map_page_idx)
+        ret = pifs_add_ba_pa(&ba, &pa, a_delta_map_page_idx);
+        if (ret == PIFS_SUCCESS)
         {
             ret = pifs_write(ba, pa, 0, &pifs.delta_map_page_buf[i], PIFS_FLASH_PAGE_SIZE_BYTE);
             PIFS_DEBUG_MSG("%s ret: %i\r\n", pifs_ba_pa2str(ba, pa), ret);
-            break;
-        }
-        if (ret == PIFS_SUCCESS)
-        {
-            ret = pifs_inc_ba_pa(&ba, &pa);
         }
     }
 

@@ -25,6 +25,7 @@
 #define PIFS_ENABLE_FSEEK_BEYOND_FILE   1u   /**< 1: Enable seeking beyond file size, 0: disable seeking beyond file size */
 #define PIFS_ENABLE_FSEEK_ERASED_VALUE  0u   /**< 1: Write 0xFF values when seeking beyond file size,
                                                   0: write 0 values when seeking beyond file size (default). */
+#define PIFS_PATH_SEPARATOR_CHAR        '/'  /**< Character to separate directories in path, '/' or '\' */
 
 #define PIFS_PACKED_ATTRIBUTE           __attribute__((packed))
 

@@ -333,7 +333,7 @@ void pifs_parse_open_mode(pifs_file_t * a_file, const pifs_char_t * a_modes)
  * @brief pifs_inc_address Increment address.
  * TODO think about return code handling when this function called!
  *
- * @param[in] a_address Pointer to address to increment.
+ * @param[out] a_address Pointer to address to increment.
  *
  * @return PIFS_SUCCESS if successfully incremented.
  * PIFS_ERROR_INTERNAL_RANGE if end of flash is reached.
@@ -360,8 +360,9 @@ pifs_status_t pifs_inc_address(pifs_address_t * a_address)
 
 /**
  * @brief pifs_add_address Add page count to an address.
+ * TODO think about return code handling when this function called!
  *
- * @param[in] a_address     Pointer to address to increment.
+ * @param[out] a_address    Pointer to address to increment.
  * @param[in] a_page_count  Number of pages to add.
  *
  * @return PIFS_SUCCESS if successfully added.
@@ -388,7 +389,8 @@ pifs_status_t pifs_add_address(pifs_address_t * a_address, pifs_size_t a_page_co
 
 /**
  * @brief pifs_inc_ba_pa Increment address.
- * @param[in] a_block_address  Pointer to block address to increment.
+ * TODO think about return code handling when this function called!
+ * @param[out] a_block_address Pointer to block address to increment.
  * @param[in] a_page_address   Pointer to page address to increment.
  *
  * @return PIFS_SUCCESS if successfully incremented.
@@ -418,8 +420,9 @@ pifs_status_t pifs_inc_ba_pa(pifs_block_address_t * a_block_address,
 
 /**
  * @brief pifs_add_ba_pa Add address.
- * @param[in] a_block_address  Pointer to block address to add.
- * @param[in] a_page_address   Pointer to page address to addr.
+ * TODO think about return code handling when this function called!
+ * @param[out] a_block_address Pointer to block address to add.
+ * @param[out] a_page_address  Pointer to page address to addr.
  * @param[in] a_page_count     Number of pages to add.
  *
  * @return PIFS_SUCCESS if successfully added.
@@ -457,8 +460,6 @@ pifs_status_t pifs_check_filename(const pifs_char_t * a_filename)
     pifs_status_t     ret = PIFS_ERROR_NOT_INITIALIZED;
     pifs_size_t       i;
     pifs_size_t       len = strlen(a_filename);
-    /* TODO exclude forward slash (/) from invalid chars */
-    /* when directory simulation is needed! */
     const pifs_char_t invalid_chars[] = "\"'*,/:;<=>?[]|";
 
     if (len > 0)

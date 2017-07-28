@@ -186,6 +186,10 @@ typedef uint8_t pifs_wear_level_bits_t;
 #define PIFS_INVERT_ATTRIBUTE_BITS      0
 #endif
 
+#if PIFS_PATH_SEPARATOR_CHAR != '/' && PIFS_PATH_SEPARATOR_CHAR != '\\'
+#error Invalid PIFS_PATH_SEPARATOR_CHAR! Forward slash '/' or backslash '\\' are supported!
+#endif
+
 #define PIFS_SET_ERRNO(status)          do { \
         pifs_errno = status; \
     } while (0)

@@ -32,7 +32,7 @@
  * @param a_name Pointer to directory name. TODO currently name is omitted!
  * @return Pointer to file system's directory.
  */
-pifs_DIR * pifs_opendir(const char *a_name)
+pifs_DIR * pifs_opendir(const char * a_name)
 {
     pifs_size_t  i;
     pifs_dir_t * dir = NULL;
