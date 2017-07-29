@@ -51,15 +51,15 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
     do
     {
         /* Read free space bitmap */
-        ret = pifs_read(old_fsbm_ba, old_fsbm_pa, 0, &pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+        ret = pifs_read(old_fsbm_ba, old_fsbm_pa, 0, &pifs.page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
 
         PIFS_DEBUG_MSG("Old free space bitmap:\r\n");
 #if PIFS_DEBUG_LEVEL >= 5
-        print_buffer(pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE,
-                     old_fsbm_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + old_fsbm_pa * PIFS_FLASH_PAGE_SIZE_BYTE);
+        print_buffer(pifs.page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE,
+                     old_fsbm_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + old_fsbm_pa * PIFS_LOGICAL_PAGE_SIZE_BYTE);
 #endif
 
-        for (i = 0; i < PIFS_FLASH_PAGE_SIZE_BYTE && ret == PIFS_SUCCESS; i++)
+        for (i = 0; i < PIFS_LOGICAL_PAGE_SIZE_BYTE && ret == PIFS_SUCCESS; i++)
         {
             if (ret == PIFS_SUCCESS && find)
             {
@@ -112,7 +112,7 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
             }
 
             fpa += PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE;
-            if (fpa == PIFS_FLASH_PAGE_PER_BLOCK)
+            if (fpa == PIFS_LOGICAL_PAGE_PER_BLOCK)
             {
                 fpa = 0;
                 fba++;
@@ -123,11 +123,11 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
 
         if (ret == PIFS_SUCCESS)
         {
-            ret = pifs_write(new_fsbm_ba, new_fsbm_pa, 0, &pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+            ret = pifs_write(new_fsbm_ba, new_fsbm_pa, 0, &pifs.page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
             PIFS_DEBUG_MSG("New free space bitmap:\r\n");
 #if PIFS_DEBUG_LEVEL >= 5
-            print_buffer(pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE,
-                         new_fsbm_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + new_fsbm_pa * PIFS_FLASH_PAGE_SIZE_BYTE);
+            print_buffer(pifs.page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE,
+                         new_fsbm_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + new_fsbm_pa * PIFS_LOGICAL_PAGE_SIZE_BYTE);
 #endif
         }
 
@@ -346,7 +346,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
                     PIFS_NOTICE_MSG("%s\r\n", pifs_ba_pa2str(new_entry_list_ba, new_entry_list_pa));
 #if PIFS_DEBUG_LEVEL >= 5
                     print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf),
-                                 new_entry_list_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + new_entry_list_pa * PIFS_FLASH_PAGE_SIZE_BYTE);
+                                 new_entry_list_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + new_entry_list_pa * PIFS_LOGICAL_PAGE_SIZE_BYTE);
 #endif
                 }
             }
@@ -466,7 +466,7 @@ pifs_status_t pifs_merge(void)
     {
         /* Reset delta map */
         memset(pifs.delta_map_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE,
-               PIFS_DELTA_MAP_PAGE_NUM * PIFS_FLASH_PAGE_SIZE_BYTE);
+               PIFS_DELTA_MAP_PAGE_NUM * PIFS_LOGICAL_PAGE_SIZE_BYTE);
         pifs.delta_map_page_is_dirty = FALSE;
         pifs.delta_map_page_is_read = FALSE;
     }

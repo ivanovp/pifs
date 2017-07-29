@@ -51,6 +51,7 @@ typedef uint32_t pifs_page_address_t;
 #error PIFS_FLASH_PAGE_PER_BLOCK is too big!
 #endif
 
+// TODO PIFS_LOGICAL_PAGE_SIZE_BYTE shall be taken account here as well!
 #if (PIFS_FLASH_PAGE_SIZE_BYTE < 255)
 typedef uint8_t pifs_page_offset_t;
 #define PIFS_PAGE_OFFSET_INVALID   (UINT8_MAX - 1u)

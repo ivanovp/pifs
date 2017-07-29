@@ -121,7 +121,7 @@ struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
     {
         /* Copy entry */
         dir->directory_entry.d_ino = entry.first_map_address.block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
-                + entry.first_map_address.page_address * PIFS_FLASH_PAGE_SIZE_BYTE;
+                + entry.first_map_address.page_address * PIFS_LOGICAL_PAGE_SIZE_BYTE;
         dir->directory_entry.d_first_map_block_address = entry.first_map_address.block_address;
         dir->directory_entry.d_first_map_page_address = entry.first_map_address.page_address;
         strncpy(dir->directory_entry.d_name, entry.name, sizeof(dir->directory_entry.d_name));

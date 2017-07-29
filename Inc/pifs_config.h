@@ -10,12 +10,20 @@
 #ifndef _INCLUDE_PIFS_CONFIG_H_
 #define _INCLUDE_PIFS_CONFIG_H_
 
+/**
+ * Allocation unit of file system.
+ * Larger logical page needs more RAM and less pages in management area.
+ * Smaller logical page needs less RAM and more pages in management area.
+ * It shall be larger or equal to PIFS_FLASH_PAGE_SIZE!
+ * Its size shall be power of two!
+ */
+#define PIFS_LOGICAL_PAGE_SIZE_BYTE     1024u
 #define PIFS_OPEN_FILE_NUM_MAX          4u   /**< Maximum number of opened file */
 #define PIFS_OPEN_DIR_NUM_MAX           2u   /**< Maximum number of opened directories */
 #define PIFS_FILENAME_LEN_MAX           32u  /**< Maximum length of file name */
 #define PIFS_ENTRY_NUM_MAX              254u /**< Maximum number of files and directories */
 #define PIFS_ENABLE_ATTRIBUTE           1u   /**< 1: Use attribute field of files, 0: don't use attribute field */
-#define PIFS_MANAGEMENT_BLOCKS          10u  /**< Number of management blocks. Minimum: 1 (Allocated area is twice of this number.) */
+#define PIFS_MANAGEMENT_BLOCKS          2u   /**< Number of management blocks. Minimum: 1 (Allocated area is twice of this number.) */
 #define PIFS_CHECKSUM_SIZE              4u   /**< Size of checksum variable in bytes. Valid values are 1, 2 and 4. */
 #define PIFS_MAP_PAGE_COUNT_SIZE        1u   /**< Size of page count variable of map entry in bytes. Valid values are 1, 2 and 4. */
 #define PIFS_OPTIMIZE_FOR_RAM           1u   /**< 1: Use less RAM, 0: Use more RAM, but faster code execution */

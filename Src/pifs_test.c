@@ -33,8 +33,8 @@
 #define ENABLE_LIST_DIRECTORY_TEST    1
 #endif
 
-#define TEST_FULL_PAGE_NUM            (PIFS_FLASH_PAGE_NUM_FS / 2)
-#define TEST_BUF_SIZE                 (PIFS_FLASH_PAGE_SIZE_BYTE * 2)
+#define TEST_FULL_PAGE_NUM            (PIFS_LOGICAL_PAGE_NUM_FS / 2)
+#define TEST_BUF_SIZE                 (PIFS_LOGICAL_PAGE_SIZE_BYTE * 2)
 #define SEEK_TEST_POS                 100
 
 #if TEST_BUF_SIZE < SEEK_TEST_POS

@@ -23,12 +23,47 @@
 
 #if PIFS_DEBUG_LEVEL >= 1
 /**
- * @brief pifs_address2str Convert address to human readable string.
+ * @brief pifs_address2str Convert logical address to human readable string.
  *
  * @param[in] a_address Address to convert.
  * @return The created string.
  */
 char * pifs_address2str(pifs_address_t * a_address)
+{
+    static char str[32];
+
+    snprintf(str, sizeof(str), "BA%i/PA%i @0x%X", a_address->block_address, a_address->page_address,
+           a_address->block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
+           + a_address->page_address * PIFS_LOGICAL_PAGE_SIZE_BYTE);
+
+    return str;
+}
+
+/**
+ * @brief pifs_ba_pa2str Convert logical address to human readable string.
+ *
+ * @param[in] a_block_address Block address.
+ * @param[in] a_page_address Page address.
+ * @return The created string.
+ */
+char * pifs_ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address)
+{
+    static char str[32];
+
+    snprintf(str, sizeof(str), "BA%i/PA%i @0x%X", a_block_address, a_page_address,
+           a_block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
+           + a_page_address * PIFS_LOGICAL_PAGE_SIZE_BYTE);
+
+    return str;
+}
+
+/**
+ * @brief pifs_address2str Convert flash address to human readable string.
+ *
+ * @param[in] a_address Address to convert.
+ * @return The created string.
+ */
+char * pifs_flash_address2str(pifs_address_t * a_address)
 {
     static char str[32];
 
@@ -40,13 +75,13 @@ char * pifs_address2str(pifs_address_t * a_address)
 }
 
 /**
- * @brief pifs_ba_pa2str Convert adress to human readable string.
+ * @brief pifs_ba_pa2str Convert flash address to human readable string.
  *
  * @param[in] a_block_address Block address.
  * @param[in] a_page_address Page address.
  * @return The created string.
  */
-char * pifs_ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address)
+char * pifs_flash_ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address)
 {
     static char str[32];
 

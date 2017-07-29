@@ -76,21 +76,30 @@ static pifs_checksum_t pifs_calc_header_checksum(pifs_header_t * a_pifs_header)
 pifs_status_t pifs_flush(void)
 {
     pifs_status_t ret = PIFS_SUCCESS;
+#if PIFS_LOGICAL_PAGE_ENABLED
+    pifs_size_t   i;
+#endif
 
     if (pifs.cache_page_buf_is_dirty)
     {
-        ret = pifs_flash_write(pifs.cache_page_buf_address.block_address,
-                               pifs.cache_page_buf_address.page_address,
-                               0,
-                               pifs.cache_page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
-        if (ret == PIFS_SUCCESS)
+#if PIFS_LOGICAL_PAGE_ENABLED
+        for (i = 0; i < PIFS_FLASH_PAGE_PER_LOGICAL_PAGE && ret == PIFS_SUCCESS; i++)
+#endif
         {
-            pifs.cache_page_buf_is_dirty = FALSE;
-        }
-        else
-        {
-            PIFS_ERROR_MSG("Cannot flush buffer %s\r\n",
-                           pifs_address2str(&pifs.cache_page_buf_address));
+            ret = pifs_flash_write(pifs.cache_page_buf_address.block_address,
+                                   PIFS_LP2FP(pifs.cache_page_buf_address.page_address) + PIFS_LOGICAL_PAGE_IDX(i),
+                                   0,
+                                   pifs.cache_page_buf + PIFS_LOGICAL_PAGE_IDX(i * PIFS_FLASH_PAGE_SIZE_BYTE),
+                                   PIFS_FLASH_PAGE_SIZE_BYTE);
+            if (ret == PIFS_SUCCESS)
+            {
+                pifs.cache_page_buf_is_dirty = FALSE;
+            }
+            else
+            {
+                PIFS_ERROR_MSG("Cannot flush buffer %s\r\n",
+                               pifs_address2str(&pifs.cache_page_buf_address));
+            }
         }
     }
 
@@ -115,6 +124,9 @@ pifs_status_t pifs_read(pifs_block_address_t a_block_address,
                         pifs_size_t a_buf_size)
 {
     pifs_status_t ret = PIFS_ERROR_GENERAL;
+#if PIFS_LOGICAL_PAGE_ENABLED
+    pifs_size_t   i;
+#endif
 
     if (a_block_address == pifs.cache_page_buf_address.block_address
             && a_page_address == pifs.cache_page_buf_address.page_address)
@@ -133,8 +145,16 @@ pifs_status_t pifs_read(pifs_block_address_t a_block_address,
 
         if (ret == PIFS_SUCCESS)
         {
-            ret = pifs_flash_read(a_block_address, a_page_address, 0,
-                                  pifs.cache_page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+#if PIFS_LOGICAL_PAGE_ENABLED
+            for (i = 0; i < PIFS_FLASH_PAGE_PER_LOGICAL_PAGE && ret == PIFS_SUCCESS; i++)
+#endif
+            {
+                ret = pifs_flash_read(a_block_address,
+                                      PIFS_LP2FP(a_page_address) + PIFS_LOGICAL_PAGE_IDX(i),
+                                      0,
+                                      pifs.cache_page_buf + PIFS_LOGICAL_PAGE_IDX(i * PIFS_FLASH_PAGE_SIZE_BYTE),
+                                      PIFS_FLASH_PAGE_SIZE_BYTE);
+            }
         }
 
         if (ret == PIFS_SUCCESS)
@@ -169,6 +189,9 @@ pifs_status_t pifs_write(pifs_block_address_t a_block_address,
                          pifs_size_t a_buf_size)
 {
     pifs_status_t ret = PIFS_ERROR_GENERAL;
+#if PIFS_LOGICAL_PAGE_ENABLED
+    pifs_size_t   i;
+#endif
 
     if (a_block_address == pifs.cache_page_buf_address.block_address
             && a_page_address == pifs.cache_page_buf_address.page_address)
@@ -188,11 +211,19 @@ pifs_status_t pifs_write(pifs_block_address_t a_block_address,
 
         if (ret == PIFS_SUCCESS)
         {
-            if (a_page_offset != 0 || a_buf_size != PIFS_FLASH_PAGE_SIZE_BYTE)
+            if (a_page_offset != 0 || a_buf_size != PIFS_LOGICAL_PAGE_SIZE_BYTE)
             {
-                /* Only part of page is written */
-                ret = pifs_flash_read(a_block_address, a_page_address, 0,
-                                      pifs.cache_page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+#if PIFS_LOGICAL_PAGE_ENABLED
+                for (i = 0; i < PIFS_FLASH_PAGE_PER_LOGICAL_PAGE && ret == PIFS_SUCCESS; i++)
+#endif
+                {
+                    /* Only part of page is written */
+                    ret = pifs_flash_read(a_block_address,
+                                          PIFS_LP2FP(a_page_address) + PIFS_LOGICAL_PAGE_IDX(i),
+                                          0,
+                                          pifs.cache_page_buf + PIFS_LOGICAL_PAGE_IDX(i * PIFS_FLASH_PAGE_SIZE_BYTE),
+                                          PIFS_FLASH_PAGE_SIZE_BYTE);
+                }
             }
 
             if (a_buf)
@@ -309,7 +340,7 @@ pifs_status_t pifs_wear_level_list_init(void)
     pifs_address_t            address;
     pifs_wear_level_entry_t * wear_level_entry = (pifs_wear_level_entry_t*) pifs.page_buf;
 
-    memset(pifs.page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_FLASH_PAGE_SIZE_BYTE);
+    memset(pifs.page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_LOGICAL_PAGE_SIZE_BYTE);
     address = pifs.header.wear_level_list_address;
     for (i = 0; i < PIFS_WEAR_LEVEL_ENTRY_PER_PAGE; i++)
     {
@@ -321,7 +352,7 @@ pifs_status_t pifs_wear_level_list_init(void)
     {
         PIFS_WARNING_MSG("%s\r\n", pifs_address2str(&address));
         ret = pifs_write(address.block_address, address.page_address, 0,
-                         pifs.page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+                         pifs.page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
         if (ret == PIFS_SUCCESS)
         {
             (void)pifs_inc_address(&address);
@@ -404,7 +435,7 @@ pifs_status_t pifs_inc_wear_level(pifs_block_address_t a_block_address,
     ret = pifs_add_address(&address, a_block_address / PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
     if (ret == PIFS_SUCCESS)
     {
-        po %= PIFS_FLASH_PAGE_SIZE_BYTE;
+        po %= PIFS_LOGICAL_PAGE_SIZE_BYTE;
         ret = pifs_read(address.block_address, address.page_address, po,
                         &wear_level, PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE);
         if (ret == PIFS_SUCCESS)
@@ -457,7 +488,7 @@ pifs_status_t pifs_write_wear_level(pifs_block_address_t a_block_address,
     ret = pifs_add_address(&address, a_block_address / PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
     if (ret == PIFS_SUCCESS)
     {
-        po %= PIFS_FLASH_PAGE_SIZE_BYTE;
+        po %= PIFS_LOGICAL_PAGE_SIZE_BYTE;
         PIFS_NOTICE_MSG("BA%i wear level counter: %i, bits: 0x%02X\r\n",
                          a_block_address,
                          a_wear_level->wear_level_cntr,
@@ -649,6 +680,7 @@ void pifs_print_fs_info(void)
     printf("\r\n");
     printf("Geometry of file system\r\n");
     printf("-----------------------\r\n");
+    printf("Size of logical page:               %i bytes\r\n", PIFS_LOGICAL_PAGE_SIZE_BYTE);
     printf("Block address size:                 %lu bytes\r\n", sizeof(pifs_block_address_t));
     printf("Page address size:                  %lu bytes\r\n", sizeof(pifs_page_address_t));
     printf("Header size:                        %lu bytes, %lu pages\r\n", PIFS_HEADER_SIZE_BYTE, PIFS_HEADER_SIZE_PAGE);
@@ -662,7 +694,7 @@ void pifs_print_fs_info(void)
     printf("Delta entry size:                   %lu bytes\r\n", PIFS_DELTA_ENTRY_SIZE_BYTE);
     printf("Number of delta entries/page:       %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE);
     printf("Number of delta entries:            %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE * PIFS_DELTA_MAP_PAGE_NUM);
-    printf("Delta map size:                     %u bytes, %u pages\r\n", PIFS_DELTA_MAP_PAGE_NUM * PIFS_FLASH_PAGE_SIZE_BYTE, PIFS_DELTA_MAP_PAGE_NUM);
+    printf("Delta map size:                     %u bytes, %u pages\r\n", PIFS_DELTA_MAP_PAGE_NUM * PIFS_LOGICAL_PAGE_SIZE_BYTE, PIFS_DELTA_MAP_PAGE_NUM);
     printf("Wear level entry size:              %lu bytes\r\n", PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE);
     printf("Number of wear level entries/page:  %lu\r\n", PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
     printf("Number of wear level entries:       %lu\r\n", PIFS_FLASH_BLOCK_NUM_FS);
@@ -765,34 +797,34 @@ pifs_status_t pifs_init(void)
     pifs_print_fs_info();
 #endif
 
-    if (PIFS_ENTRY_SIZE_BYTE > PIFS_FLASH_PAGE_SIZE_BYTE)
+    if (PIFS_ENTRY_SIZE_BYTE > PIFS_LOGICAL_PAGE_SIZE_BYTE)
     {
         PIFS_ERROR_MSG("Entry size (%lu) is larger than flash page (%u)!\r\n"
                        "Change PIFS_FILENAME_LEN_MAX to %lu!\r\n",
-                       PIFS_ENTRY_SIZE_BYTE, PIFS_FLASH_PAGE_SIZE_BYTE,
-                       PIFS_FILENAME_LEN_MAX - (PIFS_ENTRY_SIZE_BYTE - PIFS_FLASH_PAGE_SIZE_BYTE));
+                       PIFS_ENTRY_SIZE_BYTE, PIFS_LOGICAL_PAGE_SIZE_BYTE,
+                       PIFS_FILENAME_LEN_MAX - (PIFS_ENTRY_SIZE_BYTE - PIFS_LOGICAL_PAGE_SIZE_BYTE));
         ret = PIFS_ERROR_CONFIGURATION;
     }
 
-    if (PIFS_MANAGEMENT_PAGES_MIN > PIFS_FLASH_PAGE_PER_BLOCK * PIFS_MANAGEMENT_BLOCKS)
+    if (PIFS_MANAGEMENT_PAGES_MIN > PIFS_LOGICAL_PAGE_PER_BLOCK * PIFS_MANAGEMENT_BLOCKS)
     {
         PIFS_ERROR_MSG("Cannot fit data in management block!\r\n");
         PIFS_ERROR_MSG("Decrease PIFS_ENTRY_NUM_MAX or PIFS_FILENAME_LEN_MAX or PIFS_DELTA_PAGES_NUM!\r\n");
         PIFS_ERROR_MSG("Or increase PIFS_MANAGEMENT_BLOCKS to %lu!\r\n",
-                       (PIFS_MANAGEMENT_PAGES_MIN + PIFS_FLASH_PAGE_PER_BLOCK - 1) / PIFS_FLASH_PAGE_PER_BLOCK);
+                       (PIFS_MANAGEMENT_PAGES_MIN + PIFS_LOGICAL_PAGE_PER_BLOCK - 1) / PIFS_LOGICAL_PAGE_PER_BLOCK);
         ret = PIFS_ERROR_CONFIGURATION;
     }
 
-    if (PIFS_MANAGEMENT_PAGES_RECOMMENDED > PIFS_FLASH_PAGE_PER_BLOCK * PIFS_MANAGEMENT_BLOCKS)
+    if (PIFS_MANAGEMENT_PAGES_RECOMMENDED > PIFS_LOGICAL_PAGE_PER_BLOCK * PIFS_MANAGEMENT_BLOCKS)
     {
         PIFS_WARNING_MSG("Recommended PIFS_MANAGEMENT_BLOCKS is %lu!\r\n",
-                       (PIFS_MANAGEMENT_PAGES_RECOMMENDED + PIFS_FLASH_PAGE_PER_BLOCK - 1) / PIFS_FLASH_PAGE_PER_BLOCK);
+                       (PIFS_MANAGEMENT_PAGES_RECOMMENDED + PIFS_LOGICAL_PAGE_PER_BLOCK - 1) / PIFS_LOGICAL_PAGE_PER_BLOCK);
     }
 
-    if (((PIFS_FLASH_PAGE_SIZE_BYTE - (PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE)) / PIFS_ENTRY_PER_PAGE) > 0)
+    if (((PIFS_LOGICAL_PAGE_SIZE_BYTE - (PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE)) / PIFS_ENTRY_PER_PAGE) > 0)
     {
         PIFS_NOTICE_MSG("PIFS_FILENAME_LEN_MAX can be increased by %lu with same entry list size.\r\n",
-                        (PIFS_FLASH_PAGE_SIZE_BYTE - (PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE)) / PIFS_ENTRY_PER_PAGE
+                        (PIFS_LOGICAL_PAGE_SIZE_BYTE - (PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE)) / PIFS_ENTRY_PER_PAGE
                         );
     }
 
@@ -1157,13 +1189,13 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
         }
         if (file->status == PIFS_SUCCESS)
         {
-            po = file->write_pos % PIFS_FLASH_PAGE_SIZE_BYTE;
+            po = file->write_pos % PIFS_LOGICAL_PAGE_SIZE_BYTE;
             /* Check if last page was not fully used up */
             if (po)
             {
                 /* There is some space in the last page */
                 PIFS_ASSERT(pifs_is_address_valid(&file->write_address));
-                chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE - po);
+                chunk_size = PIFS_MIN(data_size, PIFS_LOGICAL_PAGE_SIZE_BYTE - po);
                 //PIFS_DEBUG_MSG("--------> pos: %i po: %i data_size: %i chunk_size: %i\r\n",
                 //               file->write_pos, po, data_size, chunk_size);
                 file->status = pifs_write(file->write_address.block_address,
@@ -1183,7 +1215,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
         {
             if (file->status == PIFS_SUCCESS)
             {
-                page_count_needed = (data_size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
+                page_count_needed = (data_size + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE;
                 /* Check if merge needed and do it if necessary */
                 file->status = pifs_merge_check(a_file, page_count_needed);
             }
@@ -1208,9 +1240,9 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                         page_cound_found_start = page_count_found;
                         do
                         {
-                            if (data_size > PIFS_FLASH_PAGE_SIZE_BYTE)
+                            if (data_size > PIFS_LOGICAL_PAGE_SIZE_BYTE)
                             {
-                                chunk_size = PIFS_FLASH_PAGE_SIZE_BYTE;
+                                chunk_size = PIFS_LOGICAL_PAGE_SIZE_BYTE;
                             }
                             else
                             {
@@ -1328,14 +1360,14 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
                              file->entry.file_size);
             data_size = file->entry.file_size - file->read_pos;
         }
-        po = file->read_pos % PIFS_FLASH_PAGE_SIZE_BYTE;
+        po = file->read_pos % PIFS_LOGICAL_PAGE_SIZE_BYTE;
         /* Check if last page was not fully read */
         if (po)
         {
             /* There is some data in the last page */
             //          PIFS_DEBUG_MSG("po != 0  %s\r\n", pifs_address2str(&file->read_address));
             PIFS_ASSERT(pifs_is_address_valid(&file->read_address));
-            chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE - po);
+            chunk_size = PIFS_MIN(data_size, PIFS_LOGICAL_PAGE_SIZE_BYTE - po);
             PIFS_DEBUG_MSG("--------> pos: %i po: %i data_size: %i chunk_size: %i\r\n",
                            file->read_pos, po, data_size, chunk_size);
             file->status = pifs_read_delta(file->read_address.block_address,
@@ -1348,7 +1380,7 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
                 data += chunk_size;
                 data_size -= chunk_size;
                 read_size += chunk_size;
-                if (po + chunk_size >= PIFS_FLASH_PAGE_SIZE_BYTE)
+                if (po + chunk_size >= PIFS_LOGICAL_PAGE_SIZE_BYTE)
                 {
                     pifs_inc_read_address(file);
                 }
@@ -1356,10 +1388,10 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
         }
         if (file->status == PIFS_SUCCESS && data_size > 0 && file->read_pos < file->entry.file_size)
         {
-            page_count = (data_size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
+            page_count = (data_size + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE;
             while (page_count && file->status == PIFS_SUCCESS)
             {
-                chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE);
+                chunk_size = PIFS_MIN(data_size, PIFS_LOGICAL_PAGE_SIZE_BYTE);
                 if (file->read_pos + chunk_size > file->entry.file_size)
                 {
                     chunk_size = file->entry.file_size - file->read_pos;
@@ -1370,7 +1402,7 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
                 file->status = pifs_read_delta(file->read_address.block_address,
                                                file->read_address.page_address,
                                                0, data, chunk_size);
-                if (file->status == PIFS_SUCCESS && chunk_size == PIFS_FLASH_PAGE_SIZE_BYTE)
+                if (file->status == PIFS_SUCCESS && chunk_size == PIFS_LOGICAL_PAGE_SIZE_BYTE)
                 {
                     pifs_inc_read_address(file);
                 }
@@ -1535,18 +1567,18 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
                 PIFS_WARNING_MSG("data_size: %i bytes\r\n", data_size);
             }
 
-            po = file->read_pos % PIFS_FLASH_PAGE_SIZE_BYTE;
+            po = file->read_pos % PIFS_LOGICAL_PAGE_SIZE_BYTE;
             /* Check if last page was not fully read */
             if (po)
             {
                 /* There is some data in the last page */
                 PIFS_ASSERT(pifs_is_address_valid(&file->read_address));
-                chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE - po);
+                chunk_size = PIFS_MIN(data_size, PIFS_LOGICAL_PAGE_SIZE_BYTE - po);
                 if (file->status == PIFS_SUCCESS)
                 {
                     data_size -= chunk_size;
                     seek_size += chunk_size;
-                    if (po + chunk_size >= PIFS_FLASH_PAGE_SIZE_BYTE)
+                    if (po + chunk_size >= PIFS_LOGICAL_PAGE_SIZE_BYTE)
                     {
                         pifs_inc_read_address(file);
                     }
@@ -1554,13 +1586,13 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
             }
             if (file->status == PIFS_SUCCESS && data_size > 0)
             {
-                page_count = (data_size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
+                page_count = (data_size + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE;
                 while (page_count && file->status == PIFS_SUCCESS)
                 {
                     PIFS_ASSERT(pifs_is_address_valid(&file->read_address));
-                    chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE);
+                    chunk_size = PIFS_MIN(data_size, PIFS_LOGICAL_PAGE_SIZE_BYTE);
                     //PIFS_DEBUG_MSG("read %s\r\n", pifs_address2str(&file->read_address));
-                    if (file->status == PIFS_SUCCESS && chunk_size == PIFS_FLASH_PAGE_SIZE_BYTE)
+                    if (file->status == PIFS_SUCCESS && chunk_size == PIFS_LOGICAL_PAGE_SIZE_BYTE)
                     {
                         pifs_inc_read_address(file);
                     }
@@ -1581,15 +1613,15 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
             if (target_pos > file->read_pos)
             {
 #if PIFS_ENABLE_FSEEK_ERASED_VALUE
-                memset(pifs.fseek_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_FLASH_PAGE_SIZE_BYTE);
+                memset(pifs.fseek_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_LOGICAL_PAGE_SIZE_BYTE);
 #else
-                memset(pifs.fseek_page_buf, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, PIFS_FLASH_PAGE_SIZE_BYTE);
+                memset(pifs.fseek_page_buf, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, PIFS_LOGICAL_PAGE_SIZE_BYTE);
 #endif
                 data_size = target_pos - file->read_pos;
-                page_count = (data_size + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE;
+                page_count = (data_size + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE;
                 while (page_count && file->status == PIFS_SUCCESS)
                 {
-                    chunk_size = PIFS_MIN(data_size, PIFS_FLASH_PAGE_SIZE_BYTE);
+                    chunk_size = PIFS_MIN(data_size, PIFS_LOGICAL_PAGE_SIZE_BYTE);
                     file->status = pifs_fwrite(pifs.fseek_page_buf, 1, chunk_size, file);
                     data_size -= chunk_size;
                     page_count--;

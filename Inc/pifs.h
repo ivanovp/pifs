@@ -44,13 +44,20 @@
 #define PIFS_FSBM_BITS_PER_PAGE_SHIFT   1
 #define PIFS_FSBM_BITS_PER_PAGE         (1u << PIFS_FSBM_BITS_PER_PAGE_SHIFT)
 
+#define PIFS_FLASH_PAGE_PER_LOGICAL_PAGE (PIFS_LOGICAL_PAGE_SIZE_BYTE / PIFS_FLASH_PAGE_SIZE_BYTE)
+#define PIFS_LOGICAL_PAGE_PER_BLOCK     (PIFS_FLASH_BLOCK_SIZE_BYTE / PIFS_LOGICAL_PAGE_SIZE_BYTE)
+/** Number of all logical pages */
+#define PIFS_LOGICAL_PAGE_NUM_ALL       (PIFS_FLASH_BLOCK_NUM_ALL * PIFS_LOGICAL_PAGE_PER_BLOCK)
+/** Number of logical pages used by the file system */
+#define PIFS_LOGICAL_PAGE_NUM_FS        (PIFS_FLASH_BLOCK_NUM_FS * PIFS_LOGICAL_PAGE_PER_BLOCK)
+
 /******************************************************************************/
 /*** FILE SYSTEM HEADER                                                     ***/
 /******************************************************************************/
 /** Size of file system's header in bytes */
 #define PIFS_HEADER_SIZE_BYTE               (sizeof(pifs_header_t))
 /** Size of file system's header in pages */
-#define PIFS_HEADER_SIZE_PAGE               ((PIFS_HEADER_SIZE_BYTE + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE)
+#define PIFS_HEADER_SIZE_PAGE               ((PIFS_HEADER_SIZE_BYTE + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE)
 
 /******************************************************************************/
 /*** ENTRY LIST                                                             ***/
@@ -58,12 +65,12 @@
 #define PIFS_ENTRY_SIZE_BYTE                (sizeof(pifs_entry_t))
 
 /** Number of entries can fit in one page */
-#define PIFS_ENTRY_PER_PAGE                 (PIFS_FLASH_PAGE_SIZE_BYTE / PIFS_ENTRY_SIZE_BYTE)
+#define PIFS_ENTRY_PER_PAGE                 (PIFS_LOGICAL_PAGE_SIZE_BYTE / PIFS_ENTRY_SIZE_BYTE)
 
 /** Size of entry list in pages */
 #define PIFS_ENTRY_LIST_SIZE_PAGE           ((PIFS_ENTRY_NUM_MAX + PIFS_ENTRY_PER_PAGE - 1) / PIFS_ENTRY_PER_PAGE)
 /** Size of entry list in bytes */
-#define PIFS_ENTRY_LIST_SIZE_BYTE           (PIFS_ENTRY_LIST_SIZE_PAGE * PIFS_FLASH_PAGE_SIZE_BYTE)
+#define PIFS_ENTRY_LIST_SIZE_BYTE           (PIFS_ENTRY_LIST_SIZE_PAGE * PIFS_LOGICAL_PAGE_SIZE_BYTE)
 
 /******************************************************************************/
 /*** MAP ENTRY                                                              ***/
@@ -71,7 +78,7 @@
 #define PIFS_MAP_HEADER_SIZE_BYTE           (sizeof(pifs_map_header_t))
 #define PIFS_MAP_ENTRY_SIZE_BYTE            (sizeof(pifs_map_entry_t))
 
-#define PIFS_MAP_ENTRY_PER_PAGE             ((PIFS_FLASH_PAGE_SIZE_BYTE - PIFS_MAP_HEADER_SIZE_BYTE) / PIFS_MAP_ENTRY_SIZE_BYTE)
+#define PIFS_MAP_ENTRY_PER_PAGE             ((PIFS_LOGICAL_PAGE_SIZE_BYTE - PIFS_MAP_HEADER_SIZE_BYTE) / PIFS_MAP_ENTRY_SIZE_BYTE)
 
 
 /******************************************************************************/
@@ -79,25 +86,25 @@
 /******************************************************************************/
 /** Size of free space bitmap in bytes.
  * Multiplied by two, because two bits are used per page */
-#define PIFS_FREE_SPACE_BITMAP_SIZE_BYTE    (PIFS_FSBM_BITS_PER_PAGE * ((PIFS_FLASH_PAGE_NUM_FS + PIFS_BYTE_BITS - 1) / PIFS_BYTE_BITS))
+#define PIFS_FREE_SPACE_BITMAP_SIZE_BYTE    (PIFS_FSBM_BITS_PER_PAGE * ((PIFS_LOGICAL_PAGE_NUM_FS + PIFS_BYTE_BITS - 1) / PIFS_BYTE_BITS))
 /** Size of free space bitmap in pages */
-#define PIFS_FREE_SPACE_BITMAP_SIZE_PAGE    ((PIFS_FREE_SPACE_BITMAP_SIZE_BYTE + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE)
+#define PIFS_FREE_SPACE_BITMAP_SIZE_PAGE    ((PIFS_FREE_SPACE_BITMAP_SIZE_BYTE + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE)
 
 /******************************************************************************/
 /*** DELTA PAGES                                                            ***/
 /******************************************************************************/
 #define PIFS_DELTA_ENTRY_SIZE_BYTE          (sizeof(pifs_delta_entry_t))
-#define PIFS_DELTA_ENTRY_PER_PAGE           (PIFS_FLASH_PAGE_SIZE_BYTE / PIFS_DELTA_ENTRY_SIZE_BYTE)
+#define PIFS_DELTA_ENTRY_PER_PAGE           (PIFS_LOGICAL_PAGE_SIZE_BYTE / PIFS_DELTA_ENTRY_SIZE_BYTE)
 
 /******************************************************************************/
 /*** WEAR LEVEL LIST                                                        ***/
 /******************************************************************************/
 #define PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE     (sizeof(pifs_wear_level_entry_t))
-#define PIFS_WEAR_LEVEL_ENTRY_PER_PAGE      (PIFS_FLASH_PAGE_SIZE_BYTE / PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE)
+#define PIFS_WEAR_LEVEL_ENTRY_PER_PAGE      (PIFS_LOGICAL_PAGE_SIZE_BYTE / PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE)
 #define PIFS_WEAR_LEVEL_LIST_SIZE_BYTE      (PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE * PIFS_FLASH_BLOCK_NUM_FS)
 #define PIFS_WEAR_LEVEL_LIST_SIZE_PAGE      ((PIFS_FLASH_BLOCK_NUM_FS + PIFS_WEAR_LEVEL_ENTRY_PER_PAGE - 1)/ PIFS_WEAR_LEVEL_ENTRY_PER_PAGE)
 
-#define PIFS_MAP_PAGES_RECOMENDED           (((PIFS_FLASH_PAGE_NUM_FS - PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_PAGE_PER_BLOCK) * PIFS_MAP_ENTRY_SIZE_BYTE + PIFS_FLASH_PAGE_SIZE_BYTE - 1) / PIFS_FLASH_PAGE_SIZE_BYTE)
+#define PIFS_MAP_PAGES_RECOMENDED           (((PIFS_LOGICAL_PAGE_NUM_FS - PIFS_MANAGEMENT_BLOCKS * PIFS_LOGICAL_PAGE_PER_BLOCK) * PIFS_MAP_ENTRY_SIZE_BYTE + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE)
 
 #define PIFS_MANAGEMENT_PAGES_MIN           (PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE + PIFS_DELTA_MAP_PAGE_NUM + PIFS_WEAR_LEVEL_LIST_SIZE_PAGE)
 #define PIFS_MANAGEMENT_PAGES_RECOMMENDED   (PIFS_MANAGEMENT_PAGES_MIN + PIFS_MAP_PAGES_RECOMENDED)
@@ -111,6 +118,31 @@
 
 #define PIFS_MIN(a,b)               ((a) < (b) ? (a) : (b))
 #define PIFS_MAX(a,b)               ((a) > (b) ? (a) : (b))
+
+#if PIFS_LOGICAL_PAGE_SIZE_BYTE < PIFS_FLASH_PAGE_SIZE_BYTE
+#error PIFS_LOGICAL_PAGE_SIZE_BYTE shall be larger or equatl to PIFS_FLASH_PAGE_SIZE_BYTE!
+#endif
+
+#if PIFS_LOGICAL_PAGE_SIZE_BYTE & (PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) != 0
+#error PIFS_LOGICAL_PAGE_SIZE_BYTE shall be power of two!
+#endif
+
+#if PIFS_LOGICAL_PAGE_SIZE_BYTE / PIFS_FLASH_PAGE_SIZE_BYTE > 1
+#define PIFS_LOGICAL_PAGE_ENABLED   1
+#else
+#define PIFS_LOGICAL_PAGE_ENABLED   0
+#endif
+
+#if PIFS_LOGICAL_PAGE_ENABLED
+#define PIFS_LOGICAL_PAGE_IDX(idx)  (idx)
+#else
+#define PIFS_LOGICAL_PAGE_IDX(idx)  (0)
+#endif
+
+/** Convert from logical page to flash page */
+#define PIFS_LP2FP(lp)              ((lp) * PIFS_FLASH_PAGE_PER_LOGICAL_PAGE)
+/** Convert from flash page to logical page */
+#define PIFS_FP2LP(fp)              ((fp) / PIFS_FLASH_PAGE_PER_LOGICAL_PAGE)
 
 #if PIFS_CHECKSUM_SIZE == 1
 typedef uint8_t pifs_checksum_t;
@@ -346,20 +378,20 @@ typedef struct
     pifs_entry_t            entry;                                        /**< For merging */
     /* Page cache */
     pifs_address_t          cache_page_buf_address;                       /**< Address of cache_page_buf */
-    uint8_t                 cache_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];    /**< Flash page buffer for cache */
+    uint8_t                 cache_page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];    /**< Flash page buffer for cache */
     bool_t                  cache_page_buf_is_dirty;
     /* Opened files and directories */
     pifs_file_t             file[PIFS_OPEN_FILE_NUM_MAX];                 /**< Opened files */
     pifs_file_t             internal_file;                                /**< Internally opened files */
     pifs_dir_t              dir[PIFS_OPEN_DIR_NUM_MAX];                   /**< Opened directories */
     /* Delta pages */
-    uint8_t                 delta_map_page_buf[PIFS_DELTA_MAP_PAGE_NUM][PIFS_FLASH_PAGE_SIZE_BYTE];
+    uint8_t                 delta_map_page_buf[PIFS_DELTA_MAP_PAGE_NUM][PIFS_LOGICAL_PAGE_SIZE_BYTE];
     bool_t                  delta_map_page_is_read PIFS_BOOL_SIZE;
     bool_t                  delta_map_page_is_dirty PIFS_BOOL_SIZE;
     /* General page buffer used by pifs_write_delta(), */
     /* pifs_copy_fsbm(), pifs_wear_level_list_init() */
-    uint8_t                 page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];           /**< Flash page buffer */
-    uint8_t                 fseek_page_buf[PIFS_FLASH_PAGE_SIZE_BYTE];     /**< Flash page buffer */
+    uint8_t                 page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];           /**< Flash page buffer */
+    uint8_t                 fseek_page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];     /**< Flash page buffer */
 } pifs_t;
 
 extern pifs_t pifs;
