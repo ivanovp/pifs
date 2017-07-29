@@ -350,7 +350,7 @@ pifs_status_t pifs_wear_level_list_init(void)
 
     for (i = 0; i < PIFS_WEAR_LEVEL_LIST_SIZE_PAGE && ret == PIFS_SUCCESS; i++)
     {
-        PIFS_WARNING_MSG("%s\r\n", pifs_address2str(&address));
+        //PIFS_WARNING_MSG("%s\r\n", pifs_address2str(&address));
         ret = pifs_write(address.block_address, address.page_address, 0,
                          pifs.page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
         if (ret == PIFS_SUCCESS)
@@ -683,32 +683,32 @@ void pifs_print_fs_info(void)
     printf("Size of logical page:               %i bytes\r\n", PIFS_LOGICAL_PAGE_SIZE_BYTE);
     printf("Block address size:                 %lu bytes\r\n", sizeof(pifs_block_address_t));
     printf("Page address size:                  %lu bytes\r\n", sizeof(pifs_page_address_t));
-    printf("Header size:                        %lu bytes, %lu pages\r\n", PIFS_HEADER_SIZE_BYTE, PIFS_HEADER_SIZE_PAGE);
+    printf("Header size:                        %lu bytes, %lu logical pages\r\n", PIFS_HEADER_SIZE_BYTE, PIFS_HEADER_SIZE_PAGE);
     printf("Entry size:                         %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE);
     printf("Entry size in a page:               %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE * PIFS_ENTRY_PER_PAGE);
-    printf("Entry list size:                    %lu bytes, %lu pages\r\n", PIFS_ENTRY_LIST_SIZE_BYTE, PIFS_ENTRY_LIST_SIZE_PAGE);
-    printf("Free space bitmap size:             %u bytes, %u pages\r\n", PIFS_FREE_SPACE_BITMAP_SIZE_BYTE, PIFS_FREE_SPACE_BITMAP_SIZE_PAGE);
+    printf("Entry list size:                    %lu bytes, %lu logical pages\r\n", PIFS_ENTRY_LIST_SIZE_BYTE, PIFS_ENTRY_LIST_SIZE_PAGE);
+    printf("Free space bitmap size:             %u bytes, %u logical pages\r\n", PIFS_FREE_SPACE_BITMAP_SIZE_BYTE, PIFS_FREE_SPACE_BITMAP_SIZE_PAGE);
     printf("Map header size:                    %lu bytes\r\n", PIFS_MAP_HEADER_SIZE_BYTE);
     printf("Map entry size:                     %lu bytes\r\n", PIFS_MAP_ENTRY_SIZE_BYTE);
     printf("Number of map entries/page:         %lu\r\n", PIFS_MAP_ENTRY_PER_PAGE);
     printf("Delta entry size:                   %lu bytes\r\n", PIFS_DELTA_ENTRY_SIZE_BYTE);
     printf("Number of delta entries/page:       %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE);
     printf("Number of delta entries:            %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE * PIFS_DELTA_MAP_PAGE_NUM);
-    printf("Delta map size:                     %u bytes, %u pages\r\n", PIFS_DELTA_MAP_PAGE_NUM * PIFS_LOGICAL_PAGE_SIZE_BYTE, PIFS_DELTA_MAP_PAGE_NUM);
+    printf("Delta map size:                     %u bytes, %u logical pages\r\n", PIFS_DELTA_MAP_PAGE_NUM * PIFS_LOGICAL_PAGE_SIZE_BYTE, PIFS_DELTA_MAP_PAGE_NUM);
     printf("Wear level entry size:              %lu bytes\r\n", PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE);
     printf("Number of wear level entries/page:  %lu\r\n", PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
     printf("Number of wear level entries:       %lu\r\n", PIFS_FLASH_BLOCK_NUM_FS);
-    printf("Wear level map size:                %u bytes, %u pages\r\n", PIFS_WEAR_LEVEL_LIST_SIZE_BYTE, PIFS_WEAR_LEVEL_LIST_SIZE_PAGE);
-    printf("Minimum management area:            %lu pages, %lu blocks\r\n", PIFS_MANAGEMENT_PAGES_MIN,
-           (PIFS_MANAGEMENT_PAGES_MIN + PIFS_FLASH_PAGE_PER_BLOCK - 1) / PIFS_FLASH_PAGE_PER_BLOCK);
-    printf("Recommended management area:        %lu pages, %lu blocks\r\n", PIFS_MANAGEMENT_PAGES_RECOMMENDED,
-           (PIFS_MANAGEMENT_PAGES_RECOMMENDED + PIFS_FLASH_PAGE_PER_BLOCK - 1) / PIFS_FLASH_PAGE_PER_BLOCK);
-    printf("Full reserved area for management:  %i bytes, %i pages\r\n",
+    printf("Wear level map size:                %u bytes, %u logical pages\r\n", PIFS_WEAR_LEVEL_LIST_SIZE_BYTE, PIFS_WEAR_LEVEL_LIST_SIZE_PAGE);
+    printf("Minimum management area:            %lu logical pages, %lu blocks\r\n", PIFS_MANAGEMENT_PAGES_MIN,
+           PIFS_MANAGEMENT_BLOCKS_MIN);
+    printf("Recommended management area:        %lu logical pages, %lu blocks\r\n", PIFS_MANAGEMENT_PAGES_RECOMMENDED,
+           PIFS_MANAGEMENT_BLOCKS_RECOMMENDED);
+    printf("Full reserved area for management:  %i bytes, %i logical pages\r\n",
            PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_BLOCK_SIZE_BYTE,
-           PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_PAGE_PER_BLOCK);
-    printf("Size of management area:            %i bytes, %i pages\r\n",
+           PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_LOGICAL_PAGE_PER_BLOCK);
+    printf("Size of management area:            %i bytes, %i logical pages\r\n",
            PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_BLOCK_SIZE_BYTE,
-           PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_PAGE_PER_BLOCK);
+           PIFS_MANAGEMENT_BLOCKS * PIFS_LOGICAL_PAGE_PER_BLOCK);
     printf("\r\n");
     printf("File system in RAM:                 %lu bytes\r\n", sizeof(pifs_t));
 }
@@ -806,19 +806,18 @@ pifs_status_t pifs_init(void)
         ret = PIFS_ERROR_CONFIGURATION;
     }
 
-    if (PIFS_MANAGEMENT_PAGES_MIN > PIFS_LOGICAL_PAGE_PER_BLOCK * PIFS_MANAGEMENT_BLOCKS)
+    if (PIFS_MANAGEMENT_BLOCKS_MIN > PIFS_MANAGEMENT_BLOCKS)
     {
         PIFS_ERROR_MSG("Cannot fit data in management block!\r\n");
         PIFS_ERROR_MSG("Decrease PIFS_ENTRY_NUM_MAX or PIFS_FILENAME_LEN_MAX or PIFS_DELTA_PAGES_NUM!\r\n");
         PIFS_ERROR_MSG("Or increase PIFS_MANAGEMENT_BLOCKS to %lu!\r\n",
-                       (PIFS_MANAGEMENT_PAGES_MIN + PIFS_LOGICAL_PAGE_PER_BLOCK - 1) / PIFS_LOGICAL_PAGE_PER_BLOCK);
+                       PIFS_MANAGEMENT_BLOCKS_MIN);
         ret = PIFS_ERROR_CONFIGURATION;
     }
 
-    if (PIFS_MANAGEMENT_PAGES_RECOMMENDED > PIFS_LOGICAL_PAGE_PER_BLOCK * PIFS_MANAGEMENT_BLOCKS)
+    if (PIFS_MANAGEMENT_BLOCKS_RECOMMENDED > PIFS_MANAGEMENT_BLOCKS)
     {
-        PIFS_WARNING_MSG("Recommended PIFS_MANAGEMENT_BLOCKS is %lu!\r\n",
-                       (PIFS_MANAGEMENT_PAGES_RECOMMENDED + PIFS_LOGICAL_PAGE_PER_BLOCK - 1) / PIFS_LOGICAL_PAGE_PER_BLOCK);
+        PIFS_WARNING_MSG("Recommended PIFS_MANAGEMENT_BLOCKS is %lu!\r\n", PIFS_MANAGEMENT_BLOCKS_RECOMMENDED);
     }
 
     if (((PIFS_LOGICAL_PAGE_SIZE_BYTE - (PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE)) / PIFS_ENTRY_PER_PAGE) > 0)
@@ -1177,6 +1176,9 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
     pifs_page_address_t  pa_start = PIFS_PAGE_ADDRESS_INVALID;
     pifs_page_offset_t   po = PIFS_PAGE_OFFSET_INVALID;
     bool_t               is_delta = FALSE;
+    bool_t               is_free_map_entry;
+    pifs_size_t          free_management_page_count = 0;
+    pifs_size_t          free_data_page_count = 0;
 
     PIFS_NOTICE_MSG("filename: '%s', size: %i, count: %i\r\n", file->entry.name, a_size, a_count);
     if (pifs.is_header_found && file && file->is_opened && file->mode_write)
@@ -1213,6 +1215,23 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
 
         if (data_size > 0)
         {
+            if (file->status == PIFS_SUCCESS)
+            {
+                /* Check if at least one map can be added after writing */
+                file->status = pifs_is_free_map_entry(a_file, &is_free_map_entry);
+                if (!is_free_map_entry)
+                {
+                    /* No free entry in actual map page, so check if there are */
+                    /* at least one free management page and a new map page */
+                    /* can be allocated. */
+                    file->status = pifs_get_free_pages(&free_management_page_count,
+                                                       &free_data_page_count);
+                    if (!free_management_page_count)
+                    {
+                        file->status = PIFS_ERROR_NO_MORE_SPACE;
+                    }
+                }
+            }
             if (file->status == PIFS_SUCCESS)
             {
                 page_count_needed = (data_size + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE;

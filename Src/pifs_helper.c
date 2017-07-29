@@ -122,14 +122,14 @@ void pifs_print_cache(void)
     PIFS_NOTICE_MSG("Cache page buffer:\r\n");
     print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf),
                  pifs.cache_page_buf_address.block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
-                 + pifs.cache_page_buf_address.page_address * PIFS_FLASH_PAGE_SIZE_BYTE);
+                 + pifs.cache_page_buf_address.page_address * PIFS_LOGICAL_PAGE_SIZE_BYTE);
 #endif
 }
 
 bool_t pifs_is_address_valid(pifs_address_t * a_address)
 {
     bool_t valid = (a_address->block_address < PIFS_FLASH_BLOCK_NUM_ALL)
-            && (a_address->page_address < PIFS_FLASH_PAGE_PER_BLOCK);
+            && (a_address->page_address < PIFS_LOGICAL_PAGE_PER_BLOCK);
 
     return valid;
 }
@@ -224,7 +224,7 @@ bool_t pifs_is_page_erased(pifs_block_address_t a_block_address,
     status = pifs_read(a_block_address, a_page_address, 0, NULL, 0);
     if (status == PIFS_SUCCESS)
     {
-        is_erased = pifs_is_buffer_erased(pifs.cache_page_buf, PIFS_FLASH_PAGE_SIZE_BYTE);
+        is_erased = pifs_is_buffer_erased(pifs.cache_page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
     }
     return is_erased;
 }
@@ -378,7 +378,7 @@ pifs_status_t pifs_inc_address(pifs_address_t * a_address)
     pifs_status_t ret = PIFS_SUCCESS;
 
     a_address->page_address++;
-    if (a_address->page_address == PIFS_FLASH_PAGE_PER_BLOCK)
+    if (a_address->page_address == PIFS_LOGICAL_PAGE_PER_BLOCK)
     {
         a_address->page_address = 0;
         a_address->block_address++;
@@ -409,8 +409,8 @@ pifs_status_t pifs_add_address(pifs_address_t * a_address, pifs_size_t a_page_co
     pifs_size_t   pa = a_address->page_address;
 
     pa += a_page_count;
-    a_address->block_address += pa / PIFS_FLASH_PAGE_PER_BLOCK;
-    pa %= PIFS_FLASH_PAGE_PER_BLOCK;
+    a_address->block_address += pa / PIFS_LOGICAL_PAGE_PER_BLOCK;
+    pa %= PIFS_LOGICAL_PAGE_PER_BLOCK;
     a_address->page_address = pa;
     if (a_address->block_address >= PIFS_FLASH_BLOCK_NUM_ALL)
     {
@@ -437,7 +437,7 @@ pifs_status_t pifs_inc_ba_pa(pifs_block_address_t * a_block_address,
     pifs_status_t ret = PIFS_SUCCESS;
 
     (*a_page_address)++;
-    if (*a_page_address == PIFS_FLASH_PAGE_PER_BLOCK)
+    if (*a_page_address == PIFS_LOGICAL_PAGE_PER_BLOCK)
     {
         *a_page_address = 0;
         (*a_block_address)++;
@@ -471,8 +471,8 @@ pifs_status_t pifs_add_ba_pa(pifs_block_address_t * a_block_address,
     pifs_size_t   pa = (*a_page_address);
 
     pa += a_page_count;
-    (*a_block_address) += pa / PIFS_FLASH_PAGE_PER_BLOCK;
-    pa %= PIFS_FLASH_PAGE_PER_BLOCK;
+    (*a_block_address) += pa / PIFS_LOGICAL_PAGE_PER_BLOCK;
+    pa %= PIFS_LOGICAL_PAGE_PER_BLOCK;
     *a_page_address = pa;
     if (*a_block_address >= PIFS_FLASH_BLOCK_NUM_ALL)
     {

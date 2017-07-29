@@ -19,6 +19,8 @@
 
 char * pifs_address2str(pifs_address_t * a_address);
 char * pifs_ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address);
+char * pifs_flash_address2str(pifs_address_t * a_address);
+char * pifs_flash_ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address);
 char * pifs_byte2bin_str(uint8_t byte);
 void pifs_print_cache(void);
 bool_t pifs_is_address_valid(pifs_address_t * a_address);

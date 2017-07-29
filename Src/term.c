@@ -198,7 +198,7 @@ void cmdCheckPage (char* command, char* params)
         if (param[0] == '-' && param[1] == 'a')
         {
             addr = 0;
-            cntr = PIFS_FLASH_PAGE_NUM_ALL;
+            cntr = PIFS_LOGICAL_PAGE_NUM_ALL;
         }
         else
         {
@@ -210,9 +210,9 @@ void cmdCheckPage (char* command, char* params)
             }
         }
         //printf("Addr: 0x%X\r\n", addr);
-        //po = addr % PIFS_FLASH_PAGE_SIZE_BYTE;
-        pa = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) % PIFS_FLASH_PAGE_PER_BLOCK;
-        ba = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) / PIFS_FLASH_PAGE_PER_BLOCK;
+        //po = addr % PIFS_LOGICAL_PAGE_SIZE_BYTE;
+        pa = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) % PIFS_LOGICAL_PAGE_PER_BLOCK;
+        ba = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) / PIFS_LOGICAL_PAGE_PER_BLOCK;
         printf("Page                    Free    TBR     Erased\r\n");
         do
         {
@@ -550,7 +550,7 @@ void cmdDumpPage (char* command, char* params)
         ba = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) / PIFS_FLASH_PAGE_PER_BLOCK;
         do
         {
-            printf("Dump page %s\r\n", pifs_ba_pa2str(ba, pa));
+            printf("Dump page %s\r\n", pifs_flash_ba_pa2str(ba, pa));
             if (ba < PIFS_FLASH_BLOCK_NUM_ALL)
             {
                 ret = pifs_flash_read(ba, pa, po, buf_r, sizeof(buf_r));
@@ -596,9 +596,9 @@ void cmdMap (char* command, char* params)
     {
         addr = strtoul(params, NULL, 0);
         //printf("Addr: 0x%X\r\n", addr);
-        po = addr % PIFS_FLASH_PAGE_SIZE_BYTE;
-        pa = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) % PIFS_FLASH_PAGE_PER_BLOCK;
-        ba = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) / PIFS_FLASH_PAGE_PER_BLOCK;
+        po = addr % PIFS_LOGICAL_PAGE_SIZE_BYTE;
+        pa = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) % PIFS_LOGICAL_PAGE_PER_BLOCK;
+        ba = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) / PIFS_LOGICAL_PAGE_PER_BLOCK;
         printf("Map page %s\r\n\r\n", pifs_ba_pa2str(ba, pa));
 
         ret = pifs_read(ba, pa, po, &map_header, PIFS_MAP_HEADER_SIZE_BYTE);
@@ -651,8 +651,8 @@ void cmdFindDelta (char* command, char* params)
     {
         addr = strtoul(params, NULL, 0);
         //printf("Addr: 0x%X\r\n", addr);
-        pa = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) % PIFS_FLASH_PAGE_PER_BLOCK;
-        ba = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) / PIFS_FLASH_PAGE_PER_BLOCK;
+        pa = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) % PIFS_LOGICAL_PAGE_PER_BLOCK;
+        ba = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) / PIFS_LOGICAL_PAGE_PER_BLOCK;
         printf("Find delta of page %s\r\n", pifs_ba_pa2str(ba, pa));
         ret = pifs_find_delta_page(ba, pa, &dba, &dpa, &is_map_full);
         if (ret == PIFS_SUCCESS)
@@ -737,8 +737,8 @@ void cmdBlockInfo (char* command, char* params)
         }
     }
     //printf("Addr: 0x%X\r\n", addr);
-    //po = addr % PIFS_FLASH_PAGE_SIZE_BYTE;
-    ba = (addr / PIFS_FLASH_PAGE_SIZE_BYTE) / PIFS_FLASH_PAGE_PER_BLOCK;
+    //po = addr % PIFS_LOGICAL_PAGE_SIZE_BYTE;
+    ba = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) / PIFS_LOGICAL_PAGE_PER_BLOCK;
 
     printf("      | Type | Wear  | Free pages  | TBR pages\r\n");
     printf("Block |      | Level | Data | Mgmt | Data | Mgmt\r\n");
@@ -884,8 +884,8 @@ parserCommand_t parserCommands[] =
     {"type",        "Read file",                        cmdReadFile},
 #endif
     {"create",      "Create file, write until 'q'",     cmdCreateFile},
-    {"dump",        "Dump page in hexadecimal format",  cmdDumpPage},
-    {"d",           "Dump page in hexadecimal format",  cmdDumpPage},
+    {"dump",        "Dump flash page in hexadecimal format", cmdDumpPage},
+    {"d",           "Dump flash page in hexadecimal format", cmdDumpPage},
     {"map",         "Print map page",                   cmdMap},
     {"m",           "Print map page",                   cmdMap},
     {"fd",          "Find delta pages of a page",       cmdFindDelta},
