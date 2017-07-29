@@ -352,7 +352,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
             }
             else
             {
-                end = TRUE;
+//                end = TRUE;
             }
         }
         if (ret == PIFS_SUCCESS)
@@ -553,13 +553,13 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
 
     /* Get number of free management and data pages */
     ret = pifs_get_free_pages(&free_management_pages, &free_data_pages);
-    PIFS_NOTICE_MSG("free_data_pages: %lu, free_management_pages: %lu\r\n",
-                    free_data_pages, free_management_pages);
+//    PIFS_NOTICE_MSG("free_data_pages: %lu, free_management_pages: %lu\r\n",
+//                    free_data_pages, free_management_pages);
     if (ret == PIFS_SUCCESS)
     {
         ret = pifs_count_entries(&free_entries, &to_be_released_entries);
-        PIFS_NOTICE_MSG("free_entries: %lu, to_be_released_entries: %lu\r\n",
-                        free_entries, to_be_released_entries);
+//        PIFS_NOTICE_MSG("free_entries: %lu, to_be_released_entries: %lu\r\n",
+//                        free_entries, to_be_released_entries);
     }
     if (ret == PIFS_SUCCESS && (free_data_pages < a_data_page_count_minimum || free_management_pages == 0 || free_entries == 0))
     {

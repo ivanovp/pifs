@@ -41,7 +41,7 @@
 #define PIFS_BYTE_BITS              8
 
 #define PIFS_MAP_PAGE_NUM               1   /**< Number of map pages. Fixed to 1! */
-#define PIFS_FSBM_BITS_PER_PAGE_SHIFT   1
+#define PIFS_FSBM_BITS_PER_PAGE_SHIFT   1   /**< 1 => 2 bits are used per page */
 #define PIFS_FSBM_BITS_PER_PAGE         (1u << PIFS_FSBM_BITS_PER_PAGE_SHIFT)
 
 #define PIFS_FLASH_PAGE_PER_LOGICAL_PAGE (PIFS_LOGICAL_PAGE_SIZE_BYTE / PIFS_FLASH_PAGE_SIZE_BYTE)

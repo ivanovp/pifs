@@ -24,7 +24,7 @@
         __asm__ volatile("int $3"); \
     } while (0)
 #else
-#define SOFTWARE_BREAKPOINT __builtin_trap()
+#define SOFTWARE_BREAKPOINT() __builtin_trap()
 #endif
 #endif
 

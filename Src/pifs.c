@@ -263,11 +263,8 @@ pifs_status_t pifs_erase(pifs_block_address_t a_block_address, pifs_header_t * a
 
     if (ret == PIFS_SUCCESS && a_new_header)
     {
-        pifs_wear_level_entry_t wear_level;
-        pifs_get_wear_level(a_block_address, a_new_header, &wear_level);
         /* Increase wear level */
         ret = pifs_inc_wear_level(a_block_address, a_new_header);
-        pifs_get_wear_level(a_block_address, a_new_header, &wear_level);
     }
 
     return ret;
@@ -308,7 +305,7 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
     a_header->delta_map_address = address;
     pifs_add_address(&address, PIFS_DELTA_MAP_PAGE_NUM);
     a_header->wear_level_list_address = address;
-    if (address.block_address - a_block_address > PIFS_MANAGEMENT_BLOCKS)
+    if ((address.block_address - a_block_address) > PIFS_MANAGEMENT_BLOCKS)
     {
         /* Not enough space for management pages */
         ret = PIFS_ERROR_CONFIGURATION;
