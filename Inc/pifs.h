@@ -17,39 +17,39 @@
 #include "pifs_config.h"
 
 // NOTE handle endianness?
-//#define PIFS_MAGIC              0x50494653u  /* PIFS */
-#define PIFS_MAGIC              0x53464950u  /* PIFS */
+//#define PIFS_MAGIC                        0x50494653u  /* PIFS */
+#define PIFS_MAGIC                          0x53464950u  /* PIFS */
 #if PIFS_MAGIC == 0
 #error PIFS_MAGIC shall not be zero!
 #elif PIFS_MAGIC == 0xFFFFFFFF
 #error PIFS_MAGIC shall not be 0xFFFFFFFF!
 #endif
 
-#define ENABLE_PIFS_VERSION     1
-#define PIFS_MAJOR_VERSION      1u
-#define PIFS_MINOR_VERSION      0u
+#define ENABLE_PIFS_VERSION                 1
+#define PIFS_MAJOR_VERSION                  1u
+#define PIFS_MINOR_VERSION                  0u
 
-#define PIFS_ATTRIB_READONLY    0x01u
-#define PIFS_ATTRIB_HIDDEN      0x02u
-#define PIFS_ATTRIB_SYSTEM      0x04u
-#define PIFS_ATTRIB_DIR         0x10u
-#define PIFS_ATTRIB_ARCHIVE     0x20u
-#define PIFS_ATTRIB_DELETED     0x80u
-#define PIFS_ATTRIB_ALL         UINT8_MAX
+#define PIFS_ATTRIB_READONLY                0x01u
+#define PIFS_ATTRIB_HIDDEN                  0x02u
+#define PIFS_ATTRIB_SYSTEM                  0x04u
+#define PIFS_ATTRIB_DIR                     0x10u
+#define PIFS_ATTRIB_ARCHIVE                 0x20u
+#define PIFS_ATTRIB_DELETED                 0x80u
+#define PIFS_ATTRIB_ALL                     UINT8_MAX
 
 /** Number of bits in a byte */
-#define PIFS_BYTE_BITS              8
+#define PIFS_BYTE_BITS                      8
 
-#define PIFS_MAP_PAGE_NUM               1   /**< Number of map pages. Fixed to 1! */
-#define PIFS_FSBM_BITS_PER_PAGE_SHIFT   1   /**< 1 => 2 bits are used per page */
-#define PIFS_FSBM_BITS_PER_PAGE         (1u << PIFS_FSBM_BITS_PER_PAGE_SHIFT)
+#define PIFS_MAP_PAGE_NUM                   1   /**< Number of map pages. Fixed to 1! */
+#define PIFS_FSBM_BITS_PER_PAGE_SHIFT       1   /**< 1 => 2 bits are used per page */
+#define PIFS_FSBM_BITS_PER_PAGE             (1u << PIFS_FSBM_BITS_PER_PAGE_SHIFT)
 
-#define PIFS_FLASH_PAGE_PER_LOGICAL_PAGE (PIFS_LOGICAL_PAGE_SIZE_BYTE / PIFS_FLASH_PAGE_SIZE_BYTE)
-#define PIFS_LOGICAL_PAGE_PER_BLOCK     (PIFS_FLASH_BLOCK_SIZE_BYTE / PIFS_LOGICAL_PAGE_SIZE_BYTE)
+#define PIFS_FLASH_PAGE_PER_LOGICAL_PAGE    (PIFS_LOGICAL_PAGE_SIZE_BYTE / PIFS_FLASH_PAGE_SIZE_BYTE)
+#define PIFS_LOGICAL_PAGE_PER_BLOCK         (PIFS_FLASH_BLOCK_SIZE_BYTE / PIFS_LOGICAL_PAGE_SIZE_BYTE)
 /** Number of all logical pages */
-#define PIFS_LOGICAL_PAGE_NUM_ALL       (PIFS_FLASH_BLOCK_NUM_ALL * PIFS_LOGICAL_PAGE_PER_BLOCK)
+#define PIFS_LOGICAL_PAGE_NUM_ALL           (PIFS_FLASH_BLOCK_NUM_ALL * PIFS_LOGICAL_PAGE_PER_BLOCK)
 /** Number of logical pages used by the file system */
-#define PIFS_LOGICAL_PAGE_NUM_FS        (PIFS_FLASH_BLOCK_NUM_FS * PIFS_LOGICAL_PAGE_PER_BLOCK)
+#define PIFS_LOGICAL_PAGE_NUM_FS            (PIFS_FLASH_BLOCK_NUM_FS * PIFS_LOGICAL_PAGE_PER_BLOCK)
 
 /******************************************************************************/
 /*** FILE SYSTEM HEADER                                                     ***/
@@ -113,13 +113,13 @@
 /******************************************************************************/
 
 #if PIFS_OPTIMIZE_FOR_RAM
-#define PIFS_BOOL_SIZE              : 1
+#define PIFS_BOOL_SIZE                      : 1
 #else
 #define PIFS_BOOL_SIZE
 #endif
 
-#define PIFS_MIN(a,b)               ((a) < (b) ? (a) : (b))
-#define PIFS_MAX(a,b)               ((a) > (b) ? (a) : (b))
+#define PIFS_MIN(a,b)                       ((a) < (b) ? (a) : (b))
+#define PIFS_MAX(a,b)                       ((a) > (b) ? (a) : (b))
 
 #if PIFS_LOGICAL_PAGE_SIZE_BYTE < PIFS_FLASH_PAGE_SIZE_BYTE
 #error PIFS_LOGICAL_PAGE_SIZE_BYTE shall be larger or equatl to PIFS_FLASH_PAGE_SIZE_BYTE!

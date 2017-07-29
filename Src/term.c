@@ -33,18 +33,6 @@ static char buf_w[PIFS_FLASH_PAGE_SIZE_BYTE];
 
 bool_t getLine(uint8_t * a_buf, size_t a_buf_size);
 
-char * yesNo(bool_t expression)
-{
-    if (expression)
-    {
-        return "Yes";
-    }
-    else
-    {
-        return "No";
-    }
-}
-
 void cmdErase (char* command, char* params)
 {
     unsigned long int    addr = 0;
@@ -180,7 +168,7 @@ void cmdTestPifsSeek (char* command, char* params)
     pifs_test_wseek_r();
 }
 
-void cmdCheckPage (char* command, char* params)
+void cmdPageInfo (char* command, char* params)
 {
     unsigned long int    addr = 0;
     pifs_block_address_t ba;
@@ -865,8 +853,6 @@ parserCommand_t parserCommands[] =
     {"tl",          "Test Pi file system: large file",  cmdTestPifsLarge},
     {"tf",          "Test Pi file system: full write",  cmdTestPifsFull},
     {"tsk",         "Test Pi file system: seek",        cmdTestPifsSeek},
-    {"c",           "Check if page is free/to be released/erased", cmdCheckPage},
-    {"w",           "Print wear level list",            cmdWearLevel},
     {"y",           "Debug command",                    cmdDebug},
     {"ls",          "List directory",                   cmdListDir},
     {"l",           "List directory",                   cmdListDir},
@@ -894,6 +880,8 @@ parserCommand_t parserCommands[] =
     {"free",        "Print info of free space",         cmdFreeSpaceInfo},
     {"f",           "Print info of free space",         cmdFreeSpaceInfo},
     {"bi",          "Print info of block",              cmdBlockInfo},
+    {"pi",          "Check if page is free/to be released/erased", cmdPageInfo},
+    {"w",           "Print wear level list",            cmdWearLevel},
     {"fs",          "Print flash's statistics",         cmdFlashStat},
     {"quit",        "Quit",                             cmdQuit},
     {"q",           "Quit",                             cmdQuit},

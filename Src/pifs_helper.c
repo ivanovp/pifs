@@ -15,6 +15,7 @@
 #include "flash.h"
 #include "flash_config.h"
 #include "pifs.h"
+#include "pifs_fsbm.h"
 #include "pifs_helper.h"
 #include "buffer.h"
 
@@ -124,6 +125,47 @@ void pifs_print_cache(void)
                  pifs.cache_page_buf_address.block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
                  + pifs.cache_page_buf_address.page_address * PIFS_LOGICAL_PAGE_SIZE_BYTE);
 #endif
+}
+
+char * yesNo(bool_t expression)
+{
+    if (expression)
+    {
+        return "Yes";
+    }
+    else
+    {
+        return "No";
+    }
+}
+
+void print_page_info(size_t addr, pifs_size_t cntr)
+{
+    pifs_block_address_t ba;
+    pifs_page_address_t  pa;
+
+    pa = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) % PIFS_LOGICAL_PAGE_PER_BLOCK;
+    ba = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) / PIFS_LOGICAL_PAGE_PER_BLOCK;
+    printf("Page                    Free    TBR     Erased\r\n");
+    do
+    {
+        printf("%-24s", pifs_ba_pa2str(ba, pa));
+        if (ba < PIFS_FLASH_BLOCK_NUM_ALL)
+        {
+            printf("%-8s", yesNo(pifs_is_page_free(ba, pa)));
+            printf("%-8s", yesNo(pifs_is_page_to_be_released(ba, pa)));
+            printf("%-8s\r\n", yesNo(pifs_is_page_erased(ba, pa)));
+        }
+        else
+        {
+            printf("ERROR: Invalid address!\r\n");
+            break;
+        }
+        if (cntr > 1)
+        {
+            pifs_inc_ba_pa(&ba, &pa);
+        }
+    } while (--cntr);
 }
 
 bool_t pifs_is_address_valid(pifs_address_t * a_address)

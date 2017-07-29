@@ -23,7 +23,7 @@
 #include "pifs_merge.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 5
 #include "pifs_debug.h"
 
 pifs_t pifs =
@@ -235,6 +235,15 @@ pifs_status_t pifs_write(pifs_block_address_t a_block_address,
             pifs.cache_page_buf_is_dirty = TRUE;
         }
     }
+
+//    if (offset == 0x30400 && buf8[0x52] == 1 && buf8[0x53] == 9)
+    if (a_block_address == 3 && a_page_address == 1
+            && pifs.cache_page_buf[0x52] == 1 && pifs.cache_page_buf[0x53] == 9)
+    {
+        printf("HERE");
+//        SOFTWARE_BREAKPOINT();
+    }
+
 
     return ret;
 }
@@ -601,10 +610,15 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
         }
         if (ret == PIFS_SUCCESS)
         {
+            PIFS_DEBUG_MSG("Marking entry list %s, %i pages\r\n",
+                           pifs_address2str(&a_header->entry_list_address),
+                           PIFS_ENTRY_LIST_SIZE_PAGE);
             /* Mark entry list as used */
             ret = pifs_mark_page(a_header->entry_list_address.block_address,
                                  a_header->entry_list_address.page_address,
                                  PIFS_ENTRY_LIST_SIZE_PAGE, TRUE);
+            print_page_info(a_header->entry_list_address.block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
+                            + a_header->entry_list_address.page_address * PIFS_LOGICAL_PAGE_SIZE_BYTE, 11);
         }
         if (ret == PIFS_SUCCESS)
         {

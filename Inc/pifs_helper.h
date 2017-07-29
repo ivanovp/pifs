@@ -23,6 +23,8 @@ char * pifs_flash_address2str(pifs_address_t * a_address);
 char * pifs_flash_ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address);
 char * pifs_byte2bin_str(uint8_t byte);
 void pifs_print_cache(void);
+char * yesNo(bool_t expression);
+void print_page_info (size_t addr, pifs_size_t cntr);
 bool_t pifs_is_address_valid(pifs_address_t * a_address);
 bool_t pifs_is_block_type(pifs_block_address_t a_block_address,
                           pifs_block_type_t a_block_type,
