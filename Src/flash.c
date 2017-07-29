@@ -20,11 +20,13 @@
 #define FLASH_DEBUG     1
 
 #if FLASH_DEBUG
-#define FLASH_ERROR_MSG(...)    do { \
-        printf("%s ERROR: ", __FUNCTION__); \
-        printf(__VA_ARGS__); \
-        fflush(stdout); \
-        exit(-1); \
+#define FLASH_ERROR_MSG(...)    do {            \
+        printf("%s ERROR: ", __FUNCTION__);     \
+        printf(__VA_ARGS__);                    \
+        fflush(stdout);                         \
+        pifs_flash_delete();                    \
+        SOFTWARE_BREAKPOINT();                  \
+        exit(-1);                               \
     } while (0);
 #else
 #define FLASH_ERROR_MSG(...)

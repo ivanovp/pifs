@@ -44,10 +44,12 @@
 #error PIFS_FILENAME_LEN_MAX shall be at least 12!
 #endif
 
-#define PIFS_TEST_ERROR_MSG(...)    do { \
+#define PIFS_TEST_ERROR_MSG(...)    do {    \
         printf("%s ERROR: ", __FUNCTION__); \
-        printf(__VA_ARGS__); \
-        exit(-1); \
+        printf(__VA_ARGS__);                \
+        pifs_delete();                      \
+        SOFTWARE_BREAKPOINT();              \
+        exit(-1);                           \
     } while (0);
 
 uint8_t test_buf_w[TEST_BUF_SIZE] __attribute__((aligned(4)));
@@ -90,7 +92,7 @@ pifs_status_t pifs_test_small_w(void)
             written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
             if (written_size != sizeof(test_buf_w))
             {
-                PIFS_TEST_ERROR_MSG("Cannot write file!\r\n");
+                PIFS_TEST_ERROR_MSG("Cannot write file: %i!\r\n", pifs_errno);
             }
             if (pifs_fclose(file))
             {
@@ -142,7 +144,7 @@ pifs_status_t pifs_test_small_r(void)
         }
         else
         {
-            PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
+            PIFS_TEST_ERROR_MSG("Cannot open file %s!\r\n", filename);
             ret = PIFS_ERROR_GENERAL;
         }
     }

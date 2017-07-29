@@ -1217,6 +1217,12 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
         {
             if (file->status == PIFS_SUCCESS)
             {
+                page_count_needed = (data_size + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE;
+                /* Check if merge needed and do it if necessary */
+                file->status = pifs_merge_check(a_file, page_count_needed);
+            }
+            if (file->status == PIFS_SUCCESS)
+            {
                 /* Check if at least one map can be added after writing */
                 file->status = pifs_is_free_map_entry(a_file, &is_free_map_entry);
                 if (!is_free_map_entry)
@@ -1226,17 +1232,11 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                     /* can be allocated. */
                     file->status = pifs_get_free_pages(&free_management_page_count,
                                                        &free_data_page_count);
-                    if (!free_management_page_count)
+                    if (file->status == PIFS_SUCCESS && !free_management_page_count)
                     {
                         file->status = PIFS_ERROR_NO_MORE_SPACE;
                     }
                 }
-            }
-            if (file->status == PIFS_SUCCESS)
-            {
-                page_count_needed = (data_size + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE;
-                /* Check if merge needed and do it if necessary */
-                file->status = pifs_merge_check(a_file, page_count_needed);
             }
             if (file->status == PIFS_SUCCESS)
             {

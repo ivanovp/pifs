@@ -15,6 +15,19 @@
 #include <stdlib.h>
 #include "common.h"
 
+#if 0
+#define SOFTWARE_BREAKPOINT()
+#else
+#if defined(__i386__) || defined(__x86_64__)
+#define SOFTWARE_BREAKPOINT() do    \
+    {                               \
+        __asm__ volatile("int $3"); \
+    } while (0)
+#else
+#define SOFTWARE_BREAKPOINT __builtin_trap()
+#endif
+#endif
+
 #define PIFS_ASSERT(expression) do {                                       \
         if (!((expression)))                                               \
         {                                                                  \
@@ -22,6 +35,8 @@
                     TOSTR(expression),                                     \
                     __FILE__, __LINE__                                     \
                    );                                                      \
+            pifs_delete();                                                 \
+            SOFTWARE_BREAKPOINT();                                         \
             exit(-1);                                                      \
         }                                                                  \
     } while (0);
@@ -37,10 +52,12 @@
 #endif
 
 #if (PIFS_DEBUG_LEVEL >= 1)
-#define PIFS_FATAL_ERROR_MSG(...)    do { \
-        printf("%s FATAL_ERROR: ", __FUNCTION__); \
-        printf( __VA_ARGS__); \
-        exit(-1); \
+#define PIFS_FATAL_ERROR_MSG(...)    do {           \
+        printf("%s FATAL_ERROR: ", __FUNCTION__);   \
+        printf( __VA_ARGS__);                       \
+        pifs_delete();                              \
+        SOFTWARE_BREAKPOINT();                      \
+        exit(-1);                                   \
     } while (0);
 #else
 #define PIFS_FATAL_ERROR_MSG(...)

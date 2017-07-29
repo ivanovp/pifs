@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "common.h"
 #include "api_pifs.h"
 #include "buffer.h"
 #include "pifs_debug.h"
@@ -103,6 +104,9 @@ pifs_status_t compare_buffer(void * a_buf1, size_t a_buf_size, void * a_buf2)
         print_buffer(a_buf1, a_buf_size, 0);
         BUFFER_ERROR_MSG("a_buf2:\r\n");
         print_buffer(a_buf2, a_buf_size, 0);
+        // TODO pifs_delete() if called from pifs_test?
+        //pifs_flash_delete();
+        SOFTWARE_BREAKPOINT();
         exit(-1);
     }
 

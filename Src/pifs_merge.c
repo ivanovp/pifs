@@ -23,7 +23,7 @@
 #include "pifs_map.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL    2
+#define PIFS_DEBUG_LEVEL    5
 #include "pifs_debug.h"
 
 /**
@@ -315,7 +315,8 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_size_t          i;
     pifs_size_t          j;
-    pifs_size_t          k;
+    pifs_size_t          k = 0;
+    bool_t               end = FALSE;
     pifs_block_address_t new_entry_list_ba = a_new_header->entry_list_address.block_address;
     pifs_page_address_t  new_entry_list_pa = a_new_header->entry_list_address.page_address;
     pifs_block_address_t old_entry_list_ba = a_old_header->entry_list_address.block_address;
@@ -323,9 +324,9 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
     pifs_entry_t       * entry = &pifs.entry;
 
     PIFS_NOTICE_MSG("start\r\n");
-    for (j = 0; j < PIFS_ENTRY_LIST_SIZE_PAGE && ret == PIFS_SUCCESS; j++)
+    for (j = 0; j < PIFS_ENTRY_LIST_SIZE_PAGE && ret == PIFS_SUCCESS && !end; j++)
     {
-        for (i = 0, k = 0; i < PIFS_ENTRY_PER_PAGE && ret == PIFS_SUCCESS; i++)
+        for (i = 0; i < PIFS_ENTRY_PER_PAGE && ret == PIFS_SUCCESS && !end; i++)
         {
             ret = pifs_read(old_entry_list_ba, old_entry_list_pa, i * PIFS_ENTRY_SIZE_BYTE, entry,
                             PIFS_ENTRY_SIZE_BYTE);
@@ -334,21 +335,24 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
             {
                 PIFS_NOTICE_MSG("name: %s, size: %i, attrib: 0x%02X\r\n",
                                 entry->name, entry->file_size, entry->attrib);
-            }
-            if (!pifs_is_buffer_erased(entry, PIFS_ENTRY_SIZE_BYTE)
-                    && (entry->name[0] != PIFS_FLASH_PROGRAMMED_BYTE_VALUE))
-            {
-                /* Create file in the new management area and copy map */
-                ret = pifs_copy_map(entry);
-                k++;
-                if ((k % PIFS_ENTRY_PER_PAGE) == 0)
+                if (entry->name[0] != PIFS_FLASH_PROGRAMMED_BYTE_VALUE)
                 {
-                    PIFS_NOTICE_MSG("%s\r\n", pifs_ba_pa2str(new_entry_list_ba, new_entry_list_pa));
+                    /* Create file in the new management area and copy map */
+                    ret = pifs_copy_map(entry);
+                    k++;
+                    if (((k + 1) % PIFS_ENTRY_PER_PAGE) == 0)
+                    {
+                        PIFS_NOTICE_MSG("%s\r\n", pifs_ba_pa2str(new_entry_list_ba, new_entry_list_pa));
 #if PIFS_DEBUG_LEVEL >= 5
-                    print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf),
-                                 new_entry_list_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + new_entry_list_pa * PIFS_LOGICAL_PAGE_SIZE_BYTE);
+                        print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf),
+                                     new_entry_list_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + new_entry_list_pa * PIFS_LOGICAL_PAGE_SIZE_BYTE);
 #endif
+                    }
                 }
+            }
+            else
+            {
+                end = TRUE;
             }
         }
         if (ret == PIFS_SUCCESS)
@@ -611,6 +615,11 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
                         merge = TRUE;
                     }
                 }
+            }
+            else if (ret == PIFS_ERROR_NO_MORE_SPACE)
+            {
+                /* It is not an error when no TBR pages found. */
+                ret = PIFS_SUCCESS;
             }
         }
         if (ret == PIFS_SUCCESS && merge)
