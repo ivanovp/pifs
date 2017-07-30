@@ -80,6 +80,7 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin);
 void pifs_rewind(P_FILE * a_file);
 long int pifs_ftell(P_FILE * a_file);
 int pifs_remove(const pifs_char_t * a_filename);
+int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname);
 int pifs_ferror(P_FILE * a_file);
 long int pifs_filesize(const pifs_char_t * a_filename);
 pifs_DIR * pifs_opendir(const char *a_name);

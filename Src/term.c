@@ -516,6 +516,34 @@ void cmdAppendFile (char* command, char* params)
     }
 }
 
+void cmdRenameFile (char* command, char* params)
+{
+    const char * old_name;
+    const char * new_name;
+    int ret;
+
+    (void) command;
+
+    if (params)
+    {
+        old_name = PARSER_getNextParam();
+        new_name = PARSER_getNextParam();
+        if (old_name && new_name)
+        {
+            printf("Renaming file '%s' to '%s'... ", old_name, new_name);
+            ret = pifs_rename(old_name, new_name);
+            if (ret == 0)
+            {
+                printf("Done.\r\n");
+            }
+            else
+            {
+                printf("Error: %i\r\n", ret);
+            }
+        }
+    }
+}
+
 void cmdDumpPage (char* command, char* params)
 {
     unsigned long int    addr = 0;
@@ -883,6 +911,7 @@ parserCommand_t parserCommands[] =
 #endif
     {"create",      "Create file, write until 'q'",     cmdCreateFile},
     {"append",      "Append file, write until 'q'",     cmdAppendFile},
+    {"rename",      "Rename file",                      cmdRenameFile},
     {"dump",        "Dump flash page in hexadecimal format", cmdDumpPage},
     {"d",           "Dump flash page in hexadecimal format", cmdDumpPage},
     {"map",         "Print map page",                   cmdMap},

@@ -1725,7 +1725,7 @@ long int pifs_ftell(P_FILE * a_file)
  */
 int pifs_remove(const pifs_char_t * a_filename)
 {
-    int ret;
+    pifs_status_t ret;
 
     PIFS_NOTICE_MSG("filename: '%s'\r\n", a_filename);
     ret = pifs_check_filename(a_filename);
@@ -1749,6 +1749,34 @@ int pifs_remove(const pifs_char_t * a_filename)
     PIFS_SET_ERRNO(ret);
     return ret;
 }
+
+int pifs_rename(const pifs_char_t * a_filename, const pifs_char_t * a_newname)
+{
+    pifs_status_t  ret;
+    pifs_entry_t * entry = &pifs.entry;
+
+    PIFS_NOTICE_MSG("filename: '%s'\r\n", a_filename);
+    ret = pifs_check_filename(a_filename);
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_find_entry(a_filename, entry);
+        if (ret == PIFS_SUCCESS)
+        {
+            /* File already exist */
+            ret = pifs_clear_entry(a_filename);
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            /* Change name in entry and append new entry */
+            strncpy(entry->name, a_newname, PIFS_FILENAME_LEN_MAX);
+            ret = pifs_append_entry(entry);
+        }
+    }
+
+    PIFS_SET_ERRNO(ret);
+    return ret;
+}
+
 
 /**
  * @brief pifs_ferror Return last error of file.
