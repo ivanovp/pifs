@@ -23,7 +23,7 @@
 #include "pifs_map.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL    5
+#define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
 
 /**
@@ -315,7 +315,9 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_size_t          i;
     pifs_size_t          j;
+#if PIFS_DEBUG_LEVEL >= 3
     pifs_size_t          k = 0;
+#endif
     bool_t               end = FALSE;
     pifs_block_address_t new_entry_list_ba = a_new_header->entry_list_address.block_address;
     pifs_page_address_t  new_entry_list_pa = a_new_header->entry_list_address.page_address;
@@ -339,6 +341,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
                 {
                     /* Create file in the new management area and copy map */
                     ret = pifs_copy_map(entry);
+#if PIFS_DEBUG_LEVEL >= 3
                     k++;
                     if (((k + 1) % PIFS_ENTRY_PER_PAGE) == 0)
                     {
@@ -348,11 +351,12 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
                                      new_entry_list_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + new_entry_list_pa * PIFS_LOGICAL_PAGE_SIZE_BYTE);
 #endif
                     }
+#endif
                 }
             }
             else
             {
-//                end = TRUE;
+                end = TRUE;
             }
         }
         if (ret == PIFS_SUCCESS)
@@ -450,7 +454,7 @@ pifs_status_t pifs_merge(void)
     {
         /* Copy free space bitmap */
         /* This should be before calling pifs_header_write(..., TRUE) */
-        /* because it that call will mark management area in the free space */
+        /* because that call will mark management area in the free space */
         /* bitmap as used space. */
         ret = pifs_copy_fsbm(&old_header, &new_header);
     }
@@ -581,7 +585,8 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
 //        PIFS_NOTICE_MSG("free_entries: %lu, to_be_released_entries: %lu\r\n",
 //                        free_entries, to_be_released_entries);
     }
-    if (ret == PIFS_SUCCESS && (free_data_pages < a_data_page_count_minimum || free_management_pages == 0 || free_entries == 0))
+    if (ret == PIFS_SUCCESS && (free_data_pages < a_data_page_count_minimum
+                                || free_management_pages == 0 || free_entries == 0))
     {
         if (free_entries == 0 && to_be_released_entries > 0)
         {
@@ -649,7 +654,7 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
         }
         else
         {
-            PIFS_NOTICE_MSG("merge is not needed!\r\n");
+            PIFS_NOTICE_MSG("Merge is not needed!\r\n");
         }
     }
 

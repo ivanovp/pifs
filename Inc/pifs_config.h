@@ -10,7 +10,7 @@
 #ifndef _INCLUDE_PIFS_CONFIG_H_
 #define _INCLUDE_PIFS_CONFIG_H_
 
-/**
+/** PIFS_LOGICAL_PAGE_SIZE_BYTE
  * Allocation unit of file system.
  * Larger logical page needs more RAM and less pages in management area.
  * Smaller logical page needs less RAM and more pages in management area.
