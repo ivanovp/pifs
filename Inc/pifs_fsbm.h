@@ -26,7 +26,8 @@ typedef struct
                                                    FALSE: find to be released page. */
     bool_t               is_same_block;       /**< TRUE: find pages in same block,
                                                    FALSE: pages can be in different block. */
-    pifs_block_address_t start_block_address; /**< Start address to search. */
+    pifs_block_address_t start_block_address; /**< Start address of search. */
+    pifs_block_address_t end_block_address;   /**< End address of search. */
     pifs_header_t      * header;
 } pifs_find_t;
 
@@ -46,11 +47,11 @@ bool_t pifs_is_page_to_be_released(pifs_block_address_t a_block_address,
 pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                              pifs_page_address_t a_page_address,
                              pifs_page_count_t a_page_count, bool_t a_mark_used);
-pifs_status_t pifs_find_free_page(pifs_page_count_t a_page_count_desired,
-                                  pifs_block_type_t a_block_type,
-                                  pifs_block_address_t * a_block_address,
-                                  pifs_page_address_t * a_page_address,
-                                  pifs_page_count_t * a_page_count_found);
+pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_desired,
+                                     pifs_block_type_t a_block_type,
+                                     pifs_block_address_t * a_block_address,
+                                     pifs_page_address_t * a_page_address,
+                                     pifs_page_count_t * a_page_count_found);
 pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
                              pifs_page_count_t a_page_count_desired,
                              pifs_block_type_t a_block_type,

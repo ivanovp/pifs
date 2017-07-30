@@ -859,9 +859,9 @@ void pifs_internal_open(pifs_file_t * a_file,
             /* #3 Mark map page */
             if (a_file->status == PIFS_SUCCESS)
             {
-                a_file->status = pifs_find_free_page(PIFS_MAP_PAGE_NUM,
-                                                     PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT,
-                                                     &ba, &pa, &page_count_found);
+                a_file->status = pifs_find_free_page_wl(PIFS_MAP_PAGE_NUM,
+                                                        PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT,
+                                                        &ba, &pa, &page_count_found);
             }
             if (a_file->status == PIFS_SUCCESS)
             {
@@ -1038,7 +1038,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                     {
                         page_count_needed_limited = PIFS_MAP_PAGE_COUNT_INVALID - 1;
                     }
-                    file->status = pifs_find_free_page(page_count_needed_limited,
+                    file->status = pifs_find_free_page_wl(page_count_needed_limited,
                                                        PIFS_BLOCK_TYPE_DATA,
                                                        &ba, &pa, &page_count_found);
                     PIFS_DEBUG_MSG("%u pages found. %s, status: %i\r\n",
