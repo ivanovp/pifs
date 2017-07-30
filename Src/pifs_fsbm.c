@@ -550,7 +550,7 @@ pifs_status_t pifs_find_free_block(pifs_size_t a_block_count,
     find.page_count_minimum = a_block_count * PIFS_LOGICAL_PAGE_PER_BLOCK;
     find.page_count_desired = a_block_count * PIFS_LOGICAL_PAGE_PER_BLOCK;
     find.block_type = a_block_type;
-    find.is_free = TRUE;
+    find.is_free = FALSE; /* Page is to be released block or free! */
     find.is_same_block = TRUE;
     find.header = a_header;
 
