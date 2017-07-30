@@ -18,7 +18,7 @@
 #include "pifs_fsbm.h"
 #include "pifs_helper.h"
 
-#define PIFS_DEBUG_LEVEL 5
+#define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
 
 /**
@@ -446,7 +446,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                 for (i = 0; i < (PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE) && !found; i++)
                 {
                     if (pifs_check_bits(a_find->is_free, free_space_bitmap)
-                            && pifs_is_block_type(fba, a_find->block_type, &pifs.header))
+                            && pifs_is_block_type(fba, a_find->block_type, a_find->header))
                     {
 #if PIFS_CHECK_IF_PAGE_IS_ERASED
                         if (!a_find->is_free || pifs_is_page_erased(fba, fpa))
@@ -571,6 +571,10 @@ pifs_status_t pifs_find_free_block(pifs_size_t a_block_count,
     if (ret == PIFS_SUCCESS)
     {
         *a_block_address = ba;
+    }
+    if (ret != PIFS_SUCCESS)
+    {
+        PIFS_WARNING_MSG("No free block found!\r\n");
     }
 
     return ret;

@@ -187,7 +187,7 @@ bool_t pifs_is_block_type(pifs_block_address_t a_block_address,
                           pifs_block_type_t a_block_type,
                           pifs_header_t * a_header)
 {
-    bool_t               is_block_type = TRUE;
+    bool_t is_block_type = FALSE;
 
     if (a_block_type == PIFS_BLOCK_TYPE_ANY)
     {
@@ -195,7 +195,6 @@ bool_t pifs_is_block_type(pifs_block_address_t a_block_address,
     }
     else
     {
-        is_block_type = (a_block_type == PIFS_BLOCK_TYPE_DATA);
 #if PIFS_MANAGEMENT_BLOCKS > 1
         if (a_block_address >= a_header->management_block_address
                 && a_block_address < (a_header->management_block_address + PIFS_MANAGEMENT_BLOCKS))
@@ -203,8 +202,13 @@ bool_t pifs_is_block_type(pifs_block_address_t a_block_address,
         if (a_header->management_block_address == a_block_address)
 #endif
         {
-            is_block_type = (a_block_type == PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT);
+            is_block_type |= (a_block_type & PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT);
+            if (a_block_type & PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT)
+            {
+//                PIFS_WARNING_MSG("Primary management block: %i\r\n", a_block_address);
+            }
         }
+        else
 #if PIFS_MANAGEMENT_BLOCKS > 1
         if (a_block_address >= a_header->next_management_block_address
                 && a_block_address < (a_header->next_management_block_address + PIFS_MANAGEMENT_BLOCKS))
@@ -212,14 +216,27 @@ bool_t pifs_is_block_type(pifs_block_address_t a_block_address,
         if (a_header->next_management_block_address == a_block_address)
 #endif
         {
-            is_block_type = (a_block_type == PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT);
+            is_block_type |= (a_block_type & PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT);
+            if (a_block_type & PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT)
+            {
+//                PIFS_WARNING_MSG("Secondary management block: %i\r\n", a_block_address);
+            }
         }
+        else
 #if PIFS_FLASH_BLOCK_RESERVED_NUM
         if (a_block_address < PIFS_FLASH_BLOCK_RESERVED_NUM)
         {
-            is_block_type = (a_block_type == PIFS_BLOCK_TYPE_RESERVED);
+            is_block_type |= (a_block_type & PIFS_BLOCK_TYPE_RESERVED);
         }
+        else
 #endif
+        {
+            is_block_type |= (a_block_type & PIFS_BLOCK_TYPE_DATA);
+            if (a_block_type & PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT)
+            {
+//                PIFS_WARNING_MSG("Data block: %i\r\n", a_block_address);
+            }
+        }
     }
 
     return is_block_type;

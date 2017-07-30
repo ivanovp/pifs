@@ -261,7 +261,12 @@ void cmdDebug (char* command, char* params)
     ba = PIFS_BLOCK_ADDRESS_INVALID;
     ret = pifs_find_to_be_released_block(1, PIFS_BLOCK_TYPE_DATA, PIFS_FLASH_BLOCK_RESERVED_NUM,
                                          &pifs.header, &ba);
+    printf("ret: %i, ba: %i\r\n", ret, ba);
 
+    printf("Find to free block...\r\n");
+    ret = pifs_find_free_block(PIFS_MANAGEMENT_BLOCKS,
+                               PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT | PIFS_BLOCK_TYPE_DATA,
+                               &pifs.header, &ba);
     printf("ret: %i, ba: %i\r\n", ret, ba);
 }
 
@@ -678,12 +683,18 @@ const char * block_type2str(pifs_block_address_t a_block_address)
     const char * str = "Data";
     if (pifs_is_block_type(a_block_address, PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT, &pifs.header))
     {
-        str = "PM";
+        str = "PriMgmt";
     }
     else if (pifs_is_block_type(a_block_address, PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT, &pifs.header))
     {
-        str = "SM";
+        str = "SecMgmt";
     }
+#if PIFS_FLASH_BLOCK_RESERVED_NUM
+    else if (pifs_is_block_type(a_block_address, PIFS_BLOCK_TYPE_RESERVED, &pifs.header))
+    {
+        str = "Reservd";
+    }
+#endif
 
     return str;
 }
@@ -729,9 +740,9 @@ void cmdBlockInfo (char* command, char* params)
     //po = addr % PIFS_LOGICAL_PAGE_SIZE_BYTE;
     ba = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) / PIFS_LOGICAL_PAGE_PER_BLOCK;
 
-    printf("      | Type | Wear  | Free pages  | TBR pages\r\n");
-    printf("Block |      | Level | Data | Mgmt | Data | Mgmt\r\n");
-    printf("------+------+-------+------+------+------+------\r\n");
+    printf("      | Type    | Wear  | Free pages  | TBR pages\r\n");
+    printf("Block |         | Level | Data | Mgmt | Data | Mgmt\r\n");
+    printf("------+---------+-------+------+------+------+------\r\n");
     while (cntr-- && (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE))
     {
         ret = pifs_get_pages(TRUE, ba, 1, &free_management_pages, &free_data_pages);
@@ -747,7 +758,7 @@ void cmdBlockInfo (char* command, char* params)
         }
         if (ret == PIFS_SUCCESS)
         {
-            printf("%5i | %4s | %5i | %4i | %4i | %4i | %4i\r\n", ba,
+            printf("%5i | %-7s | %5i | %4i | %4i | %4i | %4i\r\n", ba,
                    block_type2str(ba),
                    wear_level.wear_level_cntr,
                    free_data_pages,

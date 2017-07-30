@@ -425,7 +425,7 @@ pifs_status_t pifs_merge(void)
     /* #1 */
     for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
     {
-        ret = pifs_erase(pifs.header.next_management_block_address + i, NULL, NULL);
+        ret = pifs_erase(old_header.next_management_block_address + i, NULL, NULL);
     }
     /* #2 */
     if (ret == PIFS_SUCCESS)
@@ -483,12 +483,19 @@ pifs_status_t pifs_merge(void)
     if (ret == PIFS_SUCCESS)
     {
         /* Find next management blocks address */
-        /************* FIXME FIXME FIXME *********/
-        /* Old and new header block can overlap! */
-        /*****************************************/
-        ret = pifs_find_free_block(PIFS_MANAGEMENT_BLOCKS, PIFS_BLOCK_TYPE_ANY,
-                                   &pifs.header,
+        /* Old header's primary management blocks and data blocks are allowed */
+        /* TODO this won't find PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT as they are */
+        /* marked used. Simply remove 'PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT |' ? */
+        ret = pifs_find_free_block(PIFS_MANAGEMENT_BLOCKS,
+                                   PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT | PIFS_BLOCK_TYPE_DATA,
+                                   &old_header,
                                    &next_mgmt_ba);
+        if (ret == PIFS_ERROR_NO_MORE_SPACE)
+        {
+            /* Old management area will be the next management block */
+            next_mgmt_ba = old_header.management_block_address;
+            ret = PIFS_SUCCESS;
+        }
     }
     /* #9 */
     if (ret == PIFS_SUCCESS)
