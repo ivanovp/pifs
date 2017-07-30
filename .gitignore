@@ -2,6 +2,8 @@ tags
 *.o
 *.d
 flash.bin
+flash.stt
 flash_test
 pifs_test
 *.pro.user*
+test.log

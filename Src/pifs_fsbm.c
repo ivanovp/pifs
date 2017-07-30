@@ -17,6 +17,7 @@
 #include "pifs.h"
 #include "pifs_fsbm.h"
 #include "pifs_helper.h"
+#include "pifs_wear.h"
 
 #define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
@@ -323,7 +324,7 @@ pifs_status_t pifs_find_free_page(pifs_page_count_t a_page_count_desired,
     pifs_block_address_t ba;
 
     /* Dynamic wear leveling */
-    ret = pifs_get_least_weared_block(&pifs.header, &ba);
+    ret = pifs_get_least_weared_block(&pifs.header, &ba, a_block_type, NULL);
     if (ret == PIFS_SUCCESS)
     {
         /* Try to find free page in the least weared block */
@@ -539,7 +540,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
 /**
  * @brief pifs_find_block_wl Find free/to be released block with wear leveling.
  *
- * @param[in] a_block_count      Number of blocks to find.
+ * @param[in] a_block_count      Number of contiguous blocks to find.
  * @param[in] a_block_type       Management, data block, etc. @see pifs_block_type_t
  * @param[in] a_is_free          TRUE: find free blocks, FALSE: find to be released/free blocks.
  * @param[in] a_header           Pointer to file system header.
@@ -566,7 +567,7 @@ pifs_status_t pifs_find_block_wl(pifs_size_t a_block_count,
     find.header = a_header;
 
     /* Dynamic wear leveling */
-    ret = pifs_get_least_weared_block(a_header, &find.start_block_address);
+    ret = pifs_get_least_weared_block(a_header, &find.start_block_address, a_block_type, NULL);
     if (ret == PIFS_SUCCESS)
     {
         /* Try to find free page in the least weared block */

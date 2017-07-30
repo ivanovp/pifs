@@ -21,6 +21,7 @@
 #include "pifs_helper.h"
 #include "pifs_delta.h"
 #include "pifs_fsbm.h"
+#include "pifs_wear.h"
 
 #define ENABLE_DOS_ALIAS    0
 #define CMD_BUF_SIZE        128
@@ -221,6 +222,28 @@ void cmdWearLevel (char* command, char* params)
     {
         ret = pifs_get_wear_level(ba, &pifs.header, &wear_level);
         printf("%5i | %i\r\n", ba, wear_level.wear_level_cntr);
+    }
+}
+
+void cmdGenerateWearLevel(char* command, char* params)
+{
+    pifs_status_t           ret = PIFS_SUCCESS;
+    pifs_wear_level_entry_t wear_level;
+    pifs_size_t             i;
+
+    (void) command;
+    (void) params;
+
+    ret = pifs_generate_least_weared_blocks(&pifs.header);
+
+    printf("Block | Erase count\r\n");
+    printf("------+------------\r\n");
+    for (i = 0;
+         i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_SUCCESS;
+         i++)
+    {
+        ret = pifs_get_wear_level(pifs.header.least_weared_blocks[i], &pifs.header, &wear_level);
+        printf("%5i | %i\r\n", pifs.header.least_weared_blocks[i], wear_level.wear_level_cntr);
     }
 }
 
@@ -925,6 +948,7 @@ parserCommand_t parserCommands[] =
     {"bi",          "Print info of block",              cmdBlockInfo},
     {"pi",          "Check if page is free/to be released/erased", cmdPageInfo},
     {"w",           "Print wear level list",            cmdWearLevel},
+    {"lw",          "Generate least weared blocks' list", cmdGenerateWearLevel},
     {"fs",          "Print flash's statistics",         cmdFlashStat},
     {"quit",        "Quit",                             cmdQuit},
     {"q",           "Quit",                             cmdQuit},

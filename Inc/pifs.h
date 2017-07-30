@@ -213,6 +213,12 @@ typedef uint8_t pifs_wear_level_bits_t;
 #if PIFS_MANAGEMENT_BLOCKS < 1
 #error PIFS_MANAGEMENT_BLOCKS shall be 1 at minimum!
 #endif
+#if PIFS_LEAST_WEARED_BLOCK_NUM < 1
+#error PIFS_LEAST_WEARED_BLOCK_NUM shall be 1 at minimum!
+#endif
+#if PIFS_LEAST_WEARED_BLOCK_NUM > PIFS_FLASH_BLOCK_NUM_FS
+#error PIFS_LEAST_WEARED_BLOCK_NUM shall not be greater than PIFS_FLASH_BLOCK_NUM_FS!
+#endif
 #if PIFS_FLASH_ERASED_BYTE_VALUE == 0xFF
 /* If erased value is 0xFF, invert attribute bits. */
 /* Therefore bits can be updated in the existing entry, no new entry is needed. */
@@ -275,6 +281,8 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_address_t          entry_list_address;
     pifs_address_t          delta_map_address;
     pifs_address_t          wear_level_list_address;
+    /** Data blocks with lowest erase counter value */
+    pifs_block_address_t    least_weared_blocks[PIFS_LEAST_WEARED_BLOCK_NUM];
     /** Checksum shall be the last element! */
     pifs_checksum_t         checksum;
 } pifs_header_t;
@@ -416,17 +424,6 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
                                pifs_page_address_t a_page_address,
                                pifs_block_address_t a_next_mgmt_block_address,
                                pifs_header_t * a_header);
-pifs_status_t pifs_wear_level_list_init(void);
-pifs_status_t pifs_get_wear_level(pifs_block_address_t a_block_address,
-                                  pifs_header_t * a_header,
-                                  pifs_wear_level_entry_t * a_wear_level);
-pifs_status_t pifs_inc_wear_level(pifs_block_address_t a_block_address,
-                                  pifs_header_t * a_header);
-pifs_status_t pifs_write_wear_level(pifs_block_address_t a_block_address,
-                                    pifs_header_t * a_header,
-                                    pifs_wear_level_entry_t * a_wear_level);
-pifs_status_t pifs_copy_wear_level_list(pifs_header_t * a_old_header, pifs_header_t * a_new_header);
-pifs_status_t pifs_get_least_weared_block(pifs_header_t * a_header, pifs_block_address_t * a_block_address);
 pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                                 pifs_page_address_t a_page_address,
                                 pifs_header_t * a_header, bool_t a_mark_pages);

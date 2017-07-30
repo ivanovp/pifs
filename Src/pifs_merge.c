@@ -21,6 +21,7 @@
 #include "pifs_merge.h"
 #include "pifs_entry.h"
 #include "pifs_map.h"
+#include "pifs_wear.h"
 #include "buffer.h" /* DEBUG */
 
 #define PIFS_DEBUG_LEVEL 2
@@ -503,6 +504,10 @@ pifs_status_t pifs_merge(void)
         }
     }
     /* #9 */
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_generate_least_weared_blocks(&pifs.header);
+    }
     if (ret == PIFS_SUCCESS)
     {
         PIFS_NOTICE_MSG("Next management block: %i, ret: %i\r\n", next_mgmt_ba, ret);

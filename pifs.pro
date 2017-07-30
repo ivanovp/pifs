@@ -17,6 +17,7 @@ SOURCES += ./Src/buffer.c \
 ./Src/pifs_map.c \
 ./Src/pifs_merge.c \
 ./Src/pifs_test.c \
+./Src/pifs_wear.c \
 ./Src/term.c \
 ./test/append.c \
 ./test/listdir.c \
@@ -40,6 +41,7 @@ HEADERS += ./Inc/api_pifs.h \
 ./Inc/pifs_map.h \
 ./Inc/pifs_merge.h \
 ./Inc/pifs_test.h \
+./Inc/pifs_wear.h \
 ./Inc/term.h
 
 INCLUDEPATH += .

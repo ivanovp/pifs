@@ -64,7 +64,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                                  pifs_block_address_t * a_block_address,
                                  pifs_page_address_t * a_page_address,
                                  pifs_page_count_t * a_page_count_found);
-pifs_status_t pifs_find_free_block(pifs_size_t a_block_count,
+pifs_status_t pifs_find_block_wl(pifs_size_t a_block_count,
                                    pifs_block_type_t a_block_type, bool_t a_is_free,
                                    pifs_header_t *a_header,
                                    pifs_block_address_t * a_block_address);

@@ -21,6 +21,7 @@
 #include "pifs_entry.h"
 #include "pifs_map.h"
 #include "pifs_merge.h"
+#include "pifs_wear.h"
 #include "buffer.h" /* DEBUG */
 
 #define PIFS_DEBUG_LEVEL 2
@@ -286,6 +287,8 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_block_address_t ba = a_block_address;
     pifs_address_t       address;
+    pifs_size_t          i;
+
     PIFS_DEBUG_MSG("Creating managamenet block %s\r\n", pifs_ba_pa2str(a_block_address, a_page_address));
     a_header->magic = PIFS_MAGIC;
 #if ENABLE_PIFS_VERSION
@@ -295,6 +298,10 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
     if (a_next_mgmt_block_address == PIFS_BLOCK_ADDRESS_ERASED)
     {
         a_header->counter++;
+        for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM; i++)
+        {
+            a_header->least_weared_blocks[i] = PIFS_BLOCK_ADDRESS_ERASED;
+        }
     }
     address.block_address = a_block_address;
     address.page_address = a_page_address;
@@ -324,237 +331,6 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
 
     return ret;
 }
-
-/**
- * @brief pifs_wear_level_list_init Write initial wear level list with all
- * zeros.
- *
- * @return PIFS_SUCCES if written successfully.
- */
-pifs_status_t pifs_wear_level_list_init(void)
-{
-    pifs_status_t             ret = PIFS_SUCCESS;
-    pifs_size_t               i;
-    pifs_address_t            address;
-    pifs_wear_level_entry_t * wear_level_entry = (pifs_wear_level_entry_t*) pifs.page_buf;
-
-    memset(pifs.page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_LOGICAL_PAGE_SIZE_BYTE);
-    address = pifs.header.wear_level_list_address;
-    for (i = 0; i < PIFS_WEAR_LEVEL_ENTRY_PER_PAGE; i++)
-    {
-        wear_level_entry[i].wear_level_cntr = 0;
-        wear_level_entry[i].wear_level_bits = PIFS_FLASH_ERASED_BYTE_VALUE;
-    }
-
-    for (i = 0; i < PIFS_WEAR_LEVEL_LIST_SIZE_PAGE && ret == PIFS_SUCCESS; i++)
-    {
-        //PIFS_WARNING_MSG("%s\r\n", pifs_address2str(&address));
-        ret = pifs_write(address.block_address, address.page_address, 0,
-                         pifs.page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
-        if (ret == PIFS_SUCCESS)
-        {
-            (void)pifs_inc_address(&address);
-        }
-    }
-
-    return ret;
-}
-
-/**
- * @brief pifs_get_wear_level Get wear level of a block.
- *
- * @param[in] a_block_address   Address of block.
- * @param[in] a_header          File system's header.
- * @param[out] a_wear_level     Erase count.
- * @return PIFS_SUCCESS if wear level successfully read.
- */
-pifs_status_t pifs_get_wear_level(pifs_block_address_t a_block_address,
-                                  pifs_header_t * a_header,
-                                  pifs_wear_level_entry_t * a_wear_level)
-{
-    pifs_status_t        ret = PIFS_SUCCESS;
-    pifs_address_t       address;
-    pifs_size_t          po;
-    pifs_size_t          i;
-
-//    PIFS_NOTICE_MSG("Wear level list at %s\r\n", pifs_address2str(&a_header->wear_level_list_address));
-    address = a_header->wear_level_list_address;
-    po = (a_block_address % PIFS_WEAR_LEVEL_ENTRY_PER_PAGE) * PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE;
-//    PIFS_WARNING_MSG("po: %i ba: %i\r\n", po, a_block_address / PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
-    ret = pifs_add_address(&address, a_block_address / PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
-    if (ret == PIFS_SUCCESS)
-    {
-        ret = pifs_read(address.block_address, address.page_address, po,
-                        a_wear_level, PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE);
-#if 0
-        PIFS_WARNING_MSG("BA%i wear level counter: %i, bits: 0x%02X\r\n",
-                         a_block_address,
-                         a_wear_level->wear_level_cntr,
-                         a_wear_level->wear_level_bits);
-#endif
-        /* Add wear_level_bits to wear_level_count! */
-        for (i = 0; i < sizeof(a_wear_level->wear_level_bits) * PIFS_BYTE_BITS; i++)
-        {
-#if PIFS_FLASH_ERASED_BYTE_VALUE == 0xFF
-            if (!(a_wear_level->wear_level_bits & 1))
-#else
-            if (a_wear_level->wear_level_bits & 1)
-#endif
-            {
-                a_wear_level->wear_level_cntr++;
-            }
-            a_wear_level->wear_level_bits >>= 1;
-        }
-    }
-
-    return ret;
-}
-
-/**
- * @brief pifs_inc_wear_level_level Increment wear level of a block.
- *
- * @param[in] a_block_address   Address of block.
- * @param[in] a_header          File system's header.
- * @return PIFS_SUCCESS if wear level successfully incremented.
- */
-pifs_status_t pifs_inc_wear_level(pifs_block_address_t a_block_address,
-                                  pifs_header_t * a_header)
-{
-    pifs_status_t           ret = PIFS_SUCCESS;
-    pifs_address_t          address;
-    pifs_size_t             po;
-    pifs_size_t             i;
-    pifs_wear_level_entry_t wear_level;
-
-//    PIFS_NOTICE_MSG("Wear level list at %s\r\n", pifs_address2str(&a_header->wear_level_list_address));
-    address = a_header->wear_level_list_address;
-    po = (a_block_address % PIFS_WEAR_LEVEL_ENTRY_PER_PAGE) * PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE;
-//    PIFS_WARNING_MSG("po: %i ba: %i\r\n", po, a_block_address / PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
-    ret = pifs_add_address(&address, a_block_address / PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
-    if (ret == PIFS_SUCCESS)
-    {
-        po %= PIFS_LOGICAL_PAGE_SIZE_BYTE;
-        ret = pifs_read(address.block_address, address.page_address, po,
-                        &wear_level, PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE);
-        if (ret == PIFS_SUCCESS)
-        {
-            ret = PIFS_ERROR_NO_MORE_SPACE;
-            for (i = 0; i < sizeof(wear_level.wear_level_bits) * PIFS_BYTE_BITS && ret != PIFS_SUCCESS; i++)
-            {
-#if PIFS_FLASH_ERASED_BYTE_VALUE == 0xFF
-                if (wear_level.wear_level_bits & (1u << i))
-#else
-                if (!(wear_level.wear_level_bits & (1u << i)))
-#endif
-                {
-                    ret = PIFS_SUCCESS;
-                    wear_level.wear_level_bits ^= 1u << i;
-                    PIFS_NOTICE_MSG("BA%i inverting bit %i\r\n", a_block_address, i);
-                }
-            }
-            if (ret == PIFS_SUCCESS)
-            {
-                ret = pifs_write(address.block_address, address.page_address, po,
-                                 &wear_level, PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE);
-            }
-        }
-    }
-
-    return ret;
-}
-
-/**
- * @brief pifs_write_wear_level_level Write wear level of a block.
- *
- * @param[in] a_block_address   Address of block.
- * @param[in] a_header          File system's header.
- * @param[out] a_wear_level     Erase count.
- * @return PIFS_SUCCESS if wear level successfully written.
- */
-pifs_status_t pifs_write_wear_level(pifs_block_address_t a_block_address,
-                                    pifs_header_t * a_header,
-                                    pifs_wear_level_entry_t * a_wear_level)
-{
-    pifs_status_t        ret = PIFS_SUCCESS;
-    pifs_address_t       address;
-    pifs_size_t          po;
-
-//    PIFS_NOTICE_MSG("Wear level list at %s\r\n", pifs_address2str(&a_header->wear_level_list_address));
-    address = a_header->wear_level_list_address;
-    po = (a_block_address % PIFS_WEAR_LEVEL_ENTRY_PER_PAGE) * PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE;
-//    PIFS_WARNING_MSG("po: %i ba: %i\r\n", po, a_block_address / PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
-    ret = pifs_add_address(&address, a_block_address / PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
-    if (ret == PIFS_SUCCESS)
-    {
-        po %= PIFS_LOGICAL_PAGE_SIZE_BYTE;
-        PIFS_NOTICE_MSG("BA%i wear level counter: %i, bits: 0x%02X\r\n",
-                         a_block_address,
-                         a_wear_level->wear_level_cntr,
-                         a_wear_level->wear_level_bits);
-        ret = pifs_write(address.block_address, address.page_address, po,
-                         a_wear_level, PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE);
-    }
-
-    return ret;
-
-}
-
-/**
- * @brief pifs_wear_level_list_copy Copy wear level list.
- *
- * @return PIFS_SUCCES if copied successfully.
- */
-pifs_status_t pifs_copy_wear_level_list(pifs_header_t * a_old_header, pifs_header_t * a_new_header)
-{
-    pifs_status_t             ret = PIFS_SUCCESS;
-    pifs_block_address_t      ba;
-    pifs_wear_level_entry_t   wear_level_entry;
-
-    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_FS && ret == PIFS_SUCCESS; ba++)
-    {
-        ret = pifs_get_wear_level(ba, a_old_header, &wear_level_entry);
-        if (ret == PIFS_SUCCESS)
-        {
-            wear_level_entry.wear_level_bits = PIFS_FLASH_ERASED_BYTE_VALUE;
-            ret = pifs_write_wear_level(ba, a_new_header, &wear_level_entry);
-        }
-    }
-
-    return ret;
-}
-
-/**
- * @brief pifs_get_least_weared_block Get least weared block.
- *
- * @return PIFS_SUCCES if get successfully.
- */
-pifs_status_t pifs_get_least_weared_block(pifs_header_t * a_header, pifs_block_address_t * a_block_address)
-{
-    pifs_status_t             ret = PIFS_SUCCESS;
-    pifs_block_address_t      ba;
-    pifs_wear_level_entry_t   wear_level_entry;
-    pifs_wear_level_cntr_t    wear_level_cntr_min = PIFS_WEAR_LEVEL_CNTR_MAX;
-    pifs_block_address_t      ba_min = PIFS_FLASH_BLOCK_RESERVED_NUM;
-
-    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_FS && ret == PIFS_SUCCESS; ba++)
-    {
-        ret = pifs_get_wear_level(ba, a_header, &wear_level_entry);
-        if (ret == PIFS_SUCCESS && wear_level_entry.wear_level_cntr < wear_level_cntr_min)
-        {
-            ba_min = ba;
-            wear_level_cntr_min = wear_level_entry.wear_level_cntr;
-        }
-    }
-
-    if (ret == PIFS_SUCCESS)
-    {
-//        PIFS_NOTICE_MSG("BA%i\r\n", ba_min);
-        *a_block_address = ba_min;
-    }
-
-    return ret;
-}
-
 
 
 /**

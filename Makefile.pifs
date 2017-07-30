@@ -45,6 +45,7 @@ SRC_C += ./Src/pifs_helper.c
 SRC_C += ./Src/pifs_map.c
 SRC_C += ./Src/pifs_merge.c
 SRC_C += ./Src/pifs_test.c
+SRC_C += ./Src/pifs_wear.c
 SRC_C += ./Src/term.c
 SRC_S = 
 OBJ_CPP = $(patsubst %.cpp, %.o, $(SRC_CPP))
