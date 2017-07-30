@@ -19,7 +19,7 @@
 #include "pifs_helper.h"
 #include "pifs_delta.h"
 
-#define PIFS_DEBUG_LEVEL    2
+#define PIFS_DEBUG_LEVEL    5
 
 #include "pifs_debug.h"
 

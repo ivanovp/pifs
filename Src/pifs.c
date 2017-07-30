@@ -71,7 +71,7 @@ static pifs_checksum_t pifs_calc_header_checksum(pifs_header_t * a_pifs_header)
 /**
  * @brief pifs_flush  Flush cache.
  *
- * @return PIFS_SUCCESS if data flush successfully.
+ * @return PIFS_SUCCESS if data written successfully.
  */
 pifs_status_t pifs_flush(void)
 {
@@ -192,10 +192,27 @@ pifs_status_t pifs_write(pifs_block_address_t a_block_address,
 #if PIFS_LOGICAL_PAGE_ENABLED
     pifs_size_t   i;
 #endif
+    /****************** FIXME DEBUG! */
+    pifs_block_address_t ba;
+    pifs_page_address_t  pa;
+    pifs_bit_pos_t bit_pos;
+    bool_t is_free_space0 = FALSE;
+    bool_t is_free_space1 = FALSE;
+    /*********************************/
 
     if (a_block_address == pifs.cache_page_buf_address.block_address
             && a_page_address == pifs.cache_page_buf_address.page_address)
     {
+        /****************** FIXME DEBUG! */
+        if (a_block_address == 3 //pifs.header.free_space_bitmap_address.block_address
+                && a_page_address == 12) //pifs.header.free_space_bitmap_address.page_address)
+        {
+            PIFS_ASSERT(pifs_calc_free_space_pos(&pifs.header.free_space_bitmap_address,
+                                                 3, 1, &ba, &pa, &bit_pos) == PIFS_SUCCESS);
+            is_free_space0 = pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << (bit_pos % PIFS_BYTE_BITS));
+        }
+        /*********************************/
+
         /* Cache hit */
         if (a_buf)
         {
@@ -225,6 +242,15 @@ pifs_status_t pifs_write(pifs_block_address_t a_block_address,
                                           PIFS_FLASH_PAGE_SIZE_BYTE);
                 }
             }
+            /****************** FIXME DEBUG! */
+            if (a_block_address == 3 //pifs.header.free_space_bitmap_address.block_address
+                    && a_page_address == 12) //pifs.header.free_space_bitmap_address.page_address)
+            {
+                PIFS_ASSERT(pifs_calc_free_space_pos(&pifs.header.free_space_bitmap_address,
+                                                     3, 1, &ba, &pa, &bit_pos) == PIFS_SUCCESS);
+                is_free_space0 = pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << (bit_pos % PIFS_BYTE_BITS));
+            }
+            /*********************************/
 
             if (a_buf)
             {
@@ -236,13 +262,27 @@ pifs_status_t pifs_write(pifs_block_address_t a_block_address,
         }
     }
 
+    /****************** FIXME DEBUG! */
+    if (a_block_address == 3 //pifs.header.free_space_bitmap_address.block_address
+            && a_page_address == 12) //pifs.header.free_space_bitmap_address.page_address)
+    {
+        is_free_space1 = pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << (bit_pos % PIFS_BYTE_BITS));
+        if (is_free_space1 && !is_free_space0)
+        {
+            printf("GOTCHA!\r\n");
+        }
+    }
+    /*********************************/
+
+    /****************** FIXME DEBUG! */
 //    if (offset == 0x30400 && buf8[0x52] == 1 && buf8[0x53] == 9)
     if (a_block_address == 3 && a_page_address == 1
             && pifs.cache_page_buf[0x52] == 1 && pifs.cache_page_buf[0x53] == 9)
     {
-        printf("HERE");
+        printf("HERE\r\n");
 //        SOFTWARE_BREAKPOINT();
     }
+    /*********************************/
 
 
     return ret;
@@ -260,6 +300,7 @@ pifs_status_t pifs_erase(pifs_block_address_t a_block_address, pifs_header_t * a
 
     (void) a_old_header;
 
+    PIFS_WARNING_MSG("Erasing block %i\r\n", a_block_address)
     ret = pifs_flash_erase(a_block_address);
 
     if (a_block_address == pifs.cache_page_buf_address.block_address)
@@ -862,6 +903,20 @@ pifs_status_t pifs_init(void)
                 if (checksum == header.checksum)
                 {
                     PIFS_DEBUG_MSG("Checksum is valid\r\n");
+                    if (pifs.is_header_found)
+                    {
+                        PIFS_WARNING_MSG("Previous management page was not erased! Erasing...\r\n");
+                        /* This can happen when pifs_merge() was interrupted before step #11 */
+                        /* Erase old management area */
+                        for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
+                        {
+                            ret = pifs_erase(prev_header.management_block_address + i, &prev_header, &header);
+                        }
+                        if (ret == PIFS_SUCCESS)
+                        {
+                            PIFS_WARNING_MSG("Done.\r\n");
+                        }
+                    }
                     if (!pifs.is_header_found || prev_header.counter < pifs.header.counter)
                     {
                         pifs.is_header_found = TRUE;

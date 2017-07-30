@@ -16,6 +16,7 @@
 #include "parser.h"
 
 extern parserCommand_t parserCommands[];
+extern pifs_status_t pifs_status;
 
 void term_init (void);
 void term_task (void);

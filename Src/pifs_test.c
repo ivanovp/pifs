@@ -48,7 +48,6 @@
 #define PIFS_TEST_ERROR_MSG(...)    do {    \
         printf("%s ERROR: ", __FUNCTION__); \
         printf(__VA_ARGS__);                \
-        SOFTWARE_BREAKPOINT();              \
     } while (0);
 
 uint8_t test_buf_w[TEST_BUF_SIZE] __attribute__((aligned(4)));

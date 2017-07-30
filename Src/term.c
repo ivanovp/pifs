@@ -30,6 +30,7 @@ static uint8_t buf[CMD_BUF_SIZE] = { 0 };     /* Current input from the serial l
 static uint8_t prevBuf[CMD_BUF_SIZE] = { 0 }; /* Previous input from the serial line */
 static char buf_r[PIFS_FLASH_PAGE_SIZE_BYTE];
 static char buf_w[PIFS_FLASH_PAGE_SIZE_BYTE];
+pifs_status_t pifs_status;
 
 bool_t getLine(uint8_t * a_buf, size_t a_buf_size);
 
@@ -114,7 +115,7 @@ void cmdTestPifs (char* command, char* params)
     (void) command;
     (void) params;
 
-    pifs_test();
+    pifs_status = pifs_test();
 }
 
 void cmdTestPifsBasic (char* command, char* params)
@@ -809,7 +810,7 @@ void cmdQuit (char* command, char* params)
 
     printf("Quitting...\r\n");
     pifs_delete();
-    exit(0);
+    exit(pifs_status);
 }
 
 /**

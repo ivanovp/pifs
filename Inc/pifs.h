@@ -129,7 +129,8 @@
 #error PIFS_LOGICAL_PAGE_SIZE_BYTE shall be power of two!
 #endif
 
-#if PIFS_LOGICAL_PAGE_SIZE_BYTE / PIFS_FLASH_PAGE_SIZE_BYTE > 1
+/* Check if logical page size is equal to flash (physical) page size */
+#if PIFS_LOGICAL_PAGE_SIZE_BYTE != PIFS_FLASH_PAGE_SIZE_BYTE
 #define PIFS_LOGICAL_PAGE_ENABLED   1
 #else
 #define PIFS_LOGICAL_PAGE_ENABLED   0

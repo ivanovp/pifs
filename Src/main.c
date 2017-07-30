@@ -28,7 +28,7 @@ int main(int argc, char **argv)
     char args[256] = { 0 };
 
     srand(time(0));
-    pifs_init();
+    pifs_status = pifs_init();
     if (argc < 2)
     {
         /* No arguments */
@@ -53,8 +53,10 @@ int main(int argc, char **argv)
 //        printf("Arguments: [%s]\r\n", args);
         PARSER_process(args, strlen(args));
     }
-    pifs_delete();
+    /* This return code will be deliberately avoided to keep PARSER_process()' */
+    /* status */
+    (void)pifs_delete();
 
-    return 0;
+    return pifs_status;
 }
 

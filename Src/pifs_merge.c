@@ -449,6 +449,9 @@ pifs_status_t pifs_merge(void)
     if (ret == PIFS_SUCCESS)
     {
         /* Copy free space bitmap */
+        /* This should be before calling pifs_header_write(..., TRUE) */
+        /* because it that call will mark management area in the free space */
+        /* bitmap as used space. */
         ret = pifs_copy_fsbm(&old_header, &new_header);
     }
     /* #5 */
@@ -456,19 +459,21 @@ pifs_status_t pifs_merge(void)
     {
         /* Activate new file system header */
         pifs.header = new_header;
-        /* Write new management area's header */
+        /* Write new management area's header and mark header, entry list, */
+        /* free space bitmap, delta pages, wear level list as used space. */
         ret = pifs_header_write(new_header_ba, new_header_pa, &pifs.header, TRUE);
     }
     /* #6 */
     if (ret == PIFS_SUCCESS)
     {
-        /* Copy file entry list and process deltas */
+        /* Copy file entry list and process delta pages */
+        /* This should be before resetting delta pages! */
         ret = pifs_copy_entry_list(&old_header, &new_header);
     }
     /* #7 */
     if (ret == PIFS_SUCCESS)
     {
-        /* Reset delta map */
+        /* Reset delta map after processing delta pages */
         memset(pifs.delta_map_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE,
                PIFS_DELTA_MAP_PAGE_NUM * PIFS_LOGICAL_PAGE_SIZE_BYTE);
         pifs.delta_map_page_is_dirty = FALSE;
@@ -478,6 +483,9 @@ pifs_status_t pifs_merge(void)
     if (ret == PIFS_SUCCESS)
     {
         /* Find next management blocks address */
+        /************* FIXME FIXME FIXME *********/
+        /* Old and new header block can overlap! */
+        /*****************************************/
         ret = pifs_find_free_block(PIFS_MANAGEMENT_BLOCKS, PIFS_BLOCK_TYPE_ANY,
                                    &pifs.header,
                                    &next_mgmt_ba);
@@ -487,20 +495,25 @@ pifs_status_t pifs_merge(void)
     {
         PIFS_NOTICE_MSG("Next management block: %i, ret: %i\r\n", next_mgmt_ba, ret);
         /* Add next management block's address to the current header */
+        /* and calculate checksum */
         ret = pifs_header_init(new_header_ba, new_header_pa, next_mgmt_ba, &pifs.header);
     }
     /* #10 */
     if (ret == PIFS_SUCCESS)
     {
         /* Write new management area's header with next management block's address */
+        /* and write checksum */
         ret = pifs_header_write(new_header_ba, new_header_pa, &pifs.header, FALSE);
+        /* At this point new header is valid */
     }
     /* #11 */
     if (ret == PIFS_SUCCESS)
     {
+        PIFS_ASSERT(old_header.management_block_address != new_header.management_block_address);
         /* Erase old management area */
         for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
         {
+            PIFS_WARNING_MSG("Erasing old management block %i\r\n", old_header.management_block_address + i);
             ret = pifs_erase(old_header.management_block_address + i, &old_header, &new_header);
         }
     }
