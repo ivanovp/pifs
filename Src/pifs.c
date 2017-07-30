@@ -609,8 +609,6 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
             ret = pifs_mark_page(a_header->entry_list_address.block_address,
                                  a_header->entry_list_address.page_address,
                                  PIFS_ENTRY_LIST_SIZE_PAGE, TRUE);
-            print_page_info(a_header->entry_list_address.block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
-                            + a_header->entry_list_address.page_address * PIFS_LOGICAL_PAGE_SIZE_BYTE, 11);
         }
         if (ret == PIFS_SUCCESS)
         {
@@ -1037,7 +1035,7 @@ void pifs_internal_open(pifs_file_t * a_file,
     if (a_file->status == PIFS_SUCCESS)
     {
         a_file->status = pifs_find_entry(a_filename, entry);
-        if (a_file->mode_file_shall_exist && a_file->status == PIFS_SUCCESS)
+        if ((a_file->mode_file_shall_exist || a_file->mode_append) && a_file->status == PIFS_SUCCESS)
         {
             PIFS_DEBUG_MSG("Entry of %s found\r\n", a_filename);
 #if PIFS_DEBUG_LEVEL >= 6
@@ -1055,7 +1053,7 @@ void pifs_internal_open(pifs_file_t * a_file,
                 a_file->status = PIFS_ERROR_FILE_NOT_FOUND;
             }
         }
-        if (a_file->mode_create_new_file)
+        if (a_file->mode_create_new_file || (a_file->mode_append && !a_file->is_opened))
         {
             if (a_file->status == PIFS_SUCCESS)
             {
@@ -1638,11 +1636,8 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
                 }
             }
             file->read_pos += seek_size;
-            if (!file->mode_append)
-            {
-                file->write_pos = file->read_pos;
-                file->write_address = file->read_address;
-            }
+            file->write_pos = file->read_pos;
+            file->write_address = file->read_address;
 #if PIFS_ENABLE_FSEEK_BEYOND_FILE
             /* Check if we are at end of file and data needs to be written to reach */
             /* target position */

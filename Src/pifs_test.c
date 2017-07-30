@@ -429,8 +429,6 @@ pifs_status_t pifs_test_wfragment_w(size_t a_fragment_size)
     printf("-------------------------------------------------\r\n");
     printf("Fragment write test: writing file\r\n");
 
-    print_page_info(0x30000, 4);
-
     file = pifs_fopen("fragwr.tst", "w");
     if (file)
     {

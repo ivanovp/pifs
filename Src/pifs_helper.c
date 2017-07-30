@@ -406,6 +406,7 @@ void pifs_parse_open_mode(pifs_file_t * a_file, const pifs_char_t * a_modes)
                 break;
             case 'a':
                 a_file->mode_append = TRUE;
+                a_file->mode_write = TRUE;
                 break;
             case 'b':
                 /* Binary, all operations are binary! */

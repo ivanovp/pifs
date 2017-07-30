@@ -172,8 +172,6 @@ void cmdTestPifsSeek (char* command, char* params)
 void cmdPageInfo (char* command, char* params)
 {
     unsigned long int    addr = 0;
-    pifs_block_address_t ba;
-    pifs_page_address_t  pa;
     //pifs_page_offset_t   po;
     char               * param;
     pifs_size_t          cntr = 1;
@@ -198,30 +196,7 @@ void cmdPageInfo (char* command, char* params)
                 cntr = strtoul(param, NULL, 0);
             }
         }
-        //printf("Addr: 0x%X\r\n", addr);
-        //po = addr % PIFS_LOGICAL_PAGE_SIZE_BYTE;
-        pa = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) % PIFS_LOGICAL_PAGE_PER_BLOCK;
-        ba = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) / PIFS_LOGICAL_PAGE_PER_BLOCK;
-        printf("Page                    Free    TBR     Erased\r\n");
-        do
-        {
-            printf("%-24s", pifs_ba_pa2str(ba, pa));
-            if (ba < PIFS_FLASH_BLOCK_NUM_ALL)
-            {
-                printf("%-8s", yesNo(pifs_is_page_free(ba, pa)));
-                printf("%-8s", yesNo(pifs_is_page_to_be_released(ba, pa)));
-                printf("%-8s\r\n", yesNo(pifs_is_page_erased(ba, pa)));
-            }
-            else
-            {
-                printf("ERROR: Invalid address!\r\n");
-                break;
-            }
-            if (cntr > 1)
-            {
-                pifs_inc_ba_pa(&ba, &pa);
-            }
-        } while (--cntr);
+        print_page_info(addr, cntr);
     }
     else
     {
@@ -474,41 +449,66 @@ void cmdReadFile (char* command, char* params)
     }
 }
 
-void cmdCreateFile (char* command, char* params)
+static void write_file(const char* a_filename, const char* a_mode)
 {
     P_FILE * file;
     size_t   read;
     size_t   written;
 
+    file = pifs_fopen(a_filename, a_mode);
+    if (file)
+    {
+        do
+        {
+            /* Wait until text is entered */
+            while (!getLine((uint8_t*)buf_w, sizeof(buf_w)))
+            {
+            }
+            /* Append CR LF */
+            strncat(buf_w, "\r\n", sizeof(buf_w));
+            read = strlen(buf_w);
+            //print_buffer(buf_w, read, 0);
+            if (read)
+            {
+                written = pifs_fwrite(buf_w, 1, read, file);
+                if (read != written)
+                {
+                    printf("ERROR: Cannot write file!\r\n");
+                }
+            }
+        } while (read && written == read && buf_w[0] != 'q');
+        pifs_fclose(file);
+    }
+    else
+    {
+        printf("ERROR: Cannot open file!\r\n");
+    }
+
+}
+
+void cmdCreateFile (char* command, char* params)
+{
     (void) command;
 
     if (params)
     {
         printf("Create file '%s'\r\n", params);
-        file = pifs_fopen(params, "w");
-        if (file)
-        {
-            do
-            {
-                /* Wait until text is entered */
-                while (!getLine((uint8_t*)buf_w, sizeof(buf_w)))
-                {
-                }
-                /* Append CR LF */
-                strncat(buf_w, "\r\n", sizeof(buf_w));
-                read = strlen(buf_w);
-                //print_buffer(buf_w, read, 0);
-                if (read)
-                {
-                    written = pifs_fwrite(buf_w, 1, read, file);
-                }
-            } while (read && written == read && buf_w[0] != 'q');
-            pifs_fclose(file);
-        }
-        else
-        {
-            printf("ERROR: Cannot open file!\r\n");
-        }
+        write_file(params, "w");
+    }
+    else
+    {
+        printf("ERROR: Missing parameter!\r\n");
+    }
+}
+
+void cmdAppendFile (char* command, char* params)
+{
+    (void) command;
+
+    if (params)
+    {
+        printf("Append file '%s'\r\n", params);
+        write_file(params, "a");
     }
     else
     {
@@ -882,6 +882,7 @@ parserCommand_t parserCommands[] =
     {"type",        "Read file",                        cmdReadFile},
 #endif
     {"create",      "Create file, write until 'q'",     cmdCreateFile},
+    {"append",      "Append file, write until 'q'",     cmdAppendFile},
     {"dump",        "Dump flash page in hexadecimal format", cmdDumpPage},
     {"d",           "Dump flash page in hexadecimal format", cmdDumpPage},
     {"map",         "Print map page",                   cmdMap},

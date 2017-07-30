@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 
+#include "api_pifs.h"
 #include "common.h"
 #include "parser.h"
 
