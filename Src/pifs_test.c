@@ -48,6 +48,8 @@
 #error PIFS_FILENAME_LEN_MAX shall be at least 12!
 #endif
 
+#define LARGE_FILE_SIZE  (2 * PIFS_MAP_ENTRY_PER_PAGE + 2)
+
 #define PIFS_TEST_ERROR_MSG(...)    do {    \
         printf("%s ERROR: ", __FUNCTION__); \
         printf(__VA_ARGS__);                \
@@ -338,6 +340,15 @@ pifs_status_t pifs_test_basic_r(const char * a_filename)
         {
             ret = check_buffers();
         }
+        if (pifs_feof(file))
+        {
+            printf("EOF indicator OK\r\n");
+        }
+        else
+        {
+            PIFS_TEST_ERROR_MSG("EOF indicator is wrong!\r\n");
+            ret = PIFS_ERROR_GENERAL;
+        }
         if (pifs_fclose(file))
         {
             PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
@@ -366,7 +377,7 @@ pifs_status_t pifs_test_large_w(void)
     if (file)
     {
         printf("File opened for writing\r\n");
-        for (i = 0; i < 2 * PIFS_MAP_ENTRY_PER_PAGE + 2 && ret == PIFS_SUCCESS; i++)
+        for (i = 0; i < LARGE_FILE_SIZE && ret == PIFS_SUCCESS; i++)
         {
             generate_buffer(i);
 //            print_buffer(test_buf_w, sizeof(test_buf_w), 0);
@@ -406,7 +417,7 @@ pifs_status_t pifs_test_large_r(void)
     if (file)
     {
         printf("File opened for reading\r\n");
-        for (i = 0; i < 2 * PIFS_MAP_ENTRY_PER_PAGE + 2 && ret == PIFS_SUCCESS; i++)
+        for (i = 0; i < LARGE_FILE_SIZE && ret == PIFS_SUCCESS; i++)
         {
             generate_buffer(i);
             read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
@@ -415,11 +426,28 @@ pifs_status_t pifs_test_large_r(void)
                 PIFS_TEST_ERROR_MSG("Cannot read file!\r\n");
                 ret = PIFS_ERROR_GENERAL;
             }
+            if (i < LARGE_FILE_SIZE - 1)
+            {
+                if (pifs_feof(file))
+                {
+                    PIFS_TEST_ERROR_MSG("EOF indicator is wrong!\r\n");
+                    ret = PIFS_ERROR_GENERAL;
+                }
+            }
 //            print_buffer(test_buf_r, sizeof(test_buf_r), 0);
             if (ret == PIFS_ERROR_GENERAL)
             {
                 ret = check_buffers();
             }
+        }
+        if (pifs_feof(file))
+        {
+            printf("EOF indicator OK\r\n");
+        }
+        else
+        {
+            PIFS_TEST_ERROR_MSG("EOF indicator is wrong!\r\n");
+            ret = PIFS_ERROR_GENERAL;
         }
         if (pifs_fclose(file))
         {

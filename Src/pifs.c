@@ -1750,20 +1750,27 @@ int pifs_remove(const pifs_char_t * a_filename)
     return ret;
 }
 
-int pifs_rename(const pifs_char_t * a_filename, const pifs_char_t * a_newname)
+/**
+ * @brief pifs_rename Change name of file.
+ *
+ * @param[in] a_oldname Existing file's name.
+ * @param[in] a_newname New file name.
+ * @return 0: if rename was successfuly. Other: error occurred.
+ */
+int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
 {
     pifs_status_t  ret;
     pifs_entry_t * entry = &pifs.entry;
 
-    PIFS_NOTICE_MSG("filename: '%s'\r\n", a_filename);
-    ret = pifs_check_filename(a_filename);
+    PIFS_NOTICE_MSG("filename: '%s'\r\n", a_oldname);
+    ret = pifs_check_filename(a_oldname);
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_find_entry(a_filename, entry);
+        ret = pifs_find_entry(a_oldname, entry);
         if (ret == PIFS_SUCCESS)
         {
             /* File already exist */
-            ret = pifs_clear_entry(a_filename);
+            ret = pifs_clear_entry(a_oldname);
         }
         if (ret == PIFS_SUCCESS)
         {
@@ -1788,6 +1795,19 @@ int pifs_ferror(P_FILE * a_file)
 {
     pifs_file_t * file = (pifs_file_t*) a_file;
     int ret = file->status;
+
+    return ret;
+}
+
+/**
+ * @brief pifs_feof Check end-of-file indicator.
+ * @param[in] a_file Pointer to opened file.
+ * @return 0: end-of-file reached, other: not end-of-file.
+ */
+int pifs_feof(P_FILE * a_file)
+{
+    pifs_file_t * file = (pifs_file_t*) a_file;
+    int ret = file->read_pos == file->entry.file_size;
 
     return ret;
 }
