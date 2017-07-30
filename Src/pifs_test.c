@@ -30,6 +30,9 @@
 #define ENABLE_READ_FRAGMENT_TEST     1
 #define ENABLE_SEEK_READ_TEST         1
 #define ENABLE_SEEK_WRITE_TEST        0
+#if ENABLE_BASIC_TEST
+#define ENABLE_RENAME_TEST            1
+#endif
 #if ENABLE_SMALL_FILES_TEST
 #define ENABLE_LIST_DIRECTORY_TEST    1
 #endif
@@ -253,6 +256,9 @@ pifs_status_t pifs_test_basic_w(const char * a_filename)
 {
     pifs_status_t ret = PIFS_SUCCESS;
     const char  * filename = "basic.tst";
+#if ENABLE_RENAME_TEST
+    const char  * filename2 = "basic2.tst";
+#endif
     P_FILE      * file;
     size_t        written_size = 0;
 
@@ -281,6 +287,13 @@ pifs_status_t pifs_test_basic_w(const char * a_filename)
             PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
+#if ENABLE_RENAME_TEST
+        if (ret == PIFS_SUCCESS)
+        {
+            printf("Renaming '%s' to '%s'...\r\n", filename, filename2);
+            ret = pifs_rename(filename, filename2);
+        }
+#endif
     }
     else
     {
@@ -293,7 +306,11 @@ pifs_status_t pifs_test_basic_w(const char * a_filename)
 pifs_status_t pifs_test_basic_r(const char * a_filename)
 {
     pifs_status_t ret = PIFS_SUCCESS;
+#if ENABLE_RENAME_TEST
+    const char  * filename = "basic2.tst";
+#else
     const char  * filename = "basic.tst";
+#endif
     P_FILE      * file;
     size_t        read_size = 0;
 
