@@ -239,9 +239,10 @@ void cmdDebug (char* command, char* params)
     printf("ret: %i, ba: %i\r\n", ret, ba);
 
     printf("Find to free block...\r\n");
-    ret = pifs_find_free_block(PIFS_MANAGEMENT_BLOCKS,
-                               PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT | PIFS_BLOCK_TYPE_DATA,
-                               &pifs.header, &ba);
+    ret = pifs_find_block_wl(PIFS_MANAGEMENT_BLOCKS,
+                             PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT | PIFS_BLOCK_TYPE_DATA,
+                             TRUE,
+                             &pifs.header, &ba);
     printf("ret: %i, ba: %i\r\n", ret, ba);
 }
 

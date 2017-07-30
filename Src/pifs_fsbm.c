@@ -536,10 +536,21 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
     return ret;
 }
 
-pifs_status_t pifs_find_free_block(pifs_size_t a_block_count,
-                                   pifs_block_type_t a_block_type,
-                                   pifs_header_t * a_header,
-                                   pifs_block_address_t * a_block_address)
+/**
+ * @brief pifs_find_block_wl Find free/to be released block with wear leveling.
+ *
+ * @param[in] a_block_count      Number of blocks to find.
+ * @param[in] a_block_type       Management, data block, etc. @see pifs_block_type_t
+ * @param[in] a_is_free          TRUE: find free blocks, FALSE: find to be released/free blocks.
+ * @param[in] a_header           Pointer to file system header.
+ * @param[out] a_block_address   Found block address.
+ * @return PIFS_SUCCESS if block found.
+ */
+pifs_status_t pifs_find_block_wl(pifs_size_t a_block_count,
+                                 pifs_block_type_t a_block_type,
+                                 bool_t a_is_free,
+                                 pifs_header_t * a_header,
+                                 pifs_block_address_t * a_block_address)
 {
     pifs_status_t        ret;
     pifs_block_address_t ba;
@@ -550,7 +561,7 @@ pifs_status_t pifs_find_free_block(pifs_size_t a_block_count,
     find.page_count_minimum = a_block_count * PIFS_LOGICAL_PAGE_PER_BLOCK;
     find.page_count_desired = a_block_count * PIFS_LOGICAL_PAGE_PER_BLOCK;
     find.block_type = a_block_type;
-    find.is_free = FALSE; /* Page is to be released block or free! */
+    find.is_free = a_is_free;
     find.is_same_block = TRUE;
     find.header = a_header;
 
@@ -574,7 +585,7 @@ pifs_status_t pifs_find_free_block(pifs_size_t a_block_count,
     }
     if (ret != PIFS_SUCCESS)
     {
-        PIFS_WARNING_MSG("No free block found!\r\n");
+        PIFS_WARNING_MSG("No block found!\r\n");
     }
 
     return ret;

@@ -490,10 +490,11 @@ pifs_status_t pifs_merge(void)
         /* Old header's primary management blocks and data blocks are allowed */
         /* TODO this won't find PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT as they are */
         /* marked used. Simply remove 'PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT |' ? */
-        ret = pifs_find_free_block(PIFS_MANAGEMENT_BLOCKS,
-                                   PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT | PIFS_BLOCK_TYPE_DATA,
-                                   &old_header,
-                                   &next_mgmt_ba);
+        ret = pifs_find_block_wl(PIFS_MANAGEMENT_BLOCKS,
+                                 PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT | PIFS_BLOCK_TYPE_DATA,
+                                 FALSE,
+                                 &old_header,
+                                 &next_mgmt_ba);
         if (ret == PIFS_ERROR_NO_MORE_SPACE)
         {
             /* Old management area will be the next management block */
