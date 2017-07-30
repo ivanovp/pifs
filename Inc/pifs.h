@@ -226,6 +226,9 @@ typedef uint8_t pifs_wear_level_bits_t;
 #else
 #define PIFS_INVERT_ATTRIBUTE_BITS      0
 #endif
+#if PIFS_ENABLE_DIRECTORIES && !PIFS_ENABLE_ATTRIBUTES
+#error PIFS_ENABLE_ATTRIBUTES shall be 1 if PIFS_ENABLE_DIRECTORIES is 1!
+#endif
 
 #if PIFS_PATH_SEPARATOR_CHAR != '/' && PIFS_PATH_SEPARATOR_CHAR != '\\'
 #error Invalid PIFS_PATH_SEPARATOR_CHAR! Forward slash '/' or backslash '\\' are supported!
@@ -293,10 +296,13 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
     pifs_char_t             name[PIFS_FILENAME_LEN_MAX];
-#if PIFS_ENABLE_ATTRIBUTE
+#if PIFS_ENABLE_ATTRIBUTES
     uint8_t                 attrib;
 #endif
     /* TODO implement file date and time! modified, created, etc? */
+#if PIFS_ENABLE_USER_DATA
+    pifs_user_data_t        user_data;
+#endif
     pifs_address_t          first_map_address;  /**< First map page's address */
     pifs_file_size_t        file_size;          /**< Bytes written to file */
 } pifs_entry_t;
@@ -389,7 +395,7 @@ typedef struct
     pifs_entry_t            entry;                                        /**< For merging */
     /* Page cache */
     pifs_address_t          cache_page_buf_address;                       /**< Address of cache_page_buf */
-    uint8_t                 cache_page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];    /**< Flash page buffer for cache */
+    uint8_t                 cache_page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];  /**< Flash page buffer for cache */
     bool_t                  cache_page_buf_is_dirty;
     /* Opened files and directories */
     pifs_file_t             file[PIFS_OPEN_FILE_NUM_MAX];                 /**< Opened files */
@@ -397,12 +403,14 @@ typedef struct
     pifs_dir_t              dir[PIFS_OPEN_DIR_NUM_MAX];                   /**< Opened directories */
     /* Delta pages */
     uint8_t                 delta_map_page_buf[PIFS_DELTA_MAP_PAGE_NUM][PIFS_LOGICAL_PAGE_SIZE_BYTE];
+    /** TRUE: delta_map_page_buf's content is valid */
     bool_t                  delta_map_page_is_read PIFS_BOOL_SIZE;
+    /** TRUE: delta_map_page_buf is inconsistent, it shall be written to the flash memory */
     bool_t                  delta_map_page_is_dirty PIFS_BOOL_SIZE;
-    /* General page buffer used by pifs_write_delta(), */
-    /* pifs_copy_fsbm(), pifs_wear_level_list_init() */
-    uint8_t                 page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];           /**< Flash page buffer */
-    uint8_t                 fseek_page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];     /**< Flash page buffer */
+    /** General page buffer used by pifs_write_delta(),
+     * pifs_copy_fsbm(), pifs_wear_level_list_init() */
+    uint8_t                 page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];
+    uint8_t                 fseek_page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];  /**< Flash page buffer */
 } pifs_t;
 
 extern pifs_t pifs;

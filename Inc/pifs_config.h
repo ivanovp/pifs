@@ -22,7 +22,9 @@
 #define PIFS_OPEN_DIR_NUM_MAX           2u   /**< Maximum number of opened directories */
 #define PIFS_FILENAME_LEN_MAX           32u  /**< Maximum length of file name */
 #define PIFS_ENTRY_NUM_MAX              254u /**< Maximum number of files and directories */
-#define PIFS_ENABLE_ATTRIBUTE           1u   /**< 1: Use attribute field of files, 0: don't use attribute field */
+#define PIFS_ENABLE_ATTRIBUTES          1u   /**< 1: Use attribute field of files, 0: don't use attribute field */
+#define PIFS_ENABLE_USER_DATA           1u   /**< 1: Add user data (pifs_user_data_t) to every file, 0: don't add user data */
+#define PIFS_ENABLE_DIRECTORIES         1u   /**< 1: Support directories, 0: only support root directory */
 #define PIFS_MANAGEMENT_BLOCKS          6u   /**< Number of management blocks. Minimum: 1 (Allocated area is twice of this number.) */
 #define PIFS_CHECKSUM_SIZE              4u   /**< Size of checksum variable in bytes. Valid values are 1, 2 and 4. */
 #define PIFS_MAP_PAGE_COUNT_SIZE        1u   /**< Size of page count variable of map entry in bytes. Valid values are 1, 2 and 4. */
@@ -40,5 +42,16 @@
 #define PIFS_ALIGNED_ATTRIBUTE(align)   __attribute__((aligned(align)))
 
 typedef char pifs_char_t;
+
+#if PIFS_ENABLE_USER_DATA
+/**
+ * pifs_user_data_t is saved to every file if PIFS_ENABLE_USER_DATA is 1.
+ */
+typedef struct
+{
+    uint32_t ctime;
+    uint32_t cdate;
+} pifs_user_data_t;
+#endif
 
 #endif /* _INCLUDE_PIFS_CONFIG_H_ */

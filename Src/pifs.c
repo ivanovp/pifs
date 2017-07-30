@@ -817,17 +817,28 @@ void pifs_internal_open(pifs_file_t * a_file,
 #if PIFS_DEBUG_LEVEL >= 6
             print_buffer(entry, sizeof(pifs_entry_t), 0);
 #endif
-            /* Check if file size is valid or file is opened during merge */
-            if ((a_file->entry.file_size < PIFS_FILE_SIZE_ERASED && a_is_merge_allowed)
-                    || !a_is_merge_allowed)
+#if PIFS_ENABLE_DIRECTORIES
+            if (!(a_file->entry.attrib & PIFS_ATTRIB_DIR))
             {
-                a_file->is_opened = TRUE;
+#endif
+                /* Check if file size is valid or file is opened during merge */
+                if ((a_file->entry.file_size < PIFS_FILE_SIZE_ERASED && a_is_merge_allowed)
+                        || !a_is_merge_allowed)
+                {
+                    a_file->is_opened = TRUE;
+                }
+                else
+                {
+                    PIFS_DEBUG_MSG("File size of %s is invalid!\r\n", a_filename);
+                    a_file->status = PIFS_ERROR_FILE_NOT_FOUND;
+                }
             }
+#if PIFS_ENABLE_DIRECTORIES
             else
             {
-                PIFS_DEBUG_MSG("File size of %s is invalid!\r\n", a_filename);
-                a_file->status = PIFS_ERROR_FILE_NOT_FOUND;
+                a_file->status = PIFS_ERROR_IS_A_DIRECTORY;
             }
+#endf
         }
         if (a_file->mode_create_new_file || (a_file->mode_append && !a_file->is_opened))
         {
@@ -868,7 +879,7 @@ void pifs_internal_open(pifs_file_t * a_file,
                 PIFS_DEBUG_MSG("Map page: %u free page found %s\r\n", page_count_found, pifs_ba_pa2str(ba, pa));
                 memset(entry, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
                 strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
-#if PIFS_ENABLE_ATTRIBUTE
+#if PIFS_ENABLE_ATTRIBUTES
                 entry->attrib = PIFS_ATTRIB_ARCHIVE;
 #endif
                 entry->first_map_address.block_address = ba;
