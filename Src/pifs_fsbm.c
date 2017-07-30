@@ -320,24 +320,32 @@ pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_desired,
                                      pifs_page_address_t * a_page_address,
                                      pifs_page_count_t * a_page_count_found)
 {
-    pifs_status_t        ret;
-    pifs_block_address_t ba;
+    pifs_status_t   ret = PIFS_ERROR_NO_MORE_SPACE;
+    pifs_find_t     find;
+    pifs_size_t     i;
+
+    find.page_count_minimum = 1;
+    find.page_count_desired = a_page_count_desired;
+    find.block_type = a_block_type;
+    find.is_free = TRUE;
+    find.is_same_block = FALSE;
+    find.header = &pifs.header;
 
     /* Dynamic wear leveling */
-    ret = pifs_find_least_weared_block(&pifs.header, &ba, a_block_type, NULL);
-    if (ret == PIFS_SUCCESS)
+    for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_ERROR_NO_MORE_SPACE; i++)
     {
-        /* Try to find free page in the least weared block */
-        ret = pifs_find_page(1, a_page_count_desired, a_block_type, TRUE, FALSE,
-                             ba,
-                             a_block_address, a_page_address, a_page_count_found);
+        /* Try to find free pages in the least weared block */
+        find.start_block_address = pifs.header.least_weared_blocks[i];
+        find.end_block_address = find.start_block_address + 1;
+        ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
     }
+
     if (ret != PIFS_SUCCESS)
     {
         /* No success, try to find page in anywhere */
-        ret = pifs_find_page(1, a_page_count_desired, a_block_type, TRUE, FALSE,
-                             PIFS_FLASH_BLOCK_RESERVED_NUM,
-                             a_block_address, a_page_address, a_page_count_found);
+        find.start_block_address = PIFS_FLASH_BLOCK_RESERVED_NUM;
+        find.end_block_address = PIFS_FLASH_BLOCK_NUM_ALL;
+        ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
     }
 
     return ret;
@@ -554,11 +562,12 @@ pifs_status_t pifs_find_block_wl(pifs_size_t a_block_count,
                                  pifs_header_t * a_header,
                                  pifs_block_address_t * a_block_address)
 {
-    pifs_status_t        ret;
+    pifs_status_t        ret = PIFS_ERROR_NO_MORE_SPACE;
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
     pifs_page_count_t    page_count;
     pifs_find_t          find;
+    pifs_size_t          i;
 
     find.page_count_minimum = a_block_count * PIFS_LOGICAL_PAGE_PER_BLOCK;
     find.page_count_desired = a_block_count * PIFS_LOGICAL_PAGE_PER_BLOCK;
@@ -568,16 +577,16 @@ pifs_status_t pifs_find_block_wl(pifs_size_t a_block_count,
     find.header = a_header;
 
     /* Dynamic wear leveling */
-    ret = pifs_find_least_weared_block(a_header, &find.start_block_address, a_block_type, NULL);
-    if (ret == PIFS_SUCCESS)
+    for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_ERROR_NO_MORE_SPACE; i++)
     {
-        /* Try to find free page in the least weared block */
+        /* Try to find free pages in the least weared block */
+        find.start_block_address = a_header->least_weared_blocks[i];
         find.end_block_address = find.start_block_address + 1;
         ret = pifs_find_page_adv(&find, &ba, &pa, &page_count);
     }
     if (ret != PIFS_SUCCESS)
     {
-        /* Try again */
+        /* Not found, try to find anywhere */
         find.start_block_address = PIFS_FLASH_BLOCK_RESERVED_NUM;
         find.end_block_address = PIFS_FLASH_BLOCK_NUM_ALL;
         ret = pifs_find_page_adv(&find, &ba, &pa, &page_count);
