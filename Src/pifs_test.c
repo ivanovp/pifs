@@ -263,6 +263,9 @@ pifs_status_t pifs_test_basic_w(const char * a_filename)
 #endif
     P_FILE      * file;
     size_t        written_size = 0;
+#if PIFS_ENABLE_USER_DATA
+    pifs_user_data_t user_data;
+#endif
 
     if (a_filename)
     {
@@ -276,6 +279,19 @@ pifs_status_t pifs_test_basic_w(const char * a_filename)
     if (file)
     {
         printf("File opened for writing\r\n");
+#if PIFS_ENABLE_USER_DATA
+        fill_buffer(&user_data, sizeof(user_data), FILL_TYPE_SEQUENCE_BYTE, 42);
+        ret = pifs_fsetuserdata(file, &user_data);
+        if (ret == PIFS_SUCCESS)
+        {
+            printf("User data set\r\n");
+        }
+        else
+        {
+            PIFS_TEST_ERROR_MSG("Cannot set user data!\r\n");
+            ret = PIFS_ERROR_GENERAL;
+        }
+#endif
         generate_buffer(42);
         //print_buffer(test_buf_w, sizeof(test_buf_w), 0);
         written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
@@ -315,6 +331,10 @@ pifs_status_t pifs_test_basic_r(const char * a_filename)
 #endif
     P_FILE      * file;
     size_t        read_size = 0;
+#if PIFS_ENABLE_USER_DATA
+    pifs_user_data_t user_data_w;
+    pifs_user_data_t user_data_r;
+#endif
 
     if (a_filename)
     {
@@ -349,6 +369,19 @@ pifs_status_t pifs_test_basic_r(const char * a_filename)
             PIFS_TEST_ERROR_MSG("EOF indicator is wrong!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
+#if PIFS_ENABLE_USER_DATA
+        fill_buffer(&user_data_w, sizeof(user_data_w), FILL_TYPE_SEQUENCE_BYTE, 42);
+        ret = pifs_fgetuserdata(file, &user_data_r);
+        if (compare_buffer(&user_data_w, sizeof(user_data_w), &user_data_r) == PIFS_SUCCESS)
+        {
+            printf("User data OK\r\n");
+        }
+        else
+        {
+            PIFS_TEST_ERROR_MSG("User data mismatch!\r\n");
+            ret = PIFS_ERROR_GENERAL;
+        }
+#endif
         if (pifs_fclose(file))
         {
             PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");

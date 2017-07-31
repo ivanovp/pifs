@@ -825,8 +825,8 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
 #endif
 #if PIFS_ENABLE_DIRECTORIES
             if (!(a_file->entry.attrib & PIFS_ATTRIB_DIR))
-            {
 #endif
+            {
                 /* Check if file size is valid or file is opened during merge */
                 if ((a_file->entry.file_size < PIFS_FILE_SIZE_ERASED && a_is_merge_allowed)
                         || !a_is_merge_allowed)
@@ -1517,6 +1517,53 @@ long int pifs_ftell(P_FILE * a_file)
 
     return pos;
 }
+
+#if PIFS_ENABLE_USER_DATA
+/**
+ * @brief pifs_fgetuserdata Not standard function to get user defined data of
+ * file.
+ *
+ * @param[in] a_file        Pointer to file.
+ * @param[out] a_user_data  Pointer to user data structure to fill.
+ * @return 0 if success.
+ */
+int pifs_fgetuserdata(P_FILE * a_file, pifs_user_data_t * a_user_data)
+{
+    pifs_status_t ret = PIFS_ERROR_GENERAL;
+    pifs_file_t * file = (pifs_file_t*) a_file;
+
+    if (file->is_opened)
+    {
+        memcpy(a_user_data, &file->entry.user_data, sizeof(pifs_user_data_t));
+        ret = PIFS_SUCCESS;
+    }
+
+    return ret;
+}
+
+/**
+ * @brief pifs_fsetuserdata Not standard function to set user defined data of
+ * file.
+ *
+ * @param[in] a_file        Pointer to file.
+ * @param[out] a_user_data  Pointer to user data structure to set.
+ * @return 0 if success.
+ */
+int pifs_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data)
+{
+    pifs_file_t * file = (pifs_file_t*) a_file;
+
+    if (file->is_opened)
+    {
+        memcpy(&file->entry.user_data, a_user_data, sizeof(pifs_user_data_t));
+
+        file->status = pifs_update_entry(file->entry.name, &file->entry,
+                                         pifs.header.entry_list_address.block_address,
+                                         pifs.header.entry_list_address.page_address);
+    }
+    return file->status;
+}
+#endif
 
 /**
  * @brief pifs_remove Remove file.

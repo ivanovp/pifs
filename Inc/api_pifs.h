@@ -95,6 +95,10 @@ int pifs_fclose(P_FILE * a_file);
 int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin);
 void pifs_rewind(P_FILE * a_file);
 long int pifs_ftell(P_FILE * a_file);
+#if PIFS_ENABLE_USER_DATA
+int pifs_fgetuserdata(P_FILE * a_file, pifs_user_data_t * a_user_data);
+int pifs_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data);
+#endif
 int pifs_remove(const pifs_char_t * a_filename);
 int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname);
 int pifs_ferror(P_FILE * a_file);
