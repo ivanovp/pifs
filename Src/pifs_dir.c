@@ -160,7 +160,7 @@ int pifs_closedir(pifs_DIR * a_dirp)
 }
 
 #if PIFS_ENABLE_DIRECTORIES
-int pifs_mkdir(const pifs_char_t * a_filename, pifs_mode_t a_mode)
+int pifs_mkdir(const pifs_char_t * a_filename)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_entry_t       * entry = &pifs.entry;
@@ -181,7 +181,7 @@ int pifs_mkdir(const pifs_char_t * a_filename, pifs_mode_t a_mode)
         /* #3 Mark entry list page */
         if (ret == PIFS_SUCCESS)
         {
-            ret = pifs_find_free_page_wl(PIFS_ENTRY_LIST_SIZE_PAGE,
+            ret = pifs_find_free_page_wl(PIFS_ENTRY_LIST_SIZE_PAGE, PIFS_ENTRY_LIST_SIZE_PAGE,
                                          PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT,
                                          &ba, &pa, &page_count_found);
         }

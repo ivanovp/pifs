@@ -272,7 +272,7 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
             }
             if (ret == PIFS_SUCCESS)
             {
-                ret = pifs_find_free_page_wl(1, PIFS_BLOCK_TYPE_DATA,
+                ret = pifs_find_free_page_wl(1, 1, PIFS_BLOCK_TYPE_DATA,
                                              &fba, &fpa, &page_count_found);
             }
             if (ret == PIFS_SUCCESS)

@@ -166,7 +166,7 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
     if (a_file->status == PIFS_ERROR_END_OF_FILE)
     {
         PIFS_DEBUG_MSG("End of map, new map will be created\r\n");
-        a_file->status = pifs_find_free_page_wl(PIFS_MAP_PAGE_NUM,
+        a_file->status = pifs_find_free_page_wl(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM,
                                                 PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT,
                                                 &ba, &pa, &page_count_found);
         if (a_file->status == PIFS_SUCCESS)

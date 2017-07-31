@@ -314,7 +314,8 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
  * @param[out] a_page_count_found  Number of free pages found.
  * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_GENERAL: if no free pages found.
  */
-pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_desired,
+pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_minimum,
+                                     pifs_page_count_t a_page_count_desired,
                                      pifs_block_type_t a_block_type,
                                      pifs_block_address_t * a_block_address,
                                      pifs_page_address_t * a_page_address,
@@ -324,7 +325,7 @@ pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_desired,
     pifs_find_t     find;
     pifs_size_t     i;
 
-    find.page_count_minimum = 1;
+    find.page_count_minimum = a_page_count_minimum;
     find.page_count_desired = a_page_count_desired;
     find.block_type = a_block_type;
     find.is_free = TRUE;

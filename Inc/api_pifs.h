@@ -104,7 +104,7 @@ pifs_DIR * pifs_opendir(const pifs_char_t * a_name);
 struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp);
 int pifs_closedir(pifs_DIR * a_dirp);
 #if PIFS_ENABLE_DIRECTORIES
-int pifs_mkdir(const pifs_char_t * a_filename, pifs_mode_t a_mode);
+int pifs_mkdir(const pifs_char_t * a_filename);
 int pifs_rmdir(const pifs_char_t * a_filename);
 int pifs_chdir(const pifs_char_t * a_filename);
 pifs_char_t * pifs_getcwd(pifs_char_t * buffer, size_t a_size);
