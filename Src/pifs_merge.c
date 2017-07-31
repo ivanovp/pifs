@@ -587,7 +587,9 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
 //                    free_data_pages, free_management_pages);
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_count_entries(&free_entries, &to_be_released_entries);
+        ret = pifs_count_entries(&free_entries, &to_be_released_entries,
+                                 pifs.header.entry_list_address.block_address,
+                                 pifs.header.entry_list_address.page_address);
 //        PIFS_NOTICE_MSG("free_entries: %lu, to_be_released_entries: %lu\r\n",
 //                        free_entries, to_be_released_entries);
     }

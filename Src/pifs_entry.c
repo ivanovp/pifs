@@ -32,11 +32,13 @@
  * PIFS_ERROR_NO_MORE_SPACE if entry list is full.
  * PIFS_ERROR_FLASH_WRITE if flash write failed.
  */
-pifs_status_t pifs_append_entry(pifs_entry_t * a_entry)
+pifs_status_t pifs_append_entry(pifs_entry_t * a_entry,
+                                pifs_block_address_t a_list_entry_block_address,
+                                pifs_page_address_t a_list_entry_page_address)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
-    pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
-    pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
+    pifs_block_address_t ba = a_list_entry_block_address;
+    pifs_page_address_t  pa = a_list_entry_page_address;
     bool_t               created = FALSE;
     pifs_entry_t         entry;
     pifs_size_t          i;
@@ -101,11 +103,13 @@ pifs_status_t pifs_append_entry(pifs_entry_t * a_entry)
  * @return PIFS_SUCCESS if entry found.
  * PIFS_ERROR_FILE_NOT_FOUND if entry not found.
  */
-pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const a_entry)
+pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const a_entry,
+                                pifs_block_address_t a_list_entry_block_address,
+                                pifs_page_address_t a_list_entry_page_address)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
-    pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
-    pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
+    pifs_block_address_t ba = a_list_entry_block_address;
+    pifs_page_address_t  pa = a_list_entry_page_address;
     bool_t               found = FALSE;
     pifs_entry_t         entry;
     pifs_size_t          i;
@@ -174,14 +178,18 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                         /* Restore entry bits */
                         a_entry->attrib ^= PIFS_ATTRIB_ALL;
 #endif
-                        ret = pifs_append_entry(a_entry);
+                        ret = pifs_append_entry(a_entry,
+                                                a_list_entry_block_address,
+                                                a_list_entry_page_address);
                         if (ret == PIFS_ERROR_NO_MORE_SPACE)
                         {
                             /* If entry cannot be appended, merge the blocks */
                             ret = pifs_merge();
                             if (ret == PIFS_SUCCESS)
                             {
-                                ret = pifs_append_entry(a_entry);
+                                ret = pifs_append_entry(a_entry,
+                                                        a_list_entry_block_address,
+                                                        a_list_entry_page_address);
                             }
                         }
                         else
@@ -213,11 +221,13 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
  * @return PIFS_SUCCESS if entry found.
  * PIFS_ERROR_FILE_NOT_FOUND if entry not found.
  */
-pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a_entry)
+pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a_entry,
+                              pifs_block_address_t a_list_entry_block_address,
+                              pifs_page_address_t a_list_entry_page_address)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
-    pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
-    pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
+    pifs_block_address_t ba = a_list_entry_block_address;
+    pifs_page_address_t  pa = a_list_entry_page_address;
     bool_t               found = FALSE;
     pifs_entry_t         entry;
     pifs_size_t          i;
@@ -282,9 +292,13 @@ pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a
  * @return PIFS_SUCCESS if entry found and cleared.
  * PIFS_ERROR_FILE_NOT_FOUND if entry not found.
  */
-pifs_status_t pifs_clear_entry(const pifs_char_t * a_name)
+pifs_status_t pifs_clear_entry(const pifs_char_t * a_name,
+                               pifs_block_address_t a_list_entry_block_address,
+                               pifs_page_address_t a_list_entry_page_address)
 {
-    return pifs_find_entry(a_name, NULL);
+    return pifs_find_entry(a_name, NULL,
+                           a_list_entry_block_address,
+                           a_list_entry_page_address);
 }
 
 /**
@@ -295,11 +309,13 @@ pifs_status_t pifs_clear_entry(const pifs_char_t * a_name)
  * PIFS_ERROR_NO_MORE_SPACE if entry list is full.
  * PIFS_ERROR_FLASH_WRITE if flash write failed.
  */
-pifs_status_t pifs_count_entries(pifs_size_t * a_free_entry_count, pifs_size_t * a_to_be_released_entry_count)
+pifs_status_t pifs_count_entries(pifs_size_t * a_free_entry_count, pifs_size_t * a_to_be_released_entry_count,
+                                pifs_block_address_t a_list_entry_block_address,
+                                pifs_page_address_t a_list_entry_page_address)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
-    pifs_block_address_t ba = pifs.header.entry_list_address.block_address;
-    pifs_page_address_t  pa = pifs.header.entry_list_address.page_address;
+    pifs_block_address_t ba = a_list_entry_block_address;
+    pifs_page_address_t  pa = a_list_entry_page_address;
     pifs_entry_t         entry;
     pifs_size_t          i;
     pifs_size_t          j;

@@ -168,7 +168,9 @@ int pifs_mkdir(const pifs_char_t * a_filename)
     pifs_page_address_t  pa;
     pifs_page_count_t    page_count_found;
 
-    ret = pifs_find_entry(a_filename, entry);
+    ret = pifs_find_entry(a_filename, entry,
+                          pifs.header.entry_list_address.block_address,
+                          pifs.header.entry_list_address.page_address);
     if (ret == PIFS_SUCCESS)
     {
         ret = PIFS_ERROR_FILE_ALREADY_EXIST;
@@ -193,7 +195,9 @@ int pifs_mkdir(const pifs_char_t * a_filename)
             entry->attrib = PIFS_ATTRIB_ARCHIVE | PIFS_ATTRIB_DIR;
             entry->first_map_address.block_address = ba;
             entry->first_map_address.page_address = pa;
-            ret = pifs_append_entry(entry);
+            ret = pifs_append_entry(entry,
+                                    pifs.header.entry_list_address.block_address,
+                                    pifs.header.entry_list_address.page_address);
             if (ret == PIFS_SUCCESS)
             {
                 PIFS_DEBUG_MSG("Entry created\r\n");
