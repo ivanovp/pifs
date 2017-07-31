@@ -786,10 +786,10 @@ pifs_status_t pifs_delete(void)
  * @param[in] a_modes               Pointer to open mode. NULL: open with existing modes.
  * @param[in] a_is_merge_allowed    TRUE: merge can be started.
  */
-void pifs_internal_open(pifs_file_t * a_file,
-                        const pifs_char_t * a_filename,
-                        const pifs_char_t * a_modes,
-                        bool_t a_is_merge_allowed)
+pifs_status_t pifs_internal_open(pifs_file_t * a_file,
+                                 const pifs_char_t * a_filename,
+                                 const pifs_char_t * a_modes,
+                                 bool_t a_is_merge_allowed)
 {
     pifs_entry_t       * entry = &a_file->entry;
     pifs_block_address_t ba = PIFS_BLOCK_ADDRESS_INVALID;
@@ -914,6 +914,8 @@ void pifs_internal_open(pifs_file_t * a_file,
             a_file->read_page_count = a_file->map_entry.page_count;
         }
     }
+
+    return a_file->status;
 }
 
 /**
@@ -936,7 +938,7 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
     }
     if (ret == PIFS_SUCCESS)
     {
-        pifs_internal_open(file, a_filename, a_modes, TRUE);
+        (void)pifs_internal_open(file, a_filename, a_modes, TRUE);
         PIFS_NOTICE_MSG("status: %i is_opened: %i\r\n", file->status, file->is_opened);
         if (file->status == PIFS_SUCCESS && file->is_opened)
         {
@@ -1519,7 +1521,7 @@ int pifs_remove(const pifs_char_t * a_filename)
     if (ret == PIFS_SUCCESS)
     {
         ret = PIFS_ERROR_FILE_NOT_FOUND;
-        pifs_internal_open(&pifs.internal_file, a_filename, "r", FALSE);
+        (void)pifs_internal_open(&pifs.internal_file, a_filename, "r", FALSE);
         if (pifs.internal_file.is_opened)
         {
             /* File already exist */
@@ -1553,6 +1555,12 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
     ret = pifs_check_filename(a_oldname);
     if (ret == PIFS_SUCCESS)
     {
+        ret = pifs_find_entry(a_newname, entry);
+        if (ret == PIFS_SUCCESS)
+        {
+            /* File already exist, remove! */
+            ret = pifs_remove(a_newname);
+        }
         ret = pifs_find_entry(a_oldname, entry);
         if (ret == PIFS_SUCCESS)
         {

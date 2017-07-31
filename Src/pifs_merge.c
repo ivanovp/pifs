@@ -172,7 +172,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
     PIFS_NOTICE_MSG("start\r\n");
 
     /* Re-create file in the new management block */
-    pifs_internal_open(&pifs.internal_file, a_old_entry->name, "w", FALSE);
+    (void)pifs_internal_open(&pifs.internal_file, a_old_entry->name, "w", FALSE);
     pifs.internal_file.entry.file_size = a_old_entry->file_size;
 #if PIFS_ENABLE_ATTRIBUTES
     pifs.internal_file.entry.attrib = a_old_entry->attrib ^ PIFS_ATTRIB_ALL;
@@ -538,7 +538,7 @@ pifs_status_t pifs_merge(void)
     if (ret == PIFS_SUCCESS)
     {
         /* Re-open files */
-        for (i = 0; i < PIFS_OPEN_FILE_NUM_MAX; i++)
+        for (i = 0; i < PIFS_OPEN_FILE_NUM_MAX && ret == PIFS_SUCCESS; i++)
         {
             file = &pifs.file[i];
             if (file_is_opened[i])
@@ -546,8 +546,8 @@ pifs_status_t pifs_merge(void)
                 /* Do not create new file, as it has already done */
                 file->mode_create_new_file = FALSE;
                 file->mode_file_shall_exist = TRUE;
-                pifs_internal_open(file, file->entry.name, NULL, FALSE);
-                if (file->status == PIFS_SUCCESS && file_pos[i])
+                ret = pifs_internal_open(file, file->entry.name, NULL, FALSE);
+                if (ret == PIFS_SUCCESS && file_pos[i])
                 {
                     /* Seek to the stored position */
                     pifs_fseek(file, file_pos[i], PIFS_SEEK_SET);
