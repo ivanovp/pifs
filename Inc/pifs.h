@@ -216,8 +216,8 @@ typedef uint8_t pifs_wear_level_bits_t;
 #if PIFS_LEAST_WEARED_BLOCK_NUM < 1
 #error PIFS_LEAST_WEARED_BLOCK_NUM shall be 1 at minimum!
 #endif
-#if PIFS_LEAST_WEARED_BLOCK_NUM > PIFS_FLASH_BLOCK_NUM_FS
-#error PIFS_LEAST_WEARED_BLOCK_NUM shall not be greater than PIFS_FLASH_BLOCK_NUM_FS!
+#if PIFS_LEAST_WEARED_BLOCK_NUM > PIFS_FLASH_BLOCK_NUM_FS - PIFS_MANAGEMENT_BLOCKS * 2
+#error PIFS_LEAST_WEARED_BLOCK_NUM shall not be greater than PIFS_FLASH_BLOCK_NUM_FS - PIFS_MANAGEMENT_BLOCKS * 2!
 #endif
 #if PIFS_FLASH_ERASED_BYTE_VALUE == 0xFF
 /* If erased value is 0xFF, invert attribute bits. */
