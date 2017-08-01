@@ -367,6 +367,7 @@ pifs_status_t pifs_check_block(pifs_char_t * a_filename,
  * specified block can be released.
  * Note: there shall be no free pages in the specified block!
  * This function is used for static wear leveling.
+ * TODO copy only pages found in the specified block!
  *
  * @param[in] a_block_address Block address to find.
  * @return PIFS_SUCCESS if block was succuessfuly released.
