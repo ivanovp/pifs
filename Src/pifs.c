@@ -302,6 +302,7 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
         {
             a_header->least_weared_blocks[i] = PIFS_BLOCK_ADDRESS_ERASED;
         }
+        a_header->wear_level_cntr_max = PIFS_WEAR_LEVEL_CNTR_MAX;
     }
     address.block_address = a_block_address;
     address.page_address = a_page_address;

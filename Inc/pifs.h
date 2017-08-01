@@ -290,6 +290,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_address_t          wear_level_list_address;
     /** Data blocks with lowest erase counter value */
     pifs_block_address_t    least_weared_blocks[PIFS_LEAST_WEARED_BLOCK_NUM];
+    pifs_wear_level_cntr_t  wear_level_cntr_max;
     /** Checksum shall be the last element! */
     pifs_checksum_t         checksum;
 } pifs_header_t;
