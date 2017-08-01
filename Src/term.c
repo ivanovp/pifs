@@ -243,8 +243,8 @@ void cmdGenerateWearLevel(char* command, char* params)
          i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_SUCCESS;
          i++)
     {
-        ret = pifs_get_wear_level(pifs.header.least_weared_blocks[i], &pifs.header, &wear_level);
-        printf("%5i | %i\r\n", pifs.header.least_weared_blocks[i], wear_level.wear_level_cntr);
+        ret = pifs_get_wear_level(pifs.header.least_weared_blocks[i].block_address, &pifs.header, &wear_level);
+        printf("%5i | %i\r\n", pifs.header.least_weared_blocks[i].block_address, wear_level.wear_level_cntr);
     }
 }
 
@@ -254,6 +254,8 @@ void cmdEmptyBlock(char* command, char* params)
     pifs_block_address_t ba;
     char               * param;
     bool_t               is_emptied;
+
+    (void) command;
 
     if (params)
     {
@@ -270,6 +272,8 @@ void cmdStaticWear(char* command, char* params)
     pifs_status_t   ret;
     pifs_size_t     max_block_num = 1;
     char          * param;
+
+    (void) command;
 
     if (params)
     {

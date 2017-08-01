@@ -37,6 +37,8 @@
                                                   0: write 0 values when seeking beyond file size (default). */
 #define PIFS_PATH_SEPARATOR_CHAR        '/'  /**< Character to separate directories in path, '/' or '\' */
 #define PIFS_LEAST_WEARED_BLOCK_NUM     16   /**< Number of stored least weared blocks */
+#define PIFS_STATIC_WEAR_LEVEL_LIMIT    20
+#define PIFS_STATIC_WEAR_LEVEL_PERCENT  10
 
 #define PIFS_PACKED_ATTRIBUTE           __attribute__((packed))
 #define PIFS_ALIGNED_ATTRIBUTE(align)   __attribute__((aligned(align)))

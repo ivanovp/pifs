@@ -293,7 +293,7 @@ pifs_status_t pifs_generate_least_weared_blocks(pifs_header_t * a_header)
 
     ret = pifs_get_block_wear_stats(PIFS_BLOCK_TYPE_DATA,
             a_header,
-            &(a_header->least_weared_blocks[0]),
+            &(a_header->least_weared_blocks[0].block_address),
             &wear_level_cntr,
             &(a_header->wear_level_cntr_max));
 
@@ -310,7 +310,7 @@ pifs_status_t pifs_generate_least_weared_blocks(pifs_header_t * a_header)
                 used = FALSE;
                 for (j = 0; j < i && !used; j++)
                 {
-                    if (a_header->least_weared_blocks[j] == ba)
+                    if (a_header->least_weared_blocks[j].block_address == ba)
                     {
                         used = TRUE;
                     }
@@ -322,7 +322,7 @@ pifs_status_t pifs_generate_least_weared_blocks(pifs_header_t * a_header)
                             && wear_level_entry.wear_level_cntr >= wear_level_cntr
                             && wear_level_entry.wear_level_cntr < last_wear_level_cntr )
                     {
-                        a_header->least_weared_blocks[i] = ba;
+                        a_header->least_weared_blocks[i].block_address = ba;
                         last_wear_level_cntr = wear_level_entry.wear_level_cntr;
                     }
                 }
@@ -469,7 +469,7 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
     for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_SUCCESS
          && a_max_block_num; i++)
     {
-        ba = pifs.header.least_weared_blocks[i];
+        ba = pifs.header.least_weared_blocks[i].block_address;
         ret = pifs_get_pages(TRUE, ba,
                              1, &free_management_pages, &free_data_pages);
         PIFS_NOTICE_MSG("Block %i, free data pages: %i\r\n", ba, free_data_pages);

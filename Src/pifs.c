@@ -300,7 +300,8 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
         a_header->counter++;
         for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM; i++)
         {
-            a_header->least_weared_blocks[i] = PIFS_BLOCK_ADDRESS_ERASED;
+            a_header->least_weared_blocks[i].block_address = PIFS_BLOCK_ADDRESS_ERASED;
+            a_header->least_weared_blocks[i].wear_level_cntr = PIFS_WEAR_LEVEL_CNTR_MAX;
         }
         a_header->wear_level_cntr_max = PIFS_WEAR_LEVEL_CNTR_MAX;
     }
