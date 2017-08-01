@@ -320,3 +320,152 @@ pifs_status_t pifs_generate_least_weared_blocks(pifs_header_t * a_header)
 
     return ret;
 }
+
+/**
+ * @brief pifs_check_block Check if specified block is used by file as data
+ * block.
+ * This function is used for static wear leveling.
+ *
+ * @param[in] a_filename        File name to check.
+ * @param[in] a_block_address   Block address to look for.
+ * @param[out] a_is_block_used  TRUE: block address is used by file.
+ * @return PIFS_SUCCESS if file was scanned successfully.
+ */
+pifs_status_t pifs_check_block(pifs_char_t * a_filename,
+                               pifs_block_address_t a_block_address,
+                               bool_t * a_is_block_used)
+{
+    pifs_status_t ret;
+    bool_t        is_block_used = FALSE;
+
+    ret = pifs_internal_open(&pifs.internal_file, a_filename, "r", FALSE);
+    if (ret == PIFS_SUCCESS)
+    {
+        do
+        {
+            if (pifs.internal_file.read_address.block_address == a_block_address)
+            {
+                is_block_used = TRUE;
+            }
+            ret = pifs_inc_read_address(&pifs.internal_file);
+        } while (ret == PIFS_SUCCESS && !is_block_used);
+        if (ret == PIFS_ERROR_END_OF_FILE)
+        {
+            /* Reaching end of file is not an error */
+            ret = PIFS_SUCCESS;
+        }
+        ret = pifs_fclose(&pifs.internal_file);
+    }
+    *a_is_block_used = is_block_used;
+
+    return ret;
+}
+
+/**
+ * @brief pifs_empty_block Create copy of all files which found in
+ * the specified block. The older files will be deleted, therefore the
+ * specified block can be released.
+ * Note: there shall be no free pages in the specified block!
+ * This function is used for static wear leveling.
+ *
+ * @param[in] a_block_address Block address to find.
+ * @return PIFS_SUCCESS if block was succuessfuly released.
+ */
+pifs_status_t pifs_empty_block(pifs_block_address_t a_block_address,
+                               bool_t * a_is_emptied)
+{
+    pifs_status_t   ret = PIFS_ERROR_NO_MORE_RESOURCE;
+    pifs_char_t     path[] = { PIFS_PATH_SEPARATOR_CHAR, 0 };
+    pifs_DIR      * dir;
+    pifs_dirent_t * dirent;
+    bool_t          is_block_used;
+    pifs_char_t     tmp_filename[PIFS_FILENAME_LEN_MAX];
+
+    *a_is_emptied = FALSE;
+    dir = pifs_opendir(path);
+    if (dir != NULL)
+    {
+        ret = PIFS_SUCCESS;
+        while ((dirent = pifs_readdir(dir)) && ret == PIFS_SUCCESS)
+        {
+//            printf("%-32s", dirent->d_name);
+//            printf("  %8i", pifs_filesize(dirent->d_name));
+//            printf("  %s", pifs_ba_pa2str(dirent->d_first_map_block_address, dirent->d_first_map_page_address));
+//            printf("\r\n");
+            ret = pifs_check_block(dirent->d_name, a_block_address, &is_block_used);
+            if (ret == PIFS_SUCCESS && is_block_used)
+            {
+                *a_is_emptied = TRUE;
+                PIFS_WARNING_MSG("File '%s' uses block %i\r\n", dirent->d_name, a_block_address);
+                strncpy(tmp_filename, dirent->d_name, PIFS_FILENAME_LEN_MAX);
+                /* TODO check filename length! */
+                /* TODO check if tmp_filename does not exists! */
+                strncat(tmp_filename, PIFS_FILENAME_TEMP_STR, PIFS_FILENAME_LEN_MAX);
+                PIFS_WARNING_MSG("Copy '%s' to '%s'...\r\n", dirent->d_name, tmp_filename);
+                ret = pifs_copy(dirent->d_name, tmp_filename);
+                if (ret == PIFS_SUCCESS)
+                {
+                    PIFS_WARNING_MSG("Done\r\n");
+                    PIFS_WARNING_MSG("Rename '%s' to '%s'...\r\n", tmp_filename, dirent->d_name);
+                    ret = pifs_rename(tmp_filename, dirent->d_name);
+                    if (ret == PIFS_SUCCESS)
+                    {
+                        PIFS_WARNING_MSG("Done\r\n");
+                    }
+                    else
+                    {
+                        PIFS_ERROR_MSG("Cannot rename '%s' to '%s'!",
+                                       tmp_filename, dirent->d_name);
+                    }
+                }
+                else
+                {
+                    PIFS_ERROR_MSG("Cannot copy '%s' to '%s'!",
+                                   dirent->d_name, tmp_filename);
+                }
+            }
+        }
+        if (pifs_closedir (dir) != 0)
+        {
+            PIFS_ERROR_MSG("Cannot close directory!\r\n");
+            ret = PIFS_ERROR_GENERAL;
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * @brief pifs_static_wear_leveling Do static wear leveling by moving files
+ * from least weared blocks.
+ *
+ * @param[in] a_max_block_num Maximum number of blocks to process.
+ * @return PIFS_SUCCESS if blocks were processed successfully.
+ */
+pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
+{
+    pifs_status_t           ret = PIFS_SUCCESS;
+    pifs_size_t             i;
+    pifs_size_t             free_data_pages;
+    pifs_size_t             free_management_pages;
+    pifs_block_address_t    ba;
+    bool_t                  is_emptied;
+
+    for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_SUCCESS
+         && a_max_block_num; i++)
+    {
+        ba = pifs.header.least_weared_blocks[i];
+        ret = pifs_get_pages(TRUE, ba,
+                             1, &free_management_pages, &free_data_pages);
+        if (ret == PIFS_SUCCESS && !free_data_pages)
+        {
+            ret = pifs_empty_block(ba, &is_emptied);
+            if (is_emptied)
+            {
+                a_max_block_num--;
+            }
+        }
+    }
+
+    return ret;
+}

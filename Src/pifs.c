@@ -1580,18 +1580,17 @@ int pifs_remove(const pifs_char_t * a_filename)
     ret = pifs_check_filename(a_filename);
     if (ret == PIFS_SUCCESS)
     {
-        ret = PIFS_ERROR_FILE_NOT_FOUND;
-        (void)pifs_internal_open(&pifs.internal_file, a_filename, "r", FALSE);
-        if (pifs.internal_file.is_opened)
+        ret = pifs_internal_open(&pifs.internal_file, a_filename, "r", FALSE);
+        if (ret == PIFS_SUCCESS)
         {
             /* File already exist */
-            pifs.internal_file.status = pifs_clear_entry(a_filename,
-                                                         pifs.header.entry_list_address.block_address,
-                                                         pifs.header.entry_list_address.page_address);
-            if (pifs.internal_file.status == PIFS_SUCCESS)
+            ret = pifs_clear_entry(a_filename,
+                                   pifs.header.entry_list_address.block_address,
+                                   pifs.header.entry_list_address.page_address);
+            if (ret == PIFS_SUCCESS)
             {
                 /* Mark allocated pages to be released */
-                pifs.internal_file.status = pifs_release_file_pages(&pifs.internal_file);
+                ret = pifs_release_file_pages(&pifs.internal_file);
             }
             ret = pifs_fclose(&pifs.internal_file);
         }
@@ -1689,9 +1688,9 @@ int pifs_copy(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
                     }
                 }
             } while (read_bytes > 0 && read_bytes == written_bytes);
+            ret = pifs_fclose(&pifs.internal_file);
         }
-        (void)pifs_fclose(&pifs.internal_file);
-        (void)pifs_fclose(file);
+        ret = pifs_fclose(file);
     }
 
     PIFS_SET_ERRNO(ret);

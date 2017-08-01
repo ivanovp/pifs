@@ -32,5 +32,11 @@ pifs_status_t pifs_find_least_weared_block(pifs_header_t * a_header,
                                           pifs_block_type_t a_block_type,
                                           pifs_wear_level_cntr_t * a_wear_level_cntr);
 pifs_status_t pifs_generate_least_weared_blocks(pifs_header_t * a_header);
+pifs_status_t pifs_check_block(pifs_char_t * a_filename,
+                               pifs_block_address_t a_block_address,
+                               bool_t * a_is_block_used);
+pifs_status_t pifs_empty_block(pifs_block_address_t a_block_address,
+                               bool_t * a_is_emptied);
+pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num);
 
 #endif /* _INCLUDE_PIFS_WEAR_H_ */

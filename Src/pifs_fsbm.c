@@ -741,10 +741,10 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
         } while (byte_cntr-- > 0 && ret == PIFS_SUCCESS && !end);
     }
 
-    if (ret == PIFS_SUCCESS && !found)
-    {
-        ret = PIFS_ERROR_NO_MORE_SPACE;
-    }
+//    if (ret == PIFS_SUCCESS && !found)
+//    {
+//        ret = PIFS_ERROR_NO_MORE_SPACE;
+//    }
 
     return ret;
 }

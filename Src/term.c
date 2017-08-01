@@ -253,14 +253,31 @@ void cmdEmptyBlock(char* command, char* params)
     pifs_status_t        ret;
     pifs_block_address_t ba;
     char               * param;
+    bool_t               is_emptied;
 
     if (params)
     {
         param = PARSER_getNextParam();
         ba = strtoul(param, NULL, 0);
         printf("Empty block %i...\r\n", ba);
-        ret = pifs_empty_block(ba);
+        ret = pifs_empty_block(ba, &is_emptied);
+        printf("Emptied: %s\r\n", yesNo(is_emptied));
     }
+}
+
+void cmdStaticWear(char* command, char* params)
+{
+    pifs_status_t   ret;
+    pifs_size_t     max_block_num = 1;
+    char          * param;
+
+    if (params)
+    {
+        param = PARSER_getNextParam();
+        max_block_num = strtoul(param, NULL, 0);
+    }
+    printf("Static wear leveling on %i blocks...\r\n", max_block_num);
+    ret = pifs_static_wear_leveling(max_block_num);
 }
 
 void cmdDebug (char* command, char* params)
@@ -996,6 +1013,7 @@ parserCommand_t parserCommands[] =
     {"w",           "Print wear level list",            cmdWearLevel},
     {"lw",          "Generate least weared blocks' list", cmdGenerateWearLevel},
     {"eb",          "Empty block",                      cmdEmptyBlock},
+    {"sw",          "Static wear leveling",             cmdStaticWear},
     {"fs",          "Print flash's statistics",         cmdFlashStat},
     {"quit",        "Quit",                             cmdQuit},
     {"q",           "Quit",                             cmdQuit},
