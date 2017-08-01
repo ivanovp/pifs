@@ -1274,7 +1274,7 @@ int pifs_fflush(P_FILE * a_file)
         PIFS_DEBUG_MSG("mode_write: %i, is_size_changed: %i, file_size: %i\r\n",
                        file->mode_write, file->is_size_changed,
                        file->entry.file_size);
-        if (file->mode_write && file->is_size_changed)
+        if (file->mode_write && (file->is_size_changed || !file->entry.file_size))
         {
             file->status = pifs_update_entry(file->entry.name, &file->entry,
                                              pifs.header.entry_list_address.block_address,
@@ -1650,6 +1650,8 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
 
 /**
  * @brief pifs_copy Copy file. This is a non-standard file operation.
+ * Note: this function shall not use pifs.internal_file as merge could be
+ * needed which uses the pifs.internal_file!
  *
  * @param[in] a_oldname Existing file's name.
  * @param[in] a_newname New file name.
@@ -1659,6 +1661,7 @@ int pifs_copy(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
 {
     pifs_status_t    ret = PIFS_ERROR_NO_MORE_RESOURCE;
     pifs_file_t    * file = NULL;
+    pifs_file_t    * file2 = NULL;
     pifs_size_t      read_bytes;
     pifs_size_t      written_bytes;
 
@@ -1667,12 +1670,8 @@ int pifs_copy(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
     file = pifs_fopen(a_oldname, "r");
     if (file)
     {
-        ret = pifs_check_filename(a_newname);
-        if (ret == PIFS_SUCCESS)
-        {
-            ret = pifs_internal_open(&pifs.internal_file, a_newname, "w", TRUE);
-        }
-        if (ret == PIFS_SUCCESS)
+        file2 = pifs_fopen(a_newname, "w");
+        if (file2)
         {
             do
             {
@@ -1681,16 +1680,26 @@ int pifs_copy(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
                 if (read_bytes > 0)
                 {
                     written_bytes = pifs_fwrite(pifs.sc_page_buf, 1,
-                                                read_bytes, &pifs.internal_file);
+                                                read_bytes, file2);
                     if (read_bytes != written_bytes)
                     {
-                        ret = pifs.internal_file.status;
+                        PIFS_ERROR_MSG("Cannot write: %i! Read bytes: %i, written bytes: %i\r\n",
+                                       file2->status, read_bytes, written_bytes);
+                        ret = file2->status;
                     }
                 }
             } while (read_bytes > 0 && read_bytes == written_bytes);
-            ret = pifs_fclose(&pifs.internal_file);
+            ret = pifs_fclose(file2);
+        }
+        else
+        {
+            PIFS_ERROR_MSG("Cannot open file '%s'\r\n", a_newname);
         }
         ret = pifs_fclose(file);
+    }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot open file '%s'\r\n", a_oldname);
     }
 
     PIFS_SET_ERRNO(ret);

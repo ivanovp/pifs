@@ -414,13 +414,13 @@ pifs_status_t pifs_empty_block(pifs_block_address_t a_block_address,
                     }
                     else
                     {
-                        PIFS_ERROR_MSG("Cannot rename '%s' to '%s'!",
+                        PIFS_ERROR_MSG("Cannot rename '%s' to '%s'!\r\n",
                                        tmp_filename, dirent->d_name);
                     }
                 }
                 else
                 {
-                    PIFS_ERROR_MSG("Cannot copy '%s' to '%s'!",
+                    PIFS_ERROR_MSG("Cannot copy '%s' to '%s'!\r\n",
                                    dirent->d_name, tmp_filename);
                 }
             }
