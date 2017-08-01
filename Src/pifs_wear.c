@@ -24,7 +24,7 @@
 #include "pifs_wear.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 3
 #include "pifs_debug.h"
 
 /**
@@ -396,21 +396,21 @@ pifs_status_t pifs_empty_block(pifs_block_address_t a_block_address,
             if (ret == PIFS_SUCCESS && is_block_used)
             {
                 *a_is_emptied = TRUE;
-                PIFS_WARNING_MSG("File '%s' uses block %i\r\n", dirent->d_name, a_block_address);
+                PIFS_NOTICE_MSG("File '%s' uses block %i\r\n", dirent->d_name, a_block_address);
                 strncpy(tmp_filename, dirent->d_name, PIFS_FILENAME_LEN_MAX);
                 /* TODO check filename length! */
                 /* TODO check if tmp_filename does not exists! */
                 strncat(tmp_filename, PIFS_FILENAME_TEMP_STR, PIFS_FILENAME_LEN_MAX);
-                PIFS_WARNING_MSG("Copy '%s' to '%s'...\r\n", dirent->d_name, tmp_filename);
+                PIFS_NOTICE_MSG("Copy '%s' to '%s'...\r\n", dirent->d_name, tmp_filename);
                 ret = pifs_copy(dirent->d_name, tmp_filename);
                 if (ret == PIFS_SUCCESS)
                 {
-                    PIFS_WARNING_MSG("Done\r\n");
-                    PIFS_WARNING_MSG("Rename '%s' to '%s'...\r\n", tmp_filename, dirent->d_name);
+                    PIFS_NOTICE_MSG("Done\r\n");
+                    PIFS_NOTICE_MSG("Rename '%s' to '%s'...\r\n", tmp_filename, dirent->d_name);
                     ret = pifs_rename(tmp_filename, dirent->d_name);
                     if (ret == PIFS_SUCCESS)
                     {
-                        PIFS_WARNING_MSG("Done\r\n");
+                        PIFS_NOTICE_MSG("Done\r\n");
                     }
                     else
                     {
@@ -457,6 +457,7 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
         ba = pifs.header.least_weared_blocks[i];
         ret = pifs_get_pages(TRUE, ba,
                              1, &free_management_pages, &free_data_pages);
+        PIFS_NOTICE_MSG("Block %i, free data pages: %i\r\n", ba, free_data_pages);
         if (ret == PIFS_SUCCESS && !free_data_pages)
         {
             ret = pifs_empty_block(ba, &is_emptied);
