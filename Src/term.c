@@ -22,6 +22,7 @@
 #include "pifs_delta.h"
 #include "pifs_fsbm.h"
 #include "pifs_wear.h"
+#include "pifs_merge.h"
 
 #define ENABLE_DOS_ALIAS    0
 #define CMD_BUF_SIZE        128
@@ -244,6 +245,21 @@ void cmdGenerateWearLevel(char* command, char* params)
     {
         ret = pifs_get_wear_level(pifs.header.least_weared_blocks[i], &pifs.header, &wear_level);
         printf("%5i | %i\r\n", pifs.header.least_weared_blocks[i], wear_level.wear_level_cntr);
+    }
+}
+
+void cmdEmptyBlock(char* command, char* params)
+{
+    pifs_status_t        ret;
+    pifs_block_address_t ba;
+    char               * param;
+
+    if (params)
+    {
+        param = PARSER_getNextParam();
+        ba = strtoul(param, NULL, 0);
+        printf("Empty block %i...\r\n", ba);
+        ret = pifs_empty_block(ba);
     }
 }
 
@@ -539,6 +555,35 @@ void cmdAppendFile (char* command, char* params)
         printf("ERROR: Missing parameter!\r\n");
     }
 }
+
+void cmdCopyFile (char* command, char* params)
+{
+    const char * old_name;
+    const char * new_name;
+    int ret;
+
+    (void) command;
+
+    if (params)
+    {
+        old_name = PARSER_getNextParam();
+        new_name = PARSER_getNextParam();
+        if (old_name && new_name)
+        {
+            printf("Copying file '%s' to '%s'... ", old_name, new_name);
+            ret = pifs_copy(old_name, new_name);
+            if (ret == 0)
+            {
+                printf("Done.\r\n");
+            }
+            else
+            {
+                printf("Error: %i\r\n", ret);
+            }
+        }
+    }
+}
+
 
 void cmdRenameFile (char* command, char* params)
 {
@@ -935,6 +980,7 @@ parserCommand_t parserCommands[] =
 #endif
     {"create",      "Create file, write until 'q'",     cmdCreateFile},
     {"append",      "Append file, write until 'q'",     cmdAppendFile},
+    {"cp",          "Copy file",                        cmdCopyFile},
     {"rename",      "Rename file",                      cmdRenameFile},
     {"dump",        "Dump flash page in hexadecimal format", cmdDumpPage},
     {"d",           "Dump flash page in hexadecimal format", cmdDumpPage},
@@ -949,6 +995,7 @@ parserCommand_t parserCommands[] =
     {"pi",          "Check if page is free/to be released/erased", cmdPageInfo},
     {"w",           "Print wear level list",            cmdWearLevel},
     {"lw",          "Generate least weared blocks' list", cmdGenerateWearLevel},
+    {"eb",          "Empty block",                      cmdEmptyBlock},
     {"fs",          "Print flash's statistics",         cmdFlashStat},
     {"quit",        "Quit",                             cmdQuit},
     {"q",           "Quit",                             cmdQuit},

@@ -19,5 +19,9 @@
 
 pifs_status_t pifs_merge(void);
 pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_count_minimum);
+pifs_status_t pifs_check_block(pifs_char_t * a_filename,
+                               pifs_block_address_t a_block_address,
+                               bool_t * a_is_block_used);
+pifs_status_t pifs_empty_block(pifs_block_address_t a_block_address);
 
 #endif /* _INCLUDE_PIFS_MERGE_H_ */

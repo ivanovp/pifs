@@ -52,11 +52,11 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
     do
     {
         /* Read free space bitmap */
-        ret = pifs_read(old_fsbm_ba, old_fsbm_pa, 0, &pifs.page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
+        ret = pifs_read(old_fsbm_ba, old_fsbm_pa, 0, &pifs.dmw_page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
 
         PIFS_DEBUG_MSG("Old free space bitmap:\r\n");
 #if PIFS_DEBUG_LEVEL >= 5
-        print_buffer(pifs.page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE,
+        print_buffer(pifs.dmw_page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE,
                      old_fsbm_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + old_fsbm_pa * PIFS_LOGICAL_PAGE_SIZE_BYTE);
 #endif
 
@@ -109,7 +109,7 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
 
             if (mark_block_free)
             {
-                pifs.page_buf[i] = PIFS_FLASH_ERASED_BYTE_VALUE;
+                pifs.dmw_page_buf[i] = PIFS_FLASH_ERASED_BYTE_VALUE;
             }
 
             fpa += PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE;
@@ -124,10 +124,10 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
 
         if (ret == PIFS_SUCCESS)
         {
-            ret = pifs_write(new_fsbm_ba, new_fsbm_pa, 0, &pifs.page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
+            ret = pifs_write(new_fsbm_ba, new_fsbm_pa, 0, &pifs.dmw_page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
             PIFS_DEBUG_MSG("New free space bitmap:\r\n");
 #if PIFS_DEBUG_LEVEL >= 5
-            print_buffer(pifs.page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE,
+            print_buffer(pifs.dmw_page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE,
                          new_fsbm_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + new_fsbm_pa * PIFS_LOGICAL_PAGE_SIZE_BYTE);
 #endif
         }
@@ -398,7 +398,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
  * #12 Re-open files and seek to the stored position.
  *     Therefore actual_map_address, map_header, etc. will be updated.
  *
- * @return PIFS_SUCCES when merge was successful.
+ * @return PIFS_SUCCESS when merge was successful.
  */
 pifs_status_t pifs_merge(void)
 {
@@ -663,6 +663,113 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
         else
         {
             PIFS_NOTICE_MSG("Merge is not needed!\r\n");
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * @brief pifs_check_block Check if specified block is used by file as data
+ * block.
+ *
+ * @param[in] a_filename        File name to check.
+ * @param[in] a_block_address   Block address to look for.
+ * @param[out] a_is_block_used  TRUE: block address is used by file.
+ * @return PIFS_SUCCESS if file was scanned successfully.
+ */
+pifs_status_t pifs_check_block(pifs_char_t * a_filename,
+                               pifs_block_address_t a_block_address,
+                               bool_t * a_is_block_used)
+{
+    pifs_status_t ret;
+    bool_t        is_block_used = FALSE;
+
+    ret = pifs_internal_open(&pifs.internal_file, a_filename, "r", FALSE);
+    if (ret == PIFS_SUCCESS)
+    {
+        do
+        {
+            if (pifs.internal_file.read_address.block_address == a_block_address)
+            {
+                is_block_used = TRUE;
+            }
+            ret = pifs_inc_read_address(&pifs.internal_file);
+        } while (ret == PIFS_SUCCESS && !is_block_used);
+        if (ret == PIFS_ERROR_END_OF_FILE)
+        {
+            /* Reaching end of file is not an error */
+            ret = PIFS_SUCCESS;
+        }
+    }
+    *a_is_block_used = is_block_used;
+
+    return ret;
+}
+
+/**
+ * @brief pifs_empty_block Create copy of all files which found in
+ * the specified block. The older files will be deleted, therefore the
+ * specified block can be released.
+ * Note: there shall be no free pages in the specified block!
+ * This function is used for static wear leveling.
+ *
+ * @param[in] a_block_address Block address to find.
+ * @return PIFS_SUCCESS if block was succuessfuly released.
+ */
+pifs_status_t pifs_empty_block(pifs_block_address_t a_block_address)
+{
+    pifs_status_t   ret = PIFS_ERROR_NO_MORE_RESOURCE;
+    char          * path = "/";
+    pifs_DIR      * dir;
+    pifs_dirent_t * dirent;
+    bool_t          is_block_used;
+    pifs_char_t     tmp_filename[PIFS_FILENAME_LEN_MAX];
+
+    dir = pifs_opendir(path);
+    if (dir != NULL)
+    {
+        ret = PIFS_SUCCESS;
+        while ((dirent = pifs_readdir(dir)))
+        {
+//            printf("%-32s", dirent->d_name);
+//            printf("  %8i", pifs_filesize(dirent->d_name));
+//            printf("  %s", pifs_ba_pa2str(dirent->d_first_map_block_address, dirent->d_first_map_page_address));
+//            printf("\r\n");
+            ret = pifs_check_block(dirent->d_name, a_block_address, &is_block_used);
+            if (ret == PIFS_SUCCESS && is_block_used)
+            {
+                PIFS_DEBUG_MSG("File '%s' uses block %i\r\n", dirent->d_name, a_block_address);
+                strncpy(tmp_filename, dirent->d_name, PIFS_FILENAME_LEN_MAX);
+                strncat(tmp_filename, PIFS_FILENAME_TEMP_STR, PIFS_FILENAME_LEN_MAX);
+                PIFS_DEBUG_MSG("Copy '%s' to '%s'... ", dirent->d_name, tmp_filename);
+                ret = pifs_copy(dirent->d_name, tmp_filename);
+                if (ret == PIFS_SUCCESS)
+                {
+                    PIFS_DEBUG_MSG("Done\r\n");
+                    PIFS_DEBUG_MSG("Rename '%s' to '%s'... ", tmp_filename, dirent->d_name);
+                    ret = pifs_rename(tmp_filename, dirent->d_name);
+                    if (ret == PIFS_SUCCESS)
+                    {
+                        PIFS_DEBUG_MSG("Done\r\n");
+                    }
+                    else
+                    {
+                        PIFS_ERROR_MSG("Cannot rename '%s' to '%s'!",
+                                       tmp_filename, dirent->d_name);
+                    }
+                }
+                else
+                {
+                    PIFS_ERROR_MSG("Cannot copy '%s' to '%s'!",
+                                   dirent->d_name, tmp_filename);
+                }
+            }
+        }
+        if (pifs_closedir (dir) != 0)
+        {
+            PIFS_ERROR_MSG("Cannot close directory!\r\n");
+            ret = PIFS_ERROR_GENERAL;
         }
     }
 

@@ -31,16 +31,16 @@
  * @brief pifs_wear_level_list_init Write initial wear level list with all
  * zeros.
  *
- * @return PIFS_SUCCES if written successfully.
+ * @return PIFS_SUCCESS if written successfully.
  */
 pifs_status_t pifs_wear_level_list_init(void)
 {
     pifs_status_t             ret = PIFS_SUCCESS;
     pifs_size_t               i;
     pifs_address_t            address;
-    pifs_wear_level_entry_t * wear_level_entry = (pifs_wear_level_entry_t*) pifs.page_buf;
+    pifs_wear_level_entry_t * wear_level_entry = (pifs_wear_level_entry_t*) pifs.dmw_page_buf;
 
-    memset(pifs.page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_LOGICAL_PAGE_SIZE_BYTE);
+    memset(pifs.dmw_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_LOGICAL_PAGE_SIZE_BYTE);
     address = pifs.header.wear_level_list_address;
     for (i = 0; i < PIFS_WEAR_LEVEL_ENTRY_PER_PAGE; i++)
     {
@@ -52,7 +52,7 @@ pifs_status_t pifs_wear_level_list_init(void)
     {
         //PIFS_WARNING_MSG("%s\r\n", pifs_address2str(&address));
         ret = pifs_write(address.block_address, address.page_address, 0,
-                         pifs.page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
+                         pifs.dmw_page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
         if (ret == PIFS_SUCCESS)
         {
             (void)pifs_inc_address(&address);
@@ -204,7 +204,7 @@ pifs_status_t pifs_write_wear_level(pifs_block_address_t a_block_address,
 /**
  * @brief pifs_wear_level_list_copy Copy wear level list.
  *
- * @return PIFS_SUCCES if copied successfully.
+ * @return PIFS_SUCCESS if copied successfully.
  */
 pifs_status_t pifs_copy_wear_level_list(pifs_header_t * a_old_header, pifs_header_t * a_new_header)
 {
@@ -228,7 +228,7 @@ pifs_status_t pifs_copy_wear_level_list(pifs_header_t * a_old_header, pifs_heade
 /**
  * @brief pifs_find_least_weared_block Get least weared block.
  *
- * @return PIFS_SUCCES if get successfully.
+ * @return PIFS_SUCCESS if get successfully.
  */
 pifs_status_t pifs_find_least_weared_block(pifs_header_t * a_header,
                                            pifs_block_address_t * a_block_address,

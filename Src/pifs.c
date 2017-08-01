@@ -42,8 +42,8 @@ pifs_t pifs =
     .delta_map_page_buf = { { 0 } },
     .delta_map_page_is_read = FALSE,
     .delta_map_page_is_dirty = FALSE,
-    .page_buf = { 0 },
-    .fseek_page_buf = { 0 },
+    .dmw_page_buf = { 0 },
+    .sc_page_buf = { 0 },
 };
 
 int pifs_errno = PIFS_SUCCESS;
@@ -1132,7 +1132,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
  *
  * @param[in] a_file Pointer to the internal file structure.
  */
-void pifs_inc_read_address(pifs_file_t * a_file)
+pifs_status_t pifs_inc_read_address(pifs_file_t * a_file)
 {
     //PIFS_DEBUG_MSG("started %s\r\n", pifs_address2str(&a_file->read_address));
     a_file->read_page_count--;
@@ -1162,6 +1162,7 @@ void pifs_inc_read_address(pifs_file_t * a_file)
         }
     }
     //  PIFS_DEBUG_MSG("exited %s\r\n", pifs_address2str(&a_file->read_address));
+    return a_file->status;
 }
 
 /**
@@ -1445,22 +1446,22 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
             if (target_pos > file->read_pos)
             {
 #if PIFS_ENABLE_FSEEK_ERASED_VALUE
-                memset(pifs.fseek_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_LOGICAL_PAGE_SIZE_BYTE);
+                memset(pifs.sc_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_LOGICAL_PAGE_SIZE_BYTE);
 #else
-                memset(pifs.fseek_page_buf, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, PIFS_LOGICAL_PAGE_SIZE_BYTE);
+                memset(pifs.sc_page_buf, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, PIFS_LOGICAL_PAGE_SIZE_BYTE);
 #endif
                 data_size = target_pos - file->read_pos;
                 page_count = (data_size + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE;
                 while (page_count && file->status == PIFS_SUCCESS)
                 {
                     chunk_size = PIFS_MIN(data_size, PIFS_LOGICAL_PAGE_SIZE_BYTE);
-                    file->status = pifs_fwrite(pifs.fseek_page_buf, 1, chunk_size, file);
+                    file->status = pifs_fwrite(pifs.sc_page_buf, 1, chunk_size, file);
                     data_size -= chunk_size;
                     page_count--;
                 }
                 if (data_size && file->status == PIFS_SUCCESS)
                 {
-                    file->status = pifs_fwrite(pifs.fseek_page_buf, 1, data_size, file);
+                    file->status = pifs_fwrite(pifs.sc_page_buf, 1, data_size, file);
                 }
             }
 #endif
@@ -1520,7 +1521,7 @@ long int pifs_ftell(P_FILE * a_file)
 
 #if PIFS_ENABLE_USER_DATA
 /**
- * @brief pifs_fgetuserdata Not standard function to get user defined data of
+ * @brief pifs_fgetuserdata Non-standard function to get user defined data of
  * file.
  *
  * @param[in] a_file        Pointer to file.
@@ -1542,7 +1543,7 @@ int pifs_fgetuserdata(P_FILE * a_file, pifs_user_data_t * a_user_data)
 }
 
 /**
- * @brief pifs_fsetuserdata Not standard function to set user defined data of
+ * @brief pifs_fsetuserdata Non-standard function to set user defined data of
  * file.
  *
  * @param[in] a_file        Pointer to file.
@@ -1648,6 +1649,84 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
     return ret;
 }
 
+/**
+ * @brief pifs_copy Copy file. This is a non-standard file operation.
+ *
+ * @param[in] a_oldname Existing file's name.
+ * @param[in] a_newname New file name.
+ * @return 0: if copy was successfuly. Other: error occurred.
+ */
+int pifs_copy(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
+{
+    pifs_status_t    ret = PIFS_ERROR_NO_MORE_RESOURCE;
+    pifs_file_t    * file = NULL;
+    pifs_size_t      read_bytes;
+    pifs_size_t      written_bytes;
+
+    PIFS_NOTICE_MSG("oldname: '%s', newname: '%s'\r\n", a_oldname, a_newname);
+
+    file = pifs_fopen(a_oldname, "r");
+    if (file)
+    {
+        ret = pifs_check_filename(a_newname);
+        if (ret == PIFS_SUCCESS)
+        {
+            ret = pifs_internal_open(&pifs.internal_file, a_newname, "w", TRUE);
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            do
+            {
+                read_bytes = pifs_fread(pifs.sc_page_buf, 1,
+                                        PIFS_LOGICAL_PAGE_SIZE_BYTE, file);
+                if (read_bytes > 0)
+                {
+                    written_bytes = pifs_fwrite(pifs.sc_page_buf, 1,
+                                                read_bytes, &pifs.internal_file);
+                    if (read_bytes != written_bytes)
+                    {
+                        ret = pifs.internal_file.status;
+                    }
+                }
+            } while (read_bytes > 0 && read_bytes == written_bytes);
+        }
+        (void)pifs_fclose(&pifs.internal_file);
+        (void)pifs_fclose(file);
+    }
+
+    PIFS_SET_ERRNO(ret);
+    return ret;
+}
+
+/**
+ * @brief pifs_is_file_exist Check whether a file exist.
+ * This is a non-standard file operation.
+ *
+ * @param[in] a_filename File name to be checked.
+ * @return TRUE: if file exist. FALSE: file does not exist.
+ */
+bool_t pifs_is_file_exist(const pifs_char_t * a_filename)
+{
+    pifs_status_t    ret = PIFS_ERROR_NO_MORE_RESOURCE;
+    bool_t           is_file_exist = FALSE;
+    pifs_entry_t    * entry = &pifs.entry;
+
+    PIFS_NOTICE_MSG("filename: '%s'\r\n", a_filename);
+
+    ret = pifs_check_filename(a_filename);
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_find_entry(a_filename, entry,
+                              pifs.header.entry_list_address.block_address,
+                              pifs.header.entry_list_address.page_address);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        is_file_exist = TRUE;
+    }
+
+    return is_file_exist;
+}
 
 /**
  * @brief pifs_ferror Return last error of file.

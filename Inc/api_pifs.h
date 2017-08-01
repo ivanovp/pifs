@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include "pifs_config.h"
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -101,6 +102,8 @@ int pifs_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data);
 #endif
 int pifs_remove(const pifs_char_t * a_filename);
 int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname);
+int pifs_copy(const pifs_char_t * a_oldname, const pifs_char_t * a_newname);
+bool_t pifs_is_file_exist(const pifs_char_t * a_filename);
 int pifs_ferror(P_FILE * a_file);
 int pifs_feof(P_FILE * a_file);
 long int pifs_filesize(const pifs_char_t * a_filename);

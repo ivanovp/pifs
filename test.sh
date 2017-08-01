@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 LOG=test.log
 rm flash.bin
 rm flash.stt

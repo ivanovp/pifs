@@ -25,7 +25,7 @@
 /**
  * @brief pifs_read_delta_map_page Read delta map pages to memory buffer.
  *
- * @return PIFS_SUCCES if read successfully.
+ * @return PIFS_SUCCESS if read successfully.
  */
 static pifs_status_t pifs_read_delta_map_page(void)
 {
@@ -49,7 +49,7 @@ static pifs_status_t pifs_read_delta_map_page(void)
 /**
  * @brief pifs_write_delta_map_page Write delta map pages to flash memory.
  *
- * @return PIFS_SUCCES if written successfully.
+ * @return PIFS_SUCCESS if written successfully.
  */
 static pifs_status_t pifs_write_delta_map_page(pifs_size_t a_delta_map_page_idx)
 {
@@ -249,11 +249,11 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
     if (ret == PIFS_SUCCESS)
     {
         /* Read to page buffer */
-        ret = pifs_read(ba, pa, 0, &pifs.page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
+        ret = pifs_read(ba, pa, 0, &pifs.dmw_page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
     }
     if (ret == PIFS_SUCCESS)
     {
-        delta_needed = !pifs_is_buffer_programmable(&pifs.page_buf[a_page_offset],
+        delta_needed = !pifs_is_buffer_programmable(&pifs.dmw_page_buf[a_page_offset],
                                                     a_buf, a_buf_size);
     }
     if (ret == PIFS_SUCCESS)

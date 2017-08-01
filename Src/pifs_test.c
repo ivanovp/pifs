@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-06-15 14:34:46 ivanovp {Time-stamp}
+ * Last modify: 2017-08-01 17:34:06 ivanovp {Time-stamp}
  * Licence:     GPL
  */
 #include <stdio.h>
@@ -306,7 +306,7 @@ pifs_status_t pifs_test_basic_w(const char * a_filename)
             ret = PIFS_ERROR_GENERAL;
         }
 #if ENABLE_RENAME_TEST
-        if (ret == PIFS_SUCCESS)
+        if (ret == PIFS_SUCCESS && !a_filename)
         {
             printf("Renaming '%s' to '%s'...\r\n", filename, filename2);
             ret = pifs_rename(filename, filename2);

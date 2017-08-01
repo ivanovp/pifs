@@ -121,6 +121,10 @@
 #define PIFS_MIN(a,b)                       ((a) < (b) ? (a) : (b))
 #define PIFS_MAX(a,b)                       ((a) > (b) ? (a) : (b))
 
+#define PIFS_FILENAME_TEMP_CHAR             '%'
+#define PIFS_FILENAME_TEMP_STR              "%"
+#define PIFS_EOS                            0
+
 #if PIFS_LOGICAL_PAGE_SIZE_BYTE < PIFS_FLASH_PAGE_SIZE_BYTE
 #error PIFS_LOGICAL_PAGE_SIZE_BYTE shall be larger or equatl to PIFS_FLASH_PAGE_SIZE_BYTE!
 #endif
@@ -408,9 +412,10 @@ typedef struct
     /** TRUE: delta_map_page_buf is inconsistent, it shall be written to the flash memory */
     bool_t                  delta_map_page_is_dirty PIFS_BOOL_SIZE;
     /** General page buffer used by pifs_write_delta(),
-     * pifs_copy_fsbm(), pifs_wear_level_list_init() */
-    uint8_t                 page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];
-    uint8_t                 fseek_page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];  /**< Flash page buffer */
+     * pifs_copy_fsbm(), pifs_wear_level_list_init(), dmw=delta, merge, wear */
+    uint8_t                 dmw_page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];
+    /** General page buffer use by pifs_fseek, pifs_copy buffer, sc=seek, copy */
+    uint8_t                 sc_page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];
 } pifs_t;
 
 extern pifs_t pifs;
@@ -435,6 +440,7 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
 pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                                 pifs_page_address_t a_page_address,
                                 pifs_header_t * a_header, bool_t a_mark_pages);
+pifs_status_t pifs_inc_read_address(pifs_file_t * a_file);
 pifs_status_t pifs_internal_open(pifs_file_t * a_file,
                                  const pifs_char_t * a_filename,
                                  const pifs_char_t * a_modes, bool_t a_is_merge_allowed);
