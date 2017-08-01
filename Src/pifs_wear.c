@@ -465,15 +465,18 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
     pifs_size_t             free_management_pages;
     pifs_block_address_t    ba;
     bool_t                  is_emptied;
+    pifs_wear_level_cntr_t  diff;
 
     for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_SUCCESS
          && a_max_block_num; i++)
     {
         ba = pifs.header.least_weared_blocks[i].block_address;
+        diff = pifs.header.wear_level_cntr_max - pifs.header.least_weared_blocks[i].wear_level_cntr;
         ret = pifs_get_pages(TRUE, ba,
                              1, &free_management_pages, &free_data_pages);
-        PIFS_NOTICE_MSG("Block %i, free data pages: %i\r\n", ba, free_data_pages);
-        if (ret == PIFS_SUCCESS && !free_data_pages)
+        PIFS_NOTICE_MSG("Block %i, free data pages: %i: diff: %i\r\n", ba, free_data_pages, diff);
+        if (ret == PIFS_SUCCESS && !free_data_pages
+                && diff > PIFS_STATIC_WEAR_LEVEL_LIMIT)
         {
             ret = pifs_empty_block(ba, &is_emptied);
             if (is_emptied)
