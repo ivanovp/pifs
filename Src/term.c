@@ -196,6 +196,19 @@ void cmdTestPifsSeek (char* command, char* params)
     pifs_test_wseek_r();
 }
 
+void cmdTestPifsDelta (char* command, char* params)
+{
+    char * param;
+
+    (void) command;
+    (void) params;
+
+    param = PARSER_getNextParam();
+
+    pifs_test_delta_w(param);
+    pifs_test_delta_r(param);
+}
+
 void cmdPageInfo (char* command, char* params)
 {
     unsigned long int    addr = 0;
@@ -288,7 +301,7 @@ void cmdEmptyBlock(char* command, char* params)
         ba = strtoul(param, NULL, 0);
         printf("Empty block %i...\r\n", ba);
         ret = pifs_empty_block(ba, &is_emptied);
-        printf("Emptied: %s\r\n", yesNo(is_emptied));
+        printf("Emptied: %s, ret: %i\r\n", yesNo(is_emptied), ret);
     }
 }
 
@@ -307,6 +320,7 @@ void cmdStaticWear(char* command, char* params)
     }
     printf("Static wear leveling on %i blocks...\r\n", max_block_num);
     ret = pifs_static_wear_leveling(max_block_num);
+    printf("Ret: %i\r\n", ret);
 }
 
 void cmdDebug (char* command, char* params)
@@ -998,18 +1012,6 @@ void cmdHelp (char *command, char *params)
 parserCommand_t parserCommands[] =
 {
     //command       brief help                          callback function
-    {"erase",       "Erase flash",                      cmdErase},
-    {"e",           "Erase flash",                      cmdErase},
-    {"tstflash",    "Test flash",                       cmdTestFlash},
-    {"tp",          "Test Pi file system: all",         cmdTestPifs},
-    {"tstpifs",     "Test Pi file system: all",         cmdTestPifs},
-    {"tb",          "Test Pi file system: basic",       cmdTestPifsBasic},
-    {"ts",          "Test Pi file system: small files", cmdTestPifsSmall},
-    {"tl",          "Test Pi file system: large file",  cmdTestPifsLarge},
-    {"tf",          "Test Pi file system: full write",  cmdTestPifsFull},
-    {"tfrag",       "Test Pi file system: fragment",    cmdTestPifsFragment},
-    {"tsk",         "Test Pi file system: seek",        cmdTestPifsSeek},
-    {"y",           "Debug command",                    cmdDebug},
     {"ls",          "List directory",                   cmdListDir},
     {"l",           "List directory",                   cmdListDir},
 #if ENABLE_DOS_ALIAS
@@ -1045,6 +1047,19 @@ parserCommand_t parserCommands[] =
     {"eb",          "Empty block",                      cmdEmptyBlock},
     {"sw",          "Static wear leveling",             cmdStaticWear},
     {"fs",          "Print flash's statistics",         cmdFlashStat},
+    {"erase",       "Erase flash",                      cmdErase},
+    {"e",           "Erase flash",                      cmdErase},
+    {"tstflash",    "Test flash",                       cmdTestFlash},
+    {"tp",          "Test Pi file system: all",         cmdTestPifs},
+    {"tstpifs",     "Test Pi file system: all",         cmdTestPifs},
+    {"tb",          "Test Pi file system: basic",       cmdTestPifsBasic},
+    {"ts",          "Test Pi file system: small files", cmdTestPifsSmall},
+    {"tl",          "Test Pi file system: large file",  cmdTestPifsLarge},
+    {"tf",          "Test Pi file system: full write",  cmdTestPifsFull},
+    {"tfrag",       "Test Pi file system: fragment",    cmdTestPifsFragment},
+    {"tsk",         "Test Pi file system: seek",        cmdTestPifsSeek},
+    {"td",          "Test Pi file system: delta",       cmdTestPifsDelta},
+    {"y",           "Debug command",                    cmdDebug},
     {"quit",        "Quit",                             cmdQuit},
     {"q",           "Quit",                             cmdQuit},
     {"noprompt",    "Prompt will not be displayed",     cmdNoPrompt},

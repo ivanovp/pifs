@@ -1037,7 +1037,8 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                 /* Check if merge needed and do it if necessary */
                 file->status = pifs_merge_check(a_file, page_count_needed);
             }
-            if (file->status == PIFS_SUCCESS)
+            /* Map entry is needed when write position is at file's end */
+            if (file->status == PIFS_SUCCESS && file->write_pos == file->entry.file_size)
             {
                 /* Check if at least one map can be added after writing */
                 file->status = pifs_is_free_map_entry(a_file, &is_free_map_entry);
@@ -1056,6 +1057,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
             }
             if (file->status == PIFS_SUCCESS)
             {
+                /* FIXME different implementation needed when file->write_pos < file->entry.file_size!!! */
                 do
                 {
                     page_count_needed_limited = page_count_needed;

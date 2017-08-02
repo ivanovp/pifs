@@ -17,7 +17,7 @@
  * It shall be larger or equal to PIFS_FLASH_PAGE_SIZE!
  * Its size shall be power of two!
  */
-#define PIFS_LOGICAL_PAGE_SIZE_BYTE     1024u
+#define PIFS_LOGICAL_PAGE_SIZE_BYTE     256u
 #define PIFS_OPEN_FILE_NUM_MAX          4u   /**< Maximum number of opened file */
 #define PIFS_OPEN_DIR_NUM_MAX           2u   /**< Maximum number of opened directories */
 #define PIFS_FILENAME_LEN_MAX           32u  /**< Maximum length of file name */
@@ -25,7 +25,7 @@
 #define PIFS_ENABLE_ATTRIBUTES          1u   /**< 1: Use attribute field of files, 0: don't use attribute field */
 #define PIFS_ENABLE_USER_DATA           1u   /**< 1: Add user data (pifs_user_data_t) to every file, 0: don't add user data */
 #define PIFS_ENABLE_DIRECTORIES         0u   /**< 1: Support directories, 0: only support root directory */
-#define PIFS_MANAGEMENT_BLOCKS          6u   /**< Number of management blocks. Minimum: 1 (Allocated area is twice of this number.) */
+#define PIFS_MANAGEMENT_BLOCKS          1u   /**< Number of management blocks. Minimum: 1 (Allocated area is twice of this number.) */
 #define PIFS_CHECKSUM_SIZE              4u   /**< Size of checksum variable in bytes. Valid values are 1, 2 and 4. */
 #define PIFS_MAP_PAGE_COUNT_SIZE        1u   /**< Size of page count variable of map entry in bytes. Valid values are 1, 2 and 4. */
 #define PIFS_OPTIMIZE_FOR_RAM           1u   /**< 1: Use less RAM, 0: Use more RAM, but faster code execution */
@@ -36,9 +36,9 @@
 #define PIFS_ENABLE_FSEEK_ERASED_VALUE  0u   /**< 1: Write 0xFF values when seeking beyond file size,
                                                   0: write 0 values when seeking beyond file size (default). */
 #define PIFS_PATH_SEPARATOR_CHAR        '/'  /**< Character to separate directories in path, '/' or '\' */
-#define PIFS_LEAST_WEARED_BLOCK_NUM     16   /**< Number of stored least weared blocks */
-#define PIFS_STATIC_WEAR_LEVEL_LIMIT    20
-#define PIFS_STATIC_WEAR_LEVEL_PERCENT  10
+#define PIFS_LEAST_WEARED_BLOCK_NUM     6u   /**< Number of stored least weared blocks */
+#define PIFS_STATIC_WEAR_LEVEL_LIMIT   20u
+#define PIFS_STATIC_WEAR_LEVEL_PERCENT 10u
 #define PIFS_CALC_TBR_IN_FREE_SPACE     0u   /**< 1: Free pages and to be released pages are counted, 0: only free pages counted */
 
 #define PIFS_PACKED_ATTRIBUTE           __attribute__((packed))
