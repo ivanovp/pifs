@@ -39,6 +39,7 @@
 #define PIFS_LEAST_WEARED_BLOCK_NUM     16   /**< Number of stored least weared blocks */
 #define PIFS_STATIC_WEAR_LEVEL_LIMIT    20
 #define PIFS_STATIC_WEAR_LEVEL_PERCENT  10
+#define PIFS_CALC_TBR_IN_FREE_SPACE     0u   /**< 1: Free pages and to be released pages are counted, 0: only free pages counted */
 
 #define PIFS_PACKED_ATTRIBUTE           __attribute__((packed))
 #define PIFS_ALIGNED_ATTRIBUTE(align)   __attribute__((aligned(align)))

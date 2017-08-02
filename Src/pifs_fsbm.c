@@ -113,7 +113,7 @@ static inline bool_t pifs_check_bits(bool_t a_is_free, uint8_t a_bits)
     else
     {
         /* Looking to be released page, but free pages are also considered */
-        /* as to be releaed pages */
+        /* as to be released pages */
         ret = (a_bits & mask_to_be_released) == value_to_be_released
                 ||  (a_bits & mask_free) == value_free;
     }
@@ -436,7 +436,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
     /* Check if start block address is valid */
     if (fba >= PIFS_FLASH_BLOCK_NUM_ALL)
     {
-        PIFS_WARNING_MSG("Start block address corrected from %i to %i\r\n",
+        PIFS_NOTICE_MSG("Start block address corrected from %i to %i\r\n",
                          fba, PIFS_FLASH_BLOCK_RESERVED_NUM);
         fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
     }
@@ -795,22 +795,28 @@ pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
                                   size_t * a_free_data_page_count)
 {
     pifs_status_t ret = PIFS_ERROR_GENERAL;
+#if PIFS_CALC_TBR_IN_FREE_SPACE
     size_t        to_be_released_management_page_count = 0;
     size_t        to_be_released_data_page_count = 0;
+#endif
 
     *a_free_management_page_count = 0;
     *a_free_data_page_count = 0;
     ret = pifs_get_free_pages(a_free_management_page_count, a_free_data_page_count);
 
+#if PIFS_CALC_TBR_IN_FREE_SPACE
     if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
     {
         ret = pifs_get_to_be_released_pages(&to_be_released_management_page_count,
                                             &to_be_released_data_page_count);
     }
+#endif
     if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
     {
+#if PIFS_CALC_TBR_IN_FREE_SPACE
         *a_free_management_page_count += to_be_released_management_page_count;
         *a_free_data_page_count += to_be_released_data_page_count;
+#endif
         *a_free_management_bytes = *a_free_management_page_count * PIFS_LOGICAL_PAGE_SIZE_BYTE;
         *a_free_data_bytes = *a_free_data_page_count * PIFS_LOGICAL_PAGE_SIZE_BYTE;
     }
