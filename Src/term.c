@@ -160,6 +160,31 @@ void cmdTestPifsFull (char* command, char* params)
     pifs_test_full_r();
 }
 
+void cmdTestPifsFragment (char* command, char* params)
+{
+    size_t fragment_size = 5;
+    char * param;
+
+    (void) command;
+    (void) params;
+
+    if (params)
+    {
+        param = PARSER_getNextParam();
+        if (param)
+        {
+            fragment_size = strtoul(param, NULL, 0);
+        }
+    }
+
+    printf("Fragment size: %i bytes\r\n", fragment_size);
+
+    pifs_test_wfragment_w(fragment_size);
+    pifs_test_wfragment_r();
+    pifs_test_rfragment_w();
+    pifs_test_rfragment_r(fragment_size);
+}
+
 void cmdTestPifsSeek (char* command, char* params)
 {
     (void) command;
@@ -982,6 +1007,7 @@ parserCommand_t parserCommands[] =
     {"ts",          "Test Pi file system: small files", cmdTestPifsSmall},
     {"tl",          "Test Pi file system: large file",  cmdTestPifsLarge},
     {"tf",          "Test Pi file system: full write",  cmdTestPifsFull},
+    {"tfrag",       "Test Pi file system: fragment",    cmdTestPifsFragment},
     {"tsk",         "Test Pi file system: seek",        cmdTestPifsSeek},
     {"y",           "Debug command",                    cmdDebug},
     {"ls",          "List directory",                   cmdListDir},

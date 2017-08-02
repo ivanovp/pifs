@@ -633,6 +633,10 @@ pifs_status_t pifs_test_rfragment_r(size_t a_fragment_size)
         read_size = 0;
         for (i = 0; i < sizeof(test_buf_r) && ret == PIFS_SUCCESS; i += a_fragment_size)
         {
+            if (i + a_fragment_size >= sizeof(test_buf_r))
+            {
+                a_fragment_size = sizeof(test_buf_r) - i;
+            }
             read_size = pifs_fread(&test_buf_r[i], 1, a_fragment_size, file);
             if (read_size != a_fragment_size)
             {
