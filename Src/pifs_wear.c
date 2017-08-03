@@ -471,6 +471,7 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
          && a_max_block_num; i++)
     {
         ba = pifs.header.least_weared_blocks[i].block_address;
+        /* TODO this static wear leveling calculation should be revised! */
         diff = pifs.header.wear_level_cntr_max - pifs.header.least_weared_blocks[i].wear_level_cntr;
         ret = pifs_get_pages(TRUE, ba,
                              1, &free_management_pages, &free_data_pages);
