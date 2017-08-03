@@ -289,7 +289,7 @@ pifs_status_t pifs_release_file_pages(pifs_file_t * a_file)
                                            pifs_ba_pa2str(delta_ba, delta_pa));
                             /* Mark page to be released */
                             a_file->status = pifs_mark_page(delta_ba, delta_pa, 1, FALSE);
-                            if (a_file->status == PIFS_SUCCESS)
+                            if (a_file->status == PIFS_SUCCESS && page_count)
                             {
                                 a_file->status = pifs_inc_ba_pa(&delta_ba, &delta_pa);
                             }
