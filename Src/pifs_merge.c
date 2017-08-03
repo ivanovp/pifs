@@ -218,11 +218,15 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
                                                        &delta_address.page_address, NULL);
                             if (ret == PIFS_SUCCESS)
                             {
-#if 0
-                                PIFS_DEBUG_MSG("delta %s -> %s\r\n",
-                                               pifs_address2str(&address),
-                                               pifs_ba_pa2str(delta_address.block_address,
-                                                              delta_address.page_address));
+#if 1
+                                if (old_map_entry.address.block_address != delta_address.block_address
+                                        || old_map_entry.address.page_address != delta_address.page_address)
+                                {
+                                    PIFS_WARNING_MSG("delta %s -> %s\r\n",
+                                                     pifs_address2str(&old_map_entry.address),
+                                                     pifs_ba_pa2str(delta_address.block_address,
+                                                                    delta_address.page_address));
+                                }
 #endif
                                 if (!new_map_entry.page_count)
                                 {

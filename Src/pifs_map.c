@@ -279,6 +279,9 @@ pifs_status_t pifs_release_file_pages(pifs_file_t * a_file)
                     mba = a_file->map_entry.address.block_address;
                     mpa = a_file->map_entry.address.page_address;
                     page_count = a_file->map_entry.page_count;
+                    PIFS_DEBUG_MSG("Map entry %s, page count: %i\r\n",
+                                   pifs_ba_pa2str(mba, mpa),
+                                   page_count);
                     if (page_count && page_count < PIFS_MAP_PAGE_COUNT_INVALID)
                     {
                         a_file->status = pifs_find_delta_page(mba, mpa,

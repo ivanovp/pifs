@@ -34,13 +34,19 @@ static pifs_status_t pifs_read_delta_map_page(void)
     pifs_size_t          i;
     pifs_status_t        ret = PIFS_SUCCESS;
 
+    PIFS_WARNING_MSG("START!\r\n");
+
     for (i = 0; i < PIFS_DELTA_MAP_PAGE_NUM && ret == PIFS_SUCCESS; i++)
     {
         ret = pifs_read(ba, pa, 0, &pifs.delta_map_page_buf[i], PIFS_LOGICAL_PAGE_SIZE_BYTE);
-        if (ret == PIFS_SUCCESS)
+        if (ret == PIFS_SUCCESS && i < PIFS_DELTA_MAP_PAGE_NUM - 1)
         {
             ret = pifs_inc_ba_pa(&ba, &pa);
         }
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        pifs.delta_map_page_is_read = TRUE;
     }
 
     return ret;
@@ -57,6 +63,7 @@ static pifs_status_t pifs_write_delta_map_page(pifs_size_t a_delta_map_page_idx)
     pifs_page_address_t  pa = pifs.header.delta_map_address.page_address;
     pifs_status_t        ret = PIFS_SUCCESS;
 
+    PIFS_ASSERT(pifs.delta_map_page_is_read);
     if (a_delta_map_page_idx < PIFS_DELTA_MAP_PAGE_NUM)
     {
         ret = pifs_add_ba_pa(&ba, &pa, a_delta_map_page_idx);
@@ -64,7 +71,7 @@ static pifs_status_t pifs_write_delta_map_page(pifs_size_t a_delta_map_page_idx)
         {
             ret = pifs_write(ba, pa, 0, &pifs.delta_map_page_buf[a_delta_map_page_idx],
                              PIFS_LOGICAL_PAGE_SIZE_BYTE);
-            PIFS_DEBUG_MSG("%s ret: %i\r\n", pifs_ba_pa2str(ba, pa), ret);
+            PIFS_WARNING_MSG("%s ret: %i\r\n", pifs_ba_pa2str(ba, pa), ret);
         }
     }
 

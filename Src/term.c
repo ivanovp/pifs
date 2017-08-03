@@ -198,15 +198,31 @@ void cmdTestPifsSeek (char* command, char* params)
 
 void cmdTestPifsDelta (char* command, char* params)
 {
-    char * param;
+    char * filename;
+    char * mode;
 
     (void) command;
     (void) params;
 
-    param = PARSER_getNextParam();
-
-    pifs_test_delta_w(param);
-    pifs_test_delta_r(param);
+    filename = PARSER_getNextParam();
+    mode = PARSER_getNextParam();
+    if (mode)
+    {
+        printf("Mode: %s\r\n", mode);
+        if (strchr(mode, 'w'))
+        {
+            pifs_test_delta_w(filename);
+        }
+        if (strchr(mode, 'r'))
+        {
+            pifs_test_delta_r(filename);
+        }
+    }
+    else
+    {
+        pifs_test_delta_w(filename);
+        pifs_test_delta_r(filename);
+    }
 }
 
 void cmdPageInfo (char* command, char* params)

@@ -1177,7 +1177,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                         {
                             /* Write pages to file map entry after successfully write */
                             file->status = pifs_append_map_entry(file, ba_start, pa_start, page_cound_found_start);
-                            PIFS_ASSERT(file->status == PIFS_SUCCESS);
+                            //PIFS_ASSERT(file->status == PIFS_SUCCESS);
                         }
                     }
                 } while (page_count_needed && file->status == PIFS_SUCCESS);
