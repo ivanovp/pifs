@@ -967,6 +967,44 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
 }
 
 /**
+ * @brief pifs_inc_write_address Increment write address for file writing.
+ *
+ * @param[in] a_file Pointer to the internal file structure.
+ */
+pifs_status_t pifs_inc_write_address(pifs_file_t * a_file)
+{
+    //PIFS_DEBUG_MSG("started %s\r\n", pifs_address2str(&a_file->write_address));
+    a_file->write_page_count--;
+    if (a_file->write_page_count)
+    {
+        a_file->status = pifs_inc_address(&a_file->write_address);
+    }
+    else
+    {
+        a_file->status = pifs_read_next_map_entry(a_file);
+        if (a_file->status == PIFS_SUCCESS)
+        {
+            //      print_buffer(&a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE, 0);
+            if (pifs_is_buffer_erased(&a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
+            {
+                a_file->status = PIFS_ERROR_END_OF_FILE;
+            }
+            else
+            {
+                a_file->write_address = a_file->map_entry.address;
+                a_file->write_page_count = a_file->map_entry.page_count;
+            }
+        }
+        else
+        {
+            //      PIFS_DEBUG_MSG("status: %i\r\n", a_file->status);
+        }
+    }
+    //  PIFS_DEBUG_MSG("exited %s\r\n", pifs_address2str(&a_file->write_address));
+    return a_file->status;
+}
+
+/**
  * @brief pifs_fwrite Write to file. Works like fwrite().
  *
  * @param[in] a_data    Pointer to buffer to write.
@@ -1009,7 +1047,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
         {
             po = file->write_pos % PIFS_LOGICAL_PAGE_SIZE_BYTE;
             /* Check if last page was not fully used up */
-            if (po)
+            if (po && file->write_pos == file->entry.file_size)
             {
                 /* There is some space in the last page */
                 PIFS_ASSERT(pifs_is_address_valid(&file->write_address));
@@ -1055,62 +1093,92 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                     }
                 }
             }
-            if (file->status == PIFS_SUCCESS)
+            if (file->status == PIFS_SUCCESS && file->entry.file_size != PIFS_FILE_SIZE_ERASED
+                    && file->write_pos < file->entry.file_size)
             {
-                /* FIXME different implementation needed when file->write_pos < file->entry.file_size!!! */
-                do
+                /* Overwriting existing pages in the file */
+                PIFS_WARNING_MSG("Overwriting pages\r\n");
+                //page_count_needed = (data_size + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE;
+                while (page_count_needed && file->status == PIFS_SUCCESS)
                 {
-                    page_count_needed_limited = page_count_needed;
-                    if (page_count_needed_limited >= PIFS_MAP_PAGE_COUNT_INVALID)
+                    chunk_size = PIFS_MIN(data_size, PIFS_LOGICAL_PAGE_SIZE_BYTE);
+                    if (file->write_pos + chunk_size > file->entry.file_size)
                     {
-                        page_count_needed_limited = PIFS_MAP_PAGE_COUNT_INVALID - 1;
+                        chunk_size = file->entry.file_size - file->write_pos;
                     }
-                    file->status = pifs_find_free_page_wl(1, page_count_needed_limited,
-                                                          PIFS_BLOCK_TYPE_DATA,
-                                                          &ba, &pa, &page_count_found);
-                    PIFS_DEBUG_MSG("%u pages found. %s, status: %i\r\n",
-                                   page_count_found, pifs_ba_pa2str(ba, pa), file->status);
-                    if (file->status == PIFS_SUCCESS)
+                    PIFS_NOTICE_MSG("write %s, page_count_needed: %i, chunk size: %i\r\n",
+                                    pifs_address2str(&file->write_address), page_count_needed, chunk_size);
+                    PIFS_ASSERT(pifs_is_address_valid(&file->write_address));
+                    file->status = pifs_write_delta(file->write_address.block_address,
+                                                   file->write_address.page_address,
+                                                   0, data, chunk_size, &is_delta);
+                    if (file->status == PIFS_SUCCESS && chunk_size == PIFS_LOGICAL_PAGE_SIZE_BYTE)
                     {
-                        ba_start = ba;
-                        pa_start = pa;
-                        page_cound_found_start = page_count_found;
-                        do
-                        {
-                            if (data_size > PIFS_LOGICAL_PAGE_SIZE_BYTE)
-                            {
-                                chunk_size = PIFS_LOGICAL_PAGE_SIZE_BYTE;
-                            }
-                            else
-                            {
-                                chunk_size = data_size;
-                            }
-                            file->status = pifs_write_delta(ba, pa, 0, data, chunk_size, &is_delta);
-                            PIFS_DEBUG_MSG("%s is_delta: %i status: %i\r\n", pifs_ba_pa2str(ba, pa),
-                                           is_delta, file->status);
-                            /* Save last page's address for future use */
-                            file->write_address.block_address = ba;
-                            file->write_address.page_address = pa;
-                            data += chunk_size;
-                            data_size -= chunk_size;
-                            written_size += chunk_size;
-                            page_count_found--;
-                            page_count_needed--;
-                            if (page_count_found)
-                            {
-                                file->status = pifs_inc_ba_pa(&ba, &pa);
-                            }
-                        } while (page_count_found && file->status == PIFS_SUCCESS);
-
-                        if (file->status == PIFS_SUCCESS && !is_delta)
-                        {
-                            /* Write pages to file map entry after successfully write */
-                            file->status = pifs_append_map_entry(file, ba_start, pa_start, page_cound_found_start);
-                            PIFS_ASSERT(file->status == PIFS_SUCCESS);
-                        }
+                        pifs_inc_write_address(file);
                     }
-                } while (page_count_needed && file->status == PIFS_SUCCESS);
+                    data += chunk_size;
+                    data_size -= chunk_size;
+                    written_size += chunk_size;
+                    page_count_needed--;
+                }
             }
+       }
+        if (file->status == PIFS_SUCCESS && data_size > 0)
+        {
+            /* Appending new pages to the file */
+            PIFS_WARNING_MSG("Appending pages\r\n");
+            do
+            {
+                page_count_needed_limited = page_count_needed;
+                if (page_count_needed_limited >= PIFS_MAP_PAGE_COUNT_INVALID)
+                {
+                    page_count_needed_limited = PIFS_MAP_PAGE_COUNT_INVALID - 1;
+                }
+                file->status = pifs_find_free_page_wl(1, page_count_needed_limited,
+                                                      PIFS_BLOCK_TYPE_DATA,
+                                                      &ba, &pa, &page_count_found);
+                PIFS_DEBUG_MSG("%u pages found. %s, status: %i\r\n",
+                               page_count_found, pifs_ba_pa2str(ba, pa), file->status);
+                if (file->status == PIFS_SUCCESS)
+                {
+                    ba_start = ba;
+                    pa_start = pa;
+                    page_cound_found_start = page_count_found;
+                    do
+                    {
+                        if (data_size > PIFS_LOGICAL_PAGE_SIZE_BYTE)
+                        {
+                            chunk_size = PIFS_LOGICAL_PAGE_SIZE_BYTE;
+                        }
+                        else
+                        {
+                            chunk_size = data_size;
+                        }
+                        file->status = pifs_write_delta(ba, pa, 0, data, chunk_size, &is_delta);
+                        PIFS_DEBUG_MSG("%s is_delta: %i status: %i\r\n", pifs_ba_pa2str(ba, pa),
+                                       is_delta, file->status);
+                        /* Save last page's address for future use */
+                        file->write_address.block_address = ba;
+                        file->write_address.page_address = pa;
+                        data += chunk_size;
+                        data_size -= chunk_size;
+                        written_size += chunk_size;
+                        page_count_found--;
+                        page_count_needed--;
+                        if (page_count_found)
+                        {
+                            file->status = pifs_inc_ba_pa(&ba, &pa);
+                        }
+                    } while (page_count_found && file->status == PIFS_SUCCESS);
+
+                    if (file->status == PIFS_SUCCESS && !is_delta)
+                    {
+                        /* Write pages to file map entry after successfully write */
+                        file->status = pifs_append_map_entry(file, ba_start, pa_start, page_cound_found_start);
+                        PIFS_ASSERT(file->status == PIFS_SUCCESS);
+                    }
+                }
+            } while (page_count_needed && file->status == PIFS_SUCCESS);
         }
         file->write_pos += written_size;
         if (file->write_pos > file->entry.file_size

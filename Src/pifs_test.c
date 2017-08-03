@@ -963,6 +963,16 @@ pifs_status_t pifs_test_delta_w(const char * a_filename)
                     PIFS_TEST_ERROR_MSG("Cannot write file!\r\n");
                     ret = PIFS_ERROR_GENERAL;
                 }
+                else
+                {
+                    r = pifs_ftell(file);
+                    printf("File pos: %i\r\n", r);
+                    if (r != sizeof(test_buf_w))
+                    {
+                        PIFS_TEST_ERROR_MSG("Wrong file position!\r\n");
+                        ret = PIFS_ERROR_GENERAL;
+                    }
+                }
             }
         }
         if (pifs_fclose(file))

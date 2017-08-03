@@ -375,11 +375,13 @@ typedef struct
     pifs_map_header_t       map_header;         /**< Actual map's header */
     size_t                  map_entry_idx;      /**< Actual entry's index in the map */
     pifs_map_entry_t        map_entry;          /**< Actual entry in the map */
+    /* TODO To think about: read_pos/write_pos could be in one variable? */
     size_t                  read_pos;           /**< Position in file after last read */
     pifs_address_t          read_address;       /**< Last read page's address */
     pifs_page_count_t       read_page_count;    /**< Page count to be read from 'read_address' */
     size_t                  write_pos;          /**< Position in file after last write */
     pifs_address_t          write_address;      /**< Last written page's address */
+    pifs_page_count_t       write_page_count;   /**< Page count to be ritten to 'write_address' */
 } pifs_file_t;
 
 /**
