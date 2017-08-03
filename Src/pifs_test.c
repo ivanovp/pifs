@@ -51,7 +51,7 @@
 #define LARGE_FILE_SIZE  (2 * PIFS_MAP_ENTRY_PER_PAGE + 2)
 
 #define PIFS_TEST_ERROR_MSG(...)    do {    \
-        printf("%s ERROR: ", __FUNCTION__); \
+        printf("%s:%i ERROR: ", __FUNCTION__, __LINE__); \
         printf(__VA_ARGS__);                \
     } while (0);
 
@@ -940,13 +940,16 @@ pifs_status_t pifs_test_delta_w(const char * a_filename)
             PIFS_TEST_ERROR_MSG("Cannot write file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
-        r = pifs_fseek(file, 0, PIFS_SEEK_SET);
-        if (r != 0)
+        if (ret == PIFS_SUCCESS)
         {
-            PIFS_TEST_ERROR_MSG("Cannot seek!\r\n");
-            ret = PIFS_ERROR_GENERAL;
+            r = pifs_fseek(file, 0, PIFS_SEEK_SET);
+            if (r != 0)
+            {
+                PIFS_TEST_ERROR_MSG("Cannot seek!\r\n");
+                ret = PIFS_ERROR_GENERAL;
+            }
         }
-        else
+        if (ret == PIFS_SUCCESS)
         {
             r = pifs_ftell(file);
             if (r != 0)
@@ -954,25 +957,35 @@ pifs_status_t pifs_test_delta_w(const char * a_filename)
                 PIFS_TEST_ERROR_MSG("Seek to 0, but position is not 0! Pos: %i\r\n", r);
                 ret = PIFS_ERROR_GENERAL;
             }
-            else
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            generate_buffer(133);
+            written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+            if (written_size != sizeof(test_buf_w))
             {
-                generate_buffer(133);
-                written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
-                if (written_size != sizeof(test_buf_w))
-                {
-                    PIFS_TEST_ERROR_MSG("Cannot write file!\r\n");
-                    ret = PIFS_ERROR_GENERAL;
-                }
-                else
-                {
-                    r = pifs_ftell(file);
-                    printf("File pos: %i\r\n", r);
-                    if (r != sizeof(test_buf_w))
-                    {
-                        PIFS_TEST_ERROR_MSG("Wrong file position!\r\n");
-                        ret = PIFS_ERROR_GENERAL;
-                    }
-                }
+                PIFS_TEST_ERROR_MSG("Cannot write file!\r\n");
+                ret = PIFS_ERROR_GENERAL;
+            }
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            r = pifs_ftell(file);
+            printf("File pos: %i\r\n", r);
+            if (r != sizeof(test_buf_w))
+            {
+                PIFS_TEST_ERROR_MSG("Wrong file position!\r\n");
+                ret = PIFS_ERROR_GENERAL;
+            }
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            generate_buffer(134);
+            written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+            if (written_size != sizeof(test_buf_w))
+            {
+                PIFS_TEST_ERROR_MSG("Cannot write file!\r\n");
+                ret = PIFS_ERROR_GENERAL;
             }
         }
         if (pifs_fclose(file))
@@ -1020,14 +1033,32 @@ pifs_status_t pifs_test_delta_r(const char * a_filename)
         {
             ret = check_buffers();
         }
-        if (pifs_feof(file))
+        if (ret == PIFS_SUCCESS)
         {
-            printf("EOF indicator OK\r\n");
+            generate_buffer(134);
+            read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
+            if (read_size != sizeof(test_buf_r))
+            {
+                PIFS_TEST_ERROR_MSG("Cannot read file!\r\n");
+                ret = PIFS_ERROR_GENERAL;
+            }
         }
-        else
+        //print_buffer(test_buf_r, sizeof(test_buf_r), 0);
+        if (ret == PIFS_SUCCESS)
         {
-            PIFS_TEST_ERROR_MSG("EOF indicator is wrong!\r\n");
-            ret = PIFS_ERROR_GENERAL;
+            ret = check_buffers();
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            if (pifs_feof(file))
+            {
+                printf("EOF indicator OK\r\n");
+            }
+            else
+            {
+                PIFS_TEST_ERROR_MSG("EOF indicator is wrong!\r\n");
+                ret = PIFS_ERROR_GENERAL;
+            }
         }
         if (pifs_fclose(file))
         {
