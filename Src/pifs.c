@@ -1092,8 +1092,9 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                                     pifs_address2str(&file->write_address), page_count_needed, chunk_size);
                     PIFS_ASSERT(pifs_is_address_valid(&file->write_address));
                     file->status = pifs_write_delta(file->write_address.block_address,
-                                                   file->write_address.page_address,
-                                                   0, data, chunk_size, &is_delta);
+                                                    file->write_address.page_address,
+                                                    0, data, chunk_size, &is_delta,
+                                                    &pifs.header);
                     if (file->status == PIFS_SUCCESS && chunk_size == PIFS_LOGICAL_PAGE_SIZE_BYTE)
                     {
                         pifs_inc_write_address(file);
@@ -1156,7 +1157,8 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                             {
                                 chunk_size = data_size;
                             }
-                            file->status = pifs_write_delta(ba, pa, 0, data, chunk_size, &is_delta);
+                            file->status = pifs_write_delta(ba, pa, 0, data, chunk_size, &is_delta,
+                                                            &pifs.header);
                             PIFS_DEBUG_MSG("%s is_delta: %i status: %i\r\n", pifs_ba_pa2str(ba, pa),
                                            is_delta, file->status);
                             /* Save last page's address for future use */

@@ -154,7 +154,8 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
  * @param[in] a_old_entry Entry to be copied.
  * @return PIFS_SUCCESS if map was copied successfully.
  */
-static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
+static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
+                                   pifs_header_t * a_old_header, pifs_header_t * a_new_header)
 {
     pifs_status_t        ret = PIFS_ERROR_GENERAL;
     pifs_status_t        ret2;
@@ -215,7 +216,8 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry)
                             ret = pifs_find_delta_page(old_map_entry.address.block_address,
                                                        old_map_entry.address.page_address,
                                                        &delta_address.block_address,
-                                                       &delta_address.page_address, NULL);
+                                                       &delta_address.page_address, NULL,
+                                                       a_old_header);
                             if (ret == PIFS_SUCCESS)
                             {
 #if 1
@@ -345,7 +347,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
                 if (entry->name[0] != PIFS_FLASH_PROGRAMMED_BYTE_VALUE)
                 {
                     /* Create file in the new management area and copy map */
-                    ret = pifs_copy_map(entry);
+                    ret = pifs_copy_map(entry, a_old_header, a_new_header);
 #if PIFS_DEBUG_LEVEL >= 3
                     k++;
                     if (((k + 1) % PIFS_ENTRY_PER_PAGE) == 0)

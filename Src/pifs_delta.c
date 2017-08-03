@@ -27,10 +27,10 @@
  *
  * @return PIFS_SUCCESS if read successfully.
  */
-static pifs_status_t pifs_read_delta_map_page(void)
+static pifs_status_t pifs_read_delta_map_page(pifs_header_t * a_header)
 {
-    pifs_block_address_t ba = pifs.header.delta_map_address.block_address;
-    pifs_page_address_t  pa = pifs.header.delta_map_address.page_address;
+    pifs_block_address_t ba = a_header->delta_map_address.block_address;
+    pifs_page_address_t  pa = a_header->delta_map_address.page_address;
     pifs_size_t          i;
     pifs_status_t        ret = PIFS_SUCCESS;
 
@@ -57,10 +57,11 @@ static pifs_status_t pifs_read_delta_map_page(void)
  *
  * @return PIFS_SUCCESS if written successfully.
  */
-static pifs_status_t pifs_write_delta_map_page(pifs_size_t a_delta_map_page_idx)
+static pifs_status_t pifs_write_delta_map_page(pifs_size_t a_delta_map_page_idx,
+                                               pifs_header_t * a_header)
 {
-    pifs_block_address_t ba = pifs.header.delta_map_address.block_address;
-    pifs_page_address_t  pa = pifs.header.delta_map_address.page_address;
+    pifs_block_address_t ba = a_header->delta_map_address.block_address;
+    pifs_page_address_t  pa = a_header->delta_map_address.page_address;
     pifs_status_t        ret = PIFS_SUCCESS;
 
     PIFS_ASSERT(pifs.delta_map_page_is_read);
@@ -96,7 +97,8 @@ pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
                                    pifs_page_address_t a_page_address,
                                    pifs_block_address_t * a_delta_block_address,
                                    pifs_page_address_t * a_delta_page_address,
-                                   bool_t * a_is_map_full)
+                                   bool_t * a_is_map_full,
+                                   pifs_header_t * a_header)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_size_t          i;
@@ -110,7 +112,7 @@ pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
 
     if (!pifs.delta_map_page_is_read)
     {
-        ret = pifs_read_delta_map_page();
+        ret = pifs_read_delta_map_page(a_header);
     }
     if (ret == PIFS_SUCCESS)
     {
@@ -155,7 +157,8 @@ pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
  * @return PIFS_SUCCESS if entry was added. PIFS_ERROR_NO_MORE_SPACE if map
  * is full.
  */
-static pifs_status_t pifs_append_delta_map_entry(pifs_delta_entry_t * a_new_delta_entry)
+static pifs_status_t pifs_append_delta_map_entry(pifs_delta_entry_t * a_new_delta_entry,
+                                                 pifs_header_t * a_header)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_size_t          i;
@@ -165,7 +168,7 @@ static pifs_status_t pifs_append_delta_map_entry(pifs_delta_entry_t * a_new_delt
 
     if (!pifs.delta_map_page_is_read)
     {
-        ret = pifs_read_delta_map_page();
+        ret = pifs_read_delta_map_page(a_header);
     }
     if (ret == PIFS_SUCCESS)
     {
@@ -177,7 +180,7 @@ static pifs_status_t pifs_append_delta_map_entry(pifs_delta_entry_t * a_new_delt
                 if (pifs_is_buffer_erased(&delta_entry[j], PIFS_DELTA_ENTRY_SIZE_BYTE))
                 {
                     delta_entry[j] = *a_new_delta_entry;
-                    ret = pifs_write_delta_map_page(i);
+                    ret = pifs_write_delta_map_page(i, a_header);
                     delta_written = TRUE;
                 }
             }
@@ -212,7 +215,8 @@ pifs_status_t pifs_read_delta(pifs_block_address_t a_block_address,
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
 
-    ret = pifs_find_delta_page(a_block_address, a_page_address, &ba, &pa, NULL);
+    ret = pifs_find_delta_page(a_block_address, a_page_address, &ba, &pa, NULL,
+                               &pifs.header);
     if (ret == PIFS_SUCCESS)
     {
 //        PIFS_DEBUG_MSG("%s\r\n", pifs_ba_pa2str(ba, pa));
@@ -240,7 +244,8 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
                                pifs_page_offset_t a_page_offset,
                                const void * const a_buf,
                                pifs_size_t a_buf_size,
-                               bool_t * a_is_delta)
+                               bool_t * a_is_delta,
+                               pifs_header_t * a_header)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_delta_entry_t   delta_entry;
@@ -252,7 +257,7 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
     pifs_page_count_t    page_count_found;
     bool_t               is_delta_map_full;
 
-    ret = pifs_find_delta_page(a_block_address, a_page_address, &ba, &pa, &is_delta_map_full);
+    ret = pifs_find_delta_page(a_block_address, a_page_address, &ba, &pa, &is_delta_map_full, a_header);
     if (ret == PIFS_SUCCESS)
     {
         /* Read to page buffer */
@@ -297,7 +302,7 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
                 ret = pifs_write(fba, fpa, a_page_offset, a_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
                 if (ret == PIFS_SUCCESS)
                 {
-                    ret = pifs_append_delta_map_entry(&delta_entry);
+                    ret = pifs_append_delta_map_entry(&delta_entry, a_header);
                 }
                 if (ret == PIFS_SUCCESS)
                 {

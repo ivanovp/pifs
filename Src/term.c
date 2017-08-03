@@ -821,7 +821,8 @@ void cmdFindDelta (char* command, char* params)
         pa = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) % PIFS_LOGICAL_PAGE_PER_BLOCK;
         ba = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) / PIFS_LOGICAL_PAGE_PER_BLOCK;
         printf("Find delta of page %s\r\n", pifs_ba_pa2str(ba, pa));
-        ret = pifs_find_delta_page(ba, pa, &dba, &dpa, &is_map_full);
+        ret = pifs_find_delta_page(ba, pa, &dba, &dpa, &is_map_full,
+                                   &pifs.header);
         if (ret == PIFS_SUCCESS)
         {
             printf("                -> %s\r\n\r\nMap is full: %i\r\n",

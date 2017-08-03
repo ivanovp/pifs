@@ -56,6 +56,7 @@
         printf("%s FATAL_ERROR: ", __FUNCTION__);   \
         printf( __VA_ARGS__);                       \
         pifs_delete();                              \
+        fflush(stdout);                             \
         SOFTWARE_BREAKPOINT();                      \
         exit(-1);                                   \
     } while (0);

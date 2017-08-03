@@ -21,7 +21,8 @@ pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
                                    pifs_page_address_t a_page_address,
                                    pifs_block_address_t * a_delta_block_address,
                                    pifs_page_address_t * a_delta_page_address,
-                                   bool_t * a_is_map_full);
+                                   bool_t * a_is_map_full,
+                                   pifs_header_t * a_header);
 pifs_status_t pifs_read_delta(pifs_block_address_t a_block_address,
                               pifs_page_address_t a_page_address,
                               pifs_page_offset_t a_page_offset,
@@ -32,6 +33,7 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
                                pifs_page_offset_t a_page_offset,
                                const void * const a_buf,
                                pifs_size_t a_buf_size,
-                               bool_t * a_is_delta);
+                               bool_t * a_is_delta,
+                               pifs_header_t * a_header);
 
 #endif /* _INCLUDE_PIFS_DELTA_H_ */
