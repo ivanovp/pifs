@@ -19,7 +19,7 @@
 #include "pifs_helper.h"
 #include "pifs_delta.h"
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 5
 #include "pifs_debug.h"
 
 /**
@@ -247,6 +247,8 @@ pifs_status_t pifs_release_file_pages(pifs_file_t * a_file)
     pifs_page_address_t     pa = a_file->entry.first_map_address.page_address;
     pifs_block_address_t    mba;
     pifs_page_address_t     mpa;
+    pifs_block_address_t    delta_ba;
+    pifs_page_address_t     delta_pa;
     pifs_page_count_t       page_count;
     pifs_size_t             i;
     bool_t                  erased = FALSE;
@@ -279,10 +281,19 @@ pifs_status_t pifs_release_file_pages(pifs_file_t * a_file)
                     page_count = a_file->map_entry.page_count;
                     if (page_count && page_count < PIFS_MAP_PAGE_COUNT_INVALID)
                     {
-                        PIFS_DEBUG_MSG("Release map entry %i pages %s\r\n", page_count,
-                                       pifs_ba_pa2str(mba, mpa));
-                        /* Mark pages to be released */
-                        a_file->status = pifs_mark_page(mba, mpa, page_count, FALSE);
+                        a_file->status = pifs_find_delta_page(mba, mpa,
+                                                              &delta_ba, &delta_pa, NULL);
+                        while (page_count-- && a_file->status == PIFS_SUCCESS)
+                        {
+                            PIFS_DEBUG_MSG("Release map entry %s\r\n",
+                                           pifs_ba_pa2str(delta_ba, delta_pa));
+                            /* Mark page to be released */
+                            a_file->status = pifs_mark_page(delta_ba, delta_pa, 1, FALSE);
+                            if (a_file->status == PIFS_SUCCESS)
+                            {
+                                a_file->status = pifs_inc_ba_pa(&delta_ba, &delta_pa);
+                            }
+                        }
                     }
                 }
                 po += PIFS_MAP_ENTRY_SIZE_BYTE;

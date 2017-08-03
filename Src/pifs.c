@@ -1075,24 +1075,6 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                 /* Check if merge needed and do it if necessary */
                 file->status = pifs_merge_check(a_file, page_count_needed);
             }
-            /* Map entry is needed when write position is at file's end */
-            if (file->status == PIFS_SUCCESS && file->write_pos == file->entry.file_size)
-            {
-                /* Check if at least one map can be added after writing */
-                file->status = pifs_is_free_map_entry(a_file, &is_free_map_entry);
-                if (!is_free_map_entry)
-                {
-                    /* No free entry in actual map page, so check if there are */
-                    /* at least one free management page and a new map page */
-                    /* can be allocated. */
-                    file->status = pifs_get_free_pages(&free_management_page_count,
-                                                       &free_data_page_count);
-                    if (file->status == PIFS_SUCCESS && !free_management_page_count)
-                    {
-                        file->status = PIFS_ERROR_NO_MORE_SPACE;
-                    }
-                }
-            }
             if (file->status == PIFS_SUCCESS && file->entry.file_size != PIFS_FILE_SIZE_ERASED
                     && file->write_pos < file->entry.file_size)
             {
@@ -1122,63 +1104,84 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                     page_count_needed--;
                 }
             }
-       }
-        if (file->status == PIFS_SUCCESS && data_size > 0)
+        }
+        if (data_size > 0)
         {
-            /* Appending new pages to the file */
-            PIFS_WARNING_MSG("Appending pages\r\n");
-            do
+            /* Map entry is needed when write position is at file's end */
+            if (file->status == PIFS_SUCCESS && file->write_pos == file->entry.file_size)
             {
-                page_count_needed_limited = page_count_needed;
-                if (page_count_needed_limited >= PIFS_MAP_PAGE_COUNT_INVALID)
+                /* Check if at least one map can be added after writing */
+                file->status = pifs_is_free_map_entry(a_file, &is_free_map_entry);
+                if (!is_free_map_entry)
                 {
-                    page_count_needed_limited = PIFS_MAP_PAGE_COUNT_INVALID - 1;
-                }
-                file->status = pifs_find_free_page_wl(1, page_count_needed_limited,
-                                                      PIFS_BLOCK_TYPE_DATA,
-                                                      &ba, &pa, &page_count_found);
-                PIFS_DEBUG_MSG("%u pages found. %s, status: %i\r\n",
-                               page_count_found, pifs_ba_pa2str(ba, pa), file->status);
-                if (file->status == PIFS_SUCCESS)
-                {
-                    ba_start = ba;
-                    pa_start = pa;
-                    page_cound_found_start = page_count_found;
-                    do
+                    /* No free entry in actual map page, so check if there are */
+                    /* at least one free management page and a new map page */
+                    /* can be allocated. */
+                    file->status = pifs_get_free_pages(&free_management_page_count,
+                                                       &free_data_page_count);
+                    if (file->status == PIFS_SUCCESS && !free_management_page_count)
                     {
-                        if (data_size > PIFS_LOGICAL_PAGE_SIZE_BYTE)
-                        {
-                            chunk_size = PIFS_LOGICAL_PAGE_SIZE_BYTE;
-                        }
-                        else
-                        {
-                            chunk_size = data_size;
-                        }
-                        file->status = pifs_write_delta(ba, pa, 0, data, chunk_size, &is_delta);
-                        PIFS_DEBUG_MSG("%s is_delta: %i status: %i\r\n", pifs_ba_pa2str(ba, pa),
-                                       is_delta, file->status);
-                        /* Save last page's address for future use */
-                        file->write_address.block_address = ba;
-                        file->write_address.page_address = pa;
-                        data += chunk_size;
-                        data_size -= chunk_size;
-                        written_size += chunk_size;
-                        page_count_found--;
-                        page_count_needed--;
-                        if (page_count_found)
-                        {
-                            file->status = pifs_inc_ba_pa(&ba, &pa);
-                        }
-                    } while (page_count_found && file->status == PIFS_SUCCESS);
-
-                    if (file->status == PIFS_SUCCESS && !is_delta)
-                    {
-                        /* Write pages to file map entry after successfully write */
-                        file->status = pifs_append_map_entry(file, ba_start, pa_start, page_cound_found_start);
-                        PIFS_ASSERT(file->status == PIFS_SUCCESS);
+                        file->status = PIFS_ERROR_NO_MORE_SPACE;
                     }
                 }
-            } while (page_count_needed && file->status == PIFS_SUCCESS);
+            }
+            if (file->status == PIFS_SUCCESS)
+            {
+                /* Appending new pages to the file */
+                PIFS_WARNING_MSG("Appending pages\r\n");
+                do
+                {
+                    page_count_needed_limited = page_count_needed;
+                    if (page_count_needed_limited >= PIFS_MAP_PAGE_COUNT_INVALID)
+                    {
+                        page_count_needed_limited = PIFS_MAP_PAGE_COUNT_INVALID - 1;
+                    }
+                    file->status = pifs_find_free_page_wl(1, page_count_needed_limited,
+                                                          PIFS_BLOCK_TYPE_DATA,
+                                                          &ba, &pa, &page_count_found);
+                    PIFS_DEBUG_MSG("%u pages found. %s, status: %i\r\n",
+                                   page_count_found, pifs_ba_pa2str(ba, pa), file->status);
+                    if (file->status == PIFS_SUCCESS)
+                    {
+                        ba_start = ba;
+                        pa_start = pa;
+                        page_cound_found_start = page_count_found;
+                        do
+                        {
+                            if (data_size > PIFS_LOGICAL_PAGE_SIZE_BYTE)
+                            {
+                                chunk_size = PIFS_LOGICAL_PAGE_SIZE_BYTE;
+                            }
+                            else
+                            {
+                                chunk_size = data_size;
+                            }
+                            file->status = pifs_write_delta(ba, pa, 0, data, chunk_size, &is_delta);
+                            PIFS_DEBUG_MSG("%s is_delta: %i status: %i\r\n", pifs_ba_pa2str(ba, pa),
+                                           is_delta, file->status);
+                            /* Save last page's address for future use */
+                            file->write_address.block_address = ba;
+                            file->write_address.page_address = pa;
+                            data += chunk_size;
+                            data_size -= chunk_size;
+                            written_size += chunk_size;
+                            page_count_found--;
+                            page_count_needed--;
+                            if (page_count_found)
+                            {
+                                file->status = pifs_inc_ba_pa(&ba, &pa);
+                            }
+                        } while (page_count_found && file->status == PIFS_SUCCESS);
+
+                        if (file->status == PIFS_SUCCESS && !is_delta)
+                        {
+                            /* Write pages to file map entry after successfully write */
+                            file->status = pifs_append_map_entry(file, ba_start, pa_start, page_cound_found_start);
+                            PIFS_ASSERT(file->status == PIFS_SUCCESS);
+                        }
+                    }
+                } while (page_count_needed && file->status == PIFS_SUCCESS);
+            }
         }
         file->write_pos += written_size;
         if (file->write_pos > file->entry.file_size
