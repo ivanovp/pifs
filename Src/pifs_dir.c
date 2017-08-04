@@ -170,7 +170,7 @@ int pifs_closedir(pifs_DIR * a_dirp)
  * @return PIFS_SUCCESS if successfully walked.
  */
 pifs_status_t pifs_walk_dir(pifs_char_t * a_path, bool_t a_recursive, bool_t a_stop_at_error,
-                            pifs_dir_walker_func_t a_dir_walker_func)
+                            pifs_dir_walker_func_t a_dir_walker_func, void * a_func_data)
 {
     pifs_status_t   ret = PIFS_ERROR_FILE_NOT_FOUND;
     pifs_status_t   ret2;
@@ -187,7 +187,7 @@ pifs_status_t pifs_walk_dir(pifs_char_t * a_path, bool_t a_recursive, bool_t a_s
         ret = PIFS_SUCCESS;
         while ((dirent = pifs_readdir(dir)) && ret == PIFS_SUCCESS)
         {
-            ret2 = (*a_dir_walker_func)(dirent);
+            ret2 = (*a_dir_walker_func)(dirent, a_func_data);
             if (a_stop_at_error)
             {
                 ret = ret2;

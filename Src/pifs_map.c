@@ -243,7 +243,8 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
  * @return TRUE: if all pages were succesfully marked to be released.
  */
 pifs_status_t pifs_walk_file_pages(pifs_file_t * a_file, 
-                                   pifs_file_walker_func_t a_file_walker_func)
+                                   pifs_file_walker_func_t a_file_walker_func,
+                                   void * a_func_data)
 {
     pifs_block_address_t    ba = a_file->entry.first_map_address.block_address;
     pifs_page_address_t     pa = a_file->entry.first_map_address.page_address;
@@ -293,7 +294,9 @@ pifs_status_t pifs_walk_file_pages(pifs_file_t * a_file,
                         while (page_count-- && a_file->status == PIFS_SUCCESS)
                         {
                             /* Call callback function */
-                            a_file->status = (*a_file_walker_func)(a_file, mba, mpa, delta_ba, delta_pa, FALSE);
+                            a_file->status = (*a_file_walker_func)(a_file, mba, mpa,
+                                                                   delta_ba, delta_pa,
+                                                                   FALSE, a_func_data);
                             if (page_count)
                             {
                                 if (a_file->status == PIFS_SUCCESS)
@@ -315,7 +318,9 @@ pifs_status_t pifs_walk_file_pages(pifs_file_t * a_file,
         {
             /* Mark map page to be released */
             a_file->status = (*a_file_walker_func)(a_file, ba, pa,
-                                                   PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID, TRUE);
+                                                   PIFS_BLOCK_ADDRESS_INVALID,
+                                                   PIFS_PAGE_ADDRESS_INVALID,
+                                                   TRUE, a_func_data);
             /* Jump to the next map page */
             ba = a_file->map_header.next_map_address.block_address;
             pa = a_file->map_header.next_map_address.page_address;
@@ -376,6 +381,6 @@ pifs_status_t pifs_release_file_page(pifs_file_t * a_file,
  */
 pifs_status_t pifs_release_file_pages(pifs_file_t * a_file)
 {
-    return pifs_walk_file_pages(a_file, pifs_release_file_page);
+    return pifs_walk_file_pages(a_file, pifs_release_file_page, NULL);
 }
 

@@ -731,6 +731,62 @@ pifs_status_t pifs_delete(void)
 }
 
 /**
+ * @brief pifs_mark_page_check Used during file system check. Mark page
+ * as used.
+ *
+ * @param[in] a_file            File to write.
+ * @param[in] a_block_address   Block address to mark.
+ * @param[in] a_page_address    Page address to mark.
+ * @return
+ */
+pifs_status_t pifs_mark_page_check(pifs_file_t * a_file,
+                                   pifs_block_address_t a_block_address,
+                                   pifs_page_address_t a_page_address)
+{
+    pifs_status_t   ret = PIFS_SUCCESS;
+    pifs_bit_pos_t  bit_pos;
+    pifs_size_t     byte_pos;
+    uint8_t         byte;
+    size_t          read_bytes;
+    size_t          written_bytes;
+
+    /* Calculate address of block in the temporary file */
+    //bit_pos = ((a_block_address - PIFS_FLASH_BLOCK_RESERVED_NUM) * PIFS_LOGICAL_PAGE_PER_BLOCK + a_page_address) << PIFS_FSBM_BITS_PER_PAGE_SHIFT;
+    bit_pos = ((a_block_address - PIFS_FLASH_BLOCK_RESERVED_NUM) * PIFS_LOGICAL_PAGE_PER_BLOCK + a_page_address);
+    byte_pos = bit_pos / PIFS_BYTE_BITS;
+    bit_pos %= PIFS_BYTE_BITS;
+
+    PIFS_PRINT_MSG("Seek to %i\r\n", byte_pos);
+    ret = pifs_fseek(a_file, byte_pos, PIFS_SEEK_SET);
+    if (ret == PIFS_SUCCESS)
+    {
+        read_bytes = pifs_fread(&byte, 1, sizeof(byte), a_file);
+        if (read_bytes == sizeof(byte))
+        {
+            /* Mask bit */
+            byte &= ~(1u << bit_pos);
+            written_bytes = pifs_fwrite(&byte, 1, sizeof(byte), a_file);
+            if (written_bytes != read_bytes)
+            {
+                PIFS_ERROR_MSG("Cannot write temporary file!\r\n");
+                ret = PIFS_ERROR_GENERAL;
+            }
+        }
+        else
+        {
+            PIFS_ERROR_MSG("Cannot read temporary file!\r\n");
+            ret = PIFS_ERROR_GENERAL;
+        }
+    }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot seek in temporary file!\r\n");
+    }
+
+    return ret;
+}
+
+/**
  * @brief pifs_check_file_page Check page if it is allocated.
  *
  * @param[in] a_file                 Pointer to file.
@@ -748,9 +804,11 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
                                    pifs_page_address_t a_page_address,
                                    pifs_block_address_t a_delta_block_address,
                                    pifs_page_address_t a_delta_page_address,
-                                   bool_t a_map_page)
+                                   bool_t a_map_page,
+                                   void * a_func_data)
 {
     pifs_status_t ret = PIFS_SUCCESS;
+    pifs_file_t * file = (pifs_file_t*) a_func_data;
 
     (void) a_file;
     (void) a_block_address;
@@ -768,6 +826,10 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
                            a_file->entry.name,
                            pifs_ba_pa2str(a_block_address, a_page_address));
             ret = PIFS_ERROR_INTEGRITY;
+        }
+        else
+        {
+            ret = pifs_mark_page_check(file, a_block_address, a_page_address);
         }
         if (pifs_is_page_to_be_released(a_block_address, a_page_address))
         {
@@ -793,6 +855,10 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
                            pifs_ba_pa2str(a_block_address, a_page_address));
             ret = PIFS_ERROR_INTEGRITY;
         }
+        else
+        {
+            ret = pifs_mark_page_check(file, a_block_address, a_page_address);
+        }
         if (!pifs_is_page_to_be_released(a_block_address, a_page_address))
         {
             pifs.error_cntr++;
@@ -809,6 +875,10 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
                            a_file->entry.name,
                            pifs_ba_pa2str(a_delta_block_address, a_delta_page_address));
             ret = PIFS_ERROR_INTEGRITY;
+        }
+        else
+        {
+            ret = pifs_mark_page_check(file, a_delta_block_address, a_delta_page_address);
         }
         if (pifs_is_page_to_be_released(a_delta_block_address, a_delta_page_address))
         {
@@ -830,6 +900,10 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
                            pifs_ba_pa2str(a_block_address, a_page_address));
             ret = PIFS_ERROR_INTEGRITY;
         }
+        else
+        {
+            ret = pifs_mark_page_check(file, a_block_address, a_page_address);
+        }
         if (pifs_is_page_to_be_released(a_block_address, a_page_address))
         {
             pifs.error_cntr++;
@@ -849,7 +923,7 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
  *
  * @return PIFS_SUCCESS when file opened successfully.
  */
-pifs_status_t pifs_dir_walker_check(pifs_dirent_t * a_dirent)
+pifs_status_t pifs_dir_walker_check(pifs_dirent_t * a_dirent, void * a_func_data)
 {
     pifs_status_t ret = PIFS_ERROR_NO_MORE_RESOURCE;
     pifs_file_t * file;
@@ -858,7 +932,7 @@ pifs_status_t pifs_dir_walker_check(pifs_dirent_t * a_dirent)
     file = pifs_fopen(a_dirent->d_name, "r");
     if (file)
     {
-        ret = pifs_walk_file_pages(file, pifs_check_file_page);
+        ret = pifs_walk_file_pages(file, pifs_check_file_page, a_func_data);
         pifs_fclose(file);
     }
     else
@@ -876,20 +950,64 @@ pifs_status_t pifs_dir_walker_check(pifs_dirent_t * a_dirent)
  */
 pifs_status_t pifs_check(void)
 {
+    pifs_file_t * file;
     pifs_char_t * path = PIFS_ROOT_STR;
     pifs_status_t ret = PIFS_SUCCESS;
+    const char  * tmpfilename = "fschk.%%%";
+#if !PIFS_ENABLE_FSEEK_BEYOND_FILE || !PIFS_ENABLE_FSEEK_ERASED_VALUE
+    uint8_t       buf[16];
+    pifs_size_t   i;
+#endif
 
-    PIFS_PRINT_MSG("Checking files in directory '%s'...\r\n", path);
-    pifs.error_cntr = 0;
-    ret = pifs_walk_dir(path, TRUE, FALSE, pifs_dir_walker_check);
-    if (pifs.error_cntr)
+    /* TODO create a random file name generator! */
+    /* Prepare temporary file which will store used allocated space */
+    file = pifs_fopen(tmpfilename, "w");
+    if (file)
     {
-        PIFS_ERROR_MSG("%i errors found!\r\n", pifs.error_cntr);
+#if !PIFS_ENABLE_FSEEK_BEYOND_FILE || !PIFS_ENABLE_FSEEK_ERASED_VALUE
+        for (i = 0; i < sizeof(buf); i++)
+        {
+            buf[i] = PIFS_FLASH_ERASED_BYTE_VALUE;
+        }
+        for (i = 0; i < PIFS_FLASH_PAGE_NUM_FS / PIFS_BYTE_BITS / sizeof(buf); i++)
+        {
+            pifs_fwrite(buf, 1, sizeof(buf), file);
+        }
+#else
+        pifs_fseek(file, PIFS_FLASH_PAGE_NUM_FS / PIFS_BYTE_BITS, PIFS_SEEK_SET);
+#endif
+        PIFS_PRINT_MSG("Temporary file prepared, %i bytes\r\n", pifs_ftell(file));
+        //pifs_rewind(file);
+        pifs_fclose(file);
+        file = pifs_fopen(tmpfilename, "r+");
+        PIFS_PRINT_MSG("Checking files in directory '%s'...\r\n", path);
+        pifs.error_cntr = 0;
+        ret = pifs_walk_dir(path, TRUE, FALSE, pifs_dir_walker_check, file);
+        if (pifs.error_cntr)
+        {
+            PIFS_ERROR_MSG("%i file errors found!\r\n", pifs.error_cntr);
+        }
+        else
+        {
+            PIFS_PRINT_MSG("No file errors found.\r\n");
+        }
+        PIFS_PRINT_MSG("Checking free space...\r\n");
+        ret = pifs_fclose(file);
+        if (ret != 0)
+        {
+            PIFS_ERROR_MSG("Cannot close temporary file!\r\n");
+        }
+
+#if 0
+        ret = pifs_remove(tmpfilename);
+        if (ret != PIFS_SUCCESS)
+        {
+            PIFS_ERROR_MSG("Cannot remove temporary file!\r\n");
+        }
+#endif
     }
-    else
-    {
-        PIFS_PRINT_MSG("No errors found.\r\n");
-    }
+
+
 
     return ret;
 }

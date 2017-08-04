@@ -375,7 +375,7 @@ typedef struct
     bool_t                  mode_write PIFS_BOOL_SIZE;
     bool_t                  mode_append PIFS_BOOL_SIZE;
     bool_t                  mode_file_shall_exist PIFS_BOOL_SIZE;
-    pifs_entry_t            entry;              /**< One element of entry list */
+    pifs_entry_t            entry;              /**< File's entry, one element of entry list */
     pifs_status_t           status;             /**< Last file operation's result */
     pifs_address_t          actual_map_address; /**< Actual map's address used for reading */
     pifs_map_header_t       map_header;         /**< Actual map's header */
