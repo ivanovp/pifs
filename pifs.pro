@@ -12,6 +12,7 @@ SOURCES += ./Src/buffer.c \
 ./Src/pifs_delta.c \
 ./Src/pifs_dir.c \
 ./Src/pifs_entry.c \
+./Src/pifs_file.c \
 ./Src/pifs_fsbm.c \
 ./Src/pifs_helper.c \
 ./Src/pifs_map.c \
@@ -36,6 +37,7 @@ HEADERS += ./Inc/api_pifs.h \
 ./Inc/pifs_delta.h \
 ./Inc/pifs_dummy.h \
 ./Inc/pifs_entry.h \
+./Inc/pifs_file.h \
 ./Inc/pifs_fsbm.h \
 ./Inc/pifs_helper.h \
 ./Inc/pifs_map.h \
@@ -47,5 +49,4 @@ HEADERS += ./Inc/api_pifs.h \
 INCLUDEPATH += .
 INCLUDEPATH += ./Inc
 INCLUDEPATH += ./Src
-INCLUDEPATH += ./test
 

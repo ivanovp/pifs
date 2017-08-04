@@ -318,7 +318,19 @@ pifs_status_t pifs_walk_file_pages(pifs_file_t * a_file,
     return a_file->status;
 }
 
-
+/**
+ * @brief pifs_release_file_page Mark page as to be released.
+ *
+ * @param[in] a_file                 Pointer to file.
+ * @param[in] a_block_address        Original block address.
+ * @param[in] a_page_address         Original block address.
+ * @param[in] a_delta_block_address  Delta block address.
+ * @param[in] a_delta_page_address   Delta page address.
+ * If delta block and page are equal to original block address, no delta
+ * page is used.
+ *
+ * @return PIFS_SUCCESS if page marked successfully.
+ */
 pifs_status_t pifs_release_file_page(pifs_file_t * a_file,
                                      pifs_block_address_t a_block_address,
                                      pifs_page_address_t a_page_address,
