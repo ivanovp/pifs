@@ -839,11 +839,16 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
             ret = PIFS_ERROR_INTEGRITY;
         }
     }
-    /* Returning success to not stop checking */
-    return PIFS_SUCCESS;
+    return ret;
 }
 
-
+/**
+ * @brief pifs_dir_walker_check Callback function used during file system check.
+ *
+ * @param[in] a_dirent Pointer to directory entry.
+ *
+ * @return PIFS_SUCCESS when file opened successfully.
+ */
 pifs_status_t pifs_dir_walker_check(pifs_dirent_t * a_dirent)
 {
     pifs_status_t ret = PIFS_ERROR_NO_MORE_RESOURCE;
@@ -861,8 +866,7 @@ pifs_status_t pifs_dir_walker_check(pifs_dirent_t * a_dirent)
         pifs.error_cntr++;
         PIFS_ERROR_MSG("Cannot open file '%s'!\r\n", a_dirent->d_name);
     }
-    /* Returning success to not stop checking */
-    return PIFS_SUCCESS;
+    return ret;
 }
 
 /**
@@ -877,7 +881,7 @@ pifs_status_t pifs_check(void)
 
     PIFS_PRINT_MSG("Checking files in directory '%s'...\r\n", path);
     pifs.error_cntr = 0;
-    ret = pifs_walk_dir(path, TRUE, pifs_dir_walker_check);
+    ret = pifs_walk_dir(path, TRUE, FALSE, pifs_dir_walker_check);
     if (pifs.error_cntr)
     {
         PIFS_ERROR_MSG("%i errors found!\r\n", pifs.error_cntr);

@@ -160,10 +160,21 @@ int pifs_closedir(pifs_DIR * a_dirp)
     return ret;
 }
 
-pifs_status_t pifs_walk_dir(pifs_char_t * a_path, bool_t a_recursive,
+/**
+ * @brief pifs_walk_dir Walk through directory.
+ *
+ * @param[in] a_path            Path to walk.
+ * @param[in] a_recursive       Enter directories and walk them too.
+ * @param[in] a_stop_at_error   TRUE: Stop at first error.
+ * @param[in] a_dir_walker_func Pointer to callback function.
+ * @return PIFS_SUCCESS if successfully walked.
+ */
+pifs_status_t pifs_walk_dir(pifs_char_t * a_path, bool_t a_recursive, bool_t a_stop_at_error,
                             pifs_dir_walker_func_t a_dir_walker_func)
 {
     pifs_status_t   ret = PIFS_ERROR_FILE_NOT_FOUND;
+    pifs_status_t   ret2;
+    pifs_status_t   ret_error = PIFS_SUCCESS;
     pifs_DIR      * dir;
     pifs_dirent_t * dirent;
 
@@ -176,17 +187,26 @@ pifs_status_t pifs_walk_dir(pifs_char_t * a_path, bool_t a_recursive,
         ret = PIFS_SUCCESS;
         while ((dirent = pifs_readdir(dir)) && ret == PIFS_SUCCESS)
         {
-//            printf("%-32s", dirent->d_name);
-//            printf("  %8i", pifs_filesize(dirent->d_name));
-//            printf("  %s", pifs_ba_pa2str(dirent->d_first_map_block_address, dirent->d_first_map_page_address));
-//            printf("\r\n");
-            (*a_dir_walker_func)(dirent);
+            ret2 = (*a_dir_walker_func)(dirent);
+            if (a_stop_at_error)
+            {
+                ret = ret2;
+            }
+            else if (ret2 != PIFS_SUCCESS)
+            {
+                ret_error = ret2;
+            }
         }
         if (pifs_closedir (dir) != 0)
         {
             PIFS_ERROR_MSG("Cannot close directory!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
+    }
+
+    if (!a_stop_at_error && ret == PIFS_SUCCESS)
+    {
+        ret = ret_error;
     }
 
     return ret;
