@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-07-06 19:12:58 ivanovp {Time-stamp}
+ * Last modify: 2017-08-04 14:28:25 ivanovp {Time-stamp}
  * Licence:     GPL
  */
 #include <stdio.h>
@@ -18,6 +18,7 @@
 #include "pifs_fsbm.h"
 #include "pifs_helper.h"
 #include "pifs_delta.h"
+#include "pifs_map.h"
 
 #define PIFS_DEBUG_LEVEL 5
 #include "pifs_debug.h"
@@ -241,7 +242,8 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
  * @param[in] a_file Pointer of file structure.
  * @return TRUE: if all pages were succesfully marked to be released.
  */
-pifs_status_t pifs_release_file_pages(pifs_file_t * a_file)
+pifs_status_t pifs_walk_file_pages(pifs_file_t * a_file, 
+                                   pifs_file_walker_func_t a_file_walker_func)
 {
     pifs_block_address_t    ba = a_file->entry.first_map_address.block_address;
     pifs_page_address_t     pa = a_file->entry.first_map_address.page_address;
@@ -254,6 +256,7 @@ pifs_status_t pifs_release_file_pages(pifs_file_t * a_file)
     bool_t                  erased = FALSE;
     pifs_page_offset_t      po = PIFS_MAP_HEADER_SIZE_BYTE;
 
+    PIFS_ASSERT(a_file_walker_func);
     PIFS_DEBUG_MSG("Searching in map entry at %s\r\n", pifs_ba_pa2str(ba, pa));
 
     do
@@ -289,10 +292,8 @@ pifs_status_t pifs_release_file_pages(pifs_file_t * a_file)
                                                               &pifs.header);
                         while (page_count-- && a_file->status == PIFS_SUCCESS)
                         {
-                            PIFS_DEBUG_MSG("Release map entry %s\r\n",
-                                           pifs_ba_pa2str(delta_ba, delta_pa));
-                            /* Mark page to be released */
-                            a_file->status = pifs_mark_page(delta_ba, delta_pa, 1, FALSE);
+                            /* Call callback function */
+                            a_file->status = (*a_file_walker_func)(a_file, mba, mpa, delta_ba, delta_pa);
                             if (a_file->status == PIFS_SUCCESS && page_count)
                             {
                                 a_file->status = pifs_inc_ba_pa(&delta_ba, &delta_pa);
@@ -315,5 +316,32 @@ pifs_status_t pifs_release_file_pages(pifs_file_t * a_file)
     } while (ba < PIFS_BLOCK_ADDRESS_INVALID && pa < PIFS_PAGE_ADDRESS_INVALID && a_file->status == PIFS_SUCCESS);
 
     return a_file->status;
+}
+
+
+pifs_status_t pifs_release_file_page(pifs_file_t * a_file,
+                                     pifs_block_address_t a_block_address,
+                                     pifs_page_address_t a_page_address,
+                                     pifs_block_address_t a_delta_block_address,
+                                     pifs_page_address_t a_delta_page_address)
+{
+    (void) a_file;
+    (void) a_block_address;
+    (void) a_page_address;
+
+    PIFS_DEBUG_MSG("Release map entry %s\r\n",
+            pifs_ba_pa2str(a_delta_block_address, a_delta_page_address));
+    return pifs_mark_page(a_delta_block_address, a_delta_page_address, 1, FALSE);
+}
+
+/**
+ * @brief pifs_release_file_pages Mark file map and file's pages to be released.
+ *
+ * @param[in] a_file Pointer of file structure.
+ * @return TRUE: if all pages were succesfully marked to be released.
+ */
+pifs_status_t pifs_release_file_pages(pifs_file_t * a_file)
+{
+    return pifs_walk_file_pages(a_file, pifs_release_file_page);
 }
 
