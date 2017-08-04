@@ -123,6 +123,12 @@
 
 #define PIFS_FILENAME_TEMP_CHAR             '%'
 #define PIFS_FILENAME_TEMP_STR              "%"
+#define PIFS_ROOT_CHAR                      PIFS_PATH_SEPARATOR_CHAR
+#if PIFS_PATH_SEPARATOR_CHAR == '/'
+#define PIFS_ROOT_STR                       "/"
+#else
+#define PIFS_ROOT_STR                       "\\"
+#endif
 #define PIFS_EOS                            0
 
 #if PIFS_LOGICAL_PAGE_SIZE_BYTE < PIFS_FLASH_PAGE_SIZE_BYTE
@@ -425,6 +431,7 @@ typedef struct
     uint8_t                 dmw_page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];
     /** General page buffer use by pifs_fseek, pifs_copy buffer, sc=seek, copy */
     uint8_t                 sc_page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];
+    uint32_t                error_cntr;         /**< File system's integrity check uses it */
 } pifs_t;
 
 extern pifs_t pifs;

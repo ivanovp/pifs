@@ -22,6 +22,7 @@
 #include "pifs_map.h"
 #include "pifs_merge.h"
 #include "pifs_wear.h"
+#include "pifs_file.h"
 #include "buffer.h" /* DEBUG */
 
 #define PIFS_DEBUG_LEVEL 3
@@ -382,6 +383,7 @@ pifs_status_t pifs_check_block(pifs_char_t * a_filename,
  * Note: there shall be no free pages in the specified block!
  * This function is used for static wear leveling.
  * TODO copy only pages found in the specified block!
+ * TODO use pifs_walk_dir() function!
  *
  * @param[in] a_block_address Block address to find.
  * @return PIFS_SUCCESS if block was succuessfuly released.

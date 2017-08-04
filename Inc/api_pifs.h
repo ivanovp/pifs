@@ -46,6 +46,7 @@ typedef enum
     PIFS_ERROR_NO_A_DIRECTORY = 21,
     PIFS_ERROR_IS_A_DIRECTORY = 22,
     PIFS_ERROR_DIRECTORY_NOT_EMPTY = 23,
+    PIFS_ERROR_INTEGRITY = 24,
 } pifs_status_t;
 
 #define PIFS_EACCES     PIFS_ERROR_FILE_NOT_FOUND
@@ -88,6 +89,7 @@ void pifs_print_header_info(void);
 void pifs_print_free_space_info(void);
 pifs_status_t pifs_init(void);
 pifs_status_t pifs_delete(void);
+pifs_status_t pifs_check(void);
 P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes);
 size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * a_file);
 size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file);

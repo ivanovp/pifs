@@ -21,6 +21,7 @@
 #include "pifs_entry.h"
 #include "pifs_map.h"
 #include "pifs_merge.h"
+#include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
 
 #define PIFS_DEBUG_LEVEL 2
@@ -159,7 +160,40 @@ int pifs_closedir(pifs_DIR * a_dirp)
     return ret;
 }
 
+pifs_status_t pifs_walk_dir(pifs_char_t * a_path, bool_t a_recursive,
+                            pifs_dir_walker_func_t a_dir_walker_func)
+{
+    pifs_status_t   ret = PIFS_ERROR_FILE_NOT_FOUND;
+    pifs_DIR      * dir;
+    pifs_dirent_t * dirent;
+
+    /* TODO Currently no directories supported */
+    (void)a_recursive;
+
+    dir = pifs_opendir(a_path);
+    if (dir != NULL)
+    {
+        ret = PIFS_SUCCESS;
+        while ((dirent = pifs_readdir(dir)) && ret == PIFS_SUCCESS)
+        {
+//            printf("%-32s", dirent->d_name);
+//            printf("  %8i", pifs_filesize(dirent->d_name));
+//            printf("  %s", pifs_ba_pa2str(dirent->d_first_map_block_address, dirent->d_first_map_page_address));
+//            printf("\r\n");
+            (*a_dir_walker_func)(dirent);
+        }
+        if (pifs_closedir (dir) != 0)
+        {
+            PIFS_ERROR_MSG("Cannot close directory!\r\n");
+            ret = PIFS_ERROR_GENERAL;
+        }
+    }
+
+    return ret;
+}
+
 #if PIFS_ENABLE_DIRECTORIES
+#error Directories are not supported currently!
 int pifs_mkdir(const pifs_char_t * a_filename)
 {
     pifs_status_t        ret = PIFS_SUCCESS;

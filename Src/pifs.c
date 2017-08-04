@@ -22,9 +22,10 @@
 #include "pifs_map.h"
 #include "pifs_merge.h"
 #include "pifs_wear.h"
+#include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 3
 #include "pifs_debug.h"
 
 pifs_t pifs =
@@ -447,64 +448,64 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
  */
 void pifs_print_fs_info(void)
 {
-    printf("Geometry of flash memory\r\n");
-    printf("------------------------\r\n");
-    printf("Size of flash memory (all):         %i bytes, %i KiB\r\n", PIFS_FLASH_SIZE_BYTE_ALL, PIFS_FLASH_SIZE_BYTE_ALL / 1024);
-    printf("Size of flash memory (used by FS):  %i bytes, %i KiB\r\n", PIFS_FLASH_SIZE_BYTE_FS, PIFS_FLASH_SIZE_BYTE_ALL / 1024);
-    printf("Size of block:                      %i bytes\r\n", PIFS_FLASH_BLOCK_SIZE_BYTE);
-    printf("Size of page:                       %i bytes\r\n", PIFS_FLASH_PAGE_SIZE_BYTE);
-    printf("Number of blocks (all):             %i\r\n", PIFS_FLASH_BLOCK_NUM_ALL);
-    printf("Number of blocks (used by FS)):     %i\r\n", PIFS_FLASH_BLOCK_NUM_FS);
-    printf("Number of pages/block:              %i\r\n", PIFS_FLASH_PAGE_PER_BLOCK);
-    printf("Number of pages (all):              %i\r\n", PIFS_FLASH_PAGE_NUM_ALL);
-    printf("Number of pages (used by FS)):      %i\r\n", PIFS_FLASH_PAGE_NUM_FS);
-    printf("\r\n");
-    printf("Geometry of file system\r\n");
-    printf("-----------------------\r\n");
-    printf("Size of logical page:               %i bytes\r\n", PIFS_LOGICAL_PAGE_SIZE_BYTE);
-    printf("Block address size:                 %lu bytes\r\n", sizeof(pifs_block_address_t));
-    printf("Page address size:                  %lu bytes\r\n", sizeof(pifs_page_address_t));
-    printf("Header size:                        %lu bytes, %lu logical pages\r\n", PIFS_HEADER_SIZE_BYTE, PIFS_HEADER_SIZE_PAGE);
-    printf("Entry size:                         %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE);
-    printf("Entry size in a page:               %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE * PIFS_ENTRY_PER_PAGE);
-    printf("Entry list size:                    %lu bytes, %lu logical pages\r\n", PIFS_ENTRY_LIST_SIZE_BYTE, PIFS_ENTRY_LIST_SIZE_PAGE);
-    printf("Free space bitmap size:             %u bytes, %u logical pages\r\n", PIFS_FREE_SPACE_BITMAP_SIZE_BYTE, PIFS_FREE_SPACE_BITMAP_SIZE_PAGE);
-    printf("Map header size:                    %lu bytes\r\n", PIFS_MAP_HEADER_SIZE_BYTE);
-    printf("Map entry size:                     %lu bytes\r\n", PIFS_MAP_ENTRY_SIZE_BYTE);
-    printf("Number of map entries/page:         %lu\r\n", PIFS_MAP_ENTRY_PER_PAGE);
-    printf("Delta entry size:                   %lu bytes\r\n", PIFS_DELTA_ENTRY_SIZE_BYTE);
-    printf("Number of delta entries/page:       %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE);
-    printf("Number of delta entries:            %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE * PIFS_DELTA_MAP_PAGE_NUM);
-    printf("Delta map size:                     %u bytes, %u logical pages\r\n", PIFS_DELTA_MAP_PAGE_NUM * PIFS_LOGICAL_PAGE_SIZE_BYTE, PIFS_DELTA_MAP_PAGE_NUM);
-    printf("Wear level entry size:              %lu bytes\r\n", PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE);
-    printf("Number of wear level entries/page:  %lu\r\n", PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
-    printf("Number of wear level entries:       %lu\r\n", PIFS_FLASH_BLOCK_NUM_FS);
-    printf("Wear level map size:                %u bytes, %u logical pages\r\n", PIFS_WEAR_LEVEL_LIST_SIZE_BYTE, PIFS_WEAR_LEVEL_LIST_SIZE_PAGE);
-    printf("Minimum management area:            %lu logical pages, %lu blocks\r\n", PIFS_MANAGEMENT_PAGES_MIN,
+    PIFS_PRINT_MSG("Geometry of flash memory\r\n");
+    PIFS_PRINT_MSG("------------------------\r\n");
+    PIFS_PRINT_MSG("Size of flash memory (all):         %i bytes, %i KiB\r\n", PIFS_FLASH_SIZE_BYTE_ALL, PIFS_FLASH_SIZE_BYTE_ALL / 1024);
+    PIFS_PRINT_MSG("Size of flash memory (used by FS):  %i bytes, %i KiB\r\n", PIFS_FLASH_SIZE_BYTE_FS, PIFS_FLASH_SIZE_BYTE_ALL / 1024);
+    PIFS_PRINT_MSG("Size of block:                      %i bytes\r\n", PIFS_FLASH_BLOCK_SIZE_BYTE);
+    PIFS_PRINT_MSG("Size of page:                       %i bytes\r\n", PIFS_FLASH_PAGE_SIZE_BYTE);
+    PIFS_PRINT_MSG("Number of blocks (all):             %i\r\n", PIFS_FLASH_BLOCK_NUM_ALL);
+    PIFS_PRINT_MSG("Number of blocks (used by FS)):     %i\r\n", PIFS_FLASH_BLOCK_NUM_FS);
+    PIFS_PRINT_MSG("Number of pages/block:              %i\r\n", PIFS_FLASH_PAGE_PER_BLOCK);
+    PIFS_PRINT_MSG("Number of pages (all):              %i\r\n", PIFS_FLASH_PAGE_NUM_ALL);
+    PIFS_PRINT_MSG("Number of pages (used by FS)):      %i\r\n", PIFS_FLASH_PAGE_NUM_FS);
+    PIFS_PRINT_MSG("\r\n");
+    PIFS_PRINT_MSG("Geometry of file system\r\n");
+    PIFS_PRINT_MSG("-----------------------\r\n");
+    PIFS_PRINT_MSG("Size of logical page:               %i bytes\r\n", PIFS_LOGICAL_PAGE_SIZE_BYTE);
+    PIFS_PRINT_MSG("Block address size:                 %lu bytes\r\n", sizeof(pifs_block_address_t));
+    PIFS_PRINT_MSG("Page address size:                  %lu bytes\r\n", sizeof(pifs_page_address_t));
+    PIFS_PRINT_MSG("Header size:                        %lu bytes, %lu logical pages\r\n", PIFS_HEADER_SIZE_BYTE, PIFS_HEADER_SIZE_PAGE);
+    PIFS_PRINT_MSG("Entry size:                         %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE);
+    PIFS_PRINT_MSG("Entry size in a page:               %lu bytes\r\n", PIFS_ENTRY_SIZE_BYTE * PIFS_ENTRY_PER_PAGE);
+    PIFS_PRINT_MSG("Entry list size:                    %lu bytes, %lu logical pages\r\n", PIFS_ENTRY_LIST_SIZE_BYTE, PIFS_ENTRY_LIST_SIZE_PAGE);
+    PIFS_PRINT_MSG("Free space bitmap size:             %u bytes, %u logical pages\r\n", PIFS_FREE_SPACE_BITMAP_SIZE_BYTE, PIFS_FREE_SPACE_BITMAP_SIZE_PAGE);
+    PIFS_PRINT_MSG("Map header size:                    %lu bytes\r\n", PIFS_MAP_HEADER_SIZE_BYTE);
+    PIFS_PRINT_MSG("Map entry size:                     %lu bytes\r\n", PIFS_MAP_ENTRY_SIZE_BYTE);
+    PIFS_PRINT_MSG("Number of map entries/page:         %lu\r\n", PIFS_MAP_ENTRY_PER_PAGE);
+    PIFS_PRINT_MSG("Delta entry size:                   %lu bytes\r\n", PIFS_DELTA_ENTRY_SIZE_BYTE);
+    PIFS_PRINT_MSG("Number of delta entries/page:       %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE);
+    PIFS_PRINT_MSG("Number of delta entries:            %lu\r\n", PIFS_DELTA_ENTRY_PER_PAGE * PIFS_DELTA_MAP_PAGE_NUM);
+    PIFS_PRINT_MSG("Delta map size:                     %u bytes, %u logical pages\r\n", PIFS_DELTA_MAP_PAGE_NUM * PIFS_LOGICAL_PAGE_SIZE_BYTE, PIFS_DELTA_MAP_PAGE_NUM);
+    PIFS_PRINT_MSG("Wear level entry size:              %lu bytes\r\n", PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE);
+    PIFS_PRINT_MSG("Number of wear level entries/page:  %lu\r\n", PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
+    PIFS_PRINT_MSG("Number of wear level entries:       %lu\r\n", PIFS_FLASH_BLOCK_NUM_FS);
+    PIFS_PRINT_MSG("Wear level map size:                %u bytes, %u logical pages\r\n", PIFS_WEAR_LEVEL_LIST_SIZE_BYTE, PIFS_WEAR_LEVEL_LIST_SIZE_PAGE);
+    PIFS_PRINT_MSG("Minimum management area:            %lu logical pages, %lu blocks\r\n", PIFS_MANAGEMENT_PAGES_MIN,
            PIFS_MANAGEMENT_BLOCKS_MIN);
-    printf("Recommended management area:        %lu logical pages, %lu blocks\r\n", PIFS_MANAGEMENT_PAGES_RECOMMENDED,
+    PIFS_PRINT_MSG("Recommended management area:        %lu logical pages, %lu blocks\r\n", PIFS_MANAGEMENT_PAGES_RECOMMENDED,
            PIFS_MANAGEMENT_BLOCKS_RECOMMENDED);
-    printf("Full reserved area for management:  %i bytes, %i logical pages\r\n",
+    PIFS_PRINT_MSG("Full reserved area for management:  %i bytes, %i logical pages\r\n",
            PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_BLOCK_SIZE_BYTE,
            PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_LOGICAL_PAGE_PER_BLOCK);
-    printf("Size of management area:            %i bytes, %i logical pages\r\n",
+    PIFS_PRINT_MSG("Size of management area:            %i bytes, %i logical pages\r\n",
            PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_BLOCK_SIZE_BYTE,
            PIFS_MANAGEMENT_BLOCKS * PIFS_LOGICAL_PAGE_PER_BLOCK);
-    printf("\r\n");
-    printf("File system in RAM:                 %lu bytes\r\n", sizeof(pifs_t));
+    PIFS_PRINT_MSG("\r\n");
+    PIFS_PRINT_MSG("File system in RAM:                 %lu bytes\r\n", sizeof(pifs_t));
 }
 
 void pifs_print_header_info(void)
 {
-    printf("Counter: %i\r\n",
+    PIFS_PRINT_MSG("Counter: %i\r\n",
            pifs.header.counter);
-    printf("Entry list at %s\r\n",
+    PIFS_PRINT_MSG("Entry list at %s\r\n",
            pifs_address2str(&pifs.header.entry_list_address));
-    printf("Free space bitmap at %s\r\n",
+    PIFS_PRINT_MSG("Free space bitmap at %s\r\n",
            pifs_address2str(&pifs.header.free_space_bitmap_address));
-    printf("Delta page map at %s\r\n",
+    PIFS_PRINT_MSG("Delta page map at %s\r\n",
            pifs_address2str(&pifs.header.delta_map_address));
-    printf("Wear level list at %s\r\n",
+    PIFS_PRINT_MSG("Wear level list at %s\r\n",
            pifs_address2str(&pifs.header.wear_level_list_address));
 }
 
@@ -526,18 +527,18 @@ void pifs_print_free_space_info(void)
                               &free_management_pages, &free_data_pages);
     if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
     {
-        printf("Free data area:                     %lu bytes, %lu pages\r\n",
+        PIFS_PRINT_MSG("Free data area:                     %lu bytes, %lu pages\r\n",
                free_data_bytes, free_data_pages);
-        printf("Free management area:               %lu bytes, %lu pages\r\n",
+        PIFS_PRINT_MSG("Free management area:               %lu bytes, %lu pages\r\n",
                free_management_bytes, free_management_pages);
     }
     ret = pifs_get_to_be_released_space(&to_be_released_management_bytes, &to_be_released_data_bytes,
                                         &to_be_released_management_pages, &to_be_released_data_pages);
     if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
     {
-        printf("To be released data area:           %lu bytes, %lu pages\r\n",
+        PIFS_PRINT_MSG("To be released data area:           %lu bytes, %lu pages\r\n",
                to_be_released_data_bytes, to_be_released_data_pages);
-        printf("To be released management area:     %lu bytes, %lu pages\r\n",
+        PIFS_PRINT_MSG("To be released management area:     %lu bytes, %lu pages\r\n",
                to_be_released_management_bytes, to_be_released_management_pages);
     }
     if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
@@ -548,8 +549,8 @@ void pifs_print_free_space_info(void)
     }
     if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
     {
-        printf("Free entries:                       %lu\r\n", free_entries);
-        printf("To be released entries:             %lu\r\n", to_be_released_entries);
+        PIFS_PRINT_MSG("Free entries:                       %lu\r\n", free_entries);
+        PIFS_PRINT_MSG("To be released entries:             %lu\r\n", to_be_released_entries);
     }
 }
 
@@ -706,61 +707,6 @@ pifs_status_t pifs_init(void)
             pifs_print_header_info();
             pifs_print_free_space_info();
 #endif
-
-#if PIFS_DEBUG_LEVEL >= 6
-            {
-                uint32_t i;
-                printf("DATA blocks\r\n");
-                for (i = 0; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
-                {
-                    printf("%i %i\r\n", i, pifs_is_block_type(i, PIFS_BLOCK_TYPE_DATA, &pifs.header));
-                }
-                printf("PRIMARY MANAGEMENT blocks\r\n");
-                for (i = 0; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
-                {
-                    printf("%i %i\r\n", i, pifs_is_block_type(i, PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT, &pifs.header));
-                }
-                printf("SECONDARY MANAGEMENT blocks\r\n");
-                for (i = 0; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
-                {
-                    printf("%i %i\r\n", i, pifs_is_block_type(i, PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT, &pifs.header));
-                }
-                printf("RESERVED blocks\r\n");
-                for (i = 0; i < PIFS_FLASH_BLOCK_NUM_ALL; i++)
-                {
-                    printf("%i %i\r\n", i, pifs_is_block_type(i, PIFS_BLOCK_TYPE_RESERVED, &pifs.header));
-                }
-            }
-#endif
-#if 0
-            {
-                pifs_block_address_t ba = 2;
-                pifs_page_address_t  pa = 0;
-                pifs_status_t ret;
-                char test_buf[256];
-                char test_buf2[256];
-                bool_t is_delta;
-
-                fill_buffer(test_buf, sizeof(test_buf), FILL_TYPE_SEQUENCE_WORD, 0x1);
-                ret = pifs_write_delta(ba, pa, 0, test_buf, sizeof (test_buf), &is_delta);
-                test_buf[0] = 0xff;
-                test_buf[1] = 0xff;
-                ret = pifs_write_delta(ba, pa, 0, test_buf, sizeof (test_buf), &is_delta);
-                ret = pifs_read_delta(ba, pa, 0, test_buf2, sizeof(test_buf2));
-                print_buffer(test_buf2, sizeof(test_buf2), 0);
-                {
-                    pifs_block_address_t ba0;
-                    pifs_page_address_t  pa0;
-                    pifs_page_count_t    count0;
-                    pifs_find_page(1, 1, PIFS_BLOCK_TYPE_DATA, TRUE,
-                                   &ba0, &pa0, &count0);
-                    PIFS_DEBUG_MSG("Find page %s, count: %i ret: %i\r\n",
-                                   pifs_ba_pa2str(ba0, pa0), count0, ret);
-                }
-                pifs_delete();
-                exit(-1);
-            }
-#endif
         }
     }
 
@@ -780,6 +726,166 @@ pifs_status_t pifs_delete(void)
     ret = pifs_flush();
 
     ret = pifs_flash_delete();
+
+    return ret;
+}
+
+/**
+ * @brief pifs_check_file_page Check page if it is allocated.
+ *
+ * @param[in] a_file                 Pointer to file.
+ * @param[in] a_block_address        Original block address.
+ * @param[in] a_page_address         Original block address.
+ * @param[in] a_delta_block_address  Delta block address.
+ * @param[in] a_delta_page_address   Delta page address.
+ * If delta block and page are equal to original block address, no delta
+ * page is used.
+ *
+ * @return PIFS_SUCCESS if page marked successfully.
+ */
+pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
+                                   pifs_block_address_t a_block_address,
+                                   pifs_page_address_t a_page_address,
+                                   pifs_block_address_t a_delta_block_address,
+                                   pifs_page_address_t a_delta_page_address,
+                                   bool_t a_map_page)
+{
+    pifs_status_t ret = PIFS_SUCCESS;
+
+    (void) a_file;
+    (void) a_block_address;
+    (void) a_page_address;
+
+    PIFS_DEBUG_MSG("Check page %s\r\n",
+                   pifs_ba_pa2str(a_block_address, a_page_address));
+    if (a_map_page)
+    {
+        /* Page shall not be free or to be released */
+        if (pifs_is_page_free(a_block_address, a_page_address))
+        {
+            pifs.error_cntr++;
+            PIFS_ERROR_MSG("File '%s' map page at %s is marked free!\r\n",
+                           a_file->entry.name,
+                           pifs_ba_pa2str(a_block_address, a_page_address));
+            ret = PIFS_ERROR_INTEGRITY;
+        }
+        if (pifs_is_page_to_be_released(a_block_address, a_page_address))
+        {
+            pifs.error_cntr++;
+            PIFS_ERROR_MSG("File '%s' map page at %s is marked to be released!\r\n",
+                           a_file->entry.name,
+                           pifs_ba_pa2str(a_block_address, a_page_address));
+            ret = PIFS_ERROR_INTEGRITY;
+        }
+    }
+    else if (a_block_address != a_delta_block_address || a_page_address != a_delta_page_address)
+    {
+        /* Delta page is used */
+        PIFS_DEBUG_MSG("Check delta page %s\r\n",
+                       pifs_ba_pa2str(a_delta_block_address, a_delta_page_address));
+        /* When delta page is used, original page shall be marked as to be released, */
+        /* but it shall not be free! */
+        if (pifs_is_page_free(a_block_address, a_page_address))
+        {
+            pifs.error_cntr++;
+            PIFS_ERROR_MSG("File '%s' original page at %s is marked free!\r\n",
+                           a_file->entry.name,
+                           pifs_ba_pa2str(a_block_address, a_page_address));
+            ret = PIFS_ERROR_INTEGRITY;
+        }
+        if (!pifs_is_page_to_be_released(a_block_address, a_page_address))
+        {
+            pifs.error_cntr++;
+            PIFS_ERROR_MSG("File '%s' original page at %s is not marked to be released!\r\n",
+                           a_file->entry.name,
+                           pifs_ba_pa2str(a_block_address, a_page_address));
+            ret = PIFS_ERROR_INTEGRITY;
+        }
+        /* Delta page shall not be free or to be released */
+        if (pifs_is_page_free(a_delta_block_address, a_delta_page_address))
+        {
+            pifs.error_cntr++;
+            PIFS_ERROR_MSG("File '%s' delta page at %s is marked free!\r\n",
+                           a_file->entry.name,
+                           pifs_ba_pa2str(a_delta_block_address, a_delta_page_address));
+            ret = PIFS_ERROR_INTEGRITY;
+        }
+        if (pifs_is_page_to_be_released(a_delta_block_address, a_delta_page_address))
+        {
+            pifs.error_cntr++;
+            PIFS_ERROR_MSG("File '%s' delta page at %s is marked to be released!\r\n",
+                           a_file->entry.name,
+                           pifs_ba_pa2str(a_delta_block_address, a_delta_page_address));
+            ret = PIFS_ERROR_INTEGRITY;
+        }
+    }
+    else
+    {
+        /* Page shall not be free or to be released */
+        if (pifs_is_page_free(a_block_address, a_page_address))
+        {
+            pifs.error_cntr++;
+            PIFS_ERROR_MSG("File '%s' page at %s is marked free!\r\n",
+                           a_file->entry.name,
+                           pifs_ba_pa2str(a_block_address, a_page_address));
+            ret = PIFS_ERROR_INTEGRITY;
+        }
+        if (pifs_is_page_to_be_released(a_block_address, a_page_address))
+        {
+            pifs.error_cntr++;
+            PIFS_ERROR_MSG("File '%s' page at %s is marked to be released!\r\n",
+                           a_file->entry.name,
+                           pifs_ba_pa2str(a_block_address, a_page_address));
+            ret = PIFS_ERROR_INTEGRITY;
+        }
+    }
+    /* Returning success to not stop checking */
+    return PIFS_SUCCESS;
+}
+
+
+pifs_status_t pifs_dir_walker_check(pifs_dirent_t * a_dirent)
+{
+    pifs_status_t ret = PIFS_ERROR_NO_MORE_RESOURCE;
+    pifs_file_t * file;
+
+    PIFS_PRINT_MSG("Checking file '%s'...\r\n", a_dirent->d_name);
+    file = pifs_fopen(a_dirent->d_name, "r");
+    if (file)
+    {
+        ret = pifs_walk_file_pages(file, pifs_check_file_page);
+        pifs_fclose(file);
+    }
+    else
+    {
+        pifs.error_cntr++;
+        PIFS_ERROR_MSG("Cannot open file '%s'!\r\n", a_dirent->d_name);
+    }
+    /* Returning success to not stop checking */
+    return PIFS_SUCCESS;
+}
+
+/**
+ * @brief pifs_check Check file system's integrity.
+ *
+ * @return PIFS_SUCCESS if file system is OK.
+ */
+pifs_status_t pifs_check(void)
+{
+    pifs_char_t * path = PIFS_ROOT_STR;
+    pifs_status_t ret = PIFS_SUCCESS;
+
+    PIFS_PRINT_MSG("Checking files in directory '%s'...\r\n", path);
+    pifs.error_cntr = 0;
+    ret = pifs_walk_dir(path, TRUE, pifs_dir_walker_check);
+    if (pifs.error_cntr)
+    {
+        PIFS_ERROR_MSG("%i errors found!\r\n", pifs.error_cntr);
+    }
+    else
+    {
+        PIFS_PRINT_MSG("No errors found.\r\n");
+    }
 
     return ret;
 }

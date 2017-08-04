@@ -35,6 +35,7 @@ HEADERS += ./Inc/api_pifs.h \
 ./Inc/pifs_config.h \
 ./Inc/pifs_debug.h \
 ./Inc/pifs_delta.h \
+./Inc/pifs_dir.h \
 ./Inc/pifs_dummy.h \
 ./Inc/pifs_entry.h \
 ./Inc/pifs_file.h \
@@ -49,4 +50,5 @@ HEADERS += ./Inc/api_pifs.h \
 INCLUDEPATH += .
 INCLUDEPATH += ./Inc
 INCLUDEPATH += ./Src
+INCLUDEPATH += ./test
 

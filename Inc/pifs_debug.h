@@ -41,24 +41,26 @@
         }                                                                  \
     } while (0);
 
+#define PIFS_PRINT_MSG(...) printf(__VA_ARGS__)
+
 #if (PIFS_DEBUG_LEVEL >= 1)
 #define PIFS_ERROR_MSG(...)    do { \
-        printf("%s ERROR: ", __FUNCTION__); \
-        printf(__VA_ARGS__); \
-        fflush(stdout); \
+        printf("%s:%i ERROR: ", __FUNCTION__, __LINE__);        \
+        printf(__VA_ARGS__);                                    \
+        fflush(stdout);                                         \
     } while (0);
 #else
 #define PIFS_ERROR_MSG(...)
 #endif
 
 #if (PIFS_DEBUG_LEVEL >= 1)
-#define PIFS_FATAL_ERROR_MSG(...)    do {           \
-        printf("%s FATAL_ERROR: ", __FUNCTION__);   \
-        printf( __VA_ARGS__);                       \
-        pifs_delete();                              \
-        fflush(stdout);                             \
-        SOFTWARE_BREAKPOINT();                      \
-        exit(-1);                                   \
+#define PIFS_FATAL_ERROR_MSG(...)    do {                       \
+        printf("%s:%i FATAL_ERROR: ", __FUNCTION__, __LINE__);  \
+        printf( __VA_ARGS__);                                   \
+        pifs_delete();                                          \
+        fflush(stdout);                                         \
+        SOFTWARE_BREAKPOINT();                                  \
+        exit(-1);                                               \
     } while (0);
 #else
 #define PIFS_FATAL_ERROR_MSG(...)
@@ -66,39 +68,39 @@
 
 #if (PIFS_DEBUG_LEVEL >= 2)
 #define PIFS_WARNING_MSG(...)    do { \
-        printf("%s WARNING: ", __FUNCTION__); \
-        printf(__VA_ARGS__); \
-        fflush(stdout); \
+        printf("%s:%i WARNING: ", __FUNCTION__, __LINE__);      \
+        printf(__VA_ARGS__);                                    \
+        fflush(stdout);                                         \
     } while (0);
 #else
 #define PIFS_WARNING_MSG(...)
 #endif
 
 #if (PIFS_DEBUG_LEVEL >= 3)
-#define PIFS_NOTICE_MSG(...)    do { \
-        printf("%s ", __FUNCTION__); \
-        printf(__VA_ARGS__); \
-        fflush(stdout); \
+#define PIFS_NOTICE_MSG(...)    do {                            \
+        printf("%s ", __FUNCTION__);                            \
+        printf(__VA_ARGS__);                                    \
+        fflush(stdout);                                         \
     } while (0);
 #else
 #define PIFS_NOTICE_MSG(...)
 #endif
 
 #if (PIFS_DEBUG_LEVEL >= 4)
-#define PIFS_INFO_MSG(...)    do { \
-        printf("%s ", __FUNCTION__); \
-        printf(__VA_ARGS__); \
-        fflush(stdout); \
+#define PIFS_INFO_MSG(...)    do {                              \
+        printf("%s ", __FUNCTION__);                            \
+        printf(__VA_ARGS__);                                    \
+        fflush(stdout);                                         \
     } while (0);
 #else
 #define PIFS_INFO_MSG(...)
 #endif
 
 #if (PIFS_DEBUG_LEVEL >= 5)
-#define PIFS_DEBUG_MSG(...)    do { \
-        printf("%s ", __FUNCTION__); \
-        printf(__VA_ARGS__); \
-        fflush(stdout); \
+#define PIFS_DEBUG_MSG(...)    do {                             \
+        printf("%s ", __FUNCTION__);                            \
+        printf(__VA_ARGS__);                                    \
+        fflush(stdout);                                         \
     } while (0);
 #else
 #define PIFS_DEBUG_MSG(...)

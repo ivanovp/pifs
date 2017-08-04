@@ -361,6 +361,14 @@ void cmdDebug (char* command, char* params)
     printf("ret: %i, ba: %i\r\n", ret, ba);
 }
 
+void cmdCheckFilesystem (char* command, char* params)
+{
+    (void) command;
+    (void) params;
+
+    pifs_check();
+}
+
 void cmdListDir (char* command, char* params)
 {
     char               * path = "/";
@@ -1029,6 +1037,7 @@ void cmdHelp (char *command, char *params)
 parserCommand_t parserCommands[] =
 {
     //command       brief help                          callback function
+    {"c",           "Check file system",                cmdCheckFilesystem},
     {"ls",          "List directory",                   cmdListDir},
     {"l",           "List directory",                   cmdListDir},
 #if ENABLE_DOS_ALIAS

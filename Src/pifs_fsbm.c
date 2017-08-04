@@ -659,7 +659,7 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
     pifs_page_offset_t      po = 0;
     pifs_size_t             i;
     uint8_t                 free_space_bitmap = 0;
-    bool_t                  found = FALSE;
+//    bool_t                  found = FALSE;
     bool_t                  end = FALSE;
     pifs_size_t             byte_cntr = PIFS_FREE_SPACE_BITMAP_SIZE_BYTE;
     pifs_bit_pos_t          bit_pos = 0;
@@ -703,7 +703,7 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
                         if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA, &pifs.header))
                         {
                             (*a_data_page_count)++;
-                            found = TRUE;
+//                            found = TRUE;
                         }
                         else if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT, &pifs.header))
                         {
@@ -711,7 +711,7 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
                             /* management pages will be used when this management */
                             /* area is full. */
                             (*a_management_page_count)++;
-                            found = TRUE;
+//                            found = TRUE;
                         }
                     }
                     free_space_bitmap >>= PIFS_FSBM_BITS_PER_PAGE;

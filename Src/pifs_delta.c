@@ -34,8 +34,6 @@ static pifs_status_t pifs_read_delta_map_page(pifs_header_t * a_header)
     pifs_size_t          i;
     pifs_status_t        ret = PIFS_SUCCESS;
 
-    PIFS_WARNING_MSG("START!\r\n");
-
     for (i = 0; i < PIFS_DELTA_MAP_PAGE_NUM && ret == PIFS_SUCCESS; i++)
     {
         ret = pifs_read(ba, pa, 0, &pifs.delta_map_page_buf[i], PIFS_LOGICAL_PAGE_SIZE_BYTE);

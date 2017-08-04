@@ -22,6 +22,7 @@
 #include "pifs_entry.h"
 #include "pifs_map.h"
 #include "pifs_wear.h"
+#include "pifs_file.h"
 #include "buffer.h" /* DEBUG */
 
 #define PIFS_DEBUG_LEVEL 2
@@ -169,6 +170,8 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
     bool_t               end = FALSE;
     pifs_address_t       delta_address;
     pifs_address_t       test_address;
+
+    (void) a_new_header;
 
     PIFS_NOTICE_MSG("start\r\n");
 

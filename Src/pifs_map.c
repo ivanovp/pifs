@@ -20,7 +20,7 @@
 #include "pifs_delta.h"
 #include "pifs_map.h"
 
-#define PIFS_DEBUG_LEVEL 5
+#define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
 
 /**
@@ -293,10 +293,17 @@ pifs_status_t pifs_walk_file_pages(pifs_file_t * a_file,
                         while (page_count-- && a_file->status == PIFS_SUCCESS)
                         {
                             /* Call callback function */
-                            a_file->status = (*a_file_walker_func)(a_file, mba, mpa, delta_ba, delta_pa);
-                            if (a_file->status == PIFS_SUCCESS && page_count)
+                            a_file->status = (*a_file_walker_func)(a_file, mba, mpa, delta_ba, delta_pa, FALSE);
+                            if (page_count)
                             {
-                                a_file->status = pifs_inc_ba_pa(&delta_ba, &delta_pa);
+                                if (a_file->status == PIFS_SUCCESS)
+                                {
+                                    a_file->status = pifs_inc_ba_pa(&delta_ba, &delta_pa);
+                                }
+                                if (a_file->status == PIFS_SUCCESS)
+                                {
+                                    a_file->status = pifs_inc_ba_pa(&mba, &mpa);
+                                }
                             }
                         }
                     }
@@ -307,7 +314,8 @@ pifs_status_t pifs_walk_file_pages(pifs_file_t * a_file,
         if (a_file->status == PIFS_SUCCESS)
         {
             /* Mark map page to be released */
-            a_file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, FALSE);
+            a_file->status = (*a_file_walker_func)(a_file, ba, pa,
+                                                   PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID, TRUE);
             /* Jump to the next map page */
             ba = a_file->map_header.next_map_address.block_address;
             pa = a_file->map_header.next_map_address.page_address;
@@ -335,15 +343,29 @@ pifs_status_t pifs_release_file_page(pifs_file_t * a_file,
                                      pifs_block_address_t a_block_address,
                                      pifs_page_address_t a_page_address,
                                      pifs_block_address_t a_delta_block_address,
-                                     pifs_page_address_t a_delta_page_address)
+                                     pifs_page_address_t a_delta_page_address,
+                                     bool_t a_map_page)
 {
+    pifs_status_t ret;
+
     (void) a_file;
     (void) a_block_address;
     (void) a_page_address;
 
-    PIFS_DEBUG_MSG("Release map entry %s\r\n",
-            pifs_ba_pa2str(a_delta_block_address, a_delta_page_address));
-    return pifs_mark_page(a_delta_block_address, a_delta_page_address, 1, FALSE);
+    if (a_map_page)
+    {
+        PIFS_DEBUG_MSG("Release map page %s\r\n",
+                       pifs_ba_pa2str(a_delta_block_address, a_delta_page_address));
+        ret = pifs_mark_page(a_block_address, a_page_address, PIFS_MAP_PAGE_NUM, FALSE);
+    }
+    else
+    {
+        PIFS_DEBUG_MSG("Release map entry %s\r\n",
+                       pifs_ba_pa2str(a_delta_block_address, a_delta_page_address));
+        ret = pifs_mark_page(a_delta_block_address, a_delta_page_address, 1, FALSE);
+    }
+
+    return ret;
 }
 
 /**
