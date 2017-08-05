@@ -169,8 +169,8 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                     print_buffer(a_entry, PIFS_ENTRY_SIZE_BYTE, 0);
 #endif
                     PIFS_NOTICE_MSG("Entry CANNOT be updated!\r\n");
-                    /* Clear entry */
-                    pifs_mark_entry_deleted(&entry);
+                    /* Clear entry because file content will be re-used */
+                    memset(&entry, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
                     ret = pifs_write(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
                                      PIFS_ENTRY_SIZE_BYTE);
                     if (ret == PIFS_SUCCESS)

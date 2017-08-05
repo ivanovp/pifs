@@ -242,7 +242,11 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
                                 else
                                 {
                                     ret2 = pifs_inc_address(&test_address);
-                                    if (ret2 != PIFS_SUCCESS
+                                    /* Check if map page shall be written: */
+                                    /* #1 End of flash reached */
+                                    /* #2 Delta page was used */
+                                    /* #3 Too much pages in page entry */
+                                    if (ret2 != PIFS_SUCCESS /* End of flash reached! */
                                             || test_address.block_address != delta_address.block_address
                                             || test_address.page_address != delta_address.page_address
                                             || new_map_entry.page_count == PIFS_MAP_PAGE_COUNT_INVALID - 1)
