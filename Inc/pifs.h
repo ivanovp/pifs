@@ -29,6 +29,7 @@
 #define PIFS_MAJOR_VERSION                  1u
 #define PIFS_MINOR_VERSION                  0u
 
+#define PIFS_ENABLE_ATTRIBUTES              1u   /**< 1: Use attribute field of files, 0: don't use attribute field */
 #define PIFS_ATTRIB_READONLY                0x01u
 #define PIFS_ATTRIB_HIDDEN                  0x02u
 #define PIFS_ATTRIB_SYSTEM                  0x04u
@@ -377,6 +378,7 @@ typedef struct
     bool_t                  mode_write PIFS_BOOL_SIZE;
     bool_t                  mode_append PIFS_BOOL_SIZE;
     bool_t                  mode_file_shall_exist PIFS_BOOL_SIZE;
+    bool_t                  mode_deleted PIFS_BOOL_SIZE;
     pifs_entry_t            entry;              /**< File's entry, one element of entry list */
     pifs_status_t           status;             /**< Last file operation's result */
     pifs_address_t          actual_map_address; /**< Actual map's address used for reading */
@@ -398,10 +400,12 @@ typedef struct
 typedef struct
 {
     bool_t         is_used PIFS_BOOL_SIZE;
+    bool_t         find_deleted PIFS_BOOL_SIZE;
     pifs_size_t    entry_page_index;
     pifs_address_t entry_list_address;
     pifs_size_t    entry_list_index;
     pifs_dirent_t  directory_entry;
+    pifs_entry_t   entry; /**< Can be large, to avoid storing on stack */
 } pifs_dir_t;
 
 /**

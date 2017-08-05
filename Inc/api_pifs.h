@@ -71,9 +71,12 @@ typedef uint32_t pifs_ino_t;
 struct pifs_dirent
 {
     pifs_ino_t       d_ino;                          /**< Unique ID of the file */
+    char             d_name[PIFS_FILENAME_LEN_MAX];  /**< File/directory name */
+    /* No standard fields */
+    size_t           d_filesize;
+    uint8_t          d_attrib;
     uint32_t         d_first_map_block_address;      /**< Block address of first map page */
     uint32_t         d_first_map_page_address;       /**< Page address of first map page */
-    char             d_name[PIFS_FILENAME_LEN_MAX];  /**< File/directory name */
 #if PIFS_ENABLE_USER_DATA
     pifs_user_data_t d_user_data;
 #endif

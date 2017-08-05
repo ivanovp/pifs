@@ -169,7 +169,7 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
 #endif
                     PIFS_NOTICE_MSG("Entry CANNOT be updated!\r\n");
                     /* Clear entry */
-                    memset(&entry, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
+                    pifs_mark_entry_deleted(&entry);
                     ret = pifs_write(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
                                      PIFS_ENTRY_SIZE_BYTE);
                     if (ret == PIFS_SUCCESS)
@@ -214,6 +214,46 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
 }
 
 /**
+ * @brief pifs_mark_entry_deleted Delete entry by marking the corresponding
+ * attribute bit.
+ *
+ * @param[in] a_entry   Entry to be deleted.
+ */
+void pifs_mark_entry_deleted(pifs_entry_t * a_entry)
+{
+    //memset(a_entry, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, sizeof(pifs_entry_t));
+    /* Change only the first character to programmed value */
+    /* This way file system check can find it and take into account */
+#if PIFS_ENABLE_ATTRIBUTES
+    a_entry->attrib ^= PIFS_ATTRIB_DELETED;
+#else
+    a_entry->name[0] = PIFS_FLASH_PROGRAMMED_BYTE_VALUE;
+#endif
+}
+
+/**
+ * @brief pifs_is_entry_deleted Check if entry is deleted.
+ *
+ * @param[in] a_entry Entry to be checked.
+ * @return TRUE: entry is deleted, FALSE: entry exist.
+ */
+bool_t pifs_is_entry_deleted(pifs_entry_t * a_entry)
+{
+    bool_t is_deleted = FALSE;
+
+#if PIFS_ENABLE_ATTRIBUTES
+    if (!(a_entry->attrib & PIFS_ATTRIB_DELETED))
+#else
+    if (a_entry->name[0] == PIFS_FLASH_PROGRAMMED_BYTE_VALUE)
+#endif
+    {
+        is_deleted = TRUE;
+    }
+
+    return is_deleted;
+}
+
+/**
  * @brief pifs_find_entry Find entry in entry list.
  *
  * @param a_name[in]    Pointer to name to find.
@@ -244,8 +284,9 @@ pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a
             ret = pifs_read(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
                             PIFS_ENTRY_SIZE_BYTE);
 #endif
-            /* Check if name matches */
-            if (strncmp((char*)entry.name, a_name, sizeof(entry.name)) == 0)
+            /* Check if name matches and not deleted */
+            if ((strncmp((char*)entry.name, a_name, sizeof(entry.name)) == 0)
+                    && !pifs_is_entry_deleted(&entry))
             {
                 /* Entry found */
                 if (a_entry)
@@ -261,7 +302,7 @@ pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a
                 else
                 {
                     /* Clear entry */
-                    memset(&entry, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, sizeof(pifs_entry_t));
+                    pifs_mark_entry_deleted(&entry);
 #if PIFS_USE_DELTA_FOR_ENTRIES
                     ret = pifs_write_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
                                            PIFS_ENTRY_SIZE_BYTE, NULL);

@@ -343,20 +343,23 @@ pifs_status_t pifs_test_basic_r(const char * a_filename)
     if (a_filename)
     {
         filename = a_filename;
+        generate_buffer(42, filename);
+    }
+    else
+    {
+        generate_buffer(42, filename);
+#if ENABLE_RENAME_TEST
+        filename = filename2;
+#endif
     }
 
     printf("-------------------------------------------------\r\n");
     printf("Basic test: reading file\r\n");
 
-#if ENABLE_RENAME_TEST
-    file = pifs_fopen(filename2, "r");
-#else
     file = pifs_fopen(filename, "r");
-#endif
     if (file)
     {
         printf("File opened for reading\r\n");
-        generate_buffer(42, filename);
         read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
         if (read_size != sizeof(test_buf_r))
         {

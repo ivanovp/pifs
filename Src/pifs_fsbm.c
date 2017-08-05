@@ -152,7 +152,7 @@ bool_t pifs_is_page_free(pifs_block_address_t a_block_address,
         is_free_space = pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << (bit_pos % PIFS_BYTE_BITS));
     }
 
-    return is_free_space;
+    return is_free_space ? TRUE : FALSE;
 }
 
 /**

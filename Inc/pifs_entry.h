@@ -23,6 +23,8 @@ pifs_status_t pifs_append_entry(pifs_entry_t * a_entry,
 pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const a_entry,
                                 pifs_block_address_t a_list_entry_block_address,
                                 pifs_page_address_t a_list_entry_page_address);
+void pifs_mark_entry_deleted(pifs_entry_t * a_entry);
+bool_t pifs_is_entry_deleted(pifs_entry_t * a_entry);
 pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a_entry,
                               pifs_block_address_t a_list_entry_block_address,
                               pifs_page_address_t a_list_entry_page_address);

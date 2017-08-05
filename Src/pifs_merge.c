@@ -347,7 +347,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
             {
                 PIFS_NOTICE_MSG("name: %s, size: %i, attrib: 0x%02X\r\n",
                                 entry->name, entry->file_size, entry->attrib);
-                if (entry->name[0] != PIFS_FLASH_PROGRAMMED_BYTE_VALUE)
+                if (!pifs_is_entry_deleted(entry))
                 {
                     /* Create file in the new management area and copy map */
                     ret = pifs_copy_map(entry, a_old_header, a_new_header);

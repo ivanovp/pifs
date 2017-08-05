@@ -47,6 +47,7 @@ pifs_DIR * pifs_opendir(const pifs_char_t * a_name)
         if (!dir->is_used)
         {
             dir->is_used = TRUE;
+            dir->find_deleted = !a_name;
             dir->entry_page_index = 0;
             dir->entry_list_address = pifs.header.entry_list_address;
             dir->entry_list_index = 0;
@@ -95,8 +96,9 @@ struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
 {
     pifs_status_t   ret = PIFS_SUCCESS;
     pifs_dir_t    * dir = (pifs_dir_t*) a_dirp;
-    pifs_entry_t    entry;
+    pifs_entry_t  * entry = &dir->entry;
     pifs_dirent_t * dirent = NULL;
+    bool_t          entry_found = FALSE;
 
 #if PIFS_USE_DELTA_FOR_ENTRIES
     ret = pifs_read_delta(dir->entry_list_address.block_address,
@@ -108,26 +110,41 @@ struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
     {
         ret = pifs_read(dir->entry_list_address.block_address,
                         dir->entry_list_address.page_address,
-                        dir->entry_list_index * PIFS_ENTRY_SIZE_BYTE, &entry,
+                        dir->entry_list_index * PIFS_ENTRY_SIZE_BYTE, entry,
                         PIFS_ENTRY_SIZE_BYTE);
-        if (ret == PIFS_SUCCESS && entry.name[0] == PIFS_FLASH_PROGRAMMED_BYTE_VALUE)
+        if (ret == PIFS_SUCCESS)
         {
-            ret = pifs_inc_entry(dir);
+            if (!pifs_is_entry_deleted(entry) || dir->find_deleted)
+            {
+                entry_found = TRUE;
+            }
+            else
+            {
+                ret = pifs_inc_entry(dir);
+            }
         }
-    } while (ret == PIFS_SUCCESS && entry.name[0] == PIFS_FLASH_PROGRAMMED_BYTE_VALUE);
+    } while (ret == PIFS_SUCCESS && !entry_found);
 #endif
     if (ret == PIFS_SUCCESS
-            && !pifs_is_buffer_erased(&entry, PIFS_ENTRY_SIZE_BYTE)
-            && (entry.name[0] != PIFS_FLASH_PROGRAMMED_BYTE_VALUE))
+            && !pifs_is_buffer_erased(entry, PIFS_ENTRY_SIZE_BYTE)
+            && entry_found)
     {
         /* Copy entry */
-        dir->directory_entry.d_ino = entry.first_map_address.block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
-                + entry.first_map_address.page_address * PIFS_LOGICAL_PAGE_SIZE_BYTE;
-        dir->directory_entry.d_first_map_block_address = entry.first_map_address.block_address;
-        dir->directory_entry.d_first_map_page_address = entry.first_map_address.page_address;
-        strncpy(dir->directory_entry.d_name, entry.name, sizeof(dir->directory_entry.d_name));
+        dir->directory_entry.d_ino = entry->first_map_address.block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
+                + entry->first_map_address.page_address * PIFS_LOGICAL_PAGE_SIZE_BYTE;
+        strncpy(dir->directory_entry.d_name, entry->name, sizeof(dir->directory_entry.d_name));
+        dir->directory_entry.d_filesize = entry->file_size;
+#if PIFS_ENABLE_ATTRIBUTES
+        dir->directory_entry.d_attrib = entry->attrib;
+#if PIFS_INVERT_ATTRIBUTE_BITS
+        /* Invert attribute bits */
+        dir->directory_entry.d_attrib ^= PIFS_ATTRIB_ALL;
+#endif
+#endif
+        dir->directory_entry.d_first_map_block_address = entry->first_map_address.block_address;
+        dir->directory_entry.d_first_map_page_address = entry->first_map_address.page_address;
 #if PIFS_ENABLE_USER_DATA
-        memcpy(&dir->directory_entry.d_user_data, &entry.user_data, sizeof(dir->directory_entry.d_user_data));
+        memcpy(&dir->directory_entry.d_user_data, &entry->user_data, sizeof(dir->directory_entry.d_user_data));
 #endif
         dirent = &dir->directory_entry;
     }

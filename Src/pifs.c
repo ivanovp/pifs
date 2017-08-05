@@ -966,7 +966,8 @@ pifs_status_t pifs_check_free_page_buf(uint8_t * a_free_page_buf)
     pifs_status_t   ret = PIFS_SUCCESS;
     pifs_address_t  address;
     pifs_size_t     page_cntr;
-    bool_t          is_free; /* Page is free in free page buffer */
+    bool_t          is_free; /* Page is free in free page buffer (RAM) */
+    bool_t          is_free_fsbm; /* Page is free in free space bitmap (flash memory) */
     bool_t          is_erased;
 
     address.block_address = PIFS_FLASH_BLOCK_RESERVED_NUM;
@@ -977,12 +978,14 @@ pifs_status_t pifs_check_free_page_buf(uint8_t * a_free_page_buf)
     {
        is_free = pifs_is_page_free_check(a_free_page_buf, address.block_address,
                                          address.page_address);
+       is_free_fsbm = pifs_is_page_free(address.block_address, address.page_address);
        is_erased = pifs_is_page_erased(address.block_address, address.page_address);
-       if (is_free && !is_erased)
+       if ((is_free && !is_erased)
+               || (is_free != is_free_fsbm))
        {
-           PIFS_ERROR_MSG("Page %s free: %s, erased: %s\r\n",
+           PIFS_ERROR_MSG("Page %s free: %s, FSBM: %s, erased: %s\r\n",
                           pifs_address2str(&address),
-                          yesNo(is_free), yesNo(is_erased));
+                          yesNo(is_free), yesNo(is_free_fsbm), yesNo(is_erased));
            /* Read to page cache */
            pifs_read(address.block_address, address.page_address, 0,
                      NULL, 0);
@@ -1022,7 +1025,8 @@ pifs_status_t pifs_check(void)
         memset(free_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_FREE_PAGE_BUF_SIZE);
         PIFS_PRINT_MSG("Checking files in directory '%s'...\r\n", path);
         pifs.error_cntr = 0;
-        ret = pifs_walk_dir(path, TRUE, FALSE, pifs_dir_walker_check, free_page_buf);
+        /* Path = NULL -> find deleted files as well! */
+        ret = pifs_walk_dir(NULL, TRUE, FALSE, pifs_dir_walker_check, free_page_buf);
         if (pifs.error_cntr)
         {
             PIFS_ERROR_MSG("%i file errors found!\r\n", pifs.error_cntr);
