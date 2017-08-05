@@ -454,6 +454,8 @@ pifs_status_t pifs_test_large_r(void)
     P_FILE * file;
     size_t   read_size = 0;
     size_t   i;
+    size_t   filesize;
+    long int pos;
     const char * filename = "large.tst";
 
     printf("-------------------------------------------------\r\n");
@@ -463,6 +465,8 @@ pifs_status_t pifs_test_large_r(void)
     if (file)
     {
         printf("File opened for reading\r\n");
+        filesize = pifs_filesize(filename);
+        printf("File size: %i bytes\r\n", filesize);
         for (i = 0; i < LARGE_FILE_SIZE && ret == PIFS_SUCCESS; i++)
         {
             generate_buffer(i, filename);
@@ -484,6 +488,33 @@ pifs_status_t pifs_test_large_r(void)
             if (ret == PIFS_ERROR_GENERAL)
             {
                 ret = check_buffers();
+            }
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            ret = pifs_fseek(file, 0, PIFS_SEEK_SET);
+            if (ret != PIFS_SUCCESS)
+            {
+                PIFS_TEST_ERROR_MSG("Cannot seek to beginning of file!\r\n");
+            }
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            ret = pifs_fseek(file, filesize, PIFS_SEEK_SET);
+            if (ret != PIFS_SUCCESS)
+            {
+                PIFS_TEST_ERROR_MSG("Cannot seek to end of file!\r\n");
+            }
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            pos = ftell(file);
+            printf("Position: %i\r\n", pos);
+            if (pos != filesize)
+            {
+                PIFS_TEST_ERROR_MSG("Wrong position (%i) while seeked to end of file!\r\n",
+                                    pos);
+                ret = PIFS_ERROR_GENERAL;
             }
         }
         if (pifs_feof(file))
