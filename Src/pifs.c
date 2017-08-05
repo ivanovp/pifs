@@ -28,25 +28,8 @@
 #define PIFS_DEBUG_LEVEL 3
 #include "pifs_debug.h"
 
-pifs_t pifs =
-{
-    .header_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
-    .is_header_found = FALSE,
-    .is_merging = FALSE,
-    .header = { 0 },
-    .cache_page_buf_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID },
-    .cache_page_buf = { 0 },
-    .cache_page_buf_is_dirty = FALSE,
-    .file = { { 0 } },
-    .internal_file = { 0 },
-    .dir = { { 0 } },
-    .delta_map_page_buf = { { 0 } },
-    .delta_map_page_is_read = FALSE,
-    .delta_map_page_is_dirty = FALSE,
-    .dmw_page_buf = { 0 },
-    .sc_page_buf = { 0 },
-};
-
+bool_t pifs_initialized = FALSE;
+pifs_t pifs;
 int pifs_errno = PIFS_SUCCESS;
 
 /**
@@ -495,6 +478,9 @@ void pifs_print_fs_info(void)
     PIFS_PRINT_MSG("File system in RAM:                 %lu bytes\r\n", sizeof(pifs_t));
 }
 
+/**
+ * @brief pifs_print_header_info Print information about file system's header.
+ */
 void pifs_print_header_info(void)
 {
     PIFS_PRINT_MSG("Counter: %i\r\n",
@@ -509,6 +495,9 @@ void pifs_print_header_info(void)
            pifs_address2str(&pifs.header.wear_level_list_address));
 }
 
+/**
+ * @brief pifs_print_free_space_info Print information about free space.
+ */
 void pifs_print_free_space_info(void)
 {
     size_t        free_management_bytes = 0;
@@ -570,12 +559,25 @@ pifs_status_t pifs_init(void)
     pifs_checksum_t      checksum;
     pifs_size_t          i;
 
+    pifs_initialized = FALSE;
     pifs.header_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
     pifs.header_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
     pifs.is_header_found = FALSE;
+    pifs.is_merging = FALSE;
+    memset(&pifs.header, 0, PIFS_HEADER_SIZE_BYTE);
+    memset(pifs.cache_page_buf, 0, PIFS_LOGICAL_PAGE_SIZE_BYTE);
     pifs.cache_page_buf_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
     pifs.cache_page_buf_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
     pifs.cache_page_buf_is_dirty = FALSE;
+    memset(pifs.file, 0, sizeof(pifs.file));
+    memset(&pifs.internal_file, 0, sizeof(pifs.internal_file));
+    memset(pifs.dir, 0, sizeof(pifs.dir));
+    memset(pifs.delta_map_page_buf, 0, sizeof(pifs.delta_map_page_buf));
+    pifs.delta_map_page_is_read = FALSE;
+    pifs.delta_map_page_is_dirty = FALSE;
+    memset(pifs.dmw_page_buf, 0, sizeof(pifs.dmw_page_buf));
+    memset(pifs.sc_page_buf, 0, sizeof(pifs.sc_page_buf));
+    pifs.error_cntr = 0;
 
 #if PIFS_DEBUG_LEVEL >= 5
     pifs_print_fs_info();
@@ -652,6 +654,7 @@ pifs_status_t pifs_init(void)
                     if (!pifs.is_header_found || prev_header.counter < pifs.header.counter)
                     {
                         pifs.is_header_found = TRUE;
+                        pifs_initialized = TRUE;
                         pifs.header_address.block_address = ba;
                         pifs.header_address.page_address = pa;
                         memcpy(&prev_header, &header, sizeof(prev_header));
@@ -722,10 +725,15 @@ pifs_status_t pifs_delete(void)
 {
     pifs_status_t ret = PIFS_ERROR_GENERAL;
 
-    /* Flush cache */
-    ret = pifs_flush();
+    if (pifs_initialized)
+    {
+        /* Flush cache */
+        ret = pifs_flush();
 
-    ret = pifs_flash_delete();
+        ret = pifs_flash_delete();
+
+        pifs_initialized = FALSE;
+    }
 
     return ret;
 }
@@ -830,10 +838,6 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
     PIFS_DEBUG_MSG("Check page %s\r\n",
                    pifs_ba_pa2str(a_block_address, a_page_address));
     is_file_deleted = pifs_is_entry_deleted(&a_file->entry);
-    if (is_file_deleted)
-    {
-        PIFS_WARNING_MSG("%s is DELETED\r\n", a_file->entry.name);
-    }
     if (a_map_page)
     {
         /* Page shall not be free or to be released */
@@ -993,8 +997,11 @@ pifs_status_t pifs_dir_walker_check(pifs_dirent_t * a_dirent, void * a_func_data
  * @brief pifs_check_free_page_buf Used during file system check.
  * Checks whether file's allocated space and FS header's space is
  * consistent with actual flash.
+ * NOTE This test can generate false positive errors after a merge, because
+ * deleted file's will disappear from entry list during merge, but its
+ * allocated space may remain in FSBM!
  *
- * @param[in[ a_free_page_buf Pointer to free page buffer.
+ * @param[in] a_free_page_buf Pointer to free page buffer.
  * @return
  */
 pifs_status_t pifs_check_free_page_buf(uint8_t * a_free_page_buf)
@@ -1118,7 +1125,7 @@ pifs_status_t pifs_check(void)
         /* TODO check free space */
         PIFS_PRINT_MSG("Free page buffer:\r\n");
         print_buffer(free_page_buf, PIFS_FREE_PAGE_BUF_SIZE, 0);
-        ret = pifs_check_free_page_buf(free_page_buf);
+//        ret = pifs_check_free_page_buf(free_page_buf);
 #if !PIFS_FSCHECK_USE_STATIC_MEMORY
         free(free_page_buf);
 #endif

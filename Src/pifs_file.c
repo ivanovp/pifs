@@ -45,6 +45,7 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
     pifs_page_address_t  pa = PIFS_PAGE_ADDRESS_INVALID;
     pifs_page_count_t    page_count_found = 0;
 
+    PIFS_ASSERT(!a_file->is_opened);
     a_file->status = PIFS_SUCCESS;
     a_file->write_pos = 0;
     a_file->write_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;

@@ -121,11 +121,13 @@ int pifs_rmdir(const pifs_char_t * a_filename);
 int pifs_chdir(const pifs_char_t * a_filename);
 pifs_char_t * pifs_getcwd(pifs_char_t * buffer, size_t a_size);
 #endif
+#if 0 //PIFS_ENABLE_LINKS
 /* Hard link */
 int pifs_link(const pifs_char_t * a_oldname, const pifs_char_t * a_newname);
 /* Sym link */
 int pifs_symlink(const pifs_char_t * a_oldname, const pifs_char_t * a_newname);
 size_t pifs_readlink (const pifs_char_t * a_filename, pifs_char_t * a_buffer, size_t a_size);
+#endif
 
 pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
                                   size_t * a_free_data_bytes,

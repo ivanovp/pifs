@@ -30,7 +30,7 @@
 /**
  * @brief pifs_opendir Open directory for listing.
  *
- * @param[in] a_name Pointer to directory name. TODO currently name is omitted!
+ * @param[in] a_name Pointer to directory name. TODO currently path is omitted!
  * @return Pointer to file system's directory.
  */
 pifs_DIR * pifs_opendir(const pifs_char_t * a_name)
