@@ -17,7 +17,28 @@
 #include "pifs_config.h"
 #include "pifs.h"
 
-typedef pifs_status_t (*pifs_file_walker_func_t)(pifs_file_t * a_file, 
+/**
+ * @brief pifs_file_walker_func_t
+ * Callback function which is called for file's every data and map pages.
+ * If delta block and page are equal to original block address, no delta
+ * page is used.
+ * If a_map_page is TRUE, delta address is not applicabe (invalid address
+ * given).
+ *
+ * @param[in] a_file                 Pointer to file.
+ * @param[in] a_block_address        Original block address.
+ * @param[in] a_page_address         Original page address.
+ * @param[in] a_delta_block_address  Delta block address.
+ * @param[in] a_delta_page_address   Delta page address.
+ * @param[in] a_map_page             TRUE: a_block_address/a_page_address points
+ *                                   to a map page.
+ *                                   FALSE: a_block_address/a_page_address points
+ *                                   to a data page.
+ * @param[in] a_func_data            User data.
+ *
+ * @return PIFS_SUCCESS if page processed successfully.
+ */
+typedef pifs_status_t (*pifs_file_walker_func_t)(pifs_file_t * a_file,
                                                  pifs_block_address_t a_block_address,
                                                  pifs_page_address_t a_page_address,
                                                  pifs_block_address_t a_delta_block_address,

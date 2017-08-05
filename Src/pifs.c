@@ -741,34 +741,75 @@ pifs_status_t pifs_delete(void)
  */
 pifs_status_t pifs_mark_page_check(uint8_t * a_free_page_buf,
                                    pifs_block_address_t a_block_address,
-                                   pifs_page_address_t a_page_address)
+                                   pifs_page_address_t a_page_address,
+                                   pifs_page_count_t a_page_count)
 {
     pifs_status_t   ret = PIFS_SUCCESS;
     pifs_bit_pos_t  bit_pos;
     pifs_size_t     byte_pos;
 
-    /* Calculate address of block in the temporary file */
-    bit_pos = ((a_block_address - PIFS_FLASH_BLOCK_RESERVED_NUM) * PIFS_LOGICAL_PAGE_PER_BLOCK + a_page_address);
-    byte_pos = bit_pos / PIFS_BYTE_BITS;
-    bit_pos %= PIFS_BYTE_BITS;
+    PIFS_INFO_MSG("Marking %s, page count: %i\r\n",
+                  pifs_ba_pa2str(a_block_address, a_page_address),
+                  a_page_count);
+    while (a_page_count-- && ret == PIFS_SUCCESS)
+    {
+        /* Calculate address of block in the temporary buffer */
+        bit_pos = ((a_block_address - PIFS_FLASH_BLOCK_RESERVED_NUM) * PIFS_LOGICAL_PAGE_PER_BLOCK + a_page_address);
+        byte_pos = bit_pos / PIFS_BYTE_BITS;
+        bit_pos %= PIFS_BYTE_BITS;
 
-    //PIFS_PRINT_MSG("Pos %i, bit %i\r\n", byte_pos, bit_pos);
-    /* Mask bit */
-    a_free_page_buf[byte_pos] &= ~(1u << bit_pos);
+        //PIFS_PRINT_MSG("Pos %i, bit %i\r\n", byte_pos, bit_pos);
+        /* Mask bit */
+        a_free_page_buf[byte_pos] &= ~(1u << bit_pos);
+
+        if (a_page_count)
+        {
+            ret = pifs_inc_ba_pa(&a_block_address, &a_page_address);
+        }
+    }
 
     return ret;
 }
 
 /**
+ * @brief pifs_is_page_free_check Used during file system check.
+ * Check if page is used.
+ *
+ * @param[in] a_block_address   Block address of page(s).
+ * @param[in] a_page_address    Page address of page(s).
+ * @return TRUE: page is free. FALSE: page is used.
+ */
+bool_t pifs_is_page_free_check(uint8_t * a_free_page_buf,
+                               pifs_block_address_t a_block_address,
+                               pifs_page_address_t a_page_address)
+{
+    pifs_bit_pos_t  bit_pos;
+    pifs_size_t     byte_pos;
+
+    bit_pos = ((a_block_address - PIFS_FLASH_BLOCK_RESERVED_NUM) * PIFS_LOGICAL_PAGE_PER_BLOCK + a_page_address);
+    byte_pos = bit_pos / PIFS_BYTE_BITS;
+    bit_pos %= PIFS_BYTE_BITS;
+
+    //PIFS_PRINT_MSG("Pos %i, bit %i\r\n", byte_pos, bit_pos);
+    return (a_free_page_buf[byte_pos] & (1u << bit_pos)) ? TRUE : FALSE;
+}
+
+/**
  * @brief pifs_check_file_page Check page if it is allocated.
+ * Callback function which is called for file's every data and map pages.
+ * If delta block and page are equal to original block address, no delta
+ * page is used.
  *
  * @param[in] a_file                 Pointer to file.
  * @param[in] a_block_address        Original block address.
- * @param[in] a_page_address         Original block address.
+ * @param[in] a_page_address         Original page address.
  * @param[in] a_delta_block_address  Delta block address.
  * @param[in] a_delta_page_address   Delta page address.
- * If delta block and page are equal to original block address, no delta
- * page is used.
+ * @param[in] a_map_page             TRUE: a_block_address/a_page_address points
+ *                                   to a map page.
+ *                                   FALSE: a_block_address/a_page_address points
+ *                                   to a data page.
+ * @param[in] a_func_data            User data.
  *
  * @return PIFS_SUCCESS if page marked successfully.
  */
@@ -798,7 +839,7 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
         }
         else
         {
-            ret = pifs_mark_page_check(free_page_buf, a_block_address, a_page_address);
+            ret = pifs_mark_page_check(free_page_buf, a_block_address, a_page_address, 1);
         }
         if (pifs_is_page_to_be_released(a_block_address, a_page_address))
         {
@@ -826,7 +867,7 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
         }
         else
         {
-            ret = pifs_mark_page_check(free_page_buf, a_block_address, a_page_address);
+            ret = pifs_mark_page_check(free_page_buf, a_block_address, a_page_address, 1);
         }
         if (!pifs_is_page_to_be_released(a_block_address, a_page_address))
         {
@@ -847,7 +888,7 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
         }
         else
         {
-            ret = pifs_mark_page_check(free_page_buf, a_delta_block_address, a_delta_page_address);
+            ret = pifs_mark_page_check(free_page_buf, a_delta_block_address, a_delta_page_address, 1);
         }
         if (pifs_is_page_to_be_released(a_delta_block_address, a_delta_page_address))
         {
@@ -871,7 +912,7 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
         }
         else
         {
-            ret = pifs_mark_page_check(free_page_buf, a_block_address, a_page_address);
+            ret = pifs_mark_page_check(free_page_buf, a_block_address, a_page_address, 1);
         }
         if (pifs_is_page_to_be_released(a_block_address, a_page_address))
         {
@@ -913,6 +954,53 @@ pifs_status_t pifs_dir_walker_check(pifs_dirent_t * a_dirent, void * a_func_data
 }
 
 /**
+ * @brief pifs_check_free_page_buf Used during file system check.
+ * Checks whether file's allocated space and FS header's space is
+ * consistent with actual flash.
+ *
+ * @param[in[ a_free_page_buf Pointer to free page buffer.
+ * @return
+ */
+pifs_status_t pifs_check_free_page_buf(uint8_t * a_free_page_buf)
+{
+    pifs_status_t   ret = PIFS_SUCCESS;
+    pifs_address_t  address;
+    pifs_size_t     page_cntr;
+    bool_t          is_free; /* Page is free in free page buffer */
+    bool_t          is_erased;
+
+    address.block_address = PIFS_FLASH_BLOCK_RESERVED_NUM;
+    address.page_address = 0;
+
+    page_cntr = PIFS_LOGICAL_PAGE_NUM_FS;
+    while (page_cntr--)
+    {
+       is_free = pifs_is_page_free_check(a_free_page_buf, address.block_address,
+                                         address.page_address);
+       is_erased = pifs_is_page_erased(address.block_address, address.page_address);
+       if (is_free && !is_erased)
+       {
+           PIFS_ERROR_MSG("Page %s free: %s, erased: %s\r\n",
+                          pifs_address2str(&address),
+                          yesNo(is_free), yesNo(is_erased));
+           /* Read to page cache */
+           pifs_read(address.block_address, address.page_address, 0,
+                     NULL, 0);
+           print_buffer(pifs.cache_page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE,
+                        address.block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
+                        + address.page_address * PIFS_LOGICAL_PAGE_SIZE_BYTE);
+           ret = PIFS_ERROR_GENERAL;
+       }
+       if (page_cntr)
+       {
+           pifs_inc_address(&address);
+       }
+    }
+
+    return ret;
+}
+
+/**
  * @brief pifs_check Check file system's integrity.
  *
  * @return PIFS_SUCCESS if file system is OK.
@@ -943,10 +1031,54 @@ pifs_status_t pifs_check(void)
         {
             PIFS_PRINT_MSG("No file errors found.\r\n");
         }
+        if (ret == PIFS_SUCCESS)
+        {
+            /* Mark file system header as used */
+            ret = pifs_mark_page_check(free_page_buf,
+                                       pifs.header.management_block_address,
+                                       0,
+                                       PIFS_HEADER_SIZE_PAGE);
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            PIFS_DEBUG_MSG("Marking entry list %s, %i pages\r\n",
+                           pifs_address2str(&a_header->entry_list_address),
+                           PIFS_ENTRY_LIST_SIZE_PAGE);
+            /* Mark entry list as used */
+            ret = pifs_mark_page_check(free_page_buf,
+                                       pifs.header.entry_list_address.block_address,
+                                       pifs.header.entry_list_address.page_address,
+                                       PIFS_ENTRY_LIST_SIZE_PAGE);
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            /* Mark free space bitmap as used */
+            ret = pifs_mark_page_check(free_page_buf,
+                                       pifs.header.free_space_bitmap_address.block_address,
+                                       pifs.header.free_space_bitmap_address.page_address,
+                                       PIFS_FREE_SPACE_BITMAP_SIZE_PAGE);
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            /* Mark delta page map as used */
+            ret = pifs_mark_page_check(free_page_buf,
+                                       pifs.header.delta_map_address.block_address,
+                                       pifs.header.delta_map_address.page_address,
+                                       PIFS_DELTA_MAP_PAGE_NUM);
+        }
+        if (ret == PIFS_SUCCESS)
+        {
+            /* Mark wear level list as used */
+            ret = pifs_mark_page_check(free_page_buf,
+                                       pifs.header.wear_level_list_address.block_address,
+                                       pifs.header.wear_level_list_address.page_address,
+                                       PIFS_WEAR_LEVEL_LIST_SIZE_PAGE);
+        }
         PIFS_PRINT_MSG("Checking free space...\r\n");
         /* TODO check free space */
         PIFS_PRINT_MSG("Free page buffer:\r\n");
         print_buffer(free_page_buf, PIFS_FREE_PAGE_BUF_SIZE, 0);
+        ret = pifs_check_free_page_buf(free_page_buf);
 #if !PIFS_FSCHECK_USE_STATIC_MEMORY
         free(free_page_buf);
 #endif

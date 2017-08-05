@@ -61,9 +61,11 @@ uint8_t test_buf_r[TEST_BUF_SIZE] __attribute__((aligned(4)));
 size_t  testfull_written_buffers = 0;
 const size_t fragment_size = 5;
 
-void generate_buffer(uint32_t sequence_start)
+void generate_buffer(uint32_t a_sequence_start, const char * a_filename)
 {
-    fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SEQUENCE_WORD, sequence_start);
+    fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SEQUENCE_WORD, a_sequence_start);
+    snprintf((char*)test_buf_w, sizeof(test_buf_w),
+             "File: %s, sequence: %i.", a_filename, a_sequence_start);
 }
 
 pifs_status_t check_buffers()
@@ -97,7 +99,7 @@ pifs_status_t pifs_test_small_w(void)
         if (file)
         {
             printf("File opened for writing %s\r\n", filename);
-            generate_buffer(i);
+            generate_buffer(i, filename);
             //print_buffer(test_buf_w, sizeof(test_buf_w), 0);
             written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
             if (written_size != sizeof(test_buf_w))
@@ -139,7 +141,7 @@ pifs_status_t pifs_test_small_r(void)
         if (file)
         {
             printf("File opened for reading %s\r\n", filename);
-            generate_buffer(i);
+            generate_buffer(i, filename);
             read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
             if (read_size != sizeof(test_buf_r))
             {
@@ -173,18 +175,19 @@ pifs_status_t pifs_test_full_w(void)
     P_FILE * file;
     size_t   written_size = 0;
     size_t   i;
+    const char * filename = "fullwrite.tst";
 
     printf("-------------------------------------------------\r\n");
     printf("Full write test: writing file\r\n");
 
-    file = pifs_fopen("fullwrite.tst", "w");
+    file = pifs_fopen(filename, "w");
     if (file)
     {
         printf("File opened for writing\r\n");
         for (i = 0; i < TEST_FULL_PAGE_NUM; i++)
         {
             printf("full_w: %i\r\n", i + 1);
-            generate_buffer(i + 55);
+            generate_buffer(i + 55, filename);
 //            print_buffer(test_buf_w, sizeof(test_buf_w), 0);
             written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
             if (written_size != sizeof(test_buf_w))
@@ -216,18 +219,19 @@ pifs_status_t pifs_test_full_r(void)
     P_FILE * file;
     size_t   read_size = 0;
     size_t   i;
+    const char * filename = "fullwrite.tst";
 
     printf("-------------------------------------------------\r\n");
     printf("Full write test: reading file\r\n");
 
-    file = pifs_fopen("fullwrite.tst", "r");
+    file = pifs_fopen(filename, "r");
     if (file)
     {
         printf("File opened for reading\r\n");
         for (i = 0; i < testfull_written_buffers && ret == PIFS_SUCCESS; i++)
         {
             printf("full_r: %i/%i\r\n", i + 1, testfull_written_buffers);
-            generate_buffer(i + 55);
+            generate_buffer(i + 55, filename);
             read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
             if (read_size != sizeof(test_buf_r))
             {
@@ -293,7 +297,7 @@ pifs_status_t pifs_test_basic_w(const char * a_filename)
             ret = PIFS_ERROR_GENERAL;
         }
 #endif
-        generate_buffer(42);
+        generate_buffer(42, filename);
         //print_buffer(test_buf_w, sizeof(test_buf_w), 0);
         written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
         if (written_size != sizeof(test_buf_w))
@@ -325,10 +329,9 @@ pifs_status_t pifs_test_basic_w(const char * a_filename)
 pifs_status_t pifs_test_basic_r(const char * a_filename)
 {
     pifs_status_t ret = PIFS_SUCCESS;
-#if ENABLE_RENAME_TEST
-    const char  * filename = "basic2.tst";
-#else
     const char  * filename = "basic.tst";
+#if ENABLE_RENAME_TEST
+    const char  * filename2 = "basic2.tst";
 #endif
     P_FILE      * file;
     size_t        read_size = 0;
@@ -345,11 +348,15 @@ pifs_status_t pifs_test_basic_r(const char * a_filename)
     printf("-------------------------------------------------\r\n");
     printf("Basic test: reading file\r\n");
 
+#if ENABLE_RENAME_TEST
+    file = pifs_fopen(filename2, "r");
+#else
     file = pifs_fopen(filename, "r");
+#endif
     if (file)
     {
         printf("File opened for reading\r\n");
-        generate_buffer(42);
+        generate_buffer(42, filename);
         read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
         if (read_size != sizeof(test_buf_r))
         {
@@ -403,17 +410,18 @@ pifs_status_t pifs_test_large_w(void)
     P_FILE * file;
     size_t   written_size = 0;
     size_t   i;
+    const char * filename = "large.tst";
 
     printf("-------------------------------------------------\r\n");
     printf("Large test: writing file\r\n");
 
-    file = pifs_fopen("large.tst", "w");
+    file = pifs_fopen(filename, "w");
     if (file)
     {
         printf("File opened for writing\r\n");
         for (i = 0; i < LARGE_FILE_SIZE && ret == PIFS_SUCCESS; i++)
         {
-            generate_buffer(i);
+            generate_buffer(i, filename);
 //            print_buffer(test_buf_w, sizeof(test_buf_w), 0);
             written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
             if (written_size != sizeof(test_buf_w))
@@ -443,17 +451,18 @@ pifs_status_t pifs_test_large_r(void)
     P_FILE * file;
     size_t   read_size = 0;
     size_t   i;
+    const char * filename = "large.tst";
 
     printf("-------------------------------------------------\r\n");
     printf("Large test: reading file\r\n");
 
-    file = pifs_fopen("large.tst", "r");
+    file = pifs_fopen(filename, "r");
     if (file)
     {
         printf("File opened for reading\r\n");
         for (i = 0; i < LARGE_FILE_SIZE && ret == PIFS_SUCCESS; i++)
         {
-            generate_buffer(i);
+            generate_buffer(i, filename);
             read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
             if (read_size != sizeof(test_buf_r))
             {
@@ -504,15 +513,16 @@ pifs_status_t pifs_test_wfragment_w(size_t a_fragment_size)
     P_FILE * file;
     size_t   written_size = 0;
     size_t   i;
+    const char * filename = "fragwr.tst";
 
     printf("-------------------------------------------------\r\n");
     printf("Fragment write test: writing file\r\n");
 
-    file = pifs_fopen("fragwr.tst", "w");
+    file = pifs_fopen(filename, "w");
     if (file)
     {
         printf("File opened for writing\r\n");
-        generate_buffer(2);
+        generate_buffer(2, filename);
         written_size = 0;
         for (i = 0; i < sizeof(test_buf_w) && ret == PIFS_SUCCESS; i += a_fragment_size)
         {
@@ -543,16 +553,17 @@ pifs_status_t pifs_test_wfragment_r(void)
     pifs_status_t ret = PIFS_SUCCESS;
     P_FILE * file;
     size_t   read_size = 0;
+    const char * filename = "fragwr.tst";
 
     printf("-------------------------------------------------\r\n");
     printf("Write fragment test: reading file\r\n");
 
     memset(test_buf_r, 0, sizeof(test_buf_r));
-    file = pifs_fopen("fragwr.tst", "r");
+    file = pifs_fopen(filename, "r");
     if (file)
     {
         printf("File opened for reading\r\n");
-        generate_buffer(2);
+        generate_buffer(2, filename);
         read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
         if (read_size != sizeof(test_buf_r))
         {
@@ -584,15 +595,16 @@ pifs_status_t pifs_test_rfragment_w(void)
     pifs_status_t ret = PIFS_SUCCESS;
     P_FILE * file;
     size_t   written_size = 0;
+    const char * filename = "fragrd.tst";
 
     printf("-------------------------------------------------\r\n");
     printf("Fragment read test: writing file\r\n");
 
-    file = pifs_fopen("fragrd.tst", "w");
+    file = pifs_fopen(filename, "w");
     if (file)
     {
         printf("File opened for writing\r\n");
-        generate_buffer(3);
+        generate_buffer(3, filename);
         written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
         written_size += pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
         if (written_size != sizeof(test_buf_w) * 2)
@@ -621,16 +633,17 @@ pifs_status_t pifs_test_rfragment_r(size_t a_fragment_size)
     P_FILE * file;
     size_t   read_size = 0;
     size_t   i;
+    const char * filename = "fragrd.tst";
 
     printf("-------------------------------------------------\r\n");
     printf("Read fragment test: reading file\r\n");
 
     memset(test_buf_r, 0, sizeof(test_buf_r));
-    file = pifs_fopen("fragrd.tst", "r");
+    file = pifs_fopen(filename, "r");
     if (file)
     {
         printf("File opened for reading\r\n");
-        generate_buffer(3);
+        generate_buffer(3, filename);
         read_size = 0;
         for (i = 0; i < sizeof(test_buf_r) && ret == PIFS_SUCCESS; i += a_fragment_size)
         {
@@ -668,15 +681,16 @@ pifs_status_t pifs_test_rseek_w(void)
     pifs_status_t ret = PIFS_SUCCESS;
     P_FILE * file;
     size_t   written_size = 0;
+    const char * filename = "seekrd.tst";
 
     printf("-------------------------------------------------\r\n");
     printf("Seek read test: writing file\r\n");
 
-    file = pifs_fopen("seekrd.tst", "w");
+    file = pifs_fopen(filename, "w");
     if (file)
     {
         printf("File opened for writing\r\n");
-        generate_buffer(7);
+        generate_buffer(7, filename);
         written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
         written_size += pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
         if (written_size != 2 * sizeof(test_buf_w))
@@ -704,15 +718,16 @@ pifs_status_t pifs_test_rseek_r(void)
     pifs_status_t ret = PIFS_SUCCESS;
     P_FILE * file;
     size_t   read_size = 0;
+    const char * filename = "seekrd.tst";
 
     printf("-------------------------------------------------\r\n");
     printf("Seek read test: reading file\r\n");
 
-    file = pifs_fopen("seekrd.tst", "r");
+    file = pifs_fopen(filename, "r");
     if (file)
     {
         printf("File opened for reading\r\n");
-        generate_buffer(7);
+        generate_buffer(7, filename);
         if (pifs_fseek(file, SEEK_TEST_POS, PIFS_SEEK_SET))
         {
             PIFS_TEST_ERROR_MSG("Cannot seek!\r\n");
@@ -790,14 +805,15 @@ pifs_status_t pifs_test_wseek_w(void)
 #if PIFS_ENABLE_FSEEK_BEYOND_FILE
     P_FILE * file;
     size_t   written_size = 0;
+    const char * filename = "seekwr.tst";
 
     printf("-------------------------------------------------\r\n");
     printf("Seek write test: writing file\r\n");
-    file = pifs_fopen("seekwr.tst", "w");
+    file = pifs_fopen(filename, "w");
     if (file)
     {
         printf("File opened for writing\r\n");
-        generate_buffer(8);
+        generate_buffer(8, filename);
         pifs_fseek(file, SEEK_TEST_POS, PIFS_SEEK_SET);
         written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
         if (written_size != sizeof(test_buf_w))
@@ -827,11 +843,12 @@ pifs_status_t pifs_test_wseek_r(void)
 #if PIFS_ENABLE_FSEEK_BEYOND_FILE
     P_FILE * file;
     size_t   read_size = 0;
+    const char * filename = "seekwr.tst";
 
     printf("-------------------------------------------------\r\n");
     printf("Seek write test: reading file\r\n");
 
-    file = pifs_fopen("seekwr.tst", "r");
+    file = pifs_fopen(filename, "r");
     if (file)
     {
         printf("File opened for reading\r\n");
@@ -856,7 +873,7 @@ pifs_status_t pifs_test_wseek_r(void)
         }
         if (ret == PIFS_SUCCESS)
         {
-            generate_buffer(8);
+            generate_buffer(8, filename);
             read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
             if (read_size != sizeof(test_buf_r))
             {
@@ -933,7 +950,7 @@ pifs_status_t pifs_test_delta_w(const char * a_filename)
     if (file)
     {
         printf("File opened for writing\r\n");
-        generate_buffer(33);
+        generate_buffer(33, filename);
         //print_buffer(test_buf_w, sizeof(test_buf_w), 0);
         written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
         if (written_size != sizeof(test_buf_w))
@@ -961,7 +978,7 @@ pifs_status_t pifs_test_delta_w(const char * a_filename)
         }
         if (ret == PIFS_SUCCESS)
         {
-            generate_buffer(133);
+            generate_buffer(133, filename);
             written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
             if (written_size != sizeof(test_buf_w))
             {
@@ -981,7 +998,7 @@ pifs_status_t pifs_test_delta_w(const char * a_filename)
         }
         if (ret == PIFS_SUCCESS)
         {
-            generate_buffer(134);
+            generate_buffer(134, filename);
             written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
             if (written_size != sizeof(test_buf_w))
             {
@@ -1022,7 +1039,7 @@ pifs_status_t pifs_test_delta_r(const char * a_filename)
     if (file)
     {
         printf("File opened for reading\r\n");
-        generate_buffer(133);
+        generate_buffer(133, filename);
         read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
         if (read_size != sizeof(test_buf_r))
         {
@@ -1036,7 +1053,7 @@ pifs_status_t pifs_test_delta_r(const char * a_filename)
         }
         if (ret == PIFS_SUCCESS)
         {
-            generate_buffer(134);
+            generate_buffer(134, filename);
             read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
             if (read_size != sizeof(test_buf_r))
             {
