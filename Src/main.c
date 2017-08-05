@@ -29,6 +29,11 @@ int main(int argc, char **argv)
 
     srand(time(0));
     pifs_status = pifs_init();
+    if (pifs_status != PIFS_SUCCESS)
+    {
+        PIFS_ERROR_MSG("Cannot initialize file system: %i\r\n", pifs_status);
+        exit(-2);
+    }
     if (argc < 2)
     {
         /* No arguments */

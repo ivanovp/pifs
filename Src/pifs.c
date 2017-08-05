@@ -654,7 +654,6 @@ pifs_status_t pifs_init(void)
                     if (!pifs.is_header_found || prev_header.counter < pifs.header.counter)
                     {
                         pifs.is_header_found = TRUE;
-                        pifs_initialized = TRUE;
                         pifs.header_address.block_address = ba;
                         pifs.header_address.page_address = pa;
                         memcpy(&prev_header, &header, sizeof(prev_header));
@@ -701,8 +700,9 @@ pifs_status_t pifs_init(void)
             }
         }
 
-        if (pifs.is_header_found)
+        if (pifs.is_header_found && ret == PIFS_SUCCESS)
         {
+            pifs_initialized = TRUE;
 #if PIFS_DEBUG_LEVEL >= 6
             print_buffer(&pifs.header, sizeof(pifs.header), 0);
 #endif
