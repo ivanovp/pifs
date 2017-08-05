@@ -126,8 +126,9 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
             ret = pifs_read(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
                             PIFS_ENTRY_SIZE_BYTE);
 #endif
-            /* Check if name matches */
-            if (strncmp((char*)entry.name, a_name, sizeof(entry.name)) == 0)
+            /* Check if name matches and not deleted */
+            if ((strncmp((char*)entry.name, a_name, sizeof(entry.name)) == 0)
+                    && !pifs_is_entry_deleted(&entry))
             {
                 /* Entry found */
                 /* Copy entry */
