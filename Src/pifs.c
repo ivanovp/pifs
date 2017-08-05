@@ -823,13 +823,22 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
 {
     pifs_status_t ret = PIFS_SUCCESS;
     uint8_t * free_page_buf = (uint8_t*) a_func_data;
+    bool_t is_file_deleted = FALSE;
+    bool_t is_free;
+    bool_t is_to_be_released;
 
     PIFS_DEBUG_MSG("Check page %s\r\n",
                    pifs_ba_pa2str(a_block_address, a_page_address));
+    is_file_deleted = pifs_is_entry_deleted(&a_file->entry);
+    if (is_file_deleted)
+    {
+        PIFS_WARNING_MSG("%s is DELETED\r\n", a_file->entry.name);
+    }
     if (a_map_page)
     {
         /* Page shall not be free or to be released */
-        if (pifs_is_page_free(a_block_address, a_page_address))
+        is_free = pifs_is_page_free(a_block_address, a_page_address);
+        if (is_free)
         {
             pifs.error_cntr++;
             PIFS_ERROR_MSG("File '%s' map page at %s is marked free!\r\n",
@@ -841,12 +850,15 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
         {
             ret = pifs_mark_page_check(free_page_buf, a_block_address, a_page_address, 1);
         }
-        if (pifs_is_page_to_be_released(a_block_address, a_page_address))
+        is_to_be_released = pifs_is_page_to_be_released(a_block_address, a_page_address);
+        if ((is_to_be_released && !is_file_deleted)
+                || (!is_to_be_released && is_file_deleted))
         {
             pifs.error_cntr++;
-            PIFS_ERROR_MSG("File '%s' map page at %s is marked to be released!\r\n",
+            PIFS_ERROR_MSG("File '%s' map page at %s is %smarked to be released!\r\n",
                            a_file->entry.name,
-                           pifs_ba_pa2str(a_block_address, a_page_address));
+                           pifs_ba_pa2str(a_block_address, a_page_address),
+                           is_file_deleted ? "NOT " : "");
             ret = PIFS_ERROR_INTEGRITY;
         }
     }
@@ -857,7 +869,8 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
                        pifs_ba_pa2str(a_delta_block_address, a_delta_page_address));
         /* When delta page is used, original page shall be marked as to be released, */
         /* but it shall not be free! */
-        if (pifs_is_page_free(a_block_address, a_page_address))
+        is_free = pifs_is_page_free(a_block_address, a_page_address);
+        if (is_free)
         {
             pifs.error_cntr++;
             PIFS_ERROR_MSG("File '%s' original page at %s is marked free!\r\n",
@@ -869,7 +882,8 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
         {
             ret = pifs_mark_page_check(free_page_buf, a_block_address, a_page_address, 1);
         }
-        if (!pifs_is_page_to_be_released(a_block_address, a_page_address))
+        is_to_be_released = pifs_is_page_to_be_released(a_block_address, a_page_address);
+        if (!is_to_be_released)
         {
             pifs.error_cntr++;
             PIFS_ERROR_MSG("File '%s' original page at %s is not marked to be released!\r\n",
@@ -878,7 +892,8 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
             ret = PIFS_ERROR_INTEGRITY;
         }
         /* Delta page shall not be free or to be released */
-        if (pifs_is_page_free(a_delta_block_address, a_delta_page_address))
+        is_free = pifs_is_page_free(a_delta_block_address, a_delta_page_address);
+        if (is_free)
         {
             pifs.error_cntr++;
             PIFS_ERROR_MSG("File '%s' delta page at %s is marked free!\r\n",
@@ -890,19 +905,23 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
         {
             ret = pifs_mark_page_check(free_page_buf, a_delta_block_address, a_delta_page_address, 1);
         }
-        if (pifs_is_page_to_be_released(a_delta_block_address, a_delta_page_address))
+        is_to_be_released = pifs_is_page_to_be_released(a_delta_block_address, a_delta_page_address);
+        if ((is_to_be_released && !is_file_deleted)
+                || (!is_to_be_released && is_file_deleted))
         {
             pifs.error_cntr++;
-            PIFS_ERROR_MSG("File '%s' delta page at %s is marked to be released!\r\n",
+            PIFS_ERROR_MSG("File '%s' delta page at %s is %smarked to be released!\r\n",
                            a_file->entry.name,
-                           pifs_ba_pa2str(a_delta_block_address, a_delta_page_address));
+                           pifs_ba_pa2str(a_delta_block_address, a_delta_page_address),
+                           is_file_deleted ? "NOT " : "");
             ret = PIFS_ERROR_INTEGRITY;
         }
     }
     else
     {
         /* Page shall not be free or to be released */
-        if (pifs_is_page_free(a_block_address, a_page_address))
+        is_free = pifs_is_page_free(a_block_address, a_page_address);
+        if (is_free)
         {
             pifs.error_cntr++;
             PIFS_ERROR_MSG("File '%s' page at %s is marked free!\r\n",
@@ -914,15 +933,19 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
         {
             ret = pifs_mark_page_check(free_page_buf, a_block_address, a_page_address, 1);
         }
-        if (pifs_is_page_to_be_released(a_block_address, a_page_address))
+        is_to_be_released = pifs_is_page_to_be_released(a_block_address, a_page_address);
+        if ((is_to_be_released && !is_file_deleted)
+                || (!is_to_be_released && is_file_deleted))
         {
             pifs.error_cntr++;
-            PIFS_ERROR_MSG("File '%s' page at %s is marked to be released!\r\n",
+            PIFS_ERROR_MSG("File '%s' page at %s is %smarked to be released!\r\n",
                            a_file->entry.name,
-                           pifs_ba_pa2str(a_block_address, a_page_address));
+                           pifs_ba_pa2str(a_block_address, a_page_address),
+                           is_file_deleted ? "NOT " : "");
             ret = PIFS_ERROR_INTEGRITY;
         }
     }
+
     return ret;
 }
 
@@ -936,19 +959,32 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
 pifs_status_t pifs_dir_walker_check(pifs_dirent_t * a_dirent, void * a_func_data)
 {
     pifs_status_t ret = PIFS_ERROR_NO_MORE_RESOURCE;
-    pifs_file_t * file;
+    pifs_file_t * file = NULL;
 
-    PIFS_PRINT_MSG("Checking file '%s'...\r\n", a_dirent->d_name);
-    file = pifs_fopen(a_dirent->d_name, "r");
-    if (file)
+    /* Check if file name is not cleared (only pifs_rename() is doing this!) */
+    if (a_dirent->d_name[0] != PIFS_FLASH_PROGRAMMED_BYTE_VALUE)
     {
-        ret = pifs_walk_file_pages(file, pifs_check_file_page, a_func_data);
-        pifs_fclose(file);
-    }
-    else
-    {
-        pifs.error_cntr++;
-        PIFS_ERROR_MSG("Cannot open file '%s'!\r\n", a_dirent->d_name);
+        PIFS_PRINT_MSG("Checking file '%s'...\r\n", a_dirent->d_name);
+        /* pifs_fopen() would not work if deleted file is opened. */
+        /* Therefore we get only a pifs_file_t structure and fill the */
+        /* map information only. */
+        ret = pifs_get_file(&file);
+        if (ret == PIFS_SUCCESS && file)
+        {
+            strncpy(file->entry.name, a_dirent->d_name, PIFS_FILENAME_LEN_MAX);
+            file->entry.file_size = a_dirent->d_filesize;
+            file->entry.attrib = a_dirent->d_attrib;
+            file->entry.first_map_address.block_address = a_dirent->d_first_map_block_address;
+            file->entry.first_map_address.page_address = a_dirent->d_first_map_page_address;
+            ret = pifs_walk_file_pages(file, pifs_check_file_page, a_func_data);
+            /* Release file structure */
+            file->is_used = FALSE;
+        }
+        else
+        {
+            pifs.error_cntr++;
+            PIFS_ERROR_MSG("Cannot open file '%s'!\r\n", a_dirent->d_name);
+        }
     }
     return ret;
 }
@@ -976,28 +1012,28 @@ pifs_status_t pifs_check_free_page_buf(uint8_t * a_free_page_buf)
     page_cntr = PIFS_LOGICAL_PAGE_NUM_FS;
     while (page_cntr--)
     {
-       is_free = pifs_is_page_free_check(a_free_page_buf, address.block_address,
-                                         address.page_address);
-       is_free_fsbm = pifs_is_page_free(address.block_address, address.page_address);
-       is_erased = pifs_is_page_erased(address.block_address, address.page_address);
-       if ((is_free && !is_erased)
-               || (is_free != is_free_fsbm))
-       {
-           PIFS_ERROR_MSG("Page %s free: %s, FSBM: %s, erased: %s\r\n",
-                          pifs_address2str(&address),
-                          yesNo(is_free), yesNo(is_free_fsbm), yesNo(is_erased));
-           /* Read to page cache */
-           pifs_read(address.block_address, address.page_address, 0,
-                     NULL, 0);
-           print_buffer(pifs.cache_page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE,
-                        address.block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
-                        + address.page_address * PIFS_LOGICAL_PAGE_SIZE_BYTE);
-           ret = PIFS_ERROR_GENERAL;
-       }
-       if (page_cntr)
-       {
-           pifs_inc_address(&address);
-       }
+        is_free = pifs_is_page_free_check(a_free_page_buf, address.block_address,
+                                          address.page_address);
+        is_free_fsbm = pifs_is_page_free(address.block_address, address.page_address);
+        is_erased = pifs_is_page_erased(address.block_address, address.page_address);
+        if ((is_free && !is_erased)
+                || (is_free != is_free_fsbm))
+        {
+            PIFS_ERROR_MSG("Page %s free: %s, FSBM: %s, erased: %s\r\n",
+                           pifs_address2str(&address),
+                           yesNo(is_free), yesNo(is_free_fsbm), yesNo(is_erased));
+            /* Read to page cache */
+            pifs_read(address.block_address, address.page_address, 0,
+                      NULL, 0);
+            print_buffer(pifs.cache_page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE,
+                         address.block_address * PIFS_FLASH_BLOCK_SIZE_BYTE
+                         + address.page_address * PIFS_LOGICAL_PAGE_SIZE_BYTE);
+            ret = PIFS_ERROR_GENERAL;
+        }
+        if (page_cntr)
+        {
+            pifs_inc_address(&address);
+        }
     }
 
     return ret;

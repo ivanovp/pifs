@@ -65,7 +65,7 @@ void generate_buffer(uint32_t a_sequence_start, const char * a_filename)
 {
     fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SEQUENCE_WORD, a_sequence_start);
     snprintf((char*)test_buf_w, sizeof(test_buf_w),
-             "File: %s, sequence: %i.", a_filename, a_sequence_start);
+             "File: %s, sequence: %i#", a_filename, a_sequence_start);
 }
 
 pifs_status_t check_buffers()

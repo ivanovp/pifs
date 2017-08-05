@@ -59,7 +59,7 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
     }
     if (a_file->status == PIFS_SUCCESS)
     {
-        a_file->status = pifs_find_entry(a_filename, entry,
+        a_file->status = pifs_find_entry(PIFS_FIND_ENTRY, a_filename, entry,
                                          pifs.header.entry_list_address.block_address,
                                          pifs.header.entry_list_address.page_address);
         if ((a_file->mode_file_shall_exist || a_file->mode_append) && a_file->status == PIFS_SUCCESS)
@@ -97,9 +97,9 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
             {
                 /* File already exist */
 #if PIFS_USE_DELTA_FOR_ENTRIES == 0
-                a_file->status = pifs_clear_entry(a_filename,
-                                                  pifs.header.entry_list_address.block_address,
-                                                  pifs.header.entry_list_address.page_address);
+                a_file->status = pifs_delete_entry(a_filename,
+                                                   pifs.header.entry_list_address.block_address,
+                                                   pifs.header.entry_list_address.page_address);
                 if (a_file->status == PIFS_SUCCESS)
 #endif
                 {
@@ -904,7 +904,7 @@ int pifs_remove(const pifs_char_t * a_filename)
         if (ret == PIFS_SUCCESS)
         {
             /* File already exist */
-            ret = pifs_clear_entry(a_filename,
+            ret = pifs_delete_entry(a_filename,
                                    pifs.header.entry_list_address.block_address,
                                    pifs.header.entry_list_address.page_address);
             if (ret == PIFS_SUCCESS)
@@ -936,7 +936,8 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
     ret = pifs_check_filename(a_oldname);
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_find_entry(a_newname, entry,
+        /* Checking NEW name */
+        ret = pifs_find_entry(PIFS_FIND_ENTRY, a_newname, entry,
                               pifs.header.entry_list_address.block_address,
                               pifs.header.entry_list_address.page_address);
         if (ret == PIFS_SUCCESS)
@@ -944,15 +945,16 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
             /* File already exist, remove! */
             ret = pifs_remove(a_newname);
         }
-        ret = pifs_find_entry(a_oldname, entry,
+        ret = pifs_find_entry(PIFS_FIND_ENTRY, a_oldname, entry,
                               pifs.header.entry_list_address.block_address,
                               pifs.header.entry_list_address.page_address);
+        /* Checking OLD name */
         if (ret == PIFS_SUCCESS)
         {
             /* File already exist */
             ret = pifs_clear_entry(a_oldname,
-                              pifs.header.entry_list_address.block_address,
-                              pifs.header.entry_list_address.page_address);
+                                   pifs.header.entry_list_address.block_address,
+                                   pifs.header.entry_list_address.page_address);
         }
         if (ret == PIFS_SUCCESS)
         {
@@ -1044,7 +1046,7 @@ bool_t pifs_is_file_exist(const pifs_char_t * a_filename)
     ret = pifs_check_filename(a_filename);
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_find_entry(a_filename, entry,
+        ret = pifs_find_entry(PIFS_FIND_ENTRY, a_filename, entry,
                               pifs.header.entry_list_address.block_address,
                               pifs.header.entry_list_address.page_address);
     }
@@ -1094,9 +1096,9 @@ long int pifs_filesize(const pifs_char_t * a_filename)
     pifs_status_t status;
     pifs_entry_t  entry;
 
-    status = pifs_find_entry(a_filename, &entry,
-                              pifs.header.entry_list_address.block_address,
-                              pifs.header.entry_list_address.page_address);
+    status = pifs_find_entry(PIFS_FIND_ENTRY, a_filename, &entry,
+                             pifs.header.entry_list_address.block_address,
+                             pifs.header.entry_list_address.page_address);
     if (status == PIFS_SUCCESS)
     {
         filesize = entry.file_size;

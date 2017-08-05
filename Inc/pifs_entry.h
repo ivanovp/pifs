@@ -17,6 +17,13 @@
 #include "pifs_config.h"
 #include "pifs.h"
 
+typedef enum
+{
+    PIFS_FIND_ENTRY,
+    PIFS_DELETE_ENTRY,  /**< Set deleted attribute or zero first character of name */
+    PIFS_CLEAR_ENTRY    /**< Zero all bytes of entry */
+} pifs_entry_cmd_t;
+
 pifs_status_t pifs_append_entry(pifs_entry_t * a_entry,
                                 pifs_block_address_t a_list_entry_block_address,
                                 pifs_page_address_t a_list_entry_page_address);
@@ -25,12 +32,16 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                                 pifs_page_address_t a_list_entry_page_address);
 void pifs_mark_entry_deleted(pifs_entry_t * a_entry);
 bool_t pifs_is_entry_deleted(pifs_entry_t * a_entry);
-pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a_entry,
+pifs_status_t pifs_find_entry(pifs_entry_cmd_t entry_cmd,
+                              const pifs_char_t * a_name, pifs_entry_t * const a_entry,
                               pifs_block_address_t a_list_entry_block_address,
                               pifs_page_address_t a_list_entry_page_address);
+pifs_status_t pifs_delete_entry(const pifs_char_t * a_name,
+                                pifs_block_address_t a_list_entry_block_address,
+                                pifs_page_address_t a_list_entry_page_address);
 pifs_status_t pifs_clear_entry(const pifs_char_t * a_name,
-                              pifs_block_address_t a_list_entry_block_address,
-                              pifs_page_address_t a_list_entry_page_address);
+                               pifs_block_address_t a_list_entry_block_address,
+                               pifs_page_address_t a_list_entry_page_address);
 pifs_status_t pifs_count_entries(pifs_size_t * a_free_entry_count, pifs_size_t * a_to_be_released_entry_count,
                               pifs_block_address_t a_list_entry_block_address,
                               pifs_page_address_t a_list_entry_page_address);

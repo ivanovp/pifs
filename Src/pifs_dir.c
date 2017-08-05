@@ -114,6 +114,10 @@ struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
                         PIFS_ENTRY_SIZE_BYTE);
         if (ret == PIFS_SUCCESS)
         {
+#if PIFS_ENABLE_ATTRIBUTES && PIFS_INVERT_ATTRIBUTE_BITS
+            /* Invert attribute bits */
+            dir->directory_entry.d_attrib ^= PIFS_ATTRIB_ALL;
+#endif
             if (!pifs_is_entry_deleted(entry) || dir->find_deleted)
             {
                 entry_found = TRUE;
@@ -136,10 +140,6 @@ struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
         dir->directory_entry.d_filesize = entry->file_size;
 #if PIFS_ENABLE_ATTRIBUTES
         dir->directory_entry.d_attrib = entry->attrib;
-#if PIFS_INVERT_ATTRIBUTE_BITS
-        /* Invert attribute bits */
-        dir->directory_entry.d_attrib ^= PIFS_ATTRIB_ALL;
-#endif
 #endif
         dir->directory_entry.d_first_map_block_address = entry->first_map_address.block_address;
         dir->directory_entry.d_first_map_page_address = entry->first_map_address.page_address;

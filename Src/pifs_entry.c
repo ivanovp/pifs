@@ -223,11 +223,11 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
 void pifs_mark_entry_deleted(pifs_entry_t * a_entry)
 {
     //memset(a_entry, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, sizeof(pifs_entry_t));
-    /* Change only the first character to programmed value */
-    /* This way file system check can find it and take into account */
 #if PIFS_ENABLE_ATTRIBUTES
     a_entry->attrib ^= PIFS_ATTRIB_DELETED;
 #else
+    /* Change only the first character to programmed value */
+    /* This way file system check can find it and take into account */
     a_entry->name[0] = PIFS_FLASH_PROGRAMMED_BYTE_VALUE;
 #endif
 }
@@ -262,7 +262,8 @@ bool_t pifs_is_entry_deleted(pifs_entry_t * a_entry)
  * @return PIFS_SUCCESS if entry found.
  * PIFS_ERROR_FILE_NOT_FOUND if entry not found.
  */
-pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a_entry,
+pifs_status_t pifs_find_entry(pifs_entry_cmd_t entry_cmd,
+                              const pifs_char_t * a_name, pifs_entry_t * const a_entry,
                               pifs_block_address_t a_list_entry_block_address,
                               pifs_page_address_t a_list_entry_page_address)
 {
@@ -290,7 +291,7 @@ pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a
                     && !pifs_is_entry_deleted(&entry))
             {
                 /* Entry found */
-                if (a_entry)
+                if (entry_cmd == PIFS_FIND_ENTRY && a_entry)
                 {
                     /* Copy entry */
                     memcpy(a_entry, &entry, sizeof(pifs_entry_t));
@@ -300,10 +301,16 @@ pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a
 #endif
                     PIFS_DEBUG_MSG("file size: %i bytes\r\n", a_entry->file_size);
                 }
-                else
+                else if (entry_cmd == PIFS_DELETE_ENTRY || entry_cmd == PIFS_CLEAR_ENTRY)
                 {
-                    /* Clear entry */
-                    pifs_mark_entry_deleted(&entry);
+                    if (entry_cmd == PIFS_DELETE_ENTRY)
+                    {
+                        pifs_mark_entry_deleted(&entry);
+                    }
+                    else
+                    {
+                        memset(&entry, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
+                    }
 #if PIFS_USE_DELTA_FOR_ENTRIES
                     ret = pifs_write_delta(ba, pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
                                            PIFS_ENTRY_SIZE_BYTE, NULL);
@@ -327,8 +334,26 @@ pifs_status_t pifs_find_entry(const pifs_char_t * a_name, pifs_entry_t * const a
 }
 
 /**
- * @brief pifs_clear_entry Find entry in entry list and invalidate it.
- * This function shoudl be used only when a file is removed.
+ * @brief pifs_delete_entry Find entry in entry list and invalidate it.
+ * This function should be used only when a file is removed.
+ *
+ * @param a_name[in]    Pointer to name to find.
+ * @return PIFS_SUCCESS if entry found and deleted.
+ * PIFS_ERROR_FILE_NOT_FOUND if entry not found.
+ */
+pifs_status_t pifs_delete_entry(const pifs_char_t * a_name,
+                               pifs_block_address_t a_list_entry_block_address,
+                               pifs_page_address_t a_list_entry_page_address)
+{
+    return pifs_find_entry(PIFS_DELETE_ENTRY,
+                           a_name, NULL,
+                           a_list_entry_block_address,
+                           a_list_entry_page_address);
+}
+
+/**
+ * @brief pifs_clear_entry Find entry in entry list and zero all bytes of it.
+ * This function should be used only when a file is renamed.
  *
  * @param a_name[in]    Pointer to name to find.
  * @return PIFS_SUCCESS if entry found and cleared.
@@ -338,7 +363,8 @@ pifs_status_t pifs_clear_entry(const pifs_char_t * a_name,
                                pifs_block_address_t a_list_entry_block_address,
                                pifs_page_address_t a_list_entry_page_address)
 {
-    return pifs_find_entry(a_name, NULL,
+    return pifs_find_entry(PIFS_CLEAR_ENTRY,
+                           a_name, NULL,
                            a_list_entry_block_address,
                            a_list_entry_page_address);
 }
