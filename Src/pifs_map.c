@@ -349,13 +349,15 @@ pifs_status_t pifs_release_file_page(pifs_file_t * a_file,
                                      pifs_page_address_t a_page_address,
                                      pifs_block_address_t a_delta_block_address,
                                      pifs_page_address_t a_delta_page_address,
-                                     bool_t a_map_page)
+                                     bool_t a_map_page,
+                                     void * a_func_data)
 {
     pifs_status_t ret;
 
     (void) a_file;
     (void) a_block_address;
     (void) a_page_address;
+    (void) a_func_data;
 
     if (a_map_page)
     {

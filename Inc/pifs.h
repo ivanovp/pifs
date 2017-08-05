@@ -244,6 +244,8 @@ typedef uint8_t pifs_wear_level_bits_t;
 #error Invalid PIFS_PATH_SEPARATOR_CHAR! Forward slash '/' or backslash '\\' are supported!
 #endif
 
+#define PIFS_FREE_PAGE_BUF_SIZE         (PIFS_FLASH_PAGE_NUM_FS / PIFS_BYTE_BITS)
+
 #define PIFS_SET_ERRNO(status)          do { \
         pifs_errno = status; \
     } while (0)
@@ -432,6 +434,9 @@ typedef struct
     /** General page buffer use by pifs_fseek, pifs_copy buffer, sc=seek, copy */
     uint8_t                 sc_page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];
     uint32_t                error_cntr;         /**< File system's integrity check uses it */
+#if PIFS_FSCHECK_USE_STATIC_MEMORY
+    uint8_t                 free_pages_buf[PIFS_FLASH_PAGE_NUM_FS / PIFS_BYTE_BITS];
+#endif
 } pifs_t;
 
 extern pifs_t pifs;
