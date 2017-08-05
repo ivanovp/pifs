@@ -436,6 +436,7 @@ pifs_status_t pifs_merge(void)
         if (file_is_opened[i])
         {
             /* Store position in file */
+            PIFS_WARNING_MSG("read_pos: %i, write_pos: %i\r\n", file->read_pos, file->write_pos);
             file_pos[i] = file->read_pos;
             pifs_fclose(file);
         }
@@ -562,8 +563,13 @@ pifs_status_t pifs_merge(void)
                 ret = pifs_internal_open(file, file->entry.name, NULL, FALSE);
                 if (ret == PIFS_SUCCESS && file_pos[i])
                 {
+                    PIFS_WARNING_MSG("Seeking to %i\r\n", file_pos[i]);
                     /* Seek to the stored position */
-                    pifs_fseek(file, file_pos[i], PIFS_SEEK_SET);
+                    ret = pifs_fseek(file, file_pos[i], PIFS_SEEK_SET);
+                    if (ret != 0)
+                    {
+                        PIFS_ERROR_MSG("Seek error: %i\r\n", ret);
+                    }
                 }
             }
         }

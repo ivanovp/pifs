@@ -323,7 +323,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                     && file->write_pos < file->entry.file_size)
             {
                 /* Overwriting existing pages in the file */
-                PIFS_WARNING_MSG("Overwriting pages\r\n");
+                PIFS_WARNING_MSG("Overwriting pages, pos: %i, size: %i\r\n", file->write_pos, file->entry.file_size);
                 //page_count_needed = (data_size + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE;
                 while (page_count_needed && file->status == PIFS_SUCCESS)
                 {
@@ -764,7 +764,7 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
 #if PIFS_ENABLE_FSEEK_BEYOND_FILE
             /* Check if we are at end of file and data needs to be written to reach */
             /* target position */
-            if (target_pos > file->read_pos)
+            if (target_pos > file->read_pos && file->mode_write)
             {
 #if PIFS_ENABLE_FSEEK_ERASED_VALUE
                 memset(pifs.sc_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_LOGICAL_PAGE_SIZE_BYTE);
