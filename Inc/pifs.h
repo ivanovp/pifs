@@ -105,12 +105,12 @@
 #define PIFS_WEAR_LEVEL_LIST_SIZE_BYTE      (PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE * PIFS_FLASH_BLOCK_NUM_FS)
 #define PIFS_WEAR_LEVEL_LIST_SIZE_PAGE      ((PIFS_FLASH_BLOCK_NUM_FS + PIFS_WEAR_LEVEL_ENTRY_PER_PAGE - 1)/ PIFS_WEAR_LEVEL_ENTRY_PER_PAGE)
 
-#define PIFS_MAP_PAGES_RECOMENDED           (((PIFS_LOGICAL_PAGE_NUM_FS - PIFS_MANAGEMENT_BLOCK_NUM * PIFS_LOGICAL_PAGE_PER_BLOCK) * PIFS_MAP_ENTRY_SIZE_BYTE + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE)
+#define PIFS_MAP_PAGE_NUM_RECOMM            (((PIFS_LOGICAL_PAGE_NUM_FS - PIFS_MANAGEMENT_BLOCK_NUM * PIFS_LOGICAL_PAGE_PER_BLOCK) * PIFS_MAP_ENTRY_SIZE_BYTE + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE)
 
-#define PIFS_MANAGEMENT_PAGES_MIN           (PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE + PIFS_DELTA_MAP_PAGE_NUM + PIFS_WEAR_LEVEL_LIST_SIZE_PAGE)
-#define PIFS_MANAGEMENT_BLOCK_NUM_MIN          ((PIFS_MANAGEMENT_PAGES_MIN + PIFS_LOGICAL_PAGE_PER_BLOCK - 1) / PIFS_LOGICAL_PAGE_PER_BLOCK)
-#define PIFS_MANAGEMENT_PAGES_RECOMMENDED   (PIFS_MANAGEMENT_PAGES_MIN + PIFS_MAP_PAGES_RECOMENDED)
-#define PIFS_MANAGEMENT_BLOCK_NUM_RECOMMENDED  ((PIFS_MANAGEMENT_PAGES_RECOMMENDED + PIFS_LOGICAL_PAGE_PER_BLOCK - 1) / PIFS_LOGICAL_PAGE_PER_BLOCK)
+#define PIFS_MANAGEMENT_PAGE_NUM_MIN        (PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE + PIFS_DELTA_MAP_PAGE_NUM + PIFS_WEAR_LEVEL_LIST_SIZE_PAGE)
+#define PIFS_MANAGEMENT_BLOCK_NUM_MIN       ((PIFS_MANAGEMENT_PAGE_NUM_MIN + PIFS_LOGICAL_PAGE_PER_BLOCK - 1) / PIFS_LOGICAL_PAGE_PER_BLOCK)
+#define PIFS_MANAGEMENT_PAGE_NUM_RECOMM     (PIFS_MANAGEMENT_PAGE_NUM_MIN + PIFS_MAP_PAGE_NUM_RECOMM)
+#define PIFS_MANAGEMENT_BLOCK_NUM_RECOMM    ((PIFS_MANAGEMENT_PAGE_NUM_RECOMM + PIFS_LOGICAL_PAGE_PER_BLOCK - 1) / PIFS_LOGICAL_PAGE_PER_BLOCK)
 /******************************************************************************/
 
 #if PIFS_ENABLE_USER_DATA
@@ -404,6 +404,9 @@ typedef struct
     bool_t                  mode_append PIFS_BOOL_SIZE;
     bool_t                  mode_file_shall_exist PIFS_BOOL_SIZE;
     bool_t                  mode_deleted PIFS_BOOL_SIZE;
+#if PIFS_ENABLE_DIRECTORIES
+    pifs_address_t          entry_list_address;
+#endif
     pifs_entry_t            entry;              /**< File's entry, one element of entry list */
     pifs_status_t           status;             /**< Last file operation's result */
     pifs_address_t          actual_map_address; /**< Actual map's address used for reading */
@@ -463,6 +466,10 @@ typedef struct
     /** General page buffer use by pifs_fseek, pifs_copy buffer, sc=seek, copy */
     uint8_t                 sc_page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];
     uint32_t                error_cntr;         /**< File system's integrity check uses it */
+#if PIFS_ENABLE_DIRECTORIES
+    pifs_char_t             cwd[PIFS_PATH_LEN_MAX];                       /**< Current working directory */
+    pifs_address_t          entry_list_address;                           /**< Entry list of current working directory */
+#endif
 #if PIFS_FSCHECK_USE_STATIC_MEMORY
     uint8_t                 free_pages_buf[PIFS_FLASH_PAGE_NUM_FS / PIFS_BYTE_BITS];
 #endif

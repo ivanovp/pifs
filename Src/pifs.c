@@ -482,10 +482,10 @@ void pifs_print_fs_info(void)
     PIFS_PRINT_MSG("Number of wear level entries/page:  %lu\r\n", PIFS_WEAR_LEVEL_ENTRY_PER_PAGE);
     PIFS_PRINT_MSG("Number of wear level entries:       %lu\r\n", PIFS_FLASH_BLOCK_NUM_FS);
     PIFS_PRINT_MSG("Wear level map size:                %u bytes, %u logical pages\r\n", PIFS_WEAR_LEVEL_LIST_SIZE_BYTE, PIFS_WEAR_LEVEL_LIST_SIZE_PAGE);
-    PIFS_PRINT_MSG("Minimum management area:            %lu logical pages, %lu blocks\r\n", PIFS_MANAGEMENT_PAGES_MIN,
+    PIFS_PRINT_MSG("Minimum management area:            %lu logical pages, %lu blocks\r\n", PIFS_MANAGEMENT_PAGE_NUM_MIN,
            PIFS_MANAGEMENT_BLOCK_NUM_MIN);
-    PIFS_PRINT_MSG("Recommended management area:        %lu logical pages, %lu blocks\r\n", PIFS_MANAGEMENT_PAGES_RECOMMENDED,
-           PIFS_MANAGEMENT_BLOCK_NUM_RECOMMENDED);
+    PIFS_PRINT_MSG("Recommended management area:        %lu logical pages, %lu blocks\r\n", PIFS_MANAGEMENT_PAGE_NUM_RECOMM,
+           PIFS_MANAGEMENT_BLOCK_NUM_RECOMM);
     PIFS_PRINT_MSG("Full reserved area for management:  %i bytes, %i logical pages\r\n",
            PIFS_MANAGEMENT_BLOCK_NUM * 2 * PIFS_FLASH_BLOCK_SIZE_BYTE,
            PIFS_MANAGEMENT_BLOCK_NUM * 2 * PIFS_LOGICAL_PAGE_PER_BLOCK);
@@ -597,6 +597,10 @@ pifs_status_t pifs_init(void)
     memset(pifs.dmw_page_buf, 0, sizeof(pifs.dmw_page_buf));
     memset(pifs.sc_page_buf, 0, sizeof(pifs.sc_page_buf));
     pifs.error_cntr = 0;
+#if PIFS_ENABLE_DIRECTORIES
+    pifs.cwd[0] = PIFS_PATH_SEPARATOR_CHAR;
+    pifs.cwd[1] = 0;
+#endif
 
 #if PIFS_DEBUG_LEVEL >= 5
     pifs_print_fs_info();
@@ -620,9 +624,9 @@ pifs_status_t pifs_init(void)
         ret = PIFS_ERROR_CONFIGURATION;
     }
 
-    if (PIFS_MANAGEMENT_BLOCK_NUM_RECOMMENDED > PIFS_MANAGEMENT_BLOCK_NUM)
+    if (PIFS_MANAGEMENT_BLOCK_NUM_RECOMM > PIFS_MANAGEMENT_BLOCK_NUM)
     {
-        PIFS_WARNING_MSG("Recommended PIFS_MANAGEMENT_BLOCK_NUM is %lu!\r\n", PIFS_MANAGEMENT_BLOCK_NUM_RECOMMENDED);
+        PIFS_WARNING_MSG("Recommended PIFS_MANAGEMENT_BLOCK_NUM is %lu!\r\n", PIFS_MANAGEMENT_BLOCK_NUM_RECOMM);
     }
 
     if (((PIFS_LOGICAL_PAGE_SIZE_BYTE - (PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE)) / PIFS_ENTRY_PER_PAGE) > 0)
@@ -700,6 +704,10 @@ pifs_status_t pifs_init(void)
                             pifs.is_header_found = TRUE;
                             pifs.header_address.block_address = ba;
                             pifs.header_address.page_address = pa;
+#if PIFS_ENABLE_DIRECTORIES
+                            /* Current working directory is the root directory */
+                            pifs.entry_list_address = pifs.header.entry_list_address;
+#endif
                             memcpy(&prev_header, &header, sizeof(prev_header));
                         }
 #if PIFS_ENABLE_CONFIG_IN_FLASH

@@ -697,6 +697,86 @@ void cmdRenameFile (char* command, char* params)
     }
 }
 
+#if PIFS_ENABLE_DIRECTORIES
+void cmdMakeDir (char* command, char* params)
+{
+    const char * name;
+    int ret;
+
+    (void) command;
+
+    if (params)
+    {
+        name = PARSER_getNextParam();
+        if (name)
+        {
+            printf("Creating directory '%s'... ", name);
+            ret = pifs_mkdir(name);
+            if (ret == 0)
+            {
+                printf("Done.\r\n");
+            }
+            else
+            {
+                printf("Error: %i\r\n", ret);
+            }
+        }
+    }
+}
+
+void cmdChDir (char* command, char* params)
+{
+    const char * name;
+    int ret;
+
+    (void) command;
+
+    if (params)
+    {
+        name = PARSER_getNextParam();
+        if (name)
+        {
+            printf("Changing directory to '%s'... ", name);
+            ret = pifs_chdir(name);
+            if (ret == 0)
+            {
+                printf("Done.\r\n");
+            }
+            else
+            {
+                printf("Error: %i\r\n", ret);
+            }
+        }
+    }
+}
+
+void cmdRemoveDir (char* command, char* params)
+{
+    const char * name;
+    int ret;
+
+    (void) command;
+
+    if (params)
+    {
+        name = PARSER_getNextParam();
+        if (name)
+        {
+            printf("Removing directory '%s'... ", name);
+            ret = pifs_rmdir(name);
+            if (ret == 0)
+            {
+                printf("Done.\r\n");
+            }
+            else
+            {
+                printf("Error: %i\r\n", ret);
+            }
+        }
+    }
+}
+#endif
+
 void cmdDumpPage (char* command, char* params)
 {
     unsigned long int    addr = 0;
@@ -1057,6 +1137,11 @@ parserCommand_t parserCommands[] =
     {"append",      "Append file, write until 'q'",     cmdAppendFile},
     {"cp",          "Copy file",                        cmdCopyFile},
     {"rename",      "Rename file",                      cmdRenameFile},
+#if PIFS_ENABLE_DIRECTORIES
+    {"mkdir",       "Make directory",                   cmdMakeDir},
+    {"cd",          "Change directory",                 cmdChDir},
+    {"rmdir",       "Remove directory",                 cmdRemoveDir},
+#endif
     {"dump",        "Dump flash page in hexadecimal format", cmdDumpPage},
     {"d",           "Dump flash page in hexadecimal format", cmdDumpPage},
     {"map",         "Print map page",                   cmdMap},

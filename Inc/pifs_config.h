@@ -23,6 +23,7 @@
 #define PIFS_OPEN_FILE_NUM_MAX          4u   /**< Maximum number of opened file */
 #define PIFS_OPEN_DIR_NUM_MAX           2u   /**< Maximum number of opened directories */
 #define PIFS_FILENAME_LEN_MAX           32u  /**< Maximum length of file name */
+#define PIFS_PATH_LEN_MAX               128u /**< Maximum length of path. Only relevent if PIFS_ENABLE_DIRECTORIES is 1. */
 #define PIFS_ENTRY_NUM_MAX              254u /**< Maximum number of files and directories */
 #define PIFS_ENABLE_USER_DATA           1u   /**< 1: Add user data (pifs_user_data_t) to every file, 0: don't add user data */
 #define PIFS_MANAGEMENT_BLOCK_NUM       1u   /**< Number of management blocks. Minimum: 1 (Allocated area is twice of this number.) */
@@ -41,7 +42,7 @@
 #define PIFS_STATIC_WEAR_LEVEL_PERCENT 10u
 #define PIFS_CALC_TBR_IN_FREE_SPACE     0u   /**< 1: Free pages and to be released pages are counted, 0: only free pages counted */
 #define PIFS_FSCHECK_USE_STATIC_MEMORY  1u   /**< 1: Use static memory for file system check, 0: Use dynamic (malloc) for file system check */
-#define PIFS_ENABLE_DIRECTORIES         0u   /**< NOT IMPLEMENTED 1: Support directories, 0: only support root directory */
+#define PIFS_ENABLE_DIRECTORIES         1u   /**< 1: Support directories, 0: only support root directory */
 #define PIFS_PATH_SEPARATOR_CHAR        '/'  /**< Character to separate directories in path, '/' or '\' */
 
 #define PIFS_PACKED_ATTRIBUTE           __attribute__((packed))

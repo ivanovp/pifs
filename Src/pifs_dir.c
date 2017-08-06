@@ -230,7 +230,6 @@ pifs_status_t pifs_walk_dir(pifs_char_t * a_path, bool_t a_recursive, bool_t a_s
 }
 
 #if PIFS_ENABLE_DIRECTORIES
-#error Directories are not supported currently!
 int pifs_mkdir(const pifs_char_t * a_filename)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
@@ -239,25 +238,22 @@ int pifs_mkdir(const pifs_char_t * a_filename)
     pifs_page_address_t  pa;
     pifs_page_count_t    page_count_found;
 
-    ret = pifs_find_entry(a_filename, entry,
+    ret = pifs_find_entry(PIFS_FIND_ENTRY, a_filename, entry,
                           pifs.header.entry_list_address.block_address,
                           pifs.header.entry_list_address.page_address);
     if (ret == PIFS_SUCCESS)
     {
         ret = PIFS_ERROR_FILE_ALREADY_EXIST;
     }
-    else
+    else if (ret == PIFS_ERROR_FILE_NOT_FOUND)
     {
         /* Order of steps to create a directory: */
-        /* #1 Find a free page for entry list */
+        /* #1 Find free pages for entry list */
         /* #2 Create entry of a_file, which contains the entry list's address */
         /* #3 Mark entry list page */
-        if (ret == PIFS_SUCCESS)
-        {
-            ret = pifs_find_free_page_wl(PIFS_ENTRY_LIST_SIZE_PAGE, PIFS_ENTRY_LIST_SIZE_PAGE,
-                                         PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT,
-                                         &ba, &pa, &page_count_found);
-        }
+        ret = pifs_find_free_page_wl(PIFS_ENTRY_LIST_SIZE_PAGE, PIFS_ENTRY_LIST_SIZE_PAGE,
+                                     PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT,
+                                     &ba, &pa, &page_count_found);
         if (ret == PIFS_SUCCESS)
         {
             PIFS_DEBUG_MSG("Entry list: %u free page found %s\r\n", page_count_found, pifs_ba_pa2str(ba, pa));
@@ -273,6 +269,23 @@ int pifs_mkdir(const pifs_char_t * a_filename)
             {
                 PIFS_DEBUG_MSG("Entry created\r\n");
                 ret = pifs_mark_page(ba, pa, PIFS_ENTRY_LIST_SIZE_PAGE, TRUE);
+                if (ret == PIFS_SUCCESS)
+                {
+                    memset(entry, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
+                    strncpy((char*)entry->name, ".", PIFS_FILENAME_LEN_MAX);
+                    entry->attrib = PIFS_ATTRIB_ARCHIVE | PIFS_ATTRIB_DIR;
+                    entry->first_map_address.block_address = ba;
+                    entry->first_map_address.page_address = pa;
+                    ret = pifs_append_entry(entry, ba, pa);
+                }
+                if (ret == PIFS_SUCCESS)
+                {
+                    strncpy((char*)entry->name, "..", PIFS_FILENAME_LEN_MAX);
+                    entry->attrib = PIFS_ATTRIB_ARCHIVE | PIFS_ATTRIB_DIR;
+                    entry->first_map_address.block_address = pifs.header.entry_list_address.block_address;
+                    entry->first_map_address.page_address = pifs.header.entry_list_address.page_address;
+                    ret = pifs_append_entry(entry, ba, pa);
+                }
             }
             else
             {
@@ -287,16 +300,20 @@ int pifs_mkdir(const pifs_char_t * a_filename)
 
 int pifs_rmdir(const pifs_char_t * a_filename)
 {
+    pifs_status_t        ret = PIFS_SUCCESS;
 
+    return ret;
 }
 
 int pifs_chdir(const pifs_char_t * a_filename)
 {
+    pifs_status_t        ret = PIFS_SUCCESS;
 
+    return ret;
 }
 
 pifs_char_t * pifs_getcwd(pifs_char_t * buffer, size_t a_size)
 {
-
+    return NULL;
 }
 #endif
