@@ -289,6 +289,22 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
         }
         a_header->wear_level_cntr_max = PIFS_WEAR_LEVEL_CNTR_MAX;
     }
+#if PIFS_ENABLE_CONFIG_IN_FLASH
+    /* Flash configuration */
+    a_header->flash_block_num_all = PIFS_FLASH_BLOCK_NUM_ALL;
+    a_header->flash_block_reserved_num = PIFS_FLASH_BLOCK_RESERVED_NUM;
+    a_header->flash_page_per_block = PIFS_FLASH_PAGE_PER_BLOCK;
+    a_header->flash_page_size_byte = PIFS_FLASH_PAGE_SIZE_BYTE;
+    /* File system configuration */
+    a_header->logical_page_size_byte = PIFS_LOGICAL_PAGE_SIZE_BYTE;
+    a_header->filename_len_max = PIFS_FILENAME_LEN_MAX;
+    a_header->entry_num_max = PIFS_ENTRY_NUM_MAX;
+    a_header->user_data_size_byte = PIFS_USER_DATA_SIZE_BYTE;
+    a_header->management_block_num = PIFS_MANAGEMENT_BLOCK_NUM;
+    a_header->least_weared_block_num = PIFS_LEAST_WEARED_BLOCK_NUM;
+    a_header->delta_map_page_num = PIFS_DELTA_MAP_PAGE_NUM;
+    a_header->map_page_count_size = PIFS_MAP_PAGE_COUNT_SIZE;
+#endif
     address.block_address = a_block_address;
     address.page_address = a_page_address;
     pifs_add_address(&address, PIFS_HEADER_SIZE_PAGE);
@@ -299,7 +315,7 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
     a_header->delta_map_address = address;
     pifs_add_address(&address, PIFS_DELTA_MAP_PAGE_NUM);
     a_header->wear_level_list_address = address;
-    if ((address.block_address - a_block_address) > (pifs_block_address_t)PIFS_MANAGEMENT_BLOCKS)
+    if ((address.block_address - a_block_address) > (pifs_block_address_t)PIFS_MANAGEMENT_BLOCK_NUM)
     {
         /* Not enough space for management pages */
         ret = PIFS_ERROR_CONFIGURATION;
@@ -465,15 +481,15 @@ void pifs_print_fs_info(void)
     PIFS_PRINT_MSG("Number of wear level entries:       %lu\r\n", PIFS_FLASH_BLOCK_NUM_FS);
     PIFS_PRINT_MSG("Wear level map size:                %u bytes, %u logical pages\r\n", PIFS_WEAR_LEVEL_LIST_SIZE_BYTE, PIFS_WEAR_LEVEL_LIST_SIZE_PAGE);
     PIFS_PRINT_MSG("Minimum management area:            %lu logical pages, %lu blocks\r\n", PIFS_MANAGEMENT_PAGES_MIN,
-           PIFS_MANAGEMENT_BLOCKS_MIN);
+           PIFS_MANAGEMENT_BLOCK_NUM_MIN);
     PIFS_PRINT_MSG("Recommended management area:        %lu logical pages, %lu blocks\r\n", PIFS_MANAGEMENT_PAGES_RECOMMENDED,
-           PIFS_MANAGEMENT_BLOCKS_RECOMMENDED);
+           PIFS_MANAGEMENT_BLOCK_NUM_RECOMMENDED);
     PIFS_PRINT_MSG("Full reserved area for management:  %i bytes, %i logical pages\r\n",
-           PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_FLASH_BLOCK_SIZE_BYTE,
-           PIFS_MANAGEMENT_BLOCKS * 2 * PIFS_LOGICAL_PAGE_PER_BLOCK);
+           PIFS_MANAGEMENT_BLOCK_NUM * 2 * PIFS_FLASH_BLOCK_SIZE_BYTE,
+           PIFS_MANAGEMENT_BLOCK_NUM * 2 * PIFS_LOGICAL_PAGE_PER_BLOCK);
     PIFS_PRINT_MSG("Size of management area:            %i bytes, %i logical pages\r\n",
-           PIFS_MANAGEMENT_BLOCKS * PIFS_FLASH_BLOCK_SIZE_BYTE,
-           PIFS_MANAGEMENT_BLOCKS * PIFS_LOGICAL_PAGE_PER_BLOCK);
+           PIFS_MANAGEMENT_BLOCK_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE,
+           PIFS_MANAGEMENT_BLOCK_NUM * PIFS_LOGICAL_PAGE_PER_BLOCK);
     PIFS_PRINT_MSG("\r\n");
     PIFS_PRINT_MSG("File system in RAM:                 %lu bytes\r\n", sizeof(pifs_t));
 }
@@ -593,18 +609,18 @@ pifs_status_t pifs_init(void)
         ret = PIFS_ERROR_CONFIGURATION;
     }
 
-    if (PIFS_MANAGEMENT_BLOCKS_MIN > PIFS_MANAGEMENT_BLOCKS)
+    if (PIFS_MANAGEMENT_BLOCK_NUM_MIN > PIFS_MANAGEMENT_BLOCK_NUM)
     {
         PIFS_ERROR_MSG("Cannot fit data in management block!\r\n");
         PIFS_ERROR_MSG("Decrease PIFS_ENTRY_NUM_MAX or PIFS_FILENAME_LEN_MAX or PIFS_DELTA_PAGES_NUM!\r\n");
-        PIFS_ERROR_MSG("Or increase PIFS_MANAGEMENT_BLOCKS to %lu!\r\n",
-                       PIFS_MANAGEMENT_BLOCKS_MIN);
+        PIFS_ERROR_MSG("Or increase PIFS_MANAGEMENT_BLOCK_NUM to %lu!\r\n",
+                       PIFS_MANAGEMENT_BLOCK_NUM_MIN);
         ret = PIFS_ERROR_CONFIGURATION;
     }
 
-    if (PIFS_MANAGEMENT_BLOCKS_RECOMMENDED > PIFS_MANAGEMENT_BLOCKS)
+    if (PIFS_MANAGEMENT_BLOCK_NUM_RECOMMENDED > PIFS_MANAGEMENT_BLOCK_NUM)
     {
-        PIFS_WARNING_MSG("Recommended PIFS_MANAGEMENT_BLOCKS is %lu!\r\n", PIFS_MANAGEMENT_BLOCKS_RECOMMENDED);
+        PIFS_WARNING_MSG("Recommended PIFS_MANAGEMENT_BLOCK_NUM is %lu!\r\n", PIFS_MANAGEMENT_BLOCK_NUM_RECOMMENDED);
     }
 
     if (((PIFS_LOGICAL_PAGE_SIZE_BYTE - (PIFS_ENTRY_PER_PAGE * PIFS_ENTRY_SIZE_BYTE)) / PIFS_ENTRY_PER_PAGE) > 0)
@@ -650,7 +666,7 @@ pifs_status_t pifs_init(void)
                         PIFS_WARNING_MSG("Previous management page was not erased! Erasing...\r\n");
                         /* This can happen when pifs_merge() was interrupted before step #11 */
                         /* Erase old management area */
-                        for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
+                        for (i = 0; i < PIFS_MANAGEMENT_BLOCK_NUM && ret == PIFS_SUCCESS; i++)
                         {
                             ret = pifs_erase(prev_header.management_block_address + i, &prev_header, &header);
                         }
@@ -661,10 +677,33 @@ pifs_status_t pifs_init(void)
                     }
                     if (!pifs.is_header_found || prev_header.counter < pifs.header.counter)
                     {
-                        pifs.is_header_found = TRUE;
-                        pifs.header_address.block_address = ba;
-                        pifs.header_address.page_address = pa;
-                        memcpy(&prev_header, &header, sizeof(prev_header));
+#if PIFS_ENABLE_CONFIG_IN_FLASH
+                        /* Check flash and file system configuration */
+                        if (header.flash_block_num_all == PIFS_FLASH_BLOCK_NUM_ALL
+                               && header.flash_block_reserved_num == PIFS_FLASH_BLOCK_RESERVED_NUM
+                               && header.flash_page_per_block == PIFS_FLASH_PAGE_PER_BLOCK
+                               && header.flash_page_size_byte == PIFS_FLASH_PAGE_SIZE_BYTE
+                               && header.logical_page_size_byte == PIFS_LOGICAL_PAGE_SIZE_BYTE
+                               && header.filename_len_max == PIFS_FILENAME_LEN_MAX
+                               && header.entry_num_max == PIFS_ENTRY_NUM_MAX
+                               && header.user_data_size_byte == PIFS_USER_DATA_SIZE_BYTE
+                               && header.management_block_num == PIFS_MANAGEMENT_BLOCK_NUM
+                               && header.least_weared_block_num == PIFS_LEAST_WEARED_BLOCK_NUM
+                               && header.delta_map_page_num == PIFS_DELTA_MAP_PAGE_NUM
+                               && header.map_page_count_size == PIFS_MAP_PAGE_COUNT_SIZE)
+#endif
+                        {
+                            pifs.is_header_found = TRUE;
+                            pifs.header_address.block_address = ba;
+                            pifs.header_address.page_address = pa;
+                            memcpy(&prev_header, &header, sizeof(prev_header));
+                        }
+#if PIFS_ENABLE_CONFIG_IN_FLASH
+                        else
+                        {
+                            PIFS_WARNING_MSG("Invalid flash/file system configuration!\r\n");
+                        }
+#endif
                     }
                 }
                 else
@@ -691,7 +730,7 @@ pifs_status_t pifs_init(void)
             ba = PIFS_FLASH_BLOCK_RESERVED_NUM + rand() % (PIFS_FLASH_BLOCK_NUM_FS);
 #endif
             pa = 0;
-            ret = pifs_header_init(ba, pa, ba + PIFS_MANAGEMENT_BLOCKS, &pifs.header);
+            ret = pifs_header_init(ba, pa, ba + PIFS_MANAGEMENT_BLOCK_NUM, &pifs.header);
             if (ret == PIFS_SUCCESS)
             {
                 PIFS_WARNING_MSG("Erasing all blocks...\r\n");

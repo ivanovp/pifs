@@ -442,7 +442,7 @@ pifs_status_t pifs_merge(void)
         }
     }
     /* #1 */
-    for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
+    for (i = 0; i < PIFS_MANAGEMENT_BLOCK_NUM && ret == PIFS_SUCCESS; i++)
     {
         ret = pifs_erase(old_header.next_management_block_address + i, NULL, NULL);
     }
@@ -460,7 +460,7 @@ pifs_status_t pifs_merge(void)
         /* Copy wear level list */
         ret = pifs_copy_wear_level_list(&old_header, &new_header);
     }
-    for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
+    for (i = 0; i < PIFS_MANAGEMENT_BLOCK_NUM && ret == PIFS_SUCCESS; i++)
     {
         ret = pifs_inc_wear_level(new_header.management_block_address + i, &new_header);
     }
@@ -505,7 +505,7 @@ pifs_status_t pifs_merge(void)
         /* Old header's primary management blocks and data blocks are allowed */
         /* TODO this won't find PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT as they are */
         /* marked used. Simply remove 'PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT |' ? */
-        ret = pifs_find_block_wl(PIFS_MANAGEMENT_BLOCKS,
+        ret = pifs_find_block_wl(PIFS_MANAGEMENT_BLOCK_NUM,
                                  PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT | PIFS_BLOCK_TYPE_DATA,
                                  FALSE,
                                  &old_header,
@@ -542,7 +542,7 @@ pifs_status_t pifs_merge(void)
     {
         PIFS_ASSERT(old_header.management_block_address != new_header.management_block_address);
         /* Erase old management area */
-        for (i = 0; i < PIFS_MANAGEMENT_BLOCKS && ret == PIFS_SUCCESS; i++)
+        for (i = 0; i < PIFS_MANAGEMENT_BLOCK_NUM && ret == PIFS_SUCCESS; i++)
         {
             PIFS_WARNING_MSG("Erasing old management block %i\r\n", old_header.management_block_address + i);
             ret = pifs_erase(old_header.management_block_address + i, &old_header, &new_header);

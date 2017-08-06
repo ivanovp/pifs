@@ -25,11 +25,12 @@
 #define PIFS_FILENAME_LEN_MAX           32u  /**< Maximum length of file name */
 #define PIFS_ENTRY_NUM_MAX              254u /**< Maximum number of files and directories */
 #define PIFS_ENABLE_USER_DATA           1u   /**< 1: Add user data (pifs_user_data_t) to every file, 0: don't add user data */
-#define PIFS_MANAGEMENT_BLOCKS          1u   /**< Number of management blocks. Minimum: 1 (Allocated area is twice of this number.) */
+#define PIFS_MANAGEMENT_BLOCK_NUM       1u   /**< Number of management blocks. Minimum: 1 (Allocated area is twice of this number.) */
 #define PIFS_LEAST_WEARED_BLOCK_NUM     6u   /**< Number of stored least weared blocks */
 #define PIFS_DELTA_MAP_PAGE_NUM         2u   /**< Number of delta page maps */
 #define PIFS_CHECKSUM_SIZE              4u   /**< Size of checksum variable in bytes. Valid values are 1, 2 and 4. */
 #define PIFS_MAP_PAGE_COUNT_SIZE        1u   /**< Size of page count variable of map entry in bytes. Valid values are 1, 2 and 4. */
+#define PIFS_ENABLE_CONFIG_IN_FLASH     1u   /**< 1: Store file system's configuration in flash memory */
 #define PIFS_OPTIMIZE_FOR_RAM           1u   /**< 1: Use less RAM, 0: Use more RAM, but faster code execution */
 #define PIFS_CHECK_IF_PAGE_IS_ERASED    0u   /**< 1: Check if page is erased */
 #define PIFS_USE_DELTA_FOR_ENTRIES      0u   /**< 1: Use delta pages for list entries, 0: don't use delta pages */
@@ -39,7 +40,7 @@
 #define PIFS_STATIC_WEAR_LEVEL_LIMIT   20u
 #define PIFS_STATIC_WEAR_LEVEL_PERCENT 10u
 #define PIFS_CALC_TBR_IN_FREE_SPACE     0u   /**< 1: Free pages and to be released pages are counted, 0: only free pages counted */
-#define PIFS_FSCHECK_USE_STATIC_MEMORY    1u   /**< 1: Use static memory for file system check, 0: Use dynamic (malloc) for file system check */
+#define PIFS_FSCHECK_USE_STATIC_MEMORY  1u   /**< 1: Use static memory for file system check, 0: Use dynamic (malloc) for file system check */
 #define PIFS_ENABLE_DIRECTORIES         0u   /**< NOT IMPLEMENTED 1: Support directories, 0: only support root directory */
 #define PIFS_PATH_SEPARATOR_CHAR        '/'  /**< Character to separate directories in path, '/' or '\' */
 

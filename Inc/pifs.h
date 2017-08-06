@@ -105,13 +105,19 @@
 #define PIFS_WEAR_LEVEL_LIST_SIZE_BYTE      (PIFS_WEAR_LEVEL_ENTRY_SIZE_BYTE * PIFS_FLASH_BLOCK_NUM_FS)
 #define PIFS_WEAR_LEVEL_LIST_SIZE_PAGE      ((PIFS_FLASH_BLOCK_NUM_FS + PIFS_WEAR_LEVEL_ENTRY_PER_PAGE - 1)/ PIFS_WEAR_LEVEL_ENTRY_PER_PAGE)
 
-#define PIFS_MAP_PAGES_RECOMENDED           (((PIFS_LOGICAL_PAGE_NUM_FS - PIFS_MANAGEMENT_BLOCKS * PIFS_LOGICAL_PAGE_PER_BLOCK) * PIFS_MAP_ENTRY_SIZE_BYTE + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE)
+#define PIFS_MAP_PAGES_RECOMENDED           (((PIFS_LOGICAL_PAGE_NUM_FS - PIFS_MANAGEMENT_BLOCK_NUM * PIFS_LOGICAL_PAGE_PER_BLOCK) * PIFS_MAP_ENTRY_SIZE_BYTE + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE)
 
 #define PIFS_MANAGEMENT_PAGES_MIN           (PIFS_HEADER_SIZE_PAGE + PIFS_ENTRY_LIST_SIZE_PAGE + PIFS_FREE_SPACE_BITMAP_SIZE_PAGE + PIFS_DELTA_MAP_PAGE_NUM + PIFS_WEAR_LEVEL_LIST_SIZE_PAGE)
-#define PIFS_MANAGEMENT_BLOCKS_MIN          ((PIFS_MANAGEMENT_PAGES_MIN + PIFS_LOGICAL_PAGE_PER_BLOCK - 1) / PIFS_LOGICAL_PAGE_PER_BLOCK)
+#define PIFS_MANAGEMENT_BLOCK_NUM_MIN          ((PIFS_MANAGEMENT_PAGES_MIN + PIFS_LOGICAL_PAGE_PER_BLOCK - 1) / PIFS_LOGICAL_PAGE_PER_BLOCK)
 #define PIFS_MANAGEMENT_PAGES_RECOMMENDED   (PIFS_MANAGEMENT_PAGES_MIN + PIFS_MAP_PAGES_RECOMENDED)
-#define PIFS_MANAGEMENT_BLOCKS_RECOMMENDED  ((PIFS_MANAGEMENT_PAGES_RECOMMENDED + PIFS_LOGICAL_PAGE_PER_BLOCK - 1) / PIFS_LOGICAL_PAGE_PER_BLOCK)
+#define PIFS_MANAGEMENT_BLOCK_NUM_RECOMMENDED  ((PIFS_MANAGEMENT_PAGES_RECOMMENDED + PIFS_LOGICAL_PAGE_PER_BLOCK - 1) / PIFS_LOGICAL_PAGE_PER_BLOCK)
 /******************************************************************************/
+
+#if PIFS_ENABLE_USER_DATA
+#define PIFS_USER_DATA_SIZE_BYTE            (sizeof(pifs_user_data_t))
+#else
+#define PIFS_USER_DATA_SIZE_BYTE            0
+#endif
 
 #if PIFS_OPTIMIZE_FOR_RAM
 #define PIFS_BOOL_SIZE                      : 1
@@ -215,20 +221,20 @@ typedef uint16_t pifs_wear_level_cntr_t;
 typedef uint8_t pifs_wear_level_bits_t;
 #define PIFS_WEAR_LEVEL_BITS_ERASED (UINT8_MAX)
 
-#if PIFS_MANAGEMENT_BLOCKS >= PIFS_FLASH_BLOCK_NUM_FS
-#error PIFS_MANAGEMENT_BLOCKS is greater than PIFS_FLASH_BLOCK_NUM_FS!
+#if PIFS_MANAGEMENT_BLOCK_NUM >= PIFS_FLASH_BLOCK_NUM_FS
+#error PIFS_MANAGEMENT_BLOCK_NUM is greater than PIFS_FLASH_BLOCK_NUM_FS!
 #endif
-#if PIFS_MANAGEMENT_BLOCKS > PIFS_FLASH_BLOCK_NUM_FS / 4
-#warning PIFS_MANAGEMENT_BLOCKS is larger than PIFS_FLASH_BLOCK_NUM_FS / 4!
+#if PIFS_MANAGEMENT_BLOCK_NUM > PIFS_FLASH_BLOCK_NUM_FS / 4
+#warning PIFS_MANAGEMENT_BLOCK_NUM is larger than PIFS_FLASH_BLOCK_NUM_FS / 4!
 #endif
-#if PIFS_MANAGEMENT_BLOCKS < 1
-#error PIFS_MANAGEMENT_BLOCKS shall be 1 at minimum!
+#if PIFS_MANAGEMENT_BLOCK_NUM < 1
+#error PIFS_MANAGEMENT_BLOCK_NUM shall be 1 at minimum!
 #endif
 #if PIFS_LEAST_WEARED_BLOCK_NUM < 1
 #error PIFS_LEAST_WEARED_BLOCK_NUM shall be 1 at minimum!
 #endif
-#if PIFS_LEAST_WEARED_BLOCK_NUM > PIFS_FLASH_BLOCK_NUM_FS - PIFS_MANAGEMENT_BLOCKS * 2
-#error PIFS_LEAST_WEARED_BLOCK_NUM shall not be greater than PIFS_FLASH_BLOCK_NUM_FS - PIFS_MANAGEMENT_BLOCKS * 2!
+#if PIFS_LEAST_WEARED_BLOCK_NUM > PIFS_FLASH_BLOCK_NUM_FS - PIFS_MANAGEMENT_BLOCK_NUM * 2
+#error PIFS_LEAST_WEARED_BLOCK_NUM shall not be greater than PIFS_FLASH_BLOCK_NUM_FS - PIFS_MANAGEMENT_BLOCK_NUM * 2!
 #endif
 #if PIFS_FLASH_ERASED_BYTE_VALUE == 0xFF
 /* If erased value is 0xFF, invert attribute bits. */
@@ -297,8 +303,25 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     uint8_t                 minorVersion;
 #endif
     uint32_t                counter;
-    pifs_block_address_t    management_block_address;       /**< Number of PIFS_MANAGEMENT_BLOCKS */
-    pifs_block_address_t    next_management_block_address;  /**< Number of PIFS_MANAGEMENT_BLOCKS */
+#if PIFS_ENABLE_CONFIG_IN_FLASH
+    /* Flash configuration */
+    uint16_t                flash_block_num_all;
+    uint16_t                flash_block_reserved_num;
+    uint16_t                flash_page_per_block;
+    uint16_t                flash_page_size_byte;
+    /* File system configuration */
+    uint16_t                logical_page_size_byte;
+    uint16_t                filename_len_max;
+    uint16_t                entry_num_max;
+    uint16_t                user_data_size_byte;
+    uint8_t                 management_block_num;
+    uint16_t                least_weared_block_num;
+    uint16_t                delta_map_page_num;
+    uint8_t                 map_page_count_size;
+#endif
+    /* file system status */
+    pifs_block_address_t    management_block_address;       /**< number of pifs_management_blocks */
+    pifs_block_address_t    next_management_block_address;  /**< Number of PIFS_MANAGEMENT_BLOCK_NUM */
     pifs_address_t          free_space_bitmap_address;
     pifs_address_t          entry_list_address;
     pifs_address_t          delta_map_address;

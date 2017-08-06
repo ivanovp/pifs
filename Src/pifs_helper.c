@@ -195,9 +195,9 @@ bool_t pifs_is_block_type(pifs_block_address_t a_block_address,
     }
     else
     {
-#if PIFS_MANAGEMENT_BLOCKS > 1
+#if PIFS_MANAGEMENT_BLOCK_NUM > 1
         if (a_block_address >= a_header->management_block_address
-                && a_block_address < (a_header->management_block_address + PIFS_MANAGEMENT_BLOCKS))
+                && a_block_address < (a_header->management_block_address + PIFS_MANAGEMENT_BLOCK_NUM))
 #else
         if (a_header->management_block_address == a_block_address)
 #endif
@@ -209,9 +209,9 @@ bool_t pifs_is_block_type(pifs_block_address_t a_block_address,
             }
         }
         else
-#if PIFS_MANAGEMENT_BLOCKS > 1
+#if PIFS_MANAGEMENT_BLOCK_NUM > 1
         if (a_block_address >= a_header->next_management_block_address
-                && a_block_address < (a_header->next_management_block_address + PIFS_MANAGEMENT_BLOCKS))
+                && a_block_address < (a_header->next_management_block_address + PIFS_MANAGEMENT_BLOCK_NUM))
 #else
         if (a_header->next_management_block_address == a_block_address)
 #endif
