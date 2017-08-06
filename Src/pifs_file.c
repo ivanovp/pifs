@@ -753,6 +753,11 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
                     if (file->status == PIFS_SUCCESS && chunk_size == PIFS_LOGICAL_PAGE_SIZE_BYTE)
                     {
                         pifs_inc_read_address(file);
+                        if (file->status == PIFS_ERROR_END_OF_FILE)
+                        {
+                            /* Reaching end of file is not an error */
+                            file->status = PIFS_SUCCESS;
+                        }
                     }
                     data_size -= chunk_size;
                     seek_size += chunk_size;

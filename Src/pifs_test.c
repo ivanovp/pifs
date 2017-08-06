@@ -508,9 +508,9 @@ pifs_status_t pifs_test_large_r(void)
         }
         if (ret == PIFS_SUCCESS)
         {
-            pos = ftell(file);
+            pos = pifs_ftell(file);
             printf("Position: %i\r\n", pos);
-            if (pos != filesize)
+            if (pos != (long int)filesize)
             {
                 PIFS_TEST_ERROR_MSG("Wrong position (%i) while seeked to end of file!\r\n",
                                     pos);
