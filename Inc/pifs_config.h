@@ -54,6 +54,7 @@ typedef char pifs_char_t;
 #if PIFS_ENABLE_USER_DATA
 /**
  * pifs_user_data_t is saved to every file if PIFS_ENABLE_USER_DATA is 1.
+ * @see pifs_fgetuserdata pifs_fsetuserdata
  */
 typedef struct
 {

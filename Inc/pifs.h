@@ -318,6 +318,8 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     uint16_t                least_weared_block_num;
     uint16_t                delta_map_page_num;
     uint8_t                 map_page_count_size;
+    bool_t                  use_delta_for_entries : 1;
+    bool_t                  enable_directories : 1;
 #endif
     /* file system status */
     pifs_block_address_t    management_block_address;       /**< number of pifs_management_blocks */

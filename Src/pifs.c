@@ -304,6 +304,8 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
     a_header->least_weared_block_num = PIFS_LEAST_WEARED_BLOCK_NUM;
     a_header->delta_map_page_num = PIFS_DELTA_MAP_PAGE_NUM;
     a_header->map_page_count_size = PIFS_MAP_PAGE_COUNT_SIZE;
+    a_header->use_delta_for_entries = PIFS_USE_DELTA_FOR_ENTRIES;
+    a_header->enable_directories = PIFS_ENABLE_DIRECTORIES;
 #endif
     address.block_address = a_block_address;
     address.page_address = a_page_address;
@@ -680,17 +682,19 @@ pifs_status_t pifs_init(void)
 #if PIFS_ENABLE_CONFIG_IN_FLASH
                         /* Check flash and file system configuration */
                         if (header.flash_block_num_all == PIFS_FLASH_BLOCK_NUM_ALL
-                               && header.flash_block_reserved_num == PIFS_FLASH_BLOCK_RESERVED_NUM
-                               && header.flash_page_per_block == PIFS_FLASH_PAGE_PER_BLOCK
-                               && header.flash_page_size_byte == PIFS_FLASH_PAGE_SIZE_BYTE
-                               && header.logical_page_size_byte == PIFS_LOGICAL_PAGE_SIZE_BYTE
-                               && header.filename_len_max == PIFS_FILENAME_LEN_MAX
-                               && header.entry_num_max == PIFS_ENTRY_NUM_MAX
-                               && header.user_data_size_byte == PIFS_USER_DATA_SIZE_BYTE
-                               && header.management_block_num == PIFS_MANAGEMENT_BLOCK_NUM
-                               && header.least_weared_block_num == PIFS_LEAST_WEARED_BLOCK_NUM
-                               && header.delta_map_page_num == PIFS_DELTA_MAP_PAGE_NUM
-                               && header.map_page_count_size == PIFS_MAP_PAGE_COUNT_SIZE)
+                                && header.flash_block_reserved_num == PIFS_FLASH_BLOCK_RESERVED_NUM
+                                && header.flash_page_per_block == PIFS_FLASH_PAGE_PER_BLOCK
+                                && header.flash_page_size_byte == PIFS_FLASH_PAGE_SIZE_BYTE
+                                && header.logical_page_size_byte == PIFS_LOGICAL_PAGE_SIZE_BYTE
+                                && header.filename_len_max == PIFS_FILENAME_LEN_MAX
+                                && header.entry_num_max == PIFS_ENTRY_NUM_MAX
+                                && header.user_data_size_byte == PIFS_USER_DATA_SIZE_BYTE
+                                && header.management_block_num == PIFS_MANAGEMENT_BLOCK_NUM
+                                && header.least_weared_block_num == PIFS_LEAST_WEARED_BLOCK_NUM
+                                && header.delta_map_page_num == PIFS_DELTA_MAP_PAGE_NUM
+                                && header.map_page_count_size == PIFS_MAP_PAGE_COUNT_SIZE
+                                && header.use_delta_for_entries == PIFS_USE_DELTA_FOR_ENTRIES
+                                && header.enable_directories == PIFS_ENABLE_DIRECTORIES)
 #endif
                         {
                             pifs.is_header_found = TRUE;
