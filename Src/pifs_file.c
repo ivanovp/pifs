@@ -323,7 +323,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                     && file->write_pos < file->entry.file_size)
             {
                 /* Overwriting existing pages in the file */
-                PIFS_WARNING_MSG("Overwriting pages, pos: %i, size: %i\r\n", file->write_pos, file->entry.file_size);
+                PIFS_DEBUG_MSG("Overwriting pages, pos: %i, size: %i\r\n", file->write_pos, file->entry.file_size);
                 //page_count_needed = (data_size + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE;
                 while (page_count_needed && file->status == PIFS_SUCCESS)
                 {
@@ -332,7 +332,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                     {
                         chunk_size = file->entry.file_size - file->write_pos;
                     }
-                    PIFS_NOTICE_MSG("write %s, page_count_needed: %i, chunk size: %i\r\n",
+                    PIFS_DEBUG_MSG("write %s, page_count_needed: %i, chunk size: %i\r\n",
                                     pifs_address2str(&file->write_address), page_count_needed, chunk_size);
                     PIFS_ASSERT(pifs_is_address_valid(&file->write_address));
                     file->status = pifs_write_delta(file->write_address.block_address,
@@ -373,7 +373,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
             if (file->status == PIFS_SUCCESS)
             {
                 /* Appending new pages to the file */
-                PIFS_WARNING_MSG("Appending pages\r\n");
+                PIFS_DEBUG_MSG("Appending pages\r\n");
                 do
                 {
                     page_count_needed_limited = page_count_needed;
@@ -469,7 +469,7 @@ pifs_status_t pifs_inc_read_address(pifs_file_t * a_file)
             //      print_buffer(&a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE, 0);
             if (pifs_is_buffer_erased(&a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
             {
-                PIFS_WARNING_MSG("End of file: %i\r\n", a_file->read_pos);
+                PIFS_DEBUG_MSG("End of file: %i\r\n", a_file->read_pos);
                 a_file->status = PIFS_ERROR_END_OF_FILE;
             }
             else
@@ -511,7 +511,7 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
     {
         if (file->read_pos + data_size > file->entry.file_size)
         {
-            PIFS_WARNING_MSG("Trying to read more than file size: %i, file size: %i\r\n",
+            PIFS_DEBUG_MSG("Trying to read more than file size: %i, file size: %i\r\n",
                              file->read_pos + data_size,
                              file->entry.file_size);
             data_size = file->entry.file_size - file->read_pos;
@@ -719,10 +719,10 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
             }
             if (target_pos > file_size)
             {
-                PIFS_WARNING_MSG("Trying to seek position %i while file size is %i bytes\r\n",
+                PIFS_DEBUG_MSG("Trying to seek position %i while file size is %i bytes\r\n",
                                  target_pos, file_size);
                 data_size -= target_pos - file_size;
-                PIFS_WARNING_MSG("data_size: %i bytes\r\n", data_size);
+                PIFS_DEBUG_MSG("data_size: %i bytes\r\n", data_size);
             }
 
             po = file->read_pos % PIFS_LOGICAL_PAGE_SIZE_BYTE;

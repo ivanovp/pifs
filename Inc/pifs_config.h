@@ -10,6 +10,8 @@
 #ifndef _INCLUDE_PIFS_CONFIG_H_
 #define _INCLUDE_PIFS_CONFIG_H_
 
+#include <unistd.h>
+
 /** PIFS_LOGICAL_PAGE_SIZE_BYTE
  * Allocation unit of file system.
  * Larger logical page needs more RAM and less pages in management area.
@@ -43,6 +45,8 @@
 
 #define PIFS_PACKED_ATTRIBUTE           __attribute__((packed))
 #define PIFS_ALIGNED_ATTRIBUTE(align)   __attribute__((aligned(align)))
+/** Task delay is used when flash initialization fails. */
+#define PIFS_DELAY_MS(ms)               usleep(ms * 1000)
 
 typedef char pifs_char_t;
 

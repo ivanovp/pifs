@@ -558,6 +558,7 @@ pifs_status_t pifs_init(void)
     pifs_header_t        prev_header;
     pifs_checksum_t      checksum;
     pifs_size_t          i;
+    uint8_t              retry_cntr = 5;
 
     pifs_initialized = FALSE;
     pifs.header_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
@@ -615,7 +616,14 @@ pifs_status_t pifs_init(void)
 
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_flash_init();
+        do
+        {
+            ret = pifs_flash_init();
+            if (ret != PIFS_SUCCESS)
+            {
+                PIFS_DELAY_MS(250);
+            }
+        } while (ret != PIFS_SUCCESS && retry_cntr--);
     }
 
     if (ret == PIFS_SUCCESS)

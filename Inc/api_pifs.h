@@ -72,7 +72,7 @@ struct pifs_dirent
 {
     pifs_ino_t       d_ino;                          /**< Unique ID of the file */
     char             d_name[PIFS_FILENAME_LEN_MAX];  /**< File/directory name */
-    /* No standard fields */
+    /* Non-standard fields */
     size_t           d_filesize;
     uint8_t          d_attrib;
     uint32_t         d_first_map_block_address;      /**< Block address of first map page */
