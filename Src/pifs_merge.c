@@ -334,10 +334,10 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
     pifs_size_t          k = 0;
 #endif
     bool_t               end = FALSE;
-    pifs_block_address_t new_entry_list_ba = a_new_header->entry_list_address.block_address;
-    pifs_page_address_t  new_entry_list_pa = a_new_header->entry_list_address.page_address;
-    pifs_block_address_t old_entry_list_ba = a_old_header->entry_list_address.block_address;
-    pifs_page_address_t  old_entry_list_pa = a_old_header->entry_list_address.page_address;
+    pifs_block_address_t new_entry_list_ba = a_new_header->root_entry_list_address.block_address;
+    pifs_page_address_t  new_entry_list_pa = a_new_header->root_entry_list_address.page_address;
+    pifs_block_address_t old_entry_list_ba = a_old_header->root_entry_list_address.block_address;
+    pifs_page_address_t  old_entry_list_pa = a_old_header->root_entry_list_address.page_address;
     pifs_entry_t       * entry = &pifs.entry;
 
     PIFS_NOTICE_MSG("start\r\n");
@@ -608,8 +608,8 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
     if (ret == PIFS_SUCCESS)
     {
         ret = pifs_count_entries(&free_entries, &to_be_released_entries,
-                                 pifs.header.entry_list_address.block_address,
-                                 pifs.header.entry_list_address.page_address);
+                                 pifs.header.root_entry_list_address.block_address,
+                                 pifs.header.root_entry_list_address.page_address);
 //        PIFS_NOTICE_MSG("free_entries: %lu, to_be_released_entries: %lu\r\n",
 //                        free_entries, to_be_released_entries);
     }

@@ -310,7 +310,7 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
     address.block_address = a_block_address;
     address.page_address = a_page_address;
     pifs_add_address(&address, PIFS_HEADER_SIZE_PAGE);
-    a_header->entry_list_address = address;
+    a_header->root_entry_list_address = address;
     pifs_add_address(&address, PIFS_ENTRY_LIST_SIZE_PAGE);
     a_header->free_space_bitmap_address = address;
     pifs_add_address(&address, PIFS_FREE_SPACE_BITMAP_SIZE_PAGE);
@@ -383,11 +383,11 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
         if (ret == PIFS_SUCCESS)
         {
             PIFS_DEBUG_MSG("Marking entry list %s, %i pages\r\n",
-                           pifs_address2str(&a_header->entry_list_address),
+                           pifs_address2str(&a_header->root_entry_list_address),
                            PIFS_ENTRY_LIST_SIZE_PAGE);
             /* Mark entry list as used */
-            ret = pifs_mark_page(a_header->entry_list_address.block_address,
-                                 a_header->entry_list_address.page_address,
+            ret = pifs_mark_page(a_header->root_entry_list_address.block_address,
+                                 a_header->root_entry_list_address.page_address,
                                  PIFS_ENTRY_LIST_SIZE_PAGE, TRUE);
         }
         if (ret == PIFS_SUCCESS)
@@ -415,7 +415,7 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
     PIFS_INFO_MSG("Counter: %i\r\n",
                   a_header->counter);
     PIFS_INFO_MSG("Entry list at %s\r\n",
-                  pifs_address2str(&a_header->entry_list_address));
+                  pifs_address2str(&a_header->root_entry_list_address));
     PIFS_INFO_MSG("Free space bitmap at %s\r\n",
                   pifs_address2str(&a_header->free_space_bitmap_address));
     PIFS_INFO_MSG("Delta page map at %s\r\n",
@@ -435,8 +435,8 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
         /* Deliberately avoiding return code, it is not an error */
         /* if there is no more space */
         (void)pifs_count_entries(&free_entries, &to_be_released_entries,
-                                 pifs.header.entry_list_address.block_address,
-                                 pifs.header.entry_list_address.page_address);
+                                 pifs.header.root_entry_list_address.block_address,
+                                 pifs.header.root_entry_list_address.page_address);
         PIFS_NOTICE_MSG("free_entries: %lu, to_be_released_entries: %lu\r\n",
                         free_entries, to_be_released_entries);
     }
@@ -504,7 +504,7 @@ void pifs_print_header_info(void)
     PIFS_PRINT_MSG("Counter: %i\r\n",
            pifs.header.counter);
     PIFS_PRINT_MSG("Entry list at %s\r\n",
-           pifs_address2str(&pifs.header.entry_list_address));
+           pifs_address2str(&pifs.header.root_entry_list_address));
     PIFS_PRINT_MSG("Free space bitmap at %s\r\n",
            pifs_address2str(&pifs.header.free_space_bitmap_address));
     PIFS_PRINT_MSG("Delta page map at %s\r\n",
@@ -551,8 +551,8 @@ void pifs_print_free_space_info(void)
     if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
     {
         ret = pifs_count_entries(&free_entries, &to_be_released_entries,
-                                 pifs.header.entry_list_address.block_address,
-                                 pifs.header.entry_list_address.page_address);
+                                 pifs.header.root_entry_list_address.block_address,
+                                 pifs.header.root_entry_list_address.page_address);
     }
     if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
     {
@@ -706,7 +706,7 @@ pifs_status_t pifs_init(void)
                             pifs.header_address.page_address = pa;
 #if PIFS_ENABLE_DIRECTORIES
                             /* Current working directory is the root directory */
-                            pifs.entry_list_address = pifs.header.entry_list_address;
+                            pifs.entry_list_address = pifs.header.root_entry_list_address;
 #endif
                             memcpy(&prev_header, &header, sizeof(prev_header));
                         }
@@ -1148,12 +1148,12 @@ pifs_status_t pifs_check(void)
         if (ret == PIFS_SUCCESS)
         {
             PIFS_DEBUG_MSG("Marking entry list %s, %i pages\r\n",
-                           pifs_address2str(&a_header->entry_list_address),
+                           pifs_address2str(&a_header->root_entry_list_address),
                            PIFS_ENTRY_LIST_SIZE_PAGE);
             /* Mark entry list as used */
             ret = pifs_mark_page_check(free_page_buf,
-                                       pifs.header.entry_list_address.block_address,
-                                       pifs.header.entry_list_address.page_address,
+                                       pifs.header.root_entry_list_address.block_address,
+                                       pifs.header.root_entry_list_address.page_address,
                                        PIFS_ENTRY_LIST_SIZE_PAGE);
         }
         if (ret == PIFS_SUCCESS)

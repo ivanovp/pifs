@@ -257,12 +257,15 @@ bool_t pifs_is_entry_deleted(pifs_entry_t * a_entry)
 /**
  * @brief pifs_find_entry Find entry in entry list.
  *
- * @param a_name[in]    Pointer to name to find.
- * @param a_entry[out]  Pointer to entry to fill. NULL: clear entry.
- * @return PIFS_SUCCESS if entry found.
+ * @param[in] a_entry_cmd   Command to run. @see PIFS_FIND_ENTRY, PIFS_DELETE_ENTRY, PIFS_CLEAR_ENTRY
+ * @param[in] a_name        Pointer to name to find.
+ * @param[out] a_entry      Pointer to entry to fill. NULL: clear entry.
+ * @param[in] a_list_entry_block_address Current list entry's address.
+ * @param[in] a_list_entry_page_address  Current list entry's address.
+ * @return PIFS_SUCCESS     if entry found.
  * PIFS_ERROR_FILE_NOT_FOUND if entry not found.
  */
-pifs_status_t pifs_find_entry(pifs_entry_cmd_t entry_cmd,
+pifs_status_t pifs_find_entry(pifs_entry_cmd_t a_entry_cmd,
                               const pifs_char_t * a_name, pifs_entry_t * const a_entry,
                               pifs_block_address_t a_list_entry_block_address,
                               pifs_page_address_t a_list_entry_page_address)
@@ -291,7 +294,7 @@ pifs_status_t pifs_find_entry(pifs_entry_cmd_t entry_cmd,
                     && !pifs_is_entry_deleted(&entry))
             {
                 /* Entry found */
-                if (entry_cmd == PIFS_FIND_ENTRY && a_entry)
+                if (a_entry_cmd == PIFS_FIND_ENTRY && a_entry)
                 {
                     /* Copy entry */
                     memcpy(a_entry, &entry, sizeof(pifs_entry_t));
@@ -301,9 +304,9 @@ pifs_status_t pifs_find_entry(pifs_entry_cmd_t entry_cmd,
 #endif
                     PIFS_DEBUG_MSG("file size: %i bytes\r\n", a_entry->file_size);
                 }
-                else if (entry_cmd == PIFS_DELETE_ENTRY || entry_cmd == PIFS_CLEAR_ENTRY)
+                else if (a_entry_cmd == PIFS_DELETE_ENTRY || a_entry_cmd == PIFS_CLEAR_ENTRY)
                 {
-                    if (entry_cmd == PIFS_DELETE_ENTRY)
+                    if (a_entry_cmd == PIFS_DELETE_ENTRY)
                     {
                         pifs_mark_entry_deleted(&entry);
                     }

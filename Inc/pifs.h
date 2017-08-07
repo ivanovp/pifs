@@ -325,7 +325,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_block_address_t    management_block_address;       /**< number of pifs_management_blocks */
     pifs_block_address_t    next_management_block_address;  /**< Number of PIFS_MANAGEMENT_BLOCK_NUM */
     pifs_address_t          free_space_bitmap_address;
-    pifs_address_t          entry_list_address;
+    pifs_address_t          root_entry_list_address;
     pifs_address_t          delta_map_address;
     pifs_address_t          wear_level_list_address;
     /** Data blocks with lowest erase counter value */
@@ -405,7 +405,7 @@ typedef struct
     bool_t                  mode_file_shall_exist PIFS_BOOL_SIZE;
     bool_t                  mode_deleted PIFS_BOOL_SIZE;
 #if PIFS_ENABLE_DIRECTORIES
-    pifs_address_t          entry_list_address;
+    pifs_address_t          entry_list_address; /**< Entry list (directory) where the file belongs to */
 #endif
     pifs_entry_t            entry;              /**< File's entry, one element of entry list */
     pifs_status_t           status;             /**< Last file operation's result */

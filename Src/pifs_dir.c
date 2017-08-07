@@ -49,7 +49,7 @@ pifs_DIR * pifs_opendir(const pifs_char_t * a_name)
             dir->is_used = TRUE;
             dir->find_deleted = !a_name;
             dir->entry_page_index = 0;
-            dir->entry_list_address = pifs.header.entry_list_address;
+            dir->entry_list_address = pifs.header.root_entry_list_address;
             dir->entry_list_index = 0;
         }
     }
@@ -239,8 +239,8 @@ int pifs_mkdir(const pifs_char_t * a_filename)
     pifs_page_count_t    page_count_found;
 
     ret = pifs_find_entry(PIFS_FIND_ENTRY, a_filename, entry,
-                          pifs.header.entry_list_address.block_address,
-                          pifs.header.entry_list_address.page_address);
+                          pifs.entry_list_address.block_address,
+                          pifs.entry_list_address.page_address);
     if (ret == PIFS_SUCCESS)
     {
         ret = PIFS_ERROR_FILE_ALREADY_EXIST;
@@ -263,8 +263,8 @@ int pifs_mkdir(const pifs_char_t * a_filename)
             entry->first_map_address.block_address = ba;
             entry->first_map_address.page_address = pa;
             ret = pifs_append_entry(entry,
-                                    pifs.header.entry_list_address.block_address,
-                                    pifs.header.entry_list_address.page_address);
+                                    pifs.entry_list_address.block_address,
+                                    pifs.entry_list_address.page_address);
             if (ret == PIFS_SUCCESS)
             {
                 PIFS_DEBUG_MSG("Entry created\r\n");
@@ -282,8 +282,8 @@ int pifs_mkdir(const pifs_char_t * a_filename)
                 {
                     strncpy((char*)entry->name, "..", PIFS_FILENAME_LEN_MAX);
                     entry->attrib = PIFS_ATTRIB_ARCHIVE | PIFS_ATTRIB_DIR;
-                    entry->first_map_address.block_address = pifs.header.entry_list_address.block_address;
-                    entry->first_map_address.page_address = pifs.header.entry_list_address.page_address;
+                    entry->first_map_address.block_address = pifs.entry_list_address.block_address;
+                    entry->first_map_address.page_address = pifs.entry_list_address.page_address;
                     ret = pifs_append_entry(entry, ba, pa);
                 }
             }
