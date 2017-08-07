@@ -392,7 +392,7 @@ pifs_status_t pifs_empty_block(pifs_block_address_t a_block_address,
                                bool_t * a_is_emptied)
 {
     pifs_status_t   ret = PIFS_ERROR_NO_MORE_RESOURCE;
-    pifs_char_t     path[] = { PIFS_PATH_SEPARATOR_CHAR, 0 };
+    pifs_char_t   * path = PIFS_ROOT_STR;
     pifs_DIR      * dir;
     pifs_dirent_t * dirent;
     bool_t          is_block_used;

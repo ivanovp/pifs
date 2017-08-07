@@ -176,10 +176,14 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
     PIFS_NOTICE_MSG("start\r\n");
 
     /* Re-create file in the new management block */
+    /* BUG update entry list! */
     (void)pifs_internal_open(&pifs.internal_file, a_old_entry->name, "w", FALSE);
     pifs.internal_file.entry.file_size = a_old_entry->file_size;
 #if PIFS_ENABLE_ATTRIBUTES
-    pifs.internal_file.entry.attrib = a_old_entry->attrib ^ PIFS_ATTRIB_ALL;
+    pifs.internal_file.entry.attrib = a_old_entry->attrib;
+#endif
+#if PIFS_ENABLE_USER_DATA
+    memcpy(&pifs.internal_file.entry.user_data, &a_old_entry->user_data, PIFS_USER_DATA_SIZE_BYTE);
 #endif
     if (pifs.internal_file.entry.file_size > 0 && pifs.internal_file.entry.file_size != PIFS_FILE_SIZE_ERASED)
     {
@@ -341,6 +345,9 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
     pifs_entry_t       * entry = &pifs.entry;
 
     PIFS_NOTICE_MSG("start\r\n");
+#if PIFS_ENABLE_DIRECTORIES
+    pifs.current_entry_list_address = a_new_header->root_entry_list_address;
+#endif
     for (j = 0; j < PIFS_ENTRY_LIST_SIZE_PAGE && ret == PIFS_SUCCESS && !end; j++)
     {
         for (i = 0; i < PIFS_ENTRY_PER_PAGE && ret == PIFS_SUCCESS && !end; i++)

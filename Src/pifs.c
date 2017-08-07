@@ -275,7 +275,7 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
 
     PIFS_DEBUG_MSG("Creating managamenet block %s\r\n", pifs_ba_pa2str(a_block_address, a_page_address));
     a_header->magic = PIFS_MAGIC;
-#if ENABLE_PIFS_VERSION
+#if PIFS_ENABLE_VERSION
     a_header->majorVersion = PIFS_MAJOR_VERSION;
     a_header->minorVersion = PIFS_MINOR_VERSION;
 #endif
@@ -598,8 +598,8 @@ pifs_status_t pifs_init(void)
     memset(pifs.sc_page_buf, 0, sizeof(pifs.sc_page_buf));
     pifs.error_cntr = 0;
 #if PIFS_ENABLE_DIRECTORIES
-    pifs.cwd[0] = PIFS_PATH_SEPARATOR_CHAR;
-    pifs.cwd[1] = 0;
+    pifs.cwd[0] = PIFS_ROOT_CHAR;
+    pifs.cwd[1] = PIFS_EOS;
 #endif
 
 #if PIFS_DEBUG_LEVEL >= 5
@@ -656,7 +656,7 @@ pifs_status_t pifs_init(void)
             pa = 0;
             ret = pifs_read(ba, pa, 0, &header, sizeof(header));
             if (ret == PIFS_SUCCESS && header.magic == PIFS_MAGIC
-#if ENABLE_PIFS_VERSION
+#if PIFS_ENABLE_VERSION
                     && header.majorVersion == PIFS_MAJOR_VERSION
                     && header.minorVersion == PIFS_MINOR_VERSION
 #endif
@@ -704,10 +704,6 @@ pifs_status_t pifs_init(void)
                             pifs.is_header_found = TRUE;
                             pifs.header_address.block_address = ba;
                             pifs.header_address.page_address = pa;
-#if PIFS_ENABLE_DIRECTORIES
-                            /* Current working directory is the root directory */
-                            pifs.entry_list_address = pifs.header.root_entry_list_address;
-#endif
                             memcpy(&prev_header, &header, sizeof(prev_header));
                         }
 #if PIFS_ENABLE_CONFIG_IN_FLASH
@@ -761,6 +757,10 @@ pifs_status_t pifs_init(void)
 
         if (pifs.is_header_found && ret == PIFS_SUCCESS)
         {
+#if PIFS_ENABLE_DIRECTORIES
+            /* Current working directory is the root directory */
+            pifs.current_entry_list_address = pifs.header.root_entry_list_address;
+#endif
             pifs_initialized = TRUE;
 #if PIFS_DEBUG_LEVEL >= 6
             print_buffer(&pifs.header, sizeof(pifs.header), 0);

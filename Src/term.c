@@ -416,7 +416,16 @@ void cmdListDir (char* command, char* params)
             printf("%-32s", dirent->d_name);
             if (long_list)
             {
-                printf("  %8i", pifs_filesize(dirent->d_name));
+#if PIFS_ENABLE_DIRECTORIES
+                if (PIFS_IS_DIR(dirent->d_attrib))
+                {
+                    printf("     <DIR>");
+                }
+                else
+#endif
+                {
+                    printf("  %8i", pifs_filesize(dirent->d_name));
+                }
             }
             if (examine)
             {

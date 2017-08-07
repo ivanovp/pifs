@@ -11,6 +11,7 @@
 #define _INCLUDE_API_PIFS_H_
 
 #include <stdint.h>
+#include "flash_config.h"
 #include "pifs_config.h"
 #include "common.h"
 
@@ -44,9 +45,10 @@ typedef enum
     PIFS_ERROR_INTERNAL_RANGE = 19,
     PIFS_ERROR_SEEK_NOT_POSSIBLE = 20,
     PIFS_ERROR_NO_A_DIRECTORY = 21,
-    PIFS_ERROR_IS_A_DIRECTORY = 22,
-    PIFS_ERROR_DIRECTORY_NOT_EMPTY = 23,
-    PIFS_ERROR_INTEGRITY = 24,
+    PIFS_ERROR_IS_DIRECTORY = 22,
+    PIFS_ERROR_IS_NOT_DIRECTORY = 23,
+    PIFS_ERROR_DIRECTORY_NOT_EMPTY = 24,
+    PIFS_ERROR_INTEGRITY = 25,
 } pifs_status_t;
 
 #define PIFS_EACCES     PIFS_ERROR_FILE_NOT_FOUND
@@ -57,6 +59,50 @@ typedef enum
 #define PIFS_ENOSPC     PIFS_ERROR_NO_MORE_SPACE
 #define PIFS_ESPIPE     PIFS_ERROR_SEEK_NOT_POSSIBLE
 #define PIFS_ENOTEMPTY  PIFS_ERROR_DIRECTORY_NOT_EMPTY
+
+#define PIFS_ATTRIB_READONLY                0x01u
+#define PIFS_ATTRIB_HIDDEN                  0x02u
+#define PIFS_ATTRIB_SYSTEM                  0x04u
+#define PIFS_ATTRIB_DIR                     0x10u
+#define PIFS_ATTRIB_ARCHIVE                 0x20u
+#define PIFS_ATTRIB_DELETED                 0x80u
+#define PIFS_ATTRIB_ALL                     UINT8_MAX
+
+#if PIFS_FLASH_ERASED_BYTE_VALUE == 0xFF
+/* If erased value is 0xFF, invert attribute bits. */
+/* Therefore bits can be updated in the existing entry, no new entry is needed. */
+#define PIFS_INVERT_ATTRIBUTE_BITS      1
+#else
+#define PIFS_INVERT_ATTRIBUTE_BITS      0
+#endif
+
+#if PIFS_INVERT_ATTRIBUTE_BITS
+#define PIFS_IS_READONLY(attrib)        (!((attrib) & PIFS_ATTRIB_READONLY))
+#define PIFS_IS_HIDDEN(attrib)          (!((attrib) & PIFS_ATTRIB_HIDDEN))
+#define PIFS_IS_SYSTEM(attrib)          (!((attrib) & PIFS_ATTRIB_SYSTEM))
+#define PIFS_IS_DIR(attrib)             (!((attrib) & PIFS_ATTRIB_DIR))
+#define PIFS_IS_ARCHIVE(attrib)         (!((attrib) & PIFS_ATTRIB_ARCHIVE))
+#define PIFS_IS_DELETED(attrib)         (!((attrib) & PIFS_ATTRIB_DELETED))
+#define PIFS_SET_ATTRIB(attrib,bits)    do { \
+        (attrib) &= ~(bits); \
+    } while (0)
+#define PIFS_CLEAR_ATTRIB(attrib,bits)  do { \
+        (attrib) |= (bits); \
+    } while (0)
+#else
+#define PIFS_IS_READONLY(attrib)        ((attrib) & PIFS_ATTRIB_READONLY)
+#define PIFS_IS_HIDDEN(attrib)          ((attrib) & PIFS_ATTRIB_HIDDEN)
+#define PIFS_IS_SYSTEM(attrib)          ((attrib) & PIFS_ATTRIB_SYSTEM)
+#define PIFS_IS_DIR(attrib)             ((attrib) & PIFS_ATTRIB_DIR)
+#define PIFS_IS_ARCHIVE(attrib)         ((attrib) & PIFS_ATTRIB_ARCHIVE)
+#define PIFS_IS_DELETED(attrib)         ((attrib) & PIFS_ATTRIB_DELETED)
+#define PIFS_SET_ATTRIB(attrib,bits)  do { \
+        (attrib) |= (bits); \
+    } while (0)
+#define PIFS_CLEAR_ATTRIB(attrib,bits)    do { \
+        (attrib) &= ~(bits); \
+    } while (0)
+#endif
 
 typedef void P_FILE;
 typedef enum
@@ -119,7 +165,7 @@ int pifs_closedir(pifs_DIR * a_dirp);
 int pifs_mkdir(const pifs_char_t * a_filename);
 int pifs_rmdir(const pifs_char_t * a_filename);
 int pifs_chdir(const pifs_char_t * a_filename);
-pifs_char_t * pifs_getcwd(pifs_char_t * buffer, size_t a_size);
+pifs_char_t * pifs_getcwd(pifs_char_t * a_buffer, size_t a_size);
 #endif
 #if 0 //PIFS_ENABLE_LINKS
 /* Hard link */

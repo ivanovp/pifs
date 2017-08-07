@@ -49,7 +49,13 @@ pifs_DIR * pifs_opendir(const pifs_char_t * a_name)
             dir->is_used = TRUE;
             dir->find_deleted = !a_name;
             dir->entry_page_index = 0;
+#if PIFS_ENABLE_DIRECTORIES
+            dir->entry_list_address = pifs.current_entry_list_address;
+#else
             dir->entry_list_address = pifs.header.root_entry_list_address;
+#endif
+            PIFS_WARNING_MSG("Opening directory at %s\r\n",
+                             pifs_address2str(&dir->entry_list_address));
             dir->entry_list_index = 0;
         }
     }
@@ -114,11 +120,7 @@ struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
                         PIFS_ENTRY_SIZE_BYTE);
         if (ret == PIFS_SUCCESS)
         {
-#if PIFS_ENABLE_ATTRIBUTES && PIFS_INVERT_ATTRIBUTE_BITS
-            /* Invert attribute bits */
-            dir->directory_entry.d_attrib ^= PIFS_ATTRIB_ALL;
-#endif
-            if (!pifs_is_entry_deleted(entry) || dir->find_deleted)
+            if (dir->find_deleted || !pifs_is_entry_deleted(entry))
             {
                 entry_found = TRUE;
             }
@@ -230,6 +232,16 @@ pifs_status_t pifs_walk_dir(pifs_char_t * a_path, bool_t a_recursive, bool_t a_s
 }
 
 #if PIFS_ENABLE_DIRECTORIES
+pifs_status_t pifs_resolve_path(const pifs_char_t * a_path,
+                                pifs_address_t a_current_entry_list_address,
+                                const pifs_char_t * a_filename,
+                                pifs_address_t * a_resolved_entry_list_address)
+{
+    pifs_status_t        ret = PIFS_SUCCESS;
+
+    return ret;
+}
+
 int pifs_mkdir(const pifs_char_t * a_filename)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
@@ -237,10 +249,18 @@ int pifs_mkdir(const pifs_char_t * a_filename)
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
     pifs_page_count_t    page_count_found;
+    pifs_address_t       entry_list_address = pifs.current_entry_list_address;
+
+    /* TODO resolve a_filename's relative/absolute file path and update
+     * entry_list_address regarding that */
+#if 0
+    ret = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
+                            filename, &entry_list_address);
+#endif
 
     ret = pifs_find_entry(PIFS_FIND_ENTRY, a_filename, entry,
-                          pifs.entry_list_address.block_address,
-                          pifs.entry_list_address.page_address);
+                          entry_list_address.block_address,
+                          entry_list_address.page_address);
     if (ret == PIFS_SUCCESS)
     {
         ret = PIFS_ERROR_FILE_ALREADY_EXIST;
@@ -251,6 +271,7 @@ int pifs_mkdir(const pifs_char_t * a_filename)
         /* #1 Find free pages for entry list */
         /* #2 Create entry of a_file, which contains the entry list's address */
         /* #3 Mark entry list page */
+        /* #4 Create "." and ".." entries */
         ret = pifs_find_free_page_wl(PIFS_ENTRY_LIST_SIZE_PAGE, PIFS_ENTRY_LIST_SIZE_PAGE,
                                      PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT,
                                      &ba, &pa, &page_count_found);
@@ -259,31 +280,33 @@ int pifs_mkdir(const pifs_char_t * a_filename)
             PIFS_DEBUG_MSG("Entry list: %u free page found %s\r\n", page_count_found, pifs_ba_pa2str(ba, pa));
             memset(entry, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
             strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
-            entry->attrib = PIFS_ATTRIB_ARCHIVE | PIFS_ATTRIB_DIR;
+            PIFS_SET_ATTRIB(entry->attrib, PIFS_ATTRIB_ARCHIVE | PIFS_ATTRIB_DIR);
             entry->first_map_address.block_address = ba;
             entry->first_map_address.page_address = pa;
             ret = pifs_append_entry(entry,
-                                    pifs.entry_list_address.block_address,
-                                    pifs.entry_list_address.page_address);
+                                    entry_list_address.block_address,
+                                    entry_list_address.page_address);
             if (ret == PIFS_SUCCESS)
             {
                 PIFS_DEBUG_MSG("Entry created\r\n");
                 ret = pifs_mark_page(ba, pa, PIFS_ENTRY_LIST_SIZE_PAGE, TRUE);
                 if (ret == PIFS_SUCCESS)
                 {
+                    /* Add current directory's entry "." */
                     memset(entry, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
                     strncpy((char*)entry->name, ".", PIFS_FILENAME_LEN_MAX);
-                    entry->attrib = PIFS_ATTRIB_ARCHIVE | PIFS_ATTRIB_DIR;
+                    PIFS_SET_ATTRIB(entry->attrib, PIFS_ATTRIB_ARCHIVE | PIFS_ATTRIB_DIR);
                     entry->first_map_address.block_address = ba;
                     entry->first_map_address.page_address = pa;
                     ret = pifs_append_entry(entry, ba, pa);
                 }
                 if (ret == PIFS_SUCCESS)
                 {
+                    /* Add upper directory's entry ".." */
                     strncpy((char*)entry->name, "..", PIFS_FILENAME_LEN_MAX);
-                    entry->attrib = PIFS_ATTRIB_ARCHIVE | PIFS_ATTRIB_DIR;
-                    entry->first_map_address.block_address = pifs.entry_list_address.block_address;
-                    entry->first_map_address.page_address = pifs.entry_list_address.page_address;
+                    PIFS_SET_ATTRIB(entry->attrib, PIFS_ATTRIB_ARCHIVE | PIFS_ATTRIB_DIR);
+                    entry->first_map_address.block_address = entry_list_address.block_address;
+                    entry->first_map_address.page_address = entry_list_address.page_address;
                     ret = pifs_append_entry(entry, ba, pa);
                 }
             }
@@ -308,12 +331,46 @@ int pifs_rmdir(const pifs_char_t * a_filename)
 int pifs_chdir(const pifs_char_t * a_filename)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
+    pifs_entry_t       * entry = &pifs.entry;
+    pifs_address_t       entry_list_address = pifs.current_entry_list_address;
+
+    /* TODO resolve a_filename's relative/absolute file path and update
+     * entry_list_address regarding that */
+#if 0
+    ret = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
+                            filename, &entry_list_address);
+#endif
+
+    ret = pifs_find_entry(PIFS_FIND_ENTRY, a_filename, entry,
+                          entry_list_address.block_address,
+                          entry_list_address.page_address);
+    if (ret == PIFS_SUCCESS)
+    {
+        if (PIFS_IS_DIR(entry->attrib))
+        {
+            /* TODO update pifs.cwd ! */
+            pifs.current_entry_list_address = entry->first_map_address;
+        }
+        else
+        {
+            ret = PIFS_ERROR_IS_NOT_DIRECTORY;
+        }
+    }
 
     return ret;
 }
 
-pifs_char_t * pifs_getcwd(pifs_char_t * buffer, size_t a_size)
+/**
+ * @brief pifs_getcwd Get current working directory.
+ *
+ * @param[out] a_buffer Path to fill.
+ * @param[in] a_size    Size of a_buffer.
+ * @return Pointer to a_buffer.
+ */
+pifs_char_t * pifs_getcwd(pifs_char_t * a_buffer, size_t a_size)
 {
-    return NULL;
+    strncpy(a_buffer, pifs.cwd, a_size);
+
+    return a_buffer;
 }
 #endif

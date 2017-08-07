@@ -13,6 +13,7 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "api_pifs.h"
 #include "flash.h"
 #include "pifs_config.h"
 
@@ -25,18 +26,11 @@
 #error PIFS_MAGIC shall not be 0xFFFFFFFF!
 #endif
 
-#define ENABLE_PIFS_VERSION                 1
+#define PIFS_ENABLE_VERSION                 1
 #define PIFS_MAJOR_VERSION                  1u
 #define PIFS_MINOR_VERSION                  0u
 
 #define PIFS_ENABLE_ATTRIBUTES              1u   /**< 1: Use attribute field of files, 0: don't use attribute field */
-#define PIFS_ATTRIB_READONLY                0x01u
-#define PIFS_ATTRIB_HIDDEN                  0x02u
-#define PIFS_ATTRIB_SYSTEM                  0x04u
-#define PIFS_ATTRIB_DIR                     0x10u
-#define PIFS_ATTRIB_ARCHIVE                 0x20u
-#define PIFS_ATTRIB_DELETED                 0x80u
-#define PIFS_ATTRIB_ALL                     UINT8_MAX
 
 /** Number of bits in a byte */
 #define PIFS_BYTE_BITS                      8
@@ -236,16 +230,13 @@ typedef uint8_t pifs_wear_level_bits_t;
 #if PIFS_LEAST_WEARED_BLOCK_NUM > PIFS_FLASH_BLOCK_NUM_FS - PIFS_MANAGEMENT_BLOCK_NUM * 2
 #error PIFS_LEAST_WEARED_BLOCK_NUM shall not be greater than PIFS_FLASH_BLOCK_NUM_FS - PIFS_MANAGEMENT_BLOCK_NUM * 2!
 #endif
-#if PIFS_FLASH_ERASED_BYTE_VALUE == 0xFF
-/* If erased value is 0xFF, invert attribute bits. */
-/* Therefore bits can be updated in the existing entry, no new entry is needed. */
-#define PIFS_INVERT_ATTRIBUTE_BITS      1
-#else
-#define PIFS_INVERT_ATTRIBUTE_BITS      0
-#endif
 #if PIFS_ENABLE_DIRECTORIES && !PIFS_ENABLE_ATTRIBUTES
 #error PIFS_ENABLE_ATTRIBUTES shall be 1 if PIFS_ENABLE_DIRECTORIES is 1!
 #endif
+
+#define PIFS_INIT_ATTRIB(attrib)    do { \
+        (attrib) = PIFS_FLASH_ERASED_BYTE_VALUE; \
+    } while (0)
 
 #if PIFS_PATH_SEPARATOR_CHAR != '/' && PIFS_PATH_SEPARATOR_CHAR != '\\'
 #error Invalid PIFS_PATH_SEPARATOR_CHAR! Forward slash '/' or backslash '\\' are supported!
@@ -298,7 +289,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
     uint32_t                magic;
-#if ENABLE_PIFS_VERSION
+#if PIFS_ENABLE_VERSION
     uint8_t                 majorVersion;
     uint8_t                 minorVersion;
 #endif
@@ -325,7 +316,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_block_address_t    management_block_address;       /**< number of pifs_management_blocks */
     pifs_block_address_t    next_management_block_address;  /**< Number of PIFS_MANAGEMENT_BLOCK_NUM */
     pifs_address_t          free_space_bitmap_address;
-    pifs_address_t          root_entry_list_address;
+    pifs_address_t          root_entry_list_address;        /**< Root directory */
     pifs_address_t          delta_map_address;
     pifs_address_t          wear_level_list_address;
     /** Data blocks with lowest erase counter value */
@@ -468,7 +459,7 @@ typedef struct
     uint32_t                error_cntr;         /**< File system's integrity check uses it */
 #if PIFS_ENABLE_DIRECTORIES
     pifs_char_t             cwd[PIFS_PATH_LEN_MAX];                       /**< Current working directory */
-    pifs_address_t          entry_list_address;                           /**< Entry list of current working directory */
+    pifs_address_t          current_entry_list_address;                   /**< Entry list of current working directory */
 #endif
 #if PIFS_FSCHECK_USE_STATIC_MEMORY
     uint8_t                 free_pages_buf[PIFS_FLASH_PAGE_NUM_FS / PIFS_BYTE_BITS];

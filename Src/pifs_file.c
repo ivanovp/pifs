@@ -40,12 +40,18 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
                                  const pifs_char_t * a_modes,
                                  bool_t a_is_merge_allowed)
 {
-    pifs_entry_t       * entry = &a_file->entry;
     pifs_block_address_t ba = PIFS_BLOCK_ADDRESS_INVALID;
     pifs_page_address_t  pa = PIFS_PAGE_ADDRESS_INVALID;
     pifs_page_count_t    page_count_found = 0;
+    pifs_address_t       entry_list_address;
 
     PIFS_ASSERT(!a_file->is_opened);
+#if PIFS_ENABLE_DIRECTORIES
+    entry_list_address = pifs.current_entry_list_address;
+    a_file->entry_list_address = entry_list_address;
+#else
+    entry_list_address = pifs.header.root_entry_list_address;
+#endif
     a_file->status = PIFS_SUCCESS;
     a_file->write_pos = 0;
     a_file->write_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
@@ -60,17 +66,17 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
     }
     if (a_file->status == PIFS_SUCCESS)
     {
-        a_file->status = pifs_find_entry(PIFS_FIND_ENTRY, a_filename, entry,
-                                         pifs.header.root_entry_list_address.block_address,
-                                         pifs.header.root_entry_list_address.page_address);
+        a_file->status = pifs_find_entry(PIFS_FIND_ENTRY, a_filename, &a_file->entry,
+                                         entry_list_address.block_address,
+                                         entry_list_address.page_address);
         if ((a_file->mode_file_shall_exist || a_file->mode_append) && a_file->status == PIFS_SUCCESS)
         {
             PIFS_DEBUG_MSG("Entry of %s found\r\n", a_filename);
 #if PIFS_DEBUG_LEVEL >= 6
-            print_buffer(entry, sizeof(pifs_entry_t), 0);
+            print_buffer(a_file->entry, sizeof(pifs_entry_t), 0);
 #endif
 #if PIFS_ENABLE_DIRECTORIES
-            if (!(a_file->entry.attrib & PIFS_ATTRIB_DIR))
+            if (!PIFS_IS_DIR(a_file->entry.attrib))
 #endif
             {
                 /* Check if file size is valid or file is opened during merge */
@@ -88,7 +94,7 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
 #if PIFS_ENABLE_DIRECTORIES
             else
             {
-                a_file->status = PIFS_ERROR_IS_A_DIRECTORY;
+                a_file->status = PIFS_ERROR_IS_DIRECTORY;
             }
 #endif
         }
@@ -99,8 +105,8 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
                 /* File already exist */
 #if PIFS_USE_DELTA_FOR_ENTRIES == 0
                 a_file->status = pifs_delete_entry(a_filename,
-                                                   pifs.header.root_entry_list_address.block_address,
-                                                   pifs.header.root_entry_list_address.page_address);
+                                                   entry_list_address.block_address,
+                                                   entry_list_address.page_address);
                 if (a_file->status == PIFS_SUCCESS)
 #endif
                 {
@@ -131,16 +137,16 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
             if (a_file->status == PIFS_SUCCESS)
             {
                 PIFS_DEBUG_MSG("Map page: %u free page found %s\r\n", page_count_found, pifs_ba_pa2str(ba, pa));
-                memset(entry, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
-                strncpy((char*)entry->name, a_filename, PIFS_FILENAME_LEN_MAX);
+                memset(&a_file->entry, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
+                strncpy((char*)a_file->entry.name, a_filename, PIFS_FILENAME_LEN_MAX);
 #if PIFS_ENABLE_ATTRIBUTES
-                entry->attrib = PIFS_ATTRIB_ARCHIVE;
+                PIFS_SET_ATTRIB(a_file->entry.attrib, PIFS_ATTRIB_ARCHIVE);
 #endif
-                entry->first_map_address.block_address = ba;
-                entry->first_map_address.page_address = pa;
-                a_file->status = pifs_append_entry(entry,
-                                                   pifs.header.root_entry_list_address.block_address,
-                                                   pifs.header.root_entry_list_address.page_address);
+                a_file->entry.first_map_address.block_address = ba;
+                a_file->entry.first_map_address.page_address = pa;
+                a_file->status = pifs_append_entry(&a_file->entry,
+                                                   entry_list_address.block_address,
+                                                   entry_list_address.page_address);
                 if (a_file->status == PIFS_SUCCESS)
                 {
                     PIFS_DEBUG_MSG("Entry created\r\n");
@@ -587,20 +593,27 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
  */
 int pifs_fflush(P_FILE * a_file)
 {
-    int ret = PIFS_EOF;
-    pifs_file_t * file = (pifs_file_t*) a_file;
+    int             ret = PIFS_EOF;
+    pifs_file_t   * file = (pifs_file_t*) a_file;
+    pifs_address_t  entry_list_address;
 
     PIFS_NOTICE_MSG("filename: '%s'\r\n", file->entry.name);
     if (pifs.is_header_found && file && file->is_opened)
     {
+#if PIFS_ENABLE_DIRECTORIES
+        entry_list_address = pifs.current_entry_list_address;
+#else
+        entry_list_address = pifs.header.root_entry_list_address;
+#endif
+
         PIFS_DEBUG_MSG("mode_write: %i, is_size_changed: %i, file_size: %i\r\n",
                        file->mode_write, file->is_size_changed,
                        file->entry.file_size);
         if (file->mode_write && (file->is_size_changed || !file->entry.file_size))
         {
             file->status = pifs_update_entry(file->entry.name, &file->entry,
-                                             pifs.header.root_entry_list_address.block_address,
-                                             pifs.header.root_entry_list_address.page_address);
+                                             entry_list_address.block_address,
+                                             entry_list_address.page_address);
         }
         pifs_flush();
         ret = 0;
@@ -866,8 +879,8 @@ long int pifs_ftell(P_FILE * a_file)
  */
 int pifs_fgetuserdata(P_FILE * a_file, pifs_user_data_t * a_user_data)
 {
-    pifs_status_t ret = PIFS_ERROR_GENERAL;
-    pifs_file_t * file = (pifs_file_t*) a_file;
+    pifs_status_t  ret = PIFS_ERROR_GENERAL;
+    pifs_file_t  * file = (pifs_file_t*) a_file;
 
     if (file->is_opened)
     {
@@ -888,15 +901,22 @@ int pifs_fgetuserdata(P_FILE * a_file, pifs_user_data_t * a_user_data)
  */
 int pifs_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data)
 {
-    pifs_file_t * file = (pifs_file_t*) a_file;
+    pifs_file_t  * file = (pifs_file_t*) a_file;
+    pifs_address_t entry_list_address;
 
     if (file->is_opened)
     {
+#if PIFS_ENABLE_DIRECTORIES
+        entry_list_address = file->entry_list_address;
+#else
+        entry_list_address = pifs.header.root_entry_list_address;
+#endif
+
         memcpy(&file->entry.user_data, a_user_data, sizeof(pifs_user_data_t));
 
         file->status = pifs_update_entry(file->entry.name, &file->entry,
-                                         pifs.header.root_entry_list_address.block_address,
-                                         pifs.header.root_entry_list_address.page_address);
+                                         entry_list_address.block_address,
+                                         entry_list_address.page_address);
     }
     return file->status;
 }
@@ -911,6 +931,7 @@ int pifs_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data)
 int pifs_remove(const pifs_char_t * a_filename)
 {
     pifs_status_t ret;
+    pifs_address_t entry_list_address;
 
     PIFS_NOTICE_MSG("filename: '%s'\r\n", a_filename);
     ret = pifs_check_filename(a_filename);
@@ -919,10 +940,16 @@ int pifs_remove(const pifs_char_t * a_filename)
         ret = pifs_internal_open(&pifs.internal_file, a_filename, "r", FALSE);
         if (ret == PIFS_SUCCESS)
         {
+#if PIFS_ENABLE_DIRECTORIES
+            entry_list_address = pifs.internal_file.entry_list_address;
+#else
+            entry_list_address = pifs.header.root_entry_list_address;
+#endif
+
             /* File already exist */
             ret = pifs_delete_entry(a_filename,
-                                   pifs.header.root_entry_list_address.block_address,
-                                   pifs.header.root_entry_list_address.page_address);
+                                    entry_list_address.block_address,
+                                    entry_list_address.page_address);
             if (ret == PIFS_SUCCESS)
             {
                 /* Mark allocated pages to be released */
@@ -947,6 +974,13 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
 {
     pifs_status_t  ret;
     pifs_entry_t * entry = &pifs.entry;
+    pifs_address_t entry_list_address;
+
+#if PIFS_ENABLE_DIRECTORIES
+    entry_list_address = pifs.current_entry_list_address;
+#else
+    entry_list_address = pifs.header.root_entry_list_address;
+#endif
 
     PIFS_NOTICE_MSG("filename: '%s'\r\n", a_oldname);
     ret = pifs_check_filename(a_oldname);
@@ -954,31 +988,31 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
     {
         /* Checking NEW name */
         ret = pifs_find_entry(PIFS_FIND_ENTRY, a_newname, entry,
-                              pifs.header.root_entry_list_address.block_address,
-                              pifs.header.root_entry_list_address.page_address);
+                              entry_list_address.block_address,
+                              entry_list_address.page_address);
         if (ret == PIFS_SUCCESS)
         {
             /* File already exist, remove! */
             ret = pifs_remove(a_newname);
         }
         ret = pifs_find_entry(PIFS_FIND_ENTRY, a_oldname, entry,
-                              pifs.header.root_entry_list_address.block_address,
-                              pifs.header.root_entry_list_address.page_address);
+                              entry_list_address.block_address,
+                              entry_list_address.page_address);
         /* Checking OLD name */
         if (ret == PIFS_SUCCESS)
         {
             /* File already exist */
             ret = pifs_clear_entry(a_oldname,
-                                   pifs.header.root_entry_list_address.block_address,
-                                   pifs.header.root_entry_list_address.page_address);
+                                   entry_list_address.block_address,
+                                   entry_list_address.page_address);
         }
         if (ret == PIFS_SUCCESS)
         {
             /* Change name in entry and append new entry */
             strncpy(entry->name, a_newname, PIFS_FILENAME_LEN_MAX);
             ret = pifs_append_entry(entry,
-                                    pifs.header.root_entry_list_address.block_address,
-                                    pifs.header.root_entry_list_address.page_address);
+                                    entry_list_address.block_address,
+                                    entry_list_address.page_address);
         }
     }
 
@@ -1063,8 +1097,14 @@ bool_t pifs_is_file_exist(const pifs_char_t * a_filename)
     if (ret == PIFS_SUCCESS)
     {
         ret = pifs_find_entry(PIFS_FIND_ENTRY, a_filename, entry,
+#if PIFS_ENABLE_DIRECTORIES
+                              pifs.current_entry_list_address.block_address,
+                              pifs.current_entry_list_address.page_address
+#else
                               pifs.header.root_entry_list_address.block_address,
-                              pifs.header.root_entry_list_address.page_address);
+                              pifs.header.root_entry_list_address.page_address
+#endif
+                              );
     }
     if (ret == PIFS_SUCCESS)
     {
@@ -1113,8 +1153,14 @@ long int pifs_filesize(const pifs_char_t * a_filename)
     pifs_entry_t  entry;
 
     status = pifs_find_entry(PIFS_FIND_ENTRY, a_filename, &entry,
+#if PIFS_ENABLE_DIRECTORIES
+                             pifs.current_entry_list_address.block_address,
+                             pifs.current_entry_list_address.page_address
+#else
                              pifs.header.root_entry_list_address.block_address,
-                             pifs.header.root_entry_list_address.page_address);
+                             pifs.header.root_entry_list_address.page_address
+#endif
+                             );
     if (status == PIFS_SUCCESS)
     {
         filesize = entry.file_size;

@@ -253,9 +253,9 @@ bool_t pifs_is_block_type(pifs_block_address_t a_block_address,
  */
 bool_t pifs_is_buffer_erased(const void * a_buf, pifs_size_t a_buf_size)
 {
-    uint8_t   * buf = (uint8_t*) a_buf;
-    pifs_size_t i;
-    bool_t      ret = TRUE;
+    const uint8_t * buf = (uint8_t*) a_buf;
+    pifs_size_t     i;
+    bool_t          ret = TRUE;
 
     for (i = 0; i < a_buf_size && ret; i++)
     {
@@ -300,10 +300,10 @@ bool_t pifs_is_page_erased(pifs_block_address_t a_block_address,
  */
 bool_t pifs_is_buffer_programmable(const void * a_orig_buf, const void * a_new_buf, pifs_size_t a_buf_size)
 {
-    uint8_t   * orig_buf = (uint8_t*) a_orig_buf;
-    uint8_t   * new_buf = (uint8_t*) a_new_buf;
-    pifs_size_t i;
-    bool_t      ret = TRUE;
+    const uint8_t * orig_buf = (uint8_t*) a_orig_buf;
+    const uint8_t * new_buf = (uint8_t*) a_new_buf;
+    pifs_size_t     i;
+    bool_t          ret = TRUE;
 
     for (i = 0; i < a_buf_size && ret; i++)
     {
@@ -339,9 +339,9 @@ bool_t pifs_is_buffer_programmable(const void * a_orig_buf, const void * a_new_b
  */
 bool_t pifs_is_buffer_programmed(const void * a_buf, pifs_size_t a_buf_size)
 {
-    uint8_t   * buf = (uint8_t*) a_buf;
-    pifs_size_t i;
-    bool_t      ret = TRUE;
+    const uint8_t * buf = (uint8_t*) a_buf;
+    pifs_size_t     i;
+    bool_t          ret = TRUE;
 
     for (i = 0; i < a_buf_size && ret; i++)
     {

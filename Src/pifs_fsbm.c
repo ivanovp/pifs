@@ -301,10 +301,8 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
 }
 
 /**
- * @brief pifs_find_free_page Find free page(s) in free space
- * memory bitmap.
- * It tries to find 'a_page_count_desired' pages, but at least
- * one page.
+ * @brief pifs_find_free_page Find free page(s) in free space memory bitmap.
+ * It tries to find 'a_page_count_desired' pages, but at least one page.
  * NOTE there should be an option for maximum search time.
  *
  * @param[in] a_page_count_desired Number of pages needed.
