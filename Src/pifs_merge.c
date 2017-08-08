@@ -176,7 +176,6 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
     PIFS_NOTICE_MSG("start\r\n");
 
     /* Re-create file in the new management block */
-    /* BUG update entry list! */
     (void)pifs_internal_open(&pifs.internal_file, a_old_entry->name, "w", FALSE);
     pifs.internal_file.entry.file_size = a_old_entry->file_size;
 #if PIFS_ENABLE_ATTRIBUTES

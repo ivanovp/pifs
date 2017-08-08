@@ -136,6 +136,11 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
             }
             if (a_file->status == PIFS_SUCCESS)
             {
+#if PIFS_ENABLE_DIRECTORIES
+                /* Update entry list address, as it may changed during merge! */
+                entry_list_address = pifs.current_entry_list_address;
+                a_file->entry_list_address = entry_list_address;
+#endif
                 PIFS_DEBUG_MSG("Map page: %u free page found %s\r\n", page_count_found, pifs_ba_pa2str(ba, pa));
                 memset(&a_file->entry, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
                 strncpy((char*)a_file->entry.name, a_filename, PIFS_FILENAME_LEN_MAX);
