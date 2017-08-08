@@ -395,9 +395,7 @@ typedef struct
     bool_t                  mode_append PIFS_BOOL_SIZE;
     bool_t                  mode_file_shall_exist PIFS_BOOL_SIZE;
     bool_t                  mode_deleted PIFS_BOOL_SIZE;
-#if PIFS_ENABLE_DIRECTORIES
     pifs_address_t          entry_list_address; /**< Entry list (directory) where the file belongs to */
-#endif
     pifs_entry_t            entry;              /**< File's entry, one element of entry list */
     pifs_status_t           status;             /**< Last file operation's result */
     pifs_address_t          actual_map_address; /**< Actual map's address used for reading */

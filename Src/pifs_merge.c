@@ -685,6 +685,13 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
         {
             /* Some pages could be erased, do data merge */
             ret = pifs_merge();
+#if PIFS_ENABLE_DIRECTORIES
+            if (a_file)
+            {
+                /* Update entry list address, as it may changed during merge! */
+                a_file->entry_list_address = pifs.current_entry_list_address;
+            }
+#endif
         }
         else
         {
