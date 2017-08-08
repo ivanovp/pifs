@@ -500,10 +500,7 @@ pifs_status_t pifs_merge(void)
     if (ret == PIFS_SUCCESS)
     {
         /* Reset delta map after processing delta pages */
-        memset(pifs.delta_map_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE,
-               PIFS_DELTA_MAP_PAGE_NUM * PIFS_LOGICAL_PAGE_SIZE_BYTE);
-        pifs.delta_map_page_is_dirty = FALSE;
-        pifs.delta_map_page_is_read = FALSE;
+        pifs_reset_delta();
     }
     /* #8 */
     if (ret == PIFS_SUCCESS)

@@ -217,7 +217,11 @@ pifs_status_t pifs_read_delta(pifs_block_address_t a_block_address,
                                &pifs.header);
     if (ret == PIFS_SUCCESS)
     {
-//        PIFS_DEBUG_MSG("%s\r\n", pifs_ba_pa2str(ba, pa));
+        if (a_block_address != ba
+                || a_page_address != pa)
+        {
+            PIFS_NOTICE_MSG("%s\r\n", pifs_ba_pa2str(ba, pa));
+        }
         ret = pifs_read(ba, pa, a_page_offset, a_buf, a_buf_size);
     }
 
@@ -334,4 +338,12 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
     }
 
     return ret;
+}
+
+void pifs_reset_delta(void)
+{
+    memset(pifs.delta_map_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE,
+           PIFS_DELTA_MAP_PAGE_NUM * PIFS_LOGICAL_PAGE_SIZE_BYTE);
+    pifs.delta_map_page_is_dirty = FALSE;
+    pifs.delta_map_page_is_read = FALSE;
 }

@@ -30,7 +30,8 @@
 /**
  * @brief pifs_internal_open Internally used function to open a file.
  * Note: this function shall be re-entrant, as it can be called from
- * pifs_merge(). Level of recursion is one.
+ * pifs_merge(). Level of recursion is one and the second open
+ * uses the pifs.internal_file.
  *
  * @param[in] a_file                Pointer to internal file structure.
  * @param[in] a_filename            Pointer to file name.

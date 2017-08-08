@@ -35,5 +35,6 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
                                pifs_size_t a_buf_size,
                                bool_t * a_is_delta,
                                pifs_header_t * a_header);
+void pifs_reset_delta(void);
 
 #endif /* _INCLUDE_PIFS_DELTA_H_ */
