@@ -17,7 +17,7 @@ for i in `seq --format="%02.0f" 100`; do
     RC=${PIPESTATUS[0]}
     #RC=$?
     if [[ $RC != 0 ]]; then
-        tail $LOG
+        tail -50 $LOG
         echo "Error $RC occured during test $i, exiting..."
         exit $RC;
     fi

@@ -25,7 +25,7 @@
 #include "pifs_file.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 5
 #include "pifs_debug.h"
 
 /**

@@ -16,8 +16,8 @@
 
 pifs_status_t pifs_test_small_w(void);
 pifs_status_t pifs_test_small_r(void);
-pifs_status_t pifs_test_full_w(void);
-pifs_status_t pifs_test_full_r(void);
+pifs_status_t pifs_test_full_w(const char * a_filename);
+pifs_status_t pifs_test_full_r(const char * a_filename);
 pifs_status_t pifs_test_basic_w(const char * a_filename);
 pifs_status_t pifs_test_basic_r(const char * a_filename);
 pifs_status_t pifs_test_large_w(void);

@@ -153,11 +153,31 @@ void cmdTestPifsLarge (char* command, char* params)
 
 void cmdTestPifsFull (char* command, char* params)
 {
+    const char * filename;
+    const char * mode;
+
     (void) command;
     (void) params;
 
-    pifs_test_full_w();
-    pifs_test_full_r();
+    filename = PARSER_getNextParam();
+    mode = PARSER_getNextParam();
+    if (mode)
+    {
+        printf("Mode: %s\r\n", mode);
+        if (strchr(mode, 'w'))
+        {
+            pifs_test_full_w(filename);
+        }
+        if (strchr(mode, 'r'))
+        {
+            pifs_test_full_r(filename);
+        }
+    }
+    else
+    {
+        pifs_test_full_w(filename);
+        pifs_test_full_r(filename);
+    }
 }
 
 void cmdTestPifsFragment (char* command, char* params)

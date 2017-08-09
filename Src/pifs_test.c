@@ -169,13 +169,17 @@ pifs_status_t pifs_test_small_r(void)
     return ret;
 }
 
-pifs_status_t pifs_test_full_w(void)
+pifs_status_t pifs_test_full_w(const char * a_filename)
 {
     pifs_status_t ret = PIFS_SUCCESS;
     P_FILE * file;
     size_t   written_size = 0;
     size_t   i;
     const char * filename = "fullwrite.tst";
+    if (a_filename != NULL)
+    {
+        filename = a_filename;
+    }
 
     printf("-------------------------------------------------\r\n");
     printf("Full write test: writing file\r\n");
@@ -213,13 +217,17 @@ pifs_status_t pifs_test_full_w(void)
     return ret;
 }
 
-pifs_status_t pifs_test_full_r(void)
+pifs_status_t pifs_test_full_r(const char * a_filename)
 {
     pifs_status_t ret = PIFS_SUCCESS;
     P_FILE * file;
     size_t   read_size = 0;
     size_t   i;
     const char * filename = "fullwrite.tst";
+    if (a_filename != NULL)
+    {
+        filename = a_filename;
+    }
 
     printf("-------------------------------------------------\r\n");
     printf("Full write test: reading file\r\n");
@@ -228,6 +236,7 @@ pifs_status_t pifs_test_full_r(void)
     if (file)
     {
         printf("File opened for reading\r\n");
+        testfull_written_buffers = pifs_filesize(filename) / sizeof(test_buf_r);
         for (i = 0; i < testfull_written_buffers && ret == PIFS_SUCCESS; i++)
         {
             printf("full_r: %i/%i\r\n", i + 1, testfull_written_buffers);
@@ -1141,20 +1150,23 @@ pifs_status_t pifs_test(void)
 #if ENABLE_FULL_WRITE_TEST
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_test_full_w();
+        ret = pifs_test_full_w(NULL);
     }
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_test_full_r();
+        ret = pifs_test_full_r(NULL);
     }
-    if (pifs_remove("fullwrite.tst") == 0)
+    if (ret == PIFS_SUCCESS)
     {
-        printf("File removed!\r\n");
-    }
-    else
-    {
-        PIFS_TEST_ERROR_MSG("Cannot remove file!\r\n");
-        ret = PIFS_ERROR_GENERAL;
+        if (pifs_remove("fullwrite.tst") == 0)
+        {
+            printf("File removed!\r\n");
+        }
+        else
+        {
+            PIFS_TEST_ERROR_MSG("Cannot remove file!\r\n");
+            ret = PIFS_ERROR_GENERAL;
+        }
     }
 #endif
 
