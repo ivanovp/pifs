@@ -58,7 +58,6 @@
 
 uint8_t test_buf_w[TEST_BUF_SIZE] __attribute__((aligned(4)));
 uint8_t test_buf_r[TEST_BUF_SIZE] __attribute__((aligned(4)));
-size_t  testfull_written_buffers = 0;
 const size_t fragment_size = 5;
 
 void generate_buffer(uint32_t a_sequence_start, const char * a_filename)
@@ -190,14 +189,13 @@ pifs_status_t pifs_test_full_w(const char * a_filename)
         printf("File opened for writing\r\n");
         for (i = 0; i < TEST_FULL_PAGE_NUM; i++)
         {
-            printf("full_w: %i\r\n", i + 1);
+            printf("full_w: %i\r\n", i);
             generate_buffer(i + 55, filename);
 //            print_buffer(test_buf_w, sizeof(test_buf_w), 0);
             written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
             if (written_size != sizeof(test_buf_w))
             {
                 PIFS_DEBUG_MSG("Media full!!!\r\n");
-                testfull_written_buffers = i;
                 break;
             }
         }
@@ -206,7 +204,7 @@ pifs_status_t pifs_test_full_w(const char * a_filename)
             PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
-        PIFS_DEBUG_MSG("%i buffers written.\r\n", testfull_written_buffers);
+        PIFS_DEBUG_MSG("%i buffers written.\r\n", i);
     }
     else
     {
@@ -221,6 +219,8 @@ pifs_status_t pifs_test_full_r(const char * a_filename)
 {
     pifs_status_t ret = PIFS_SUCCESS;
     P_FILE * file;
+    size_t   testfull_written_buffers = 0;
+    size_t   file_size;
     size_t   read_size = 0;
     size_t   i;
     const char * filename = "fullwrite.tst";
@@ -236,7 +236,10 @@ pifs_status_t pifs_test_full_r(const char * a_filename)
     if (file)
     {
         printf("File opened for reading\r\n");
-        testfull_written_buffers = pifs_filesize(filename) / sizeof(test_buf_r);
+        file_size = pifs_filesize(filename);
+        testfull_written_buffers = file_size / sizeof(test_buf_r);
+        printf("File size: %i bytes, buffers: %i\r\n",
+               file_size, testfull_written_buffers);
         for (i = 0; i < testfull_written_buffers && ret == PIFS_SUCCESS; i++)
         {
             printf("full_r: %i/%i\r\n", i + 1, testfull_written_buffers);

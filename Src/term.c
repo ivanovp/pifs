@@ -537,11 +537,14 @@ void cmdDumpFile (char* command, char* params)
     P_FILE * file;
     size_t   read;
     uint32_t addr = 0;
+    size_t   file_size;
 
     (void) command;
 
     if (params)
     {
+        file_size = pifs_filesize(params);
+        printf("File size: %i bytes\r\n", file_size);
         printf("Dump file '%s'\r\n", params);
         file = pifs_fopen(params, "r");
         if (file)
@@ -555,6 +558,7 @@ void cmdDumpFile (char* command, char* params)
                     addr += read;
                 }
             } while (read > 0);
+            printf("End position: %i bytes\r\n", pifs_ftell(file));
             pifs_fclose(file);
         }
         else
