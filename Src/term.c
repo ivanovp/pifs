@@ -272,7 +272,7 @@ void cmdPageInfo (char* command, char* params)
                 cntr = strtoul(param, NULL, 0);
             }
         }
-        print_page_info(addr, cntr);
+        pifs_print_page_info(addr, cntr);
     }
     else
     {
@@ -871,7 +871,7 @@ void cmdMap (char* command, char* params)
     unsigned long int    addr = 0;
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
-    pifs_page_offset_t   po;
+    //pifs_page_offset_t   po;
     pifs_status_t        ret;
     pifs_map_header_t    map_header;
     pifs_map_entry_t     map_entry;
@@ -884,42 +884,12 @@ void cmdMap (char* command, char* params)
     {
         addr = strtoul(params, NULL, 0);
         //printf("Addr: 0x%X\r\n", addr);
-        po = addr % PIFS_LOGICAL_PAGE_SIZE_BYTE;
+        //po = addr % PIFS_LOGICAL_PAGE_SIZE_BYTE;
         pa = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) % PIFS_LOGICAL_PAGE_PER_BLOCK;
         ba = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) / PIFS_LOGICAL_PAGE_PER_BLOCK;
         printf("Map page %s\r\n\r\n", pifs_ba_pa2str(ba, pa));
 
-        ret = pifs_read(ba, pa, po, &map_header, PIFS_MAP_HEADER_SIZE_BYTE);
-        if (ret == PIFS_SUCCESS)
-        {
-            printf("Previous map: %s\r\n", pifs_address2str(&map_header.prev_map_address));
-            printf("Next map:     %s\r\n\r\n", pifs_address2str(&map_header.next_map_address));
-
-            for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !end && ret == PIFS_SUCCESS; i++)
-            {
-                /* Go through all map entries in the page */
-                ret = pifs_read(ba, pa, PIFS_MAP_HEADER_SIZE_BYTE + i * PIFS_MAP_ENTRY_SIZE_BYTE,
-                                &map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
-                if (ret == PIFS_SUCCESS)
-                {
-                    if (!pifs_is_buffer_erased(&map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
-                    {
-                        printf("%s  page count: %i\r\n",
-                               pifs_address2str(&map_entry.address),
-                               map_entry.page_count);
-                    }
-                    else
-                    {
-                        /* Map entry is unused */
-                        end = TRUE;
-                    }
-                }
-            }
-        }
-        else
-        {
-            printf("ERROR: Cannot read page, error code: %i\r\n", ret);
-        }
+        ret = pifs_print_map_page(ba, pa, UINT32_MAX);
     }
 }
 

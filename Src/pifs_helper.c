@@ -139,7 +139,7 @@ char * yesNo(bool_t expression)
     }
 }
 
-void print_page_info(size_t addr, pifs_size_t cntr)
+void pifs_print_page_info(size_t addr, pifs_size_t cntr)
 {
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
@@ -166,6 +166,67 @@ void print_page_info(size_t addr, pifs_size_t cntr)
             pifs_inc_ba_pa(&ba, &pa);
         }
     } while (--cntr);
+}
+
+pifs_status_t pifs_print_map_page(pifs_block_address_t a_block_address,
+                                  pifs_page_address_t a_page_address,
+                                  pifs_size_t a_count)
+{
+    pifs_map_header_t   map_header;
+    pifs_map_entry_t    map_entry;
+    pifs_status_t       ret;
+    size_t              i;
+    bool_t              end = FALSE;
+
+    printf("Map page %s\r\n\r\n", pifs_ba_pa2str(a_block_address, a_page_address));
+
+    map_header.next_map_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
+    map_header.next_map_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
+
+    do
+    {
+        if (map_header.next_map_address.block_address < PIFS_BLOCK_ADDRESS_INVALID
+                && map_header.next_map_address.page_address < PIFS_PAGE_ADDRESS_INVALID)
+        {
+            a_block_address = map_header.next_map_address.block_address;
+            a_page_address = map_header.next_map_address.page_address;
+        }
+        ret = pifs_read(a_block_address, a_page_address, 0, &map_header, PIFS_MAP_HEADER_SIZE_BYTE);
+        if (ret == PIFS_SUCCESS)
+        {
+            printf("Previous map: %s\r\n", pifs_address2str(&map_header.prev_map_address));
+            printf("Next map:     %s\r\n\r\n", pifs_address2str(&map_header.next_map_address));
+
+            for (i = 0; i < PIFS_MAP_ENTRY_PER_PAGE && !end && ret == PIFS_SUCCESS; i++)
+            {
+                /* Go through all map entries in the page */
+                ret = pifs_read(a_block_address, a_page_address, PIFS_MAP_HEADER_SIZE_BYTE + i * PIFS_MAP_ENTRY_SIZE_BYTE,
+                                &map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
+                if (ret == PIFS_SUCCESS)
+                {
+                    if (!pifs_is_buffer_erased(&map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
+                    {
+                        printf("%s  page count: %i\r\n",
+                               pifs_address2str(&map_entry.address),
+                               map_entry.page_count);
+                    }
+                    else
+                    {
+                        /* Map entry is unused */
+                        end = TRUE;
+                    }
+                }
+            }
+        }
+        else
+        {
+            printf("ERROR: Cannot read page, error code: %i\r\n", ret);
+        }
+    } while (a_count--
+             && map_header.next_map_address.block_address < PIFS_BLOCK_ADDRESS_INVALID
+             && map_header.next_map_address.page_address < PIFS_PAGE_ADDRESS_INVALID);
+
+    return ret;
 }
 
 bool_t pifs_is_address_valid(pifs_address_t * a_address)

@@ -171,10 +171,11 @@ pifs_status_t pifs_test_small_r(void)
 pifs_status_t pifs_test_full_w(const char * a_filename)
 {
     pifs_status_t ret = PIFS_SUCCESS;
-    P_FILE * file;
-    size_t   written_size = 0;
-    size_t   i;
-    const char * filename = "fullwrite.tst";
+    P_FILE      * file;
+    pifs_file_t * f;
+    size_t        written_size = 0;
+    size_t        i;
+    const char  * filename = "fullwrite.tst";
     if (a_filename != NULL)
     {
         filename = a_filename;
@@ -199,12 +200,16 @@ pifs_status_t pifs_test_full_w(const char * a_filename)
                 break;
             }
         }
+        PIFS_DEBUG_MSG("%i buffers written.\r\n", i);
+        f = (pifs_file_t*) file;
+        (void)pifs_print_map_page(f->entry.first_map_address.block_address,
+                                  f->entry.first_map_address.page_address,
+                                  UINT32_MAX);
         if (pifs_fclose(file))
         {
             PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
         }
-        PIFS_DEBUG_MSG("%i buffers written.\r\n", i);
     }
     else
     {
@@ -218,12 +223,13 @@ pifs_status_t pifs_test_full_w(const char * a_filename)
 pifs_status_t pifs_test_full_r(const char * a_filename)
 {
     pifs_status_t ret = PIFS_SUCCESS;
-    P_FILE * file;
-    size_t   testfull_written_buffers = 0;
-    size_t   file_size;
-    size_t   read_size = 0;
-    size_t   i;
-    const char * filename = "fullwrite.tst";
+    P_FILE      * file;
+    pifs_file_t * f;
+    size_t        testfull_written_buffers = 0;
+    size_t        file_size;
+    size_t        read_size = 0;
+    size_t        i;
+    const char  * filename = "fullwrite.tst";
     if (a_filename != NULL)
     {
         filename = a_filename;
@@ -256,6 +262,10 @@ pifs_status_t pifs_test_full_r(const char * a_filename)
                 ret = check_buffers();
             }
         }
+        f = (pifs_file_t*) file;
+        (void)pifs_print_map_page(f->entry.first_map_address.block_address,
+                                  f->entry.first_map_address.page_address,
+                                  UINT32_MAX);
         if (pifs_fclose(file))
         {
             PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
