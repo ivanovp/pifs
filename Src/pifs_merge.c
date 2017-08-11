@@ -374,6 +374,10 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
                     }
 #endif
                 }
+                else
+                {
+                    PIFS_NOTICE_MSG("name %s DELETED\r\n", entry->name);
+                }
             }
             else
             {
@@ -660,6 +664,8 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
                 }
                 if (free_management_pages == 0 && to_be_released_management_pages > 0 && !merge)
                 {
+                    /* TODO number of free map entries should be calculated here! */
+#if 0
                     if (a_file)
                     {
                         /* If free_management_pages is 0, number of free map entries */
@@ -672,6 +678,7 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
                         }
                     }
                     else
+#endif
                     {
                         merge = TRUE;
                     }
