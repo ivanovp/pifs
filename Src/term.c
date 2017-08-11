@@ -808,6 +808,17 @@ void cmdRemoveDir (char* command, char* params)
         }
     }
 }
+
+void cmdGetCurrWorkDir(char* command, char* params)
+{
+    char cwd[PIFS_PATH_LEN_MAX];
+
+    (void) command;
+    (void) params;
+
+    printf("Current working directory: %s\r\n", pifs_getcwd(cwd, sizeof(cwd)));
+}
+
 #endif
 
 void cmdDumpPage (char* command, char* params)
@@ -1144,6 +1155,7 @@ parserCommand_t parserCommands[] =
     {"mkdir",       "Make directory",                   cmdMakeDir},
     {"cd",          "Change directory",                 cmdChDir},
     {"rmdir",       "Remove directory",                 cmdRemoveDir},
+    {"cwd",         "Get current working directory",    cmdGetCurrWorkDir},
 #endif
     {"dump",        "Dump flash page in hexadecimal format", cmdDumpPage},
     {"d",           "Dump flash page in hexadecimal format", cmdDumpPage},

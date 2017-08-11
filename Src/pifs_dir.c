@@ -383,21 +383,23 @@ int pifs_rmdir(const pifs_char_t * a_filename)
 
 int pifs_chdir(const pifs_char_t * a_filename)
 {
-    pifs_status_t        ret = PIFS_SUCCESS;
-    pifs_entry_t       * entry = &pifs.entry;
-    pifs_address_t       entry_list_address = pifs.current_entry_list_address;
-    pifs_char_t          filename[PIFS_FILENAME_LEN_MAX];
+    pifs_status_t   ret = PIFS_SUCCESS;
+    pifs_entry_t  * entry = &pifs.entry;
+    pifs_address_t  entry_list_address = pifs.current_entry_list_address;
+    pifs_char_t     filename[PIFS_FILENAME_LEN_MAX];
 
-    if (a_filename[0] == PIFS_PATH_SEPARATOR_CHAR &&
-            a_filename[1] == PIFS_EOS)
+    if (a_filename[0] == PIFS_PATH_SEPARATOR_CHAR
+            && a_filename[1] == PIFS_EOS)
     {
         /* Root directory: "/" or "\" */
         pifs.current_entry_list_address = pifs.header.root_entry_list_address;
+        pifs.cwd[0] = PIFS_PATH_SEPARATOR_CHAR;
+        pifs.cwd[1] = PIFS_EOS;
     }
     else
     {
-        /* TODO resolve a_filename's relative/absolute file path and update
-     * entry_list_address regarding that */
+        /* TODO resolve a_filename's relative/absolute file path and update */
+        /* entry_list_address regarding that */
         ret = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
                                 filename, &entry_list_address);
 
