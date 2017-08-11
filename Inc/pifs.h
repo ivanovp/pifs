@@ -130,6 +130,9 @@
 #else
 #define PIFS_ROOT_STR                       "\\"
 #endif
+#define PIFS_DOT_CHAR                       '.'
+#define PIFS_DOT_STR                        "."
+#define PIFS_DOUBLE_DOT_STR                 ".."
 #define PIFS_EOS                            0
 
 #if PIFS_LOGICAL_PAGE_SIZE_BYTE < PIFS_FLASH_PAGE_SIZE_BYTE

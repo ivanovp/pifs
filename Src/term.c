@@ -759,6 +759,7 @@ void cmdMakeDir (char* command, char* params)
 
 void cmdChDir (char* command, char* params)
 {
+    char cwd[PIFS_PATH_LEN_MAX];
     const char * name;
     int ret;
 
@@ -774,6 +775,7 @@ void cmdChDir (char* command, char* params)
             if (ret == 0)
             {
                 printf("Done.\r\n");
+                printf("Current working directory: %s\r\n", pifs_getcwd(cwd, sizeof(cwd)));
             }
             else
             {

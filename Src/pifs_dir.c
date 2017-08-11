@@ -232,6 +232,172 @@ pifs_status_t pifs_walk_dir(pifs_char_t * a_path, bool_t a_recursive, bool_t a_s
 }
 
 #if PIFS_ENABLE_DIRECTORIES
+void pifs_delete_chars(pifs_char_t * a_string, pifs_size_t a_idx, pifs_size_t a_count)
+{
+    pifs_size_t i;
+    pifs_size_t len;
+
+    PIFS_DEBUG_MSG("before %s, idx: %i, count: %i\r\n", a_string, a_idx, a_count);
+    len = strlen(a_string) - a_count + 1;
+//    if (a_idx + a_count < len)
+    {
+        for (i = a_idx; i < len; i++)
+        {
+            a_string[i] = a_string[i + a_count];
+        }
+    }
+//    else
+//    {
+//        a_string[a_idx] = PIFS_EOS;
+//    }
+    PIFS_DEBUG_MSG("after %s\r\n", a_string);
+}
+
+void pifs_normalize_path(pifs_char_t * a_path)
+{
+    size_t              i;
+    size_t              separator_pos[2] = { 0 };
+    size_t              path_len;
+    bool_t              is_deleted = TRUE;
+    bool_t              end = FALSE;
+    typedef enum
+    {
+        NORM_start = 0,
+        NORM_separator,
+        NORM_dot,
+        NORM_dot2,
+    } norm_state_t;
+    norm_state_t        norm_state = NORM_start;
+
+    do
+    {
+        PIFS_DEBUG_MSG("start %s\r\n", a_path);
+        separator_pos[1] = 0;
+        separator_pos[0] = 0;
+        is_deleted = FALSE;
+        end = FALSE;
+        path_len = strlen(a_path);
+        for (i = 0; i < path_len && !end; i++)
+        {
+            if (a_path[i] == PIFS_DOT_CHAR)
+            {
+                printf(".state: %i\r\n", norm_state);
+                if (norm_state == NORM_separator)
+                {
+                    norm_state = NORM_dot;
+                }
+                else if (norm_state == NORM_dot)
+                {
+                    norm_state = NORM_dot2;
+                }
+            }
+            if (a_path[i] == PIFS_PATH_SEPARATOR_CHAR
+                     || i == (path_len - 1))
+            {
+                printf("/state: %i\r\n", norm_state);
+                if (i == (path_len - 1))
+                {
+                    printf("END!\r\n");
+                }
+                if (norm_state == NORM_dot)
+                {
+                    pifs_delete_chars(a_path, i - 2, 2);
+                    is_deleted = TRUE;
+                    end = TRUE;
+                }
+                else if (norm_state == NORM_dot2)
+                {
+                    pifs_delete_chars(a_path, separator_pos[1], i - separator_pos[1]);
+                    is_deleted = TRUE;
+                    end = TRUE;
+                }
+                norm_state = NORM_separator;
+                separator_pos[1] = separator_pos[0];
+                separator_pos[0] = i;
+                printf("separator_pos[1]: %i\r\n", separator_pos[1]);
+                printf("separator_pos[0]: %i\r\n", separator_pos[0]);
+            }
+        }
+        PIFS_DEBUG_MSG("end %s\r\n", a_path);
+    } while (is_deleted);
+}
+#if 0
+void pifs_normalize_path(pifs_char_t * a_path)
+{
+    size_t              i;
+    size_t              path_len;
+    size_t              len;
+    pifs_char_t         name[PIFS_FILENAME_LEN_MAX]; /* TODO try to avoid stack use */
+    const pifs_char_t * curr_path_pos = a_path;
+    pifs_char_t       * prev2_separator_pos = NULL;
+    pifs_char_t       * prev_separator_pos = NULL;
+    pifs_char_t       * curr_separator_pos = NULL;
+    bool_t              is_deleted = TRUE;
+    bool_t              end = FALSE;
+//    pifs_char_t         test[] = "0123456789";
+
+    PIFS_DEBUG_MSG("before %s\r\n", a_path);
+
+//    PIFS_DEBUG_MSG("-test: %s\r\n", test);
+//    pifs_delete_chars(test, 0, 9);
+//    PIFS_DEBUG_MSG("+test: %s\r\n", test);
+
+    path_len = strlen(a_path);
+    do
+    {
+        curr_path_pos = a_path;
+        if (curr_path_pos[0] == PIFS_PATH_SEPARATOR_CHAR)
+        {
+            curr_path_pos++;
+        }
+        PIFS_DEBUG_MSG("path %s\r\n", a_path);
+        is_deleted = FALSE;
+        end = FALSE;
+        do
+        {
+            curr_separator_pos = strchr(curr_path_pos, PIFS_PATH_SEPARATOR_CHAR);
+            if (curr_separator_pos)
+            {
+                len = curr_separator_pos - curr_path_pos;
+                PIFS_DEBUG_MSG("len: %i\r\n", len);
+                PIFS_DEBUG_MSG("curr_separator_pos: %s\r\n", curr_separator_pos);
+            }
+            else
+            {
+                /* No separator character found, end of path */
+                end = TRUE;
+                curr_separator_pos = curr_path_pos;
+                len = strlen(curr_path_pos);
+                PIFS_DEBUG_MSG("Last, len: %i\r\n", len);
+                PIFS_DEBUG_MSG("curr_separator_pos: %s\r\n", curr_separator_pos);
+            }
+            memcpy(name, curr_path_pos, len);
+            name[len] = PIFS_EOS;
+            PIFS_DEBUG_MSG("name: [%s]\r\n", name);
+            if (strncmp(name, PIFS_DOT_STR, PIFS_PATH_LEN_MAX) == 0)
+            {
+                PIFS_DEBUG_MSG("delete dir '.'\r\n");
+                pifs_delete_chars(curr_path_pos - 1, 0, len + 1);
+            }
+            if (strncmp(name, PIFS_DOUBLE_DOT_STR, PIFS_PATH_LEN_MAX) == 0)
+            {
+                PIFS_DEBUG_MSG("delete dir '..'\r\n");
+                PIFS_DEBUG_MSG("curr_separator_pos: %s\r\n", curr_separator_pos);
+                PIFS_DEBUG_MSG("prev_separator_pos: %s\r\n", prev_separator_pos);
+                PIFS_DEBUG_MSG("prev2_separator_pos: %s\r\n", prev2_separator_pos);
+                pifs_delete_chars(prev2_separator_pos, 0,
+                                  curr_separator_pos - prev2_separator_pos);
+                is_deleted = TRUE;
+            }
+            prev2_separator_pos = prev_separator_pos;
+            prev_separator_pos = curr_separator_pos;
+            curr_path_pos = curr_separator_pos + 1;
+        } while (!is_deleted && !end);
+    } while (is_deleted);
+    PIFS_DEBUG_MSG("after %s\r\n", a_path);
+}
+#endif
+
 pifs_status_t pifs_resolve_path(const pifs_char_t * a_path,
                                 pifs_address_t a_current_entry_list_address,
                                 pifs_char_t * const a_filename,
@@ -246,8 +412,10 @@ pifs_status_t pifs_resolve_path(const pifs_char_t * a_path,
     pifs_size_t         len;
 
     PIFS_DEBUG_MSG("path: [%s]\r\n", a_path);
+    /* Check if it is an absolute path */
     if (a_path[0] == PIFS_PATH_SEPARATOR_CHAR)
     {
+        /* Absolute path, start from root entry list */
         curr_path_pos++;
         entry_list_address = pifs.header.root_entry_list_address;
     }
@@ -303,7 +471,7 @@ int pifs_mkdir(const pifs_char_t * a_filename)
     pifs_address_t       entry_list_address = pifs.current_entry_list_address;
     pifs_char_t          filename[PIFS_FILENAME_LEN_MAX];
 
-    /* TODO resolve a_filename's relative/absolute file path and update
+    /* Resolve a_filename's relative/absolute file path and update
      * entry_list_address regarding that */
     ret = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
                             filename, &entry_list_address);
@@ -347,7 +515,7 @@ int pifs_mkdir(const pifs_char_t * a_filename)
                 {
                     /* Add current directory's entry "." */
                     memset(entry, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
-                    strncpy((char*)entry->name, ".", PIFS_FILENAME_LEN_MAX);
+                    strncpy((char*)entry->name, PIFS_DOT_STR, PIFS_FILENAME_LEN_MAX);
                     PIFS_SET_ATTRIB(entry->attrib, PIFS_ATTRIB_ARCHIVE | PIFS_ATTRIB_DIR);
                     entry->first_map_address.block_address = ba;
                     entry->first_map_address.page_address = pa;
@@ -356,7 +524,7 @@ int pifs_mkdir(const pifs_char_t * a_filename)
                 if (ret == PIFS_SUCCESS)
                 {
                     /* Add upper directory's entry ".." */
-                    strncpy((char*)entry->name, "..", PIFS_FILENAME_LEN_MAX);
+                    strncpy((char*)entry->name, PIFS_DOUBLE_DOT_STR, PIFS_FILENAME_LEN_MAX);
                     PIFS_SET_ATTRIB(entry->attrib, PIFS_ATTRIB_ARCHIVE | PIFS_ATTRIB_DIR);
                     entry->first_map_address.block_address = entry_list_address.block_address;
                     entry->first_map_address.page_address = entry_list_address.page_address;
@@ -383,10 +551,11 @@ int pifs_rmdir(const pifs_char_t * a_filename)
 
 int pifs_chdir(const pifs_char_t * a_filename)
 {
-    pifs_status_t   ret = PIFS_SUCCESS;
-    pifs_entry_t  * entry = &pifs.entry;
-    pifs_address_t  entry_list_address = pifs.current_entry_list_address;
-    pifs_char_t     filename[PIFS_FILENAME_LEN_MAX];
+    pifs_status_t     ret = PIFS_SUCCESS;
+    pifs_entry_t    * entry = &pifs.entry;
+    pifs_address_t    entry_list_address = pifs.current_entry_list_address;
+    const pifs_char_t filename[PIFS_FILENAME_LEN_MAX];
+    pifs_char_t       separator[2] = { PIFS_PATH_SEPARATOR_CHAR, 0 };
 
     if (a_filename[0] == PIFS_PATH_SEPARATOR_CHAR
             && a_filename[1] == PIFS_EOS)
@@ -398,7 +567,7 @@ int pifs_chdir(const pifs_char_t * a_filename)
     }
     else
     {
-        /* TODO resolve a_filename's relative/absolute file path and update */
+        /* Resolve a_filename's relative/absolute file path and update */
         /* entry_list_address regarding that */
         ret = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
                                 filename, &entry_list_address);
@@ -415,6 +584,12 @@ int pifs_chdir(const pifs_char_t * a_filename)
             {
                 /* TODO update pifs.cwd ! */
                 pifs.current_entry_list_address = entry->first_map_address;
+                if (pifs.cwd[strlen(pifs.cwd) - 1] != PIFS_PATH_SEPARATOR_CHAR)
+                {
+                    strncat(pifs.cwd, separator, PIFS_PATH_LEN_MAX);
+                }
+                strncat(pifs.cwd, a_filename, PIFS_PATH_LEN_MAX);
+                pifs_normalize_path(&pifs.cwd);
             }
             else
             {
