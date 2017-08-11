@@ -604,10 +604,12 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
     pifs_size_t   free_entries = 0;
     pifs_size_t   to_be_released_entries = 0;
 
+    PIFS_DEBUG_MSG("name: %s, data page min: %i\r\n",
+                   a_file ? a_file->entry.name : "NULL", a_data_page_count_minimum);
     /* Get number of free management and data pages */
     ret = pifs_get_free_pages(&free_management_pages, &free_data_pages);
-//    PIFS_NOTICE_MSG("free_data_pages: %lu, free_management_pages: %lu\r\n",
-//                    free_data_pages, free_management_pages);
+    PIFS_NOTICE_MSG("free_data_pages: %lu, free_management_pages: %lu\r\n",
+                    free_data_pages, free_management_pages);
     if (ret == PIFS_SUCCESS)
     {
         ret = pifs_count_entries(&free_entries, &to_be_released_entries,
@@ -650,6 +652,9 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
                     {
                         /* It is not an error when there are no to be released */
                         /* blocks */
+                        /* TODO When no blocks can be released, static wear leveling */
+                        /* may be useful, but some space shall be reserved as */
+                        /* at this point there is no free space! */
                         ret = PIFS_SUCCESS;
                     }
                 }

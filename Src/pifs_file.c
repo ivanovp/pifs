@@ -440,18 +440,26 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
                 } while (page_count_needed && file->status == PIFS_SUCCESS);
             }
         }
-        file->write_pos += written_size;
-        if (file->write_pos > file->entry.file_size
-                || file->entry.file_size == PIFS_FILE_SIZE_ERASED)
+        if (file->status == PIFS_SUCCESS)
         {
-            file->is_size_changed = TRUE;
-            file->entry.file_size = file->write_pos;
-            PIFS_DEBUG_MSG("File size increased to %i bytes\r\n", file->entry.file_size);
+            file->write_pos += written_size;
+            if (file->write_pos > file->entry.file_size
+                    || file->entry.file_size == PIFS_FILE_SIZE_ERASED)
+            {
+                file->is_size_changed = TRUE;
+                file->entry.file_size = file->write_pos;
+                PIFS_DEBUG_MSG("File size increased to %i bytes\r\n", file->entry.file_size);
+            }
+            if (!file->mode_append)
+            {
+                file->read_pos = file->write_pos;
+                file->read_address = file->write_address;
+            }
         }
-        if (!file->mode_append)
+        else
         {
-            file->read_pos = file->write_pos;
-            file->read_address = file->write_address;
+            /* Error occurred */
+            written_size = 0;
         }
     }
 

@@ -20,7 +20,7 @@
 #include "pifs_delta.h"
 #include "pifs_map.h"
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 5
 #include "pifs_debug.h"
 
 /**
@@ -70,8 +70,8 @@ pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
                 && a_file->map_header.next_map_address.page_address < PIFS_PAGE_ADDRESS_INVALID)
         {
             a_file->actual_map_address = a_file->map_header.next_map_address;
-            PIFS_DEBUG_MSG("Next map address %s\r\n",
-                           pifs_address2str(&a_file->actual_map_address));
+//            PIFS_DEBUG_MSG("Next map address %s\r\n",
+//                           pifs_address2str(&a_file->actual_map_address));
             a_file->status = pifs_read(a_file->actual_map_address.block_address,
                                        a_file->actual_map_address.page_address,
                                        0, &a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE);
@@ -89,9 +89,9 @@ pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
                                    PIFS_MAP_HEADER_SIZE_BYTE + a_file->map_entry_idx * PIFS_MAP_ENTRY_SIZE_BYTE,
                                    &a_file->map_entry,
                                    PIFS_MAP_ENTRY_SIZE_BYTE);
-        PIFS_DEBUG_MSG("Map entry %s, page count: %i\r\n",
-                       pifs_address2str(&a_file->map_entry.address),
-                       a_file->map_entry.page_count);
+//        PIFS_DEBUG_MSG("Map entry %s, page count: %i\r\n",
+//                       pifs_address2str(&a_file->map_entry.address),
+//                       a_file->map_entry.page_count);
     }
 
     return a_file->status;
@@ -231,6 +231,11 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
         PIFS_DEBUG_MSG("### New map entry %s ###\r\n",
                        pifs_ba_pa2str(ba, pa));
 //        pifs_print_cache();
+    }
+    else
+    {
+        a_file->status = PIFS_ERROR_NO_MORE_SPACE;
+        PIFS_ERROR_MSG("Cannot create new map!\r\n");
     }
 
     return a_file->status;
