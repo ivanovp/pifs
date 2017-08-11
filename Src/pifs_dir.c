@@ -24,7 +24,7 @@
 #include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 5
 #include "pifs_debug.h"
 
 /**
@@ -234,19 +234,18 @@ pifs_status_t pifs_walk_dir(pifs_char_t * a_path, bool_t a_recursive, bool_t a_s
 #if PIFS_ENABLE_DIRECTORIES
 pifs_status_t pifs_resolve_path(const pifs_char_t * a_path,
                                 pifs_address_t a_current_entry_list_address,
-                                const pifs_char_t * a_filename,
-                                pifs_address_t * a_resolved_entry_list_address)
+                                pifs_char_t * const a_filename,
+                                pifs_address_t * const a_resolved_entry_list_address)
 {
     pifs_status_t       ret = PIFS_SUCCESS;
     const pifs_char_t * curr_path_pos = a_path;
     pifs_char_t       * curr_separator_pos = NULL;
-    pifs_char_t       * next_separator_pos = NULL;
     pifs_address_t      entry_list_address = a_current_entry_list_address;
     pifs_char_t         name[PIFS_FILENAME_LEN_MAX]; /* TODO try to avoid stack use */
     pifs_entry_t      * entry = &pifs.entry;
     pifs_size_t         len;
 
-    PIFS_PRINT_MSG("path: [%s]\r\n", a_path);
+    PIFS_DEBUG_MSG("path: [%s]\r\n", a_path);
     if (a_path[0] == PIFS_PATH_SEPARATOR_CHAR)
     {
         curr_path_pos++;
@@ -255,18 +254,10 @@ pifs_status_t pifs_resolve_path(const pifs_char_t * a_path,
     while ((curr_separator_pos = strchr(curr_path_pos, PIFS_PATH_SEPARATOR_CHAR))
            && ret == PIFS_SUCCESS)
     {
-        next_separator_pos = strchr(curr_separator_pos, PIFS_PATH_SEPARATOR_CHAR);
-        if (next_separator_pos)
-        {
-            len = next_separator_pos - curr_separator_pos;
-            memcpy(name, curr_separator_pos, len);
-            name[len] = PIFS_EOS;
-        }
-        else
-        {
-            strncpy(name, curr_separator_pos, PIFS_FILENAME_LEN_MAX);
-        }
-        PIFS_PRINT_MSG("name: [%s]\r\n", name);
+        len = curr_separator_pos - curr_path_pos;
+        memcpy(name, curr_path_pos, len);
+        name[len] = PIFS_EOS;
+        PIFS_DEBUG_MSG("name: [%s]\r\n", name);
         ret = pifs_find_entry(PIFS_FIND_ENTRY, name, entry,
                               entry_list_address.block_address,
                               entry_list_address.page_address);
@@ -282,16 +273,22 @@ pifs_status_t pifs_resolve_path(const pifs_char_t * a_path,
                 ret = PIFS_ERROR_IS_NOT_DIRECTORY;
             }
         }
+        curr_path_pos = curr_separator_pos + 1;
     }
-    if (curr_separator_pos == a_path)
+    if (curr_path_pos == a_path)
     {
         strncpy(a_filename, a_path, PIFS_FILENAME_LEN_MAX);
     }
     else
     {
-        strncpy(a_filename, name, PIFS_FILENAME_LEN_MAX);
+        strncpy(a_filename, curr_path_pos, PIFS_FILENAME_LEN_MAX);
     }
-    PIFS_PRINT_MSG("a_filename: [%s]\r\n", a_filename);
+    if (ret == PIFS_SUCCESS)
+    {
+        *a_resolved_entry_list_address = entry_list_address;
+    }
+    PIFS_INFO_MSG("a_filename: [%s] entry list address: %s\r\n",
+                   a_filename, pifs_address2str(a_resolved_entry_list_address));
 
     return ret;
 }
@@ -391,27 +388,36 @@ int pifs_chdir(const pifs_char_t * a_filename)
     pifs_address_t       entry_list_address = pifs.current_entry_list_address;
     pifs_char_t          filename[PIFS_FILENAME_LEN_MAX];
 
-    /* TODO resolve a_filename's relative/absolute file path and update
-     * entry_list_address regarding that */
-    ret = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
-                            filename, &entry_list_address);
-
-    if (ret == PIFS_SUCCESS)
+    if (a_filename[0] == PIFS_PATH_SEPARATOR_CHAR &&
+            a_filename[1] == PIFS_EOS)
     {
-        ret = pifs_find_entry(PIFS_FIND_ENTRY, filename, entry,
-                              entry_list_address.block_address,
-                              entry_list_address.page_address);
+        /* Root directory: "/" or "\" */
+        pifs.current_entry_list_address = pifs.header.root_entry_list_address;
     }
-    if (ret == PIFS_SUCCESS)
+    else
     {
-        if (PIFS_IS_DIR(entry->attrib))
+        /* TODO resolve a_filename's relative/absolute file path and update
+     * entry_list_address regarding that */
+        ret = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
+                                filename, &entry_list_address);
+
+        if (ret == PIFS_SUCCESS)
         {
-            /* TODO update pifs.cwd ! */
-            pifs.current_entry_list_address = entry->first_map_address;
+            ret = pifs_find_entry(PIFS_FIND_ENTRY, filename, entry,
+                                  entry_list_address.block_address,
+                                  entry_list_address.page_address);
         }
-        else
+        if (ret == PIFS_SUCCESS)
         {
-            ret = PIFS_ERROR_IS_NOT_DIRECTORY;
+            if (PIFS_IS_DIR(entry->attrib))
+            {
+                /* TODO update pifs.cwd ! */
+                pifs.current_entry_list_address = entry->first_map_address;
+            }
+            else
+            {
+                ret = PIFS_ERROR_IS_NOT_DIRECTORY;
+            }
         }
     }
 
