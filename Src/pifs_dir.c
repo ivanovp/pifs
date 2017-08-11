@@ -237,7 +237,61 @@ pifs_status_t pifs_resolve_path(const pifs_char_t * a_path,
                                 const pifs_char_t * a_filename,
                                 pifs_address_t * a_resolved_entry_list_address)
 {
-    pifs_status_t        ret = PIFS_SUCCESS;
+    pifs_status_t       ret = PIFS_SUCCESS;
+    const pifs_char_t * curr_path_pos = a_path;
+    pifs_char_t       * curr_separator_pos = NULL;
+    pifs_char_t       * next_separator_pos = NULL;
+    pifs_address_t      entry_list_address = a_current_entry_list_address;
+    pifs_char_t         name[PIFS_FILENAME_LEN_MAX]; /* TODO try to avoid stack use */
+    pifs_entry_t      * entry = &pifs.entry;
+    pifs_size_t         len;
+
+    PIFS_PRINT_MSG("path: [%s]\r\n", a_path);
+    if (a_path[0] == PIFS_PATH_SEPARATOR_CHAR)
+    {
+        curr_path_pos++;
+        entry_list_address = pifs.header.root_entry_list_address;
+    }
+    while ((curr_separator_pos = strchr(curr_path_pos, PIFS_PATH_SEPARATOR_CHAR))
+           && ret == PIFS_SUCCESS)
+    {
+        next_separator_pos = strchr(curr_separator_pos, PIFS_PATH_SEPARATOR_CHAR);
+        if (next_separator_pos)
+        {
+            len = next_separator_pos - curr_separator_pos;
+            memcpy(name, curr_separator_pos, len);
+            name[len] = PIFS_EOS;
+        }
+        else
+        {
+            strncpy(name, curr_separator_pos, PIFS_FILENAME_LEN_MAX);
+        }
+        PIFS_PRINT_MSG("name: [%s]\r\n", name);
+        ret = pifs_find_entry(PIFS_FIND_ENTRY, name, entry,
+                              entry_list_address.block_address,
+                              entry_list_address.page_address);
+        if (ret == PIFS_SUCCESS)
+        {
+            if (PIFS_IS_DIR(entry->attrib))
+            {
+                entry_list_address = entry->first_map_address;
+            }
+            else
+            {
+                PIFS_ERROR_MSG("'%s' is not directory!\r\n", entry->name);
+                ret = PIFS_ERROR_IS_NOT_DIRECTORY;
+            }
+        }
+    }
+    if (curr_separator_pos == a_path)
+    {
+        strncpy(a_filename, a_path, PIFS_FILENAME_LEN_MAX);
+    }
+    else
+    {
+        strncpy(a_filename, name, PIFS_FILENAME_LEN_MAX);
+    }
+    PIFS_PRINT_MSG("a_filename: [%s]\r\n", a_filename);
 
     return ret;
 }
@@ -250,17 +304,19 @@ int pifs_mkdir(const pifs_char_t * a_filename)
     pifs_page_address_t  pa;
     pifs_page_count_t    page_count_found;
     pifs_address_t       entry_list_address = pifs.current_entry_list_address;
+    pifs_char_t          filename[PIFS_FILENAME_LEN_MAX];
 
     /* TODO resolve a_filename's relative/absolute file path and update
      * entry_list_address regarding that */
-#if 0
     ret = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
                             filename, &entry_list_address);
-#endif
 
-    ret = pifs_find_entry(PIFS_FIND_ENTRY, a_filename, entry,
-                          entry_list_address.block_address,
-                          entry_list_address.page_address);
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_find_entry(PIFS_FIND_ENTRY, filename, entry,
+                              entry_list_address.block_address,
+                              entry_list_address.page_address);
+    }
     if (ret == PIFS_SUCCESS)
     {
         ret = PIFS_ERROR_FILE_ALREADY_EXIST;
@@ -333,17 +389,19 @@ int pifs_chdir(const pifs_char_t * a_filename)
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_entry_t       * entry = &pifs.entry;
     pifs_address_t       entry_list_address = pifs.current_entry_list_address;
+    pifs_char_t          filename[PIFS_FILENAME_LEN_MAX];
 
     /* TODO resolve a_filename's relative/absolute file path and update
      * entry_list_address regarding that */
-#if 0
     ret = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
                             filename, &entry_list_address);
-#endif
 
-    ret = pifs_find_entry(PIFS_FIND_ENTRY, a_filename, entry,
-                          entry_list_address.block_address,
-                          entry_list_address.page_address);
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_find_entry(PIFS_FIND_ENTRY, filename, entry,
+                              entry_list_address.block_address,
+                              entry_list_address.page_address);
+    }
     if (ret == PIFS_SUCCESS)
     {
         if (PIFS_IS_DIR(entry->attrib))
