@@ -255,30 +255,36 @@ void pifs_delete_chars(pifs_char_t * a_string, pifs_size_t a_idx, pifs_size_t a_
 
 void pifs_normalize_path(pifs_char_t * a_path)
 {
-    size_t              i;
-    size_t              separator_pos[2] = { 0 };
-    size_t              path_len;
-    bool_t              is_deleted = TRUE;
-    bool_t              end = FALSE;
     typedef enum
     {
         NORM_start = 0,
         NORM_separator,
         NORM_dot,
         NORM_dot2,
+        NORM_other,
     } norm_state_t;
     norm_state_t        norm_state = NORM_start;
+    size_t              i;
+    size_t              separator_pos[2] = { 0 };
+    size_t              path_len;
+    bool_t              is_deleted = TRUE;
+    bool_t              end = FALSE;
 
     do
     {
         PIFS_DEBUG_MSG("start %s\r\n", a_path);
-        separator_pos[1] = 0;
-        separator_pos[0] = 0;
+        separator_pos[1] = 0; /* Befor last separator's position */
+        separator_pos[0] = 0; /* Last separator's position */
         is_deleted = FALSE;
         end = FALSE;
         path_len = strlen(a_path);
+        norm_state = NORM_start;
         for (i = 0; i < path_len && !end; i++)
         {
+            if (a_path[i] != PIFS_DOT_CHAR && a_path[i] != PIFS_PATH_SEPARATOR_CHAR)
+            {
+                norm_state = NORM_other;
+            }
             if (a_path[i] == PIFS_DOT_CHAR)
             {
                 printf(".state: %i\r\n", norm_state);
@@ -295,9 +301,11 @@ void pifs_normalize_path(pifs_char_t * a_path)
                      || i == (path_len - 1))
             {
                 printf("/state: %i\r\n", norm_state);
+                printf("separator_pos[1]: %i\r\n", separator_pos[1]);
+                printf("separator_pos[0]: %i\r\n", separator_pos[0]);
                 if (i == (path_len - 1))
                 {
-                    printf("END!\r\n");
+                    i++;
                 }
                 if (norm_state == NORM_dot)
                 {
@@ -314,89 +322,11 @@ void pifs_normalize_path(pifs_char_t * a_path)
                 norm_state = NORM_separator;
                 separator_pos[1] = separator_pos[0];
                 separator_pos[0] = i;
-                printf("separator_pos[1]: %i\r\n", separator_pos[1]);
-                printf("separator_pos[0]: %i\r\n", separator_pos[0]);
             }
         }
         PIFS_DEBUG_MSG("end %s\r\n", a_path);
     } while (is_deleted);
 }
-#if 0
-void pifs_normalize_path(pifs_char_t * a_path)
-{
-    size_t              i;
-    size_t              path_len;
-    size_t              len;
-    pifs_char_t         name[PIFS_FILENAME_LEN_MAX]; /* TODO try to avoid stack use */
-    const pifs_char_t * curr_path_pos = a_path;
-    pifs_char_t       * prev2_separator_pos = NULL;
-    pifs_char_t       * prev_separator_pos = NULL;
-    pifs_char_t       * curr_separator_pos = NULL;
-    bool_t              is_deleted = TRUE;
-    bool_t              end = FALSE;
-//    pifs_char_t         test[] = "0123456789";
-
-    PIFS_DEBUG_MSG("before %s\r\n", a_path);
-
-//    PIFS_DEBUG_MSG("-test: %s\r\n", test);
-//    pifs_delete_chars(test, 0, 9);
-//    PIFS_DEBUG_MSG("+test: %s\r\n", test);
-
-    path_len = strlen(a_path);
-    do
-    {
-        curr_path_pos = a_path;
-        if (curr_path_pos[0] == PIFS_PATH_SEPARATOR_CHAR)
-        {
-            curr_path_pos++;
-        }
-        PIFS_DEBUG_MSG("path %s\r\n", a_path);
-        is_deleted = FALSE;
-        end = FALSE;
-        do
-        {
-            curr_separator_pos = strchr(curr_path_pos, PIFS_PATH_SEPARATOR_CHAR);
-            if (curr_separator_pos)
-            {
-                len = curr_separator_pos - curr_path_pos;
-                PIFS_DEBUG_MSG("len: %i\r\n", len);
-                PIFS_DEBUG_MSG("curr_separator_pos: %s\r\n", curr_separator_pos);
-            }
-            else
-            {
-                /* No separator character found, end of path */
-                end = TRUE;
-                curr_separator_pos = curr_path_pos;
-                len = strlen(curr_path_pos);
-                PIFS_DEBUG_MSG("Last, len: %i\r\n", len);
-                PIFS_DEBUG_MSG("curr_separator_pos: %s\r\n", curr_separator_pos);
-            }
-            memcpy(name, curr_path_pos, len);
-            name[len] = PIFS_EOS;
-            PIFS_DEBUG_MSG("name: [%s]\r\n", name);
-            if (strncmp(name, PIFS_DOT_STR, PIFS_PATH_LEN_MAX) == 0)
-            {
-                PIFS_DEBUG_MSG("delete dir '.'\r\n");
-                pifs_delete_chars(curr_path_pos - 1, 0, len + 1);
-            }
-            if (strncmp(name, PIFS_DOUBLE_DOT_STR, PIFS_PATH_LEN_MAX) == 0)
-            {
-                PIFS_DEBUG_MSG("delete dir '..'\r\n");
-                PIFS_DEBUG_MSG("curr_separator_pos: %s\r\n", curr_separator_pos);
-                PIFS_DEBUG_MSG("prev_separator_pos: %s\r\n", prev_separator_pos);
-                PIFS_DEBUG_MSG("prev2_separator_pos: %s\r\n", prev2_separator_pos);
-                pifs_delete_chars(prev2_separator_pos, 0,
-                                  curr_separator_pos - prev2_separator_pos);
-                is_deleted = TRUE;
-            }
-            prev2_separator_pos = prev_separator_pos;
-            prev_separator_pos = curr_separator_pos;
-            curr_path_pos = curr_separator_pos + 1;
-        } while (!is_deleted && !end);
-    } while (is_deleted);
-    PIFS_DEBUG_MSG("after %s\r\n", a_path);
-}
-#endif
 
 pifs_status_t pifs_resolve_path(const pifs_char_t * a_path,
                                 pifs_address_t a_current_entry_list_address,
@@ -582,7 +512,7 @@ int pifs_chdir(const pifs_char_t * a_filename)
         {
             if (PIFS_IS_DIR(entry->attrib))
             {
-                /* TODO update pifs.cwd ! */
+                /* Update current working directory (pifs.cwd) */
                 pifs.current_entry_list_address = entry->first_map_address;
                 if (pifs.cwd[strlen(pifs.cwd) - 1] != PIFS_PATH_SEPARATOR_CHAR)
                 {
@@ -590,6 +520,11 @@ int pifs_chdir(const pifs_char_t * a_filename)
                 }
                 strncat(pifs.cwd, a_filename, PIFS_PATH_LEN_MAX);
                 pifs_normalize_path(&pifs.cwd);
+                if (pifs.cwd[0] == PIFS_EOS)
+                {
+                    pifs.cwd[0] = PIFS_PATH_SEPARATOR_CHAR;
+                    pifs.cwd[1] = PIFS_EOS;
+                }
             }
             else
             {
