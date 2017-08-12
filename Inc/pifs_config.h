@@ -24,7 +24,7 @@
 #define PIFS_OPEN_DIR_NUM_MAX           2u   /**< Maximum number of opened directories */
 #define PIFS_FILENAME_LEN_MAX           32u  /**< Maximum length of file name */
 #define PIFS_PATH_LEN_MAX               128u /**< Maximum length of path. Only relevent if PIFS_ENABLE_DIRECTORIES is 1. */
-#define PIFS_ENTRY_NUM_MAX              32u  /**< Maximum number of files and directories */
+#define PIFS_ENTRY_NUM_MAX              32u  /**< Maximum number of files and directories in a directory */
 #define PIFS_ENABLE_USER_DATA           1u   /**< 1: Add user data (pifs_user_data_t) to every file, 0: don't add user data */
 #define PIFS_MANAGEMENT_BLOCK_NUM       1u   /**< Number of management blocks. Minimum: 1 (Allocated area is twice of this number.) */
 #define PIFS_LEAST_WEARED_BLOCK_NUM     6u   /**< Number of stored least weared blocks */

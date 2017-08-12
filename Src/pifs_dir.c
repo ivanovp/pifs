@@ -262,8 +262,12 @@ pifs_DIR * pifs_opendir(const pifs_char_t * a_name)
     {
         /* Root directory: "/" or "\" */
         pifs.current_entry_list_address = pifs.header.root_entry_list_address;
-        pifs.cwd[0] = PIFS_PATH_SEPARATOR_CHAR;
-        pifs.cwd[1] = PIFS_EOS;
+    }
+    else if (a_name[0] == PIFS_DOT_CHAR
+            && a_name[1] == PIFS_EOS)
+    {
+        /* Current directory: "." */
+        entry_list_address = pifs.current_entry_list_address;
     }
     else
     {
