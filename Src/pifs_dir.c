@@ -446,9 +446,13 @@ pifs_status_t pifs_walk_dir(const pifs_char_t * const a_path, bool_t a_recursive
     pifs_status_t   ret_error = PIFS_SUCCESS;
     pifs_DIR      * dir;
     pifs_dirent_t * dirent;
+#if PIFS_ENABLE_DIRECTORIES
+    pifs_char_t     path[PIFS_PATH_LEN_MAX];
+#endif
 
-    /* TODO Currently no directories supported */
+#if !PIFS_ENABLE_DIRECTORIES
     (void)a_recursive;
+#endif
 
     dir = pifs_opendir(a_path);
     if (dir != NULL)
@@ -465,6 +469,18 @@ pifs_status_t pifs_walk_dir(const pifs_char_t * const a_path, bool_t a_recursive
             {
                 ret_error = ret2;
             }
+#if PIFS_ENABLE_DIRECTORIES
+            if (ret == PIFS_SUCCESS)
+            {
+                if (a_recursive && PIFS_IS_DIR(dirent->d_attrib))
+                {
+                    strncpy(path, a_path, PIFS_PATH_LEN_MAX);
+                    strncat(path, PIFS_PATH_SEPARATOR_STR, PIFS_PATH_LEN_MAX);
+                    strncat(path, dirent->d_name, PIFS_PATH_LEN_MAX);
+                    ret = pifs_walk_dir(path, TRUE, a_stop_at_error, a_dir_walker_func, a_func_data);
+                }
+            }
+#endif
         }
         if (pifs_closedir (dir) != 0)
         {

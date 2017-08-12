@@ -603,7 +603,7 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
     pifs_size_t   to_be_released_management_pages = 0;
     pifs_size_t   to_be_released_data_pages = 0;
     bool_t        merge = FALSE;
-    bool_t        is_free_map_entry = TRUE;
+    //bool_t        is_free_map_entry = TRUE;
     pifs_block_address_t to_be_released_ba;
     pifs_size_t   free_entries = 0;
     pifs_size_t   to_be_released_entries = 0;

@@ -885,11 +885,6 @@ void cmdMap (char* command, char* params)
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
     //pifs_page_offset_t   po;
-    pifs_status_t        ret;
-    pifs_map_header_t    map_header;
-    pifs_map_entry_t     map_entry;
-    size_t               i;
-    bool_t               end = FALSE;
 
     (void) command;
 
@@ -902,7 +897,7 @@ void cmdMap (char* command, char* params)
         ba = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) / PIFS_LOGICAL_PAGE_PER_BLOCK;
         printf("Map page %s\r\n\r\n", pifs_ba_pa2str(ba, pa));
 
-        ret = pifs_print_map_page(ba, pa, UINT32_MAX);
+        (void)pifs_print_map_page(ba, pa, UINT32_MAX);
     }
 }
 

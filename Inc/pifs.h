@@ -126,8 +126,10 @@
 #define PIFS_FILENAME_TEMP_STR              "%"
 #define PIFS_ROOT_CHAR                      PIFS_PATH_SEPARATOR_CHAR
 #if PIFS_PATH_SEPARATOR_CHAR == '/'
+#define PIFS_PATH_SEPARATOR_STR             "/"
 #define PIFS_ROOT_STR                       "/"
 #else
+#define PIFS_PATH_SEPARATOR_STR             "\\"
 #define PIFS_ROOT_STR                       "\\"
 #endif
 #define PIFS_DOT_CHAR                       '.'
