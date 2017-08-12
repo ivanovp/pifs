@@ -18,7 +18,7 @@
 #include "pifs.h"
 
 typedef pifs_status_t (*pifs_dir_walker_func_t)(pifs_dirent_t * a_dirent, void * a_fund_data);
-pifs_status_t pifs_walk_dir(pifs_char_t * a_path, bool_t a_recursive, bool_t a_stop_at_error,
+pifs_status_t pifs_walk_dir(const pifs_char_t * const a_path, bool_t a_recursive, bool_t a_stop_at_error,
                             pifs_dir_walker_func_t a_dir_walker_func, void * a_func_data);
 
 #endif /* _INCLUDE_PIFS_DIR_H_ */

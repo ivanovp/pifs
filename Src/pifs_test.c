@@ -965,7 +965,7 @@ pifs_status_t pifs_test_list_dir(void)
 
     printf("-------------------------------------------------\r\n");
     printf("List directory test\r\n");
-    dir = pifs_opendir("/");
+    dir = pifs_opendir(".");
     if (dir != NULL)
     {
         while ((dirent = pifs_readdir(dir)))

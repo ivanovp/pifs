@@ -160,11 +160,11 @@ int pifs_feof(P_FILE * a_file);
 long int pifs_filesize(const pifs_char_t * a_filename);
 pifs_DIR * pifs_opendir(const pifs_char_t * a_name);
 struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp);
-int pifs_closedir(pifs_DIR * a_dirp);
+int pifs_closedir(pifs_DIR * const a_dirp);
 #if PIFS_ENABLE_DIRECTORIES
-int pifs_mkdir(const pifs_char_t * a_filename);
-int pifs_rmdir(const pifs_char_t * a_filename);
-int pifs_chdir(const pifs_char_t * a_filename);
+int pifs_mkdir(const pifs_char_t * const a_filename);
+int pifs_rmdir(const pifs_char_t * const a_filename);
+int pifs_chdir(const pifs_char_t * const a_filename);
 pifs_char_t * pifs_getcwd(pifs_char_t * a_buffer, size_t a_size);
 #endif
 #if 0 //PIFS_ENABLE_LINKS

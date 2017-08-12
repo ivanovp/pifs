@@ -391,7 +391,7 @@ void cmdCheckFilesystem (char* command, char* params)
 
 void cmdListDir (char* command, char* params)
 {
-    char               * path = "/";
+    char               * path = ".";
     pifs_DIR           * dir;
     struct pifs_dirent * dirent;
     char               * param;
