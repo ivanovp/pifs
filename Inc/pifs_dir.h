@@ -17,9 +17,11 @@
 #include "pifs_config.h"
 #include "pifs.h"
 
+#if PIFS_ENABLE_DIRECTORIES
 #define PIFS_IS_ONE_DOT_DIR(name) (name[0] == PIFS_DOT_CHAR && name[1] == PIFS_EOS)
 #define PIFS_IS_TWO_DOT_DIR(name) (name[0] == PIFS_DOT_CHAR && name[1] == PIFS_DOT_CHAR && name[2] == PIFS_EOS)
 #define PIFS_IS_DOT_DIR(name) (PIFS_IS_ONE_DOT_DIR(name) || PIFS_IS_TWO_DOT_DIR(name))
+#endif
 
 typedef pifs_status_t (*pifs_dir_walker_func_t)(pifs_dirent_t * a_dirent, void * a_fund_data);
 pifs_status_t pifs_walk_dir(const pifs_char_t * const a_path, bool_t a_recursive, bool_t a_stop_at_error,

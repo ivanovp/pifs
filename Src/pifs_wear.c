@@ -405,10 +405,6 @@ pifs_status_t pifs_empty_block(pifs_block_address_t a_block_address,
         ret = PIFS_SUCCESS;
         while ((dirent = pifs_readdir(dir)) && ret == PIFS_SUCCESS)
         {
-//            printf("%-32s", dirent->d_name);
-//            printf("  %8i", pifs_filesize(dirent->d_name));
-//            printf("  %s", pifs_ba_pa2str(dirent->d_first_map_block_address, dirent->d_first_map_page_address));
-//            printf("\r\n");
             ret = pifs_check_block(dirent->d_name, a_block_address, &is_block_used);
             if (ret == PIFS_SUCCESS && is_block_used)
             {

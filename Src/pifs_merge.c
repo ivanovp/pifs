@@ -348,6 +348,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
     pifs_block_address_t old_entry_list_ba = a_old_entry_list_address->block_address;
     pifs_page_address_t  old_entry_list_pa = a_old_entry_list_address->page_address;
     //pifs_entry_t       * entry = &pifs.entry;
+    /* TODO entry can be large, try to avoid store on stack */
     pifs_entry_t         stack_entry; /* To make function re-entrant */
     pifs_entry_t       * entry = &stack_entry;
 #if PIFS_ENABLE_DIRECTORIES
