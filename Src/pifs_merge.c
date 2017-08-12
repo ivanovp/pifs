@@ -23,6 +23,7 @@
 #include "pifs_map.h"
 #include "pifs_wear.h"
 #include "pifs_file.h"
+#include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
 
 #define PIFS_DEBUG_LEVEL 5
@@ -323,13 +324,17 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
 /**
  * @brief pifs_copy_entry_list copy list of files (entry list) from previous
  * management block.
+ * TODO copy directory's attribute!
  * TODO use pifs_walk_dir or implement other method to enter directory and
  * copy them too!
  *
  * @param[in] a_old_header Pointer to previous file system's header.
  * @return PIFS_SUCCESS if copy was successful.
  */
-static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_header_t * a_new_header)
+static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
+                                          pifs_header_t * a_new_header,
+                                          pifs_address_t * a_old_entry_list_address,
+                                          pifs_address_t * a_new_entry_list_address)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_size_t          i;
@@ -338,16 +343,18 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
     pifs_size_t          k = 0;
 #endif
     bool_t               end = FALSE;
-    pifs_block_address_t new_entry_list_ba = a_new_header->root_entry_list_address.block_address;
-    pifs_page_address_t  new_entry_list_pa = a_new_header->root_entry_list_address.page_address;
-    pifs_block_address_t old_entry_list_ba = a_old_header->root_entry_list_address.block_address;
-    pifs_page_address_t  old_entry_list_pa = a_old_header->root_entry_list_address.page_address;
-    pifs_entry_t       * entry = &pifs.entry;
+    pifs_block_address_t new_entry_list_ba = a_new_entry_list_address->block_address;
+    pifs_page_address_t  new_entry_list_pa = a_new_entry_list_address->page_address;
+    pifs_block_address_t old_entry_list_ba = a_old_entry_list_address->block_address;
+    pifs_page_address_t  old_entry_list_pa = a_old_entry_list_address->page_address;
+    //pifs_entry_t       * entry = &pifs.entry;
+    pifs_entry_t         stack_entry; /* To make function re-entrant */
+    pifs_entry_t       * entry = &stack_entry;
+#if PIFS_ENABLE_DIRECTORIES
+    pifs_entry_t         new_dir_entry;
+#endif
 
     PIFS_NOTICE_MSG("start\r\n");
-#if PIFS_ENABLE_DIRECTORIES
-    pifs.current_entry_list_address = a_new_header->root_entry_list_address;
-#endif
     for (j = 0; j < PIFS_ENTRY_LIST_SIZE_PAGE && ret == PIFS_SUCCESS && !end; j++)
     {
         for (i = 0; i < PIFS_ENTRY_PER_PAGE && ret == PIFS_SUCCESS && !end; i++)
@@ -361,17 +368,54 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header, pifs_hea
                                 entry->name, entry->file_size, entry->attrib);
                 if (!pifs_is_entry_deleted(entry))
                 {
-                    /* Create file in the new management area and copy map */
-                    ret = pifs_copy_map(entry, a_old_header, a_new_header);
-#if PIFS_DEBUG_LEVEL >= 3
-                    k++;
-                    if (((k + 1) % PIFS_ENTRY_PER_PAGE) == 0)
+#if PIFS_ENABLE_DIRECTORIES
+                    if (PIFS_IS_DIR(entry->attrib))
                     {
-                        PIFS_NOTICE_MSG("%s\r\n", pifs_ba_pa2str(new_entry_list_ba, new_entry_list_pa));
-#if PIFS_DEBUG_LEVEL >= 5
-                        print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf),
-                                     new_entry_list_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + new_entry_list_pa * PIFS_LOGICAL_PAGE_SIZE_BYTE);
+                        if (!PIFS_IS_DOT_DIR(entry->name))
+                        {
+                            /* Copy directory */
+                            ret = pifs_mkdir(entry->name);
+                            if (ret == PIFS_SUCCESS)
+                            {
+                                ret = pifs_find_entry(PIFS_FIND_ENTRY, entry->name,
+                                                      &new_dir_entry,
+                                                      pifs.current_entry_list_address.block_address,
+                                                      pifs.current_entry_list_address.page_address);
+                            }
+                            if (ret == PIFS_SUCCESS)
+                            {
+                                /* Enter new directory */
+                                ret = pifs_chdir(entry->name);
+                            }
+                            if (ret == PIFS_SUCCESS)
+                            {
+                                /* Copy entry list of directory */
+                                ret = pifs_copy_entry_list(a_old_header, a_new_header,
+                                                           &entry->first_map_address,
+                                                           &new_dir_entry.first_map_address);
+                            }
+                            if (ret == PIFS_SUCCESS)
+                            {
+                                /* Go back to this directory */
+                                ret = pifs_chdir(PIFS_DOUBLE_DOT_STR);
+                            }
+                        }
+                    }
+                    else
 #endif
+                    {
+                        /* Create file in the new management area and copy map */
+                        ret = pifs_copy_map(entry, a_old_header, a_new_header);
+#if PIFS_DEBUG_LEVEL >= 3
+                        k++;
+                        if (((k + 1) % PIFS_ENTRY_PER_PAGE) == 0)
+                        {
+                            PIFS_NOTICE_MSG("%s\r\n", pifs_ba_pa2str(new_entry_list_ba, new_entry_list_pa));
+#if PIFS_DEBUG_LEVEL >= 5
+                            print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf),
+                                         new_entry_list_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + new_entry_list_pa * PIFS_LOGICAL_PAGE_SIZE_BYTE);
+#endif
+                        }
                     }
 #endif
                 }
@@ -499,7 +543,12 @@ pifs_status_t pifs_merge(void)
     {
         /* Copy file entry list and process delta pages */
         /* This should be before resetting delta pages! */
-        ret = pifs_copy_entry_list(&old_header, &new_header);
+#if PIFS_ENABLE_DIRECTORIES
+        pifs.current_entry_list_address = new_header.root_entry_list_address;
+#endif
+        ret = pifs_copy_entry_list(&old_header, &new_header,
+                                   &old_header.root_entry_list_address,
+                                   &new_header.root_entry_list_address);
     }
     /* #7 */
     if (ret == PIFS_SUCCESS)

@@ -217,12 +217,7 @@ bool_t pifs_is_directory_empty(const pifs_char_t * a_path)
     {
         while ((dirent = pifs_readdir(dir)))
         {
-            if ((dirent->d_name[0] == PIFS_DOT_CHAR && dirent->d_name[1] == PIFS_EOS)
-                    || (dirent->d_name[0] == PIFS_DOT_CHAR
-                        && dirent->d_name[1] == PIFS_DOT_CHAR && dirent->d_name[2] == PIFS_EOS))
-            {
-            }
-            else
+            if (!PIFS_IS_DOT_DIR(dirent->d_name))
             {
                 empty = FALSE;
             }
