@@ -23,6 +23,7 @@
 #include "pifs_merge.h"
 #include "pifs_wear.h"
 #include "pifs_file.h"
+#include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
 
 #define PIFS_DEBUG_LEVEL 3
@@ -376,6 +377,65 @@ pifs_status_t pifs_check_block(pifs_char_t * a_filename,
     return ret;
 }
 
+typedef struct
+{
+    pifs_block_address_t block_address;
+    bool_t               is_block_emptied;
+} pifs_empty_block_t;
+
+/**
+ * @brief pifs_dir_walker_empty Callback function used during block emptying.
+ *
+ * @param[in] a_dirent Pointer to directory entry.
+ *
+ * @return PIFS_SUCCESS when file opened successfully.
+ */
+pifs_status_t pifs_dir_walker_empty(pifs_dirent_t * a_dirent, void * a_func_data)
+{
+    pifs_status_t        ret = PIFS_SUCCESS;
+    pifs_empty_block_t * empty_block = (pifs_empty_block_t*) a_func_data;
+    pifs_char_t          tmp_filename[PIFS_FILENAME_LEN_MAX];
+    bool_t               is_block_used;
+
+    if (!PIFS_IS_DIR(a_dirent->d_attrib))
+    {
+        ret = pifs_check_block(a_dirent->d_name, empty_block->block_address, &is_block_used);
+        if (ret == PIFS_SUCCESS && is_block_used)
+        {
+            empty_block->is_block_emptied = TRUE;
+            PIFS_NOTICE_MSG("File '%s' uses block %i\r\n", a_dirent->d_name, empty_block->block_address);
+            strncpy(tmp_filename, a_dirent->d_name, PIFS_FILENAME_LEN_MAX);
+            /* TODO check filename length! */
+            /* TODO check if tmp_filename does not exists! */
+            strncat(tmp_filename, PIFS_FILENAME_TEMP_STR, PIFS_FILENAME_LEN_MAX);
+            PIFS_NOTICE_MSG("Copy '%s' to '%s'...\r\n", a_dirent->d_name, tmp_filename);
+            ret = pifs_copy(a_dirent->d_name, tmp_filename);
+            if (ret == PIFS_SUCCESS)
+            {
+                PIFS_NOTICE_MSG("Done\r\n");
+                PIFS_NOTICE_MSG("Rename '%s' to '%s'...\r\n", tmp_filename, a_dirent->d_name);
+                ret = pifs_rename(tmp_filename, a_dirent->d_name);
+                if (ret == PIFS_SUCCESS)
+                {
+                    PIFS_NOTICE_MSG("Done\r\n");
+                }
+                else
+                {
+                    PIFS_ERROR_MSG("Cannot rename '%s' to '%s'!\r\n",
+                                   tmp_filename, a_dirent->d_name);
+                }
+            }
+            else
+            {
+                PIFS_ERROR_MSG("Cannot copy '%s' to '%s'!\r\n",
+                               a_dirent->d_name, tmp_filename);
+            }
+        }
+    }
+
+    return ret;
+}
+
 /**
  * @brief pifs_empty_block Create copy of all files which found in
  * the specified block. The older files will be deleted, therefore the
@@ -391,58 +451,16 @@ pifs_status_t pifs_check_block(pifs_char_t * a_filename,
 pifs_status_t pifs_empty_block(pifs_block_address_t a_block_address,
                                bool_t * a_is_emptied)
 {
-    pifs_status_t   ret = PIFS_ERROR_NO_MORE_RESOURCE;
-    pifs_char_t   * path = PIFS_ROOT_STR;
-    pifs_DIR      * dir;
-    pifs_dirent_t * dirent;
-    bool_t          is_block_used;
-    pifs_char_t     tmp_filename[PIFS_FILENAME_LEN_MAX];
+    pifs_status_t      ret = PIFS_ERROR_NO_MORE_RESOURCE;
+    pifs_empty_block_t empty_block;
 
-    *a_is_emptied = FALSE;
-    dir = pifs_opendir(path);
-    if (dir != NULL)
+    empty_block.is_block_emptied = FALSE;
+    empty_block.block_address = a_block_address;
+    ret = pifs_walk_dir(PIFS_ROOT_STR, TRUE, TRUE, pifs_dir_walker_empty, &empty_block);
+
+    if (ret == PIFS_SUCCESS)
     {
-        ret = PIFS_SUCCESS;
-        while ((dirent = pifs_readdir(dir)) && ret == PIFS_SUCCESS)
-        {
-            ret = pifs_check_block(dirent->d_name, a_block_address, &is_block_used);
-            if (ret == PIFS_SUCCESS && is_block_used)
-            {
-                *a_is_emptied = TRUE;
-                PIFS_NOTICE_MSG("File '%s' uses block %i\r\n", dirent->d_name, a_block_address);
-                strncpy(tmp_filename, dirent->d_name, PIFS_FILENAME_LEN_MAX);
-                /* TODO check filename length! */
-                /* TODO check if tmp_filename does not exists! */
-                strncat(tmp_filename, PIFS_FILENAME_TEMP_STR, PIFS_FILENAME_LEN_MAX);
-                PIFS_NOTICE_MSG("Copy '%s' to '%s'...\r\n", dirent->d_name, tmp_filename);
-                ret = pifs_copy(dirent->d_name, tmp_filename);
-                if (ret == PIFS_SUCCESS)
-                {
-                    PIFS_NOTICE_MSG("Done\r\n");
-                    PIFS_NOTICE_MSG("Rename '%s' to '%s'...\r\n", tmp_filename, dirent->d_name);
-                    ret = pifs_rename(tmp_filename, dirent->d_name);
-                    if (ret == PIFS_SUCCESS)
-                    {
-                        PIFS_NOTICE_MSG("Done\r\n");
-                    }
-                    else
-                    {
-                        PIFS_ERROR_MSG("Cannot rename '%s' to '%s'!\r\n",
-                                       tmp_filename, dirent->d_name);
-                    }
-                }
-                else
-                {
-                    PIFS_ERROR_MSG("Cannot copy '%s' to '%s'!\r\n",
-                                   dirent->d_name, tmp_filename);
-                }
-            }
-        }
-        if (pifs_closedir (dir) != 0)
-        {
-            PIFS_ERROR_MSG("Cannot close directory!\r\n");
-            ret = PIFS_ERROR_GENERAL;
-        }
+        *a_is_emptied = empty_block.is_block_emptied;
     }
 
     return ret;
