@@ -431,6 +431,9 @@ int pifs_closedir(pifs_DIR * const a_dirp)
 
 /**
  * @brief pifs_walk_dir Walk through directory.
+ * TODO implement a non-recursive method: it should not use
+ * pifs_opendir() and store positions
+ * size_t current_entry_pos[PIFS_MAX_DIR_DEPTH];
  *
  * @param[in] a_path            Path to walk.
  * @param[in] a_recursive       Enter directories and walk them too.

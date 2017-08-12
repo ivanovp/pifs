@@ -323,7 +323,8 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
 /**
  * @brief pifs_copy_entry_list copy list of files (entry list) from previous
  * management block.
- * TODO use pifs_walk_dir!
+ * TODO use pifs_walk_dir or implement other method to enter directory and
+ * copy them too!
  *
  * @param[in] a_old_header Pointer to previous file system's header.
  * @return PIFS_SUCCESS if copy was successful.
