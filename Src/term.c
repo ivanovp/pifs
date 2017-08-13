@@ -337,7 +337,7 @@ void cmdEmptyBlock(char* command, char* params)
         ba = strtoul(param, NULL, 0);
         printf("Empty block %i...\r\n", ba);
         ret = pifs_empty_block(ba, &is_emptied);
-        printf("Emptied: %s, ret: %i\r\n", yesNo(is_emptied), ret);
+        printf("Emptied: %s, ret: %i\r\n", pifs_yes_no(is_emptied), ret);
     }
 }
 

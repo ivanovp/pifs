@@ -228,6 +228,7 @@ bool_t pifs_is_directory_empty(const pifs_char_t * a_path)
         }
     }
 
+    PIFS_DEBUG_MSG("%s empty: %s\r\n", a_path, pifs_yes_no(empty));
     return empty;
 }
 #endif
@@ -244,7 +245,7 @@ pifs_DIR * pifs_opendir(const pifs_char_t * a_name)
     pifs_size_t     i;
     pifs_dir_t    * dir = NULL;
 #if PIFS_ENABLE_DIRECTORIES
-    pifs_address_t  entry_list_address;
+    pifs_address_t  entry_list_address = pifs.current_entry_list_address;
     pifs_char_t     filename[PIFS_FILENAME_LEN_MAX];
     pifs_entry_t  * entry = &pifs.entry;
 #endif
@@ -256,7 +257,7 @@ pifs_DIR * pifs_opendir(const pifs_char_t * a_name)
             && a_name[1] == PIFS_EOS)
     {
         /* Root directory: "/" or "\" */
-        pifs.current_entry_list_address = pifs.header.root_entry_list_address;
+        entry_list_address = pifs.header.root_entry_list_address;
     }
     else if (a_name[0] == PIFS_DOT_CHAR
             && a_name[1] == PIFS_EOS)

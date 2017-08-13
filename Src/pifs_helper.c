@@ -127,7 +127,7 @@ void pifs_print_cache(void)
 #endif
 }
 
-char * yesNo(bool_t expression)
+char * pifs_yes_no(bool_t expression)
 {
     if (expression)
     {
@@ -152,9 +152,9 @@ void pifs_print_page_info(size_t addr, pifs_size_t cntr)
         printf("%-24s", pifs_ba_pa2str(ba, pa));
         if (ba < PIFS_FLASH_BLOCK_NUM_ALL)
         {
-            printf("%-8s", yesNo(pifs_is_page_free(ba, pa)));
-            printf("%-8s", yesNo(pifs_is_page_to_be_released(ba, pa)));
-            printf("%-8s\r\n", yesNo(pifs_is_page_erased(ba, pa)));
+            printf("%-8s", pifs_yes_no(pifs_is_page_free(ba, pa)));
+            printf("%-8s", pifs_yes_no(pifs_is_page_to_be_released(ba, pa)));
+            printf("%-8s\r\n", pifs_yes_no(pifs_is_page_erased(ba, pa)));
         }
         else
         {

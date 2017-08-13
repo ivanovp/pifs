@@ -1087,7 +1087,7 @@ pifs_status_t pifs_check_free_page_buf(uint8_t * a_free_page_buf)
         {
             PIFS_ERROR_MSG("Page %s free: %s, FSBM: %s, erased: %s\r\n",
                            pifs_address2str(&address),
-                           yesNo(is_free), yesNo(is_free_fsbm), yesNo(is_erased));
+                           pifs_yes_no(is_free), pifs_yes_no(is_free_fsbm), pifs_yes_no(is_erased));
             /* Read to page cache */
             pifs_read(address.block_address, address.page_address, 0,
                       NULL, 0);

@@ -397,6 +397,7 @@ pifs_status_t pifs_dir_walker_empty(pifs_dirent_t * a_dirent, void * a_func_data
     pifs_char_t          tmp_filename[PIFS_FILENAME_LEN_MAX];
     bool_t               is_block_used;
 
+    PIFS_NOTICE_MSG("File '%s', attr: 0x%02X\r\n", a_dirent->d_name, a_dirent->d_attrib);
     if (!PIFS_IS_DIR(a_dirent->d_attrib))
     {
         ret = pifs_check_block(a_dirent->d_name, empty_block->block_address, &is_block_used);
