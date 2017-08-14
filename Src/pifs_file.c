@@ -22,6 +22,7 @@
 #include "pifs_map.h"
 #include "pifs_merge.h"
 #include "pifs_wear.h"
+#include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
 
 #define PIFS_DEBUG_LEVEL 2
@@ -46,6 +47,11 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
     pifs_block_address_t ba = PIFS_BLOCK_ADDRESS_INVALID;
     pifs_page_address_t  pa = PIFS_PAGE_ADDRESS_INVALID;
     pifs_page_count_t    page_count_found = 0;
+#if PIFS_ENABLE_DIRECTORIES
+    pifs_char_t          filename[PIFS_FILENAME_LEN_MAX];
+#else
+    const pifs_char_t  * filename = a_filename;
+#endif
 
     PIFS_ASSERT(!a_file->is_opened);
 #if PIFS_ENABLE_DIRECTORIES
@@ -67,12 +73,19 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
     }
     if (a_file->status == PIFS_SUCCESS)
     {
-        a_file->status = pifs_find_entry(PIFS_FIND_ENTRY, a_filename, &a_file->entry,
-                                         a_file->entry_list_address.block_address,
-                                         a_file->entry_list_address.page_address);
+#if PIFS_ENABLE_DIRECTORIES
+        a_file->status = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
+                                           filename, &a_file->entry_list_address);
+        if (a_file->status == PIFS_SUCCESS)
+#endif
+        {
+            a_file->status = pifs_find_entry(PIFS_FIND_ENTRY, filename, &a_file->entry,
+                                             a_file->entry_list_address.block_address,
+                                             a_file->entry_list_address.page_address);
+        }
         if ((a_file->mode_file_shall_exist || a_file->mode_append) && a_file->status == PIFS_SUCCESS)
         {
-            PIFS_DEBUG_MSG("Entry of %s found\r\n", a_filename);
+            PIFS_DEBUG_MSG("Entry of %s found\r\n", filename);
 #if PIFS_DEBUG_LEVEL >= 6
             print_buffer(a_file->entry, sizeof(pifs_entry_t), 0);
 #endif
@@ -88,7 +101,7 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
                 }
                 else
                 {
-                    PIFS_DEBUG_MSG("File size of %s is invalid!\r\n", a_filename);
+                    PIFS_DEBUG_MSG("File size of %s is invalid!\r\n", filename);
                     a_file->status = PIFS_ERROR_FILE_NOT_FOUND;
                 }
             }
@@ -105,7 +118,7 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
             {
                 /* File already exist */
 #if PIFS_USE_DELTA_FOR_ENTRIES == 0
-                a_file->status = pifs_delete_entry(a_filename,
+                a_file->status = pifs_delete_entry(filename,
                                                    a_file->entry_list_address.block_address,
                                                    a_file->entry_list_address.page_address);
                 if (a_file->status == PIFS_SUCCESS)
@@ -135,15 +148,19 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
                                                         PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT,
                                                         &ba, &pa, &page_count_found);
             }
+#if PIFS_ENABLE_DIRECTORIES
             if (a_file->status == PIFS_SUCCESS)
             {
-#if PIFS_ENABLE_DIRECTORIES
                 /* Update entry list address, as it may changed during merge! */
-                a_file->entry_list_address = pifs.current_entry_list_address;
+                a_file->status = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
+                                                   filename, &a_file->entry_list_address);
+            }
 #endif
+            if (a_file->status == PIFS_SUCCESS)
+            {
                 PIFS_DEBUG_MSG("Map page: %u free page found %s\r\n", page_count_found, pifs_ba_pa2str(ba, pa));
                 memset(&a_file->entry, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
-                strncpy((char*)a_file->entry.name, a_filename, PIFS_FILENAME_LEN_MAX);
+                strncpy((char*)a_file->entry.name, filename, PIFS_FILENAME_LEN_MAX);
 #if PIFS_ENABLE_ATTRIBUTES
                 PIFS_SET_ATTRIB(a_file->entry.attrib, PIFS_ATTRIB_ARCHIVE);
 #endif

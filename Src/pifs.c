@@ -836,6 +836,8 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
     bool_t is_free;
     bool_t is_to_be_released;
 
+    (void) a_func_data;
+
     PIFS_DEBUG_MSG("Check page %s\r\n",
                    pifs_ba_pa2str(a_block_address, a_page_address));
     is_file_deleted = pifs_is_entry_deleted(&a_file->entry);

@@ -621,15 +621,10 @@ pifs_status_t pifs_check_filename(const pifs_char_t * a_filename)
     pifs_status_t     ret = PIFS_ERROR_NOT_INITIALIZED;
     pifs_size_t       i;
     pifs_size_t       len = strlen(a_filename);
-#if PIFS_ENABLE_DIRECTORIES
-    /* Slash and backslash are invalid */
-    const pifs_char_t invalid_chars[] = "\"'*,/:;<=>?[\\]|";
-#elif PIFS_PATH_SEPARATOR_CHAR == '/'
-    /* No directories, directory emulation */
+#if PIFS_PATH_SEPARATOR_CHAR == '/'
     /* Backslash is invalid */
     const pifs_char_t invalid_chars[] = "\"'*,:;<=>?[\\]|";
 #elif PIFS_PATH_SEPARATOR_CHAR == '\\'
-    /* No directories, directory emulation */
     /* Slash is invalid */
     const pifs_char_t invalid_chars[] = "\"'*,/:;<=>?[]|";
 #endif

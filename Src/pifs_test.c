@@ -172,7 +172,7 @@ pifs_status_t pifs_test_full_w(const char * a_filename)
 {
     pifs_status_t ret = PIFS_SUCCESS;
     P_FILE      * file;
-#if PIFS_DEBUG_LEVEL >= 5
+#if PIFS_DEBUG_LEVEL >= 6
     pifs_file_t * f;
 #endif
     size_t        written_size = 0;
@@ -228,7 +228,7 @@ pifs_status_t pifs_test_full_r(const char * a_filename)
 {
     pifs_status_t ret = PIFS_SUCCESS;
     P_FILE      * file;
-#if PIFS_DEBUG_LEVEL >= 5
+#if PIFS_DEBUG_LEVEL >= 6
     pifs_file_t * f;
 #endif
     size_t        testfull_written_buffers = 0;
