@@ -222,6 +222,58 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
 }
 
 /**
+ * @brief pifs_tmpfile Opens a temporary file with mode "wb+".
+ * @return Pointer to temporary file or NULL.
+ */
+P_FILE * pifs_tmpfile( void )
+{
+    pifs_char_t filename[PIFS_FILENAME_LEN_MAX];
+    return pifs_fopen(pifs_tmpnam(filename), "wb+");
+}
+
+/**
+ * @brief pifs_tmpnam Generate a temporary file name which does not exists
+ * in the current working directory.
+ *
+ * @param[out] a_str String which at least has length of PIFS_FILENAME_LEN_MAX.
+ * @return Pointer to a_str
+ */
+pifs_char_t * pifs_tmpnam(pifs_char_t * a_str)
+{
+    return pifs_tmpnamn(a_str, PIFS_FILENAME_LEN_MAX);
+}
+
+/**
+ * @brief pifs_tmpnamn Generate a temporary file name which does not exists
+ * in the current working directory.
+ * Non-standard function.
+ *
+ * @param[out] a_str String which at least has length of a_size.
+ * @param[in] a_size Length of buffer.
+ * @return Pointer to a_str
+ */
+pifs_char_t * pifs_tmpnamn(pifs_char_t * a_str, size_t a_size)
+{
+    bool_t      is_exists = FALSE;
+    pifs_size_t i;
+    const char  file_chars[] = "abcdefghijklmnopqrstuvwxyz0123456789.!-%$";
+
+    do
+    {
+        for (i = 0; i < a_size - 1 && i < PIFS_FILENAME_LEN_MAX - 1; i++)
+        {
+            a_str[i] = file_chars[rand() % (sizeof(file_chars) - 1)];
+        }
+        a_str[a_size - 1] = PIFS_EOS;
+        is_exists = pifs_is_file_exist(a_str);
+    } while (is_exists);
+
+    PIFS_DEBUG_MSG("name: %s\r\n", a_str);
+
+    return a_str;
+}
+
+/**
  * @brief pifs_inc_write_address Increment write address for file writing.
  *
  * @param[in] a_file Pointer to the internal file structure.

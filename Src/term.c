@@ -122,15 +122,25 @@ void cmdTestPifs (char* command, char* params)
 
 void cmdTestPifsBasic (char* command, char* params)
 {
+    char buf[PIFS_FILENAME_LEN_MAX];
     char * param;
+    char * filename;
 
     (void) command;
     (void) params;
 
     param = PARSER_getNextParam();
+    if (param[0] == '-' && param[1] == 'r')
+    {
+        filename = pifs_tmpnam(buf);
+    }
+    else
+    {
+        filename = param;
+    }
 
-    pifs_test_basic_w(param);
-    pifs_test_basic_r(param);
+    pifs_test_basic_w(filename);
+    pifs_test_basic_r(filename);
 }
 
 void cmdTestPifsSmall (char* command, char* params)

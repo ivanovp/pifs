@@ -51,6 +51,7 @@
 #define PIFS_DELAY_MS(ms)               usleep(ms * 1000)
 
 typedef char pifs_char_t;
+#define PIFS_CHAR_MAX   255
 
 #if PIFS_ENABLE_USER_DATA
 /**

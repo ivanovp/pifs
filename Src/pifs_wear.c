@@ -385,6 +385,7 @@ typedef struct
 
 /**
  * @brief pifs_dir_walker_empty Callback function used during block emptying.
+ * TODO copy only pages found in the specified block!
  *
  * @param[in] a_dirent Pointer to directory entry.
  *
@@ -403,12 +404,8 @@ pifs_status_t pifs_dir_walker_empty(pifs_dirent_t * a_dirent, void * a_func_data
         ret = pifs_check_block(a_dirent->d_name, empty_block->block_address, &is_block_used);
         if (ret == PIFS_SUCCESS && is_block_used)
         {
-            empty_block->is_block_emptied = TRUE;
             PIFS_NOTICE_MSG("File '%s' uses block %i\r\n", a_dirent->d_name, empty_block->block_address);
-            strncpy(tmp_filename, a_dirent->d_name, PIFS_FILENAME_LEN_MAX);
-            /* TODO check filename length! */
-            /* TODO check if tmp_filename does not exists! */
-            strncat(tmp_filename, PIFS_FILENAME_TEMP_STR, PIFS_FILENAME_LEN_MAX);
+            pifs_tmpnamn(tmp_filename, PIFS_FILENAME_LEN_MAX);
             PIFS_NOTICE_MSG("Copy '%s' to '%s'...\r\n", a_dirent->d_name, tmp_filename);
             ret = pifs_copy(a_dirent->d_name, tmp_filename);
             if (ret == PIFS_SUCCESS)
@@ -432,6 +429,10 @@ pifs_status_t pifs_dir_walker_empty(pifs_dirent_t * a_dirent, void * a_func_data
                                a_dirent->d_name, tmp_filename);
             }
         }
+        if (ret == PIFS_SUCCESS)
+        {
+            empty_block->is_block_emptied = TRUE;
+        }
     }
 
     return ret;
@@ -443,8 +444,6 @@ pifs_status_t pifs_dir_walker_empty(pifs_dirent_t * a_dirent, void * a_func_data
  * specified block can be released.
  * Note: there shall be no free pages in the specified block!
  * This function is used for static wear leveling.
- * TODO copy only pages found in the specified block!
- * TODO use pifs_walk_dir() function!
  *
  * @param[in] a_block_address Block address to find.
  * @return PIFS_SUCCESS if block was succuessfuly released.
