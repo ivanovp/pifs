@@ -519,14 +519,17 @@ void cmdRemove (char* command, char* params)
             {
                 while ((dirent = pifs_readdir(dir)))
                 {
-                    printf("Remove file '%s'... ", dirent->d_name);
-                    if (pifs_remove(dirent->d_name) == PIFS_SUCCESS)
+                    if (!PIFS_IS_DIR(dirent->d_attrib))
                     {
-                        printf("Done.\r\n");
-                    }
-                    else
-                    {
-                        printf("ERROR: Cannot remove file!\r\n");
+                        printf("Remove file '%s'... ", dirent->d_name);
+                        if (pifs_remove(dirent->d_name) == PIFS_SUCCESS)
+                        {
+                            printf("Done.\r\n");
+                        }
+                        else
+                        {
+                            printf("ERROR: Cannot remove file!\r\n");
+                        }
                     }
                 }
                 if (pifs_closedir (dir) != 0)

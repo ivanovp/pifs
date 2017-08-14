@@ -20,7 +20,7 @@
 #include "pifs_delta.h"
 #include "pifs_map.h"
 
-#define PIFS_DEBUG_LEVEL 5
+#define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
 
 /**

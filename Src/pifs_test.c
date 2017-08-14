@@ -172,7 +172,9 @@ pifs_status_t pifs_test_full_w(const char * a_filename)
 {
     pifs_status_t ret = PIFS_SUCCESS;
     P_FILE      * file;
+#if PIFS_DEBUG_LEVEL >= 5
     pifs_file_t * f;
+#endif
     size_t        written_size = 0;
     size_t        i;
     const char  * filename = "fullwrite.tst";
@@ -201,10 +203,12 @@ pifs_status_t pifs_test_full_w(const char * a_filename)
             }
         }
         PIFS_DEBUG_MSG("%i buffers written.\r\n", i);
+#if PIFS_DEBUG_LEVEL >= 6
         f = (pifs_file_t*) file;
         (void)pifs_print_map_page(f->entry.first_map_address.block_address,
                                   f->entry.first_map_address.page_address,
                                   UINT32_MAX);
+#endif
         if (pifs_fclose(file))
         {
             PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
@@ -224,7 +228,9 @@ pifs_status_t pifs_test_full_r(const char * a_filename)
 {
     pifs_status_t ret = PIFS_SUCCESS;
     P_FILE      * file;
+#if PIFS_DEBUG_LEVEL >= 5
     pifs_file_t * f;
+#endif
     size_t        testfull_written_buffers = 0;
     size_t        file_size;
     size_t        read_size = 0;
@@ -262,10 +268,12 @@ pifs_status_t pifs_test_full_r(const char * a_filename)
                 ret = check_buffers();
             }
         }
+#if PIFS_DEBUG_LEVEL >= 6
         f = (pifs_file_t*) file;
         (void)pifs_print_map_page(f->entry.first_map_address.block_address,
                                   f->entry.first_map_address.page_address,
                                   UINT32_MAX);
+#endif
         if (pifs_fclose(file))
         {
             PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
