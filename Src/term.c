@@ -1095,6 +1095,28 @@ void cmdParamTest (char* command, char* params)
 }
 
 /**
+ * Test HardFault handler.
+ */
+void cmdHardFaultTest (char* command, char* params)
+{
+    int x;
+    int y;
+    int z;
+
+    (void) command;
+    (void) params;
+
+    printf("Causing division by zero error in one second!\r\n");
+    PIFS_DELAY_MS(1000);
+
+    y = 10;
+    z = 0;
+    x = y /z;
+
+    printf("x: %i\r\n", x);
+}
+
+/**
  * Quit from program.
  */
 void cmdQuit (char* command, char* params)

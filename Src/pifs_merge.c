@@ -417,8 +417,8 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
                                          new_entry_list_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + new_entry_list_pa * PIFS_LOGICAL_PAGE_SIZE_BYTE);
 #endif
                         }
-                    }
 #endif
+                    }
                 }
                 else
                 {
