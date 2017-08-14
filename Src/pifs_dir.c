@@ -610,13 +610,9 @@ int pifs_rmdir(const pifs_char_t * const a_filename)
 
         if (ret == PIFS_SUCCESS)
         {
-            ret = pifs_find_entry(PIFS_FIND_ENTRY, filename, entry,
+            ret = pifs_find_entry(PIFS_DELETE_ENTRY, filename, entry,
                                   entry_list_address.block_address,
                                   entry_list_address.page_address);
-        }
-
-        if (ret == PIFS_SUCCESS)
-        {
         }
     }
     else

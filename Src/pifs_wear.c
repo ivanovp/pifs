@@ -482,6 +482,20 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
     pifs_block_address_t    ba;
     bool_t                  is_emptied;
     pifs_wear_level_cntr_t  diff;
+    pifs_wear_level_cntr_t  percent_limit;
+
+    percent_limit = (uint32_t)pifs.header.wear_level_cntr_max * PIFS_STATIC_WEAR_LEVEL_PERCENT / 100;
+    if (percent_limit < 10)
+    {
+        percent_limit = 10;
+    }
+
+    PIFS_NOTICE_MSG("Wear level counter maximum:        %i\r\n",
+                    pifs.header.wear_level_cntr_max);
+    PIFS_NOTICE_MSG("Static wear level limit (delta):   %i\r\n",
+                    PIFS_STATIC_WEAR_LEVEL_LIMIT);
+    PIFS_NOTICE_MSG("Static wear level limit (percent): %i\r\n",
+                    percent_limit);
 
     for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_SUCCESS
          && a_max_block_num; i++)
@@ -491,9 +505,9 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
         diff = pifs.header.wear_level_cntr_max - pifs.header.least_weared_blocks[i].wear_level_cntr;
         ret = pifs_get_pages(TRUE, ba,
                              1, &free_management_pages, &free_data_pages);
-        PIFS_NOTICE_MSG("Block %i, free data pages: %i: diff: %i\r\n", ba, free_data_pages, diff);
+        PIFS_NOTICE_MSG("Block %3i, free data pages: %3i, diff: %i\r\n", ba, free_data_pages, diff);
         if (ret == PIFS_SUCCESS && !free_data_pages
-                && diff > PIFS_STATIC_WEAR_LEVEL_LIMIT)
+                && (diff >= PIFS_STATIC_WEAR_LEVEL_LIMIT || diff >= percent_limit))
         {
             ret = pifs_empty_block(ba, &is_emptied);
             if (is_emptied)

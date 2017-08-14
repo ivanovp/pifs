@@ -478,7 +478,7 @@ void cmdRemove (char* command, char* params)
 {
     bool_t               all = FALSE;
     char               * param;
-    char               * path = "/";
+    char               * path = ".";
     pifs_DIR           * dir;
     struct pifs_dirent * dirent;
 

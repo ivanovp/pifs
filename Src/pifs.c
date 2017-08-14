@@ -606,10 +606,17 @@ pifs_status_t pifs_init(void)
     pifs_print_fs_info();
 #endif
 
+    if (PIFS_HEADER_SIZE_BYTE > PIFS_LOGICAL_PAGE_SIZE_BYTE)
+    {
+        PIFS_ERROR_MSG("Header size (%lu) is larger than logical page (%u)!\r\n"
+                       "Decrease PIFS_LEAST_WEARED_BLOCK_NUM or increase PIFS_LOGICAL_PAGE_SIZE_BYTE!\r\n",
+                       PIFS_HEADER_SIZE_BYTE, PIFS_LOGICAL_PAGE_SIZE_BYTE);
+        ret = PIFS_ERROR_CONFIGURATION;
+    }
     if (PIFS_ENTRY_SIZE_BYTE > PIFS_LOGICAL_PAGE_SIZE_BYTE)
     {
-        PIFS_ERROR_MSG("Entry size (%lu) is larger than flash page (%u)!\r\n"
-                       "Change PIFS_FILENAME_LEN_MAX to %lu!\r\n",
+        PIFS_ERROR_MSG("Entry size (%lu) is larger than logical page (%u)!\r\n"
+                       "Change PIFS_FILENAME_LEN_MAX to %lu or increase PIFS_LOGICAL_PAGE_SIZE_BYTE!\r\n",
                        PIFS_ENTRY_SIZE_BYTE, PIFS_LOGICAL_PAGE_SIZE_BYTE,
                        PIFS_FILENAME_LEN_MAX - (PIFS_ENTRY_SIZE_BYTE - PIFS_LOGICAL_PAGE_SIZE_BYTE));
         ret = PIFS_ERROR_CONFIGURATION;
