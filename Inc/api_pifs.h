@@ -169,6 +169,7 @@ int pifs_mkdir(const pifs_char_t * const a_filename);
 int pifs_rmdir(const pifs_char_t * const a_filename);
 int pifs_chdir(const pifs_char_t * const a_filename);
 pifs_char_t * pifs_getcwd(pifs_char_t * a_buffer, size_t a_size);
+pifs_char_t * pifs_append_path(pifs_char_t * a_path1, size_t a_size, pifs_char_t * a_path2);
 #endif
 #if 0 //PIFS_ENABLE_LINKS
 /* Hard link */

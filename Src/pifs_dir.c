@@ -306,11 +306,13 @@ pifs_DIR * pifs_opendir(const pifs_char_t * a_name)
         }
         if (dir == NULL)
         {
+            PIFS_ERROR_MSG("No more directory structure!\r\n");
             PIFS_SET_ERRNO(PIFS_ERROR_NO_MORE_RESOURCE);
         }
     }
     else
     {
+        PIFS_ERROR_MSG("Cannot open directory: %i\r\n", ret);
         PIFS_SET_ERRNO(ret);
     }
 
@@ -478,14 +480,14 @@ pifs_status_t pifs_walk_dir(const pifs_char_t * const a_path, bool_t a_recursive
                 if (a_recursive && PIFS_IS_DIR(dirent->d_attrib))
                 {
                     strncpy(path, a_path, PIFS_PATH_LEN_MAX);
-                    strncat(path, PIFS_PATH_SEPARATOR_STR, PIFS_PATH_LEN_MAX);
-                    strncat(path, dirent->d_name, PIFS_PATH_LEN_MAX);
+                    pifs_append_path(path, PIFS_PATH_LEN_MAX, dirent->d_name);
+                    PIFS_NOTICE_MSG("Entering directory '%s'...\r\n", path);
                     ret = pifs_walk_dir(path, TRUE, a_stop_at_error, a_dir_walker_func, a_func_data);
                 }
             }
 #endif
         }
-        if (pifs_closedir (dir) != 0)
+        if (pifs_closedir(dir) != 0)
         {
             PIFS_ERROR_MSG("Cannot close directory!\r\n");
             ret = PIFS_ERROR_GENERAL;
@@ -692,5 +694,19 @@ pifs_char_t * pifs_getcwd(pifs_char_t * a_buffer, size_t a_size)
     strncpy(a_buffer, pifs.cwd, a_size);
 
     return a_buffer;
+}
+pifs_char_t * pifs_append_path(pifs_char_t * a_path1, size_t a_size, pifs_char_t * a_path2)
+{
+    size_t len;
+
+    len = strlen(a_path1);
+    if (a_path1[len - 1] != PIFS_PATH_SEPARATOR_CHAR
+            && a_path2[0] != PIFS_PATH_SEPARATOR_CHAR)
+    {
+        strncat(a_path1, PIFS_PATH_SEPARATOR_STR, a_size);
+    }
+    strncat(a_path1, a_path2, a_size);
+
+    return a_path1;
 }
 #endif
