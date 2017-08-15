@@ -660,36 +660,12 @@ pifs_status_t pifs_test_wfragment_r(void)
 pifs_status_t pifs_test_rfragment_w(void)
 {
     pifs_status_t ret = PIFS_SUCCESS;
-    P_FILE * file;
-    size_t   written_size = 0;
     const char * filename = "fragrd.tst";
 
     printf("-------------------------------------------------\r\n");
     printf("Fragment read test: writing file\r\n");
 
-    file = pifs_fopen(filename, "w");
-    if (file)
-    {
-        printf("File opened for writing\r\n");
-        generate_buffer(3, filename);
-        written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
-        written_size += pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
-        if (written_size != sizeof(test_buf_w) * 2)
-        {
-            PIFS_TEST_ERROR_MSG("Cannot write file!\r\n");
-            ret = PIFS_ERROR_GENERAL;
-        }
-        if (pifs_fclose(file))
-        {
-            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
-            ret = PIFS_ERROR_GENERAL;
-        }
-    }
-    else
-    {
-        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
-        ret = PIFS_ERROR_GENERAL;
-    }
+    ret = pifs_create_file(filename, 3, 2);
 
     return ret;
 }
@@ -746,36 +722,12 @@ pifs_status_t pifs_test_rfragment_r(size_t a_fragment_size)
 pifs_status_t pifs_test_rseek_w(void)
 {
     pifs_status_t ret = PIFS_SUCCESS;
-    P_FILE * file;
-    size_t   written_size = 0;
     const char * filename = "seekrd.tst";
 
     printf("-------------------------------------------------\r\n");
     printf("Seek read test: writing file\r\n");
 
-    file = pifs_fopen(filename, "w");
-    if (file)
-    {
-        printf("File opened for writing\r\n");
-        generate_buffer(7, filename);
-        written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
-        written_size += pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
-        if (written_size != 2 * sizeof(test_buf_w))
-        {
-            PIFS_TEST_ERROR_MSG("Cannot write\r\n");
-            ret = PIFS_ERROR_GENERAL;
-        }
-        if (pifs_fclose(file))
-        {
-            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
-            ret = PIFS_ERROR_GENERAL;
-        }
-    }
-    else
-    {
-        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
-        ret = PIFS_ERROR_GENERAL;
-    }
+    ret = pifs_create_file(filename, 7, 2);
 
     return ret;
 }
@@ -832,6 +784,7 @@ pifs_status_t pifs_test_rseek_r(void)
         }
         if (ret == PIFS_SUCCESS)
         {
+            generate_buffer(8, filename);
             if (pifs_fseek(file, -sizeof(test_buf_r), PIFS_SEEK_END))
             {
                 PIFS_TEST_ERROR_MSG("Cannot seek!\r\n");
