@@ -61,11 +61,35 @@ uint8_t test_buf_w[TEST_BUF_SIZE] __attribute__((aligned(4)));
 uint8_t test_buf_r[TEST_BUF_SIZE] __attribute__((aligned(4)));
 const size_t fragment_size = 5;
 
+#if PIFS_ENABLE_DIRECTORIES
+const char * get_filename(const char * a_path)
+{
+    const char * filename;
+
+    filename = strrchr(a_path, PIFS_PATH_SEPARATOR_CHAR);
+    if (!filename)
+    {
+        filename = a_path;
+    }
+    else
+    {
+        filename++;
+    }
+
+    return filename;
+}
+#endif
+
 void generate_buffer(uint32_t a_sequence_start, const char * a_filename)
 {
+#if PIFS_ENABLE_DIRECTORIES
+    const char * filename = get_filename(a_filename);
+#else
+    const char * filename = a_filename;
+#endif
     fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SEQUENCE_WORD, a_sequence_start);
     snprintf((char*)test_buf_w, sizeof(test_buf_w),
-             "File: %s, sequence: %i#", a_filename, a_sequence_start);
+             "File: %s, sequence: %i#", filename, a_sequence_start);
 }
 
 pifs_status_t check_buffers()
@@ -1136,12 +1160,180 @@ pifs_status_t pifs_test_dir_w(void)
         }
     }
 
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_mkdir("/a");
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_mkdir("b");
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_mkdir("c");
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_mkdir("a/d");
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_create_file("/a/1", 1, 1);
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_create_file("/b/2", 2, 1);
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_create_file("/c/3", 3, 1);
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_chdir("a/d");
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_create_file("./4", 4, 1);
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_chdir("../..");
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        if (strncmp(pifs_getcwd(cwd, sizeof(cwd)), PIFS_ROOT_STR, sizeof(cwd)) != 0)
+        {
+            PIFS_ERROR_MSG("Invalid directory: %s\r\n", cwd);
+            ret = PIFS_ERROR_GENERAL;
+        }
+    }
+
     return ret;
 }
 
 pifs_status_t pifs_test_dir_r(void)
 {
     pifs_status_t ret = PIFS_SUCCESS;
+    pifs_char_t   cwd[PIFS_PATH_LEN_MAX];
+
+    printf("Entering root directory...\r\n");
+    ret = pifs_chdir(PIFS_ROOT_STR);
+
+    if (ret == PIFS_SUCCESS)
+    {
+        if (strncmp(pifs_getcwd(cwd, sizeof(cwd)), PIFS_ROOT_STR, sizeof(cwd)) != 0)
+        {
+            PIFS_ERROR_MSG("Invalid directory: %s\r\n", cwd);
+            ret = PIFS_ERROR_GENERAL;
+        }
+    }
+    else
+    {
+        PIFS_ERROR_MSG("Cannot change directory: %i!\r\n", ret);
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_chdir("/a");
+        if (ret != PIFS_SUCCESS)
+        {
+            PIFS_ERROR_MSG("Cannot change directory: %i!\r\n", ret);
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_check_file("1", 1, 1);
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_chdir("../b");
+        if (ret != PIFS_SUCCESS)
+        {
+            PIFS_ERROR_MSG("Cannot change directory: %i!\r\n", ret);
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_check_file("2", 2, 1);
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_check_file("../c/3", 3, 1);
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_check_file("../a/d/4", 4, 1);
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_chdir("..");
+        if (ret != PIFS_SUCCESS)
+        {
+            PIFS_ERROR_MSG("Cannot change directory: %i!\r\n", ret);
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        if (strncmp(pifs_getcwd(cwd, sizeof(cwd)), PIFS_ROOT_STR, sizeof(cwd)) != 0)
+        {
+            PIFS_ERROR_MSG("Invalid directory: %s\r\n", cwd);
+            ret = PIFS_ERROR_GENERAL;
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_rename("/a/1", "b/1");
+        if (ret != PIFS_SUCCESS)
+        {
+            PIFS_ERROR_MSG("Cannot rename file: %i!\r\n", ret);
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        if (!pifs_is_file_exist("b/1"))
+        {
+           PIFS_ERROR_MSG("Rename was unsuccessful!\r\n");
+           ret = PIFS_ERROR_GENERAL;
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_remove("b/1");
+        if (ret != PIFS_SUCCESS)
+        {
+            PIFS_ERROR_MSG("Cannot remove file: %i!\r\n", ret);
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        if (pifs_is_file_exist("b/1"))
+        {
+           PIFS_ERROR_MSG("Remove was unsuccessful!\r\n");
+           ret = PIFS_ERROR_GENERAL;
+        }
+    }
 
     return ret;
 }

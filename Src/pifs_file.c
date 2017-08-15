@@ -1041,8 +1041,10 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
     pifs_address_t      entry_list_address;
 #if PIFS_ENABLE_DIRECTORIES
     pifs_char_t         oldname[PIFS_FILENAME_LEN_MAX];
+    pifs_char_t         newname[PIFS_FILENAME_LEN_MAX];
 #else
     const pifs_char_t * oldname = a_oldname;
+    const pifs_char_t * newname = a_newname;
 #endif
 
 #if PIFS_ENABLE_DIRECTORIES
@@ -1053,6 +1055,14 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
 
     PIFS_NOTICE_MSG("filename: '%s'\r\n", a_oldname);
     ret = pifs_check_filename(a_oldname);
+    if (ret == PIFS_SUCCESS)
+    {
+        if (pifs_is_file_exist(a_newname))
+        {
+            /* File already exist, remove! */
+            ret = pifs_remove(a_newname);
+        }
+    }
 #if PIFS_ENABLE_DIRECTORIES
     if (ret == PIFS_SUCCESS)
     {
@@ -1062,30 +1072,24 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
 #endif
     if (ret == PIFS_SUCCESS)
     {
-        if (pifs_is_file_exist(a_newname))
-        {
-            /* File already exist, remove! */
-            ret = pifs_remove(a_newname);
-        }
-        ret = pifs_find_entry(PIFS_FIND_ENTRY, oldname, entry,
+        ret = pifs_find_entry(PIFS_DELETE_ENTRY, oldname, entry,
                               entry_list_address.block_address,
                               entry_list_address.page_address);
-        /* Checking OLD name */
-        if (ret == PIFS_SUCCESS)
-        {
-            /* File already exist */
-            ret = pifs_clear_entry(a_oldname,
-                                   entry_list_address.block_address,
-                                   entry_list_address.page_address);
-        }
-        if (ret == PIFS_SUCCESS)
-        {
-            /* Change name in entry and append new entry */
-            strncpy(entry->name, a_newname, PIFS_FILENAME_LEN_MAX);
-            ret = pifs_append_entry(entry,
-                                    entry_list_address.block_address,
-                                    entry_list_address.page_address);
-        }
+    }
+#if PIFS_ENABLE_DIRECTORIES
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_resolve_path(a_newname, pifs.current_entry_list_address,
+                                newname, &entry_list_address);
+    }
+#endif
+    if (ret == PIFS_SUCCESS)
+    {
+        /* Change name in entry and append new entry */
+        strncpy(entry->name, newname, PIFS_FILENAME_LEN_MAX);
+        ret = pifs_append_entry(entry,
+                                entry_list_address.block_address,
+                                entry_list_address.page_address);
     }
 
     PIFS_SET_ERRNO(ret);

@@ -33,6 +33,8 @@ pifs_status_t pifs_test_wseek_r(void);
 pifs_status_t pifs_test_delta_w(const char * a_filename);
 pifs_status_t pifs_test_delta_r(const char * a_filename);
 pifs_status_t pifs_test_list_dir(void);
+pifs_status_t pifs_test_dir_w(void);
+pifs_status_t pifs_test_dir_r(void);
 pifs_status_t pifs_test(void);
 
 #endif /* _INCLUDE_PIFS_TEST_H_ */

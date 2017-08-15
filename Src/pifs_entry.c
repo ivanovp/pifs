@@ -301,11 +301,15 @@ pifs_status_t pifs_find_entry(pifs_entry_cmd_t a_entry_cmd,
                     && !pifs_is_entry_deleted(&entry))
             {
                 /* Entry found */
-                if (a_entry_cmd == PIFS_FIND_ENTRY && a_entry)
+                if (a_entry)
                 {
                     /* Copy entry */
                     memcpy(a_entry, &entry, PIFS_ENTRY_SIZE_BYTE);
                     PIFS_DEBUG_MSG("file size: %i bytes\r\n", a_entry->file_size);
+                }
+                if (a_entry_cmd == PIFS_FIND_ENTRY)
+                {
+                    /* Already copied */
                 }
                 else if (a_entry_cmd == PIFS_DELETE_ENTRY || a_entry_cmd == PIFS_CLEAR_ENTRY)
                 {

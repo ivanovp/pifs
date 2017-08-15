@@ -255,6 +255,15 @@ void cmdTestPifsDelta (char* command, char* params)
     }
 }
 
+void cmdTestPifsDir (char* command, char* params)
+{
+    (void) command;
+    (void) params;
+
+    pifs_test_dir_w();
+    pifs_test_dir_r();
+}
+
 void cmdPageInfo (char* command, char* params)
 {
     unsigned long int    addr = 0;
@@ -1217,6 +1226,9 @@ parserCommand_t parserCommands[] =
     {"tfrag",       "Test Pi file system: fragment",    cmdTestPifsFragment},
     {"tsk",         "Test Pi file system: seek",        cmdTestPifsSeek},
     {"td",          "Test Pi file system: delta",       cmdTestPifsDelta},
+#if PIFS_ENABLE_DIRECTORIES
+    {"tdir",        "Test Pi file system: directories", cmdTestPifsDir},
+#endif
     {"y",           "Debug command",                    cmdDebug},
     {"quit",        "Quit",                             cmdQuit},
     {"q",           "Quit",                             cmdQuit},
