@@ -24,7 +24,7 @@
 #include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 5
 #include "pifs_debug.h"
 
 #if PIFS_ENABLE_DIRECTORIES
@@ -40,13 +40,13 @@ void pifs_delete_chars(pifs_char_t * a_string, pifs_size_t a_idx, pifs_size_t a_
     pifs_size_t i;
     pifs_size_t len;
 
-    PIFS_DEBUG_MSG("before %s, idx: %i, count: %i\r\n", a_string, a_idx, a_count);
+    //PIFS_DEBUG_MSG("before %s, idx: %i, count: %i\r\n", a_string, a_idx, a_count);
     len = strlen(a_string) - a_count + 1;
     for (i = a_idx; i < len; i++)
     {
         a_string[i] = a_string[i + a_count];
     }
-    PIFS_DEBUG_MSG("after %s\r\n", a_string);
+    //PIFS_DEBUG_MSG("after %s\r\n", a_string);
 }
 
 /**
@@ -74,7 +74,7 @@ void pifs_normalize_path(pifs_char_t * const a_path)
 
     do
     {
-        PIFS_DEBUG_MSG("start %s\r\n", a_path);
+        //PIFS_DEBUG_MSG("start %s\r\n", a_path);
         separator_pos[1] = 0; /* Befor last separator's position */
         separator_pos[0] = 0; /* Last separator's position */
         is_deleted = FALSE;
@@ -89,7 +89,7 @@ void pifs_normalize_path(pifs_char_t * const a_path)
             }
             if (a_path[i] == PIFS_DOT_CHAR)
             {
-                PIFS_DEBUG_MSG(".state: %i\r\n", norm_state);
+                //PIFS_DEBUG_MSG(".state: %i\r\n", norm_state);
                 if (norm_state == NORM_separator)
                 {
                     norm_state = NORM_dot;
@@ -102,9 +102,9 @@ void pifs_normalize_path(pifs_char_t * const a_path)
             if (a_path[i] == PIFS_PATH_SEPARATOR_CHAR
                      || i == (path_len - 1))
             {
-                PIFS_DEBUG_MSG("/state: %i\r\n", norm_state);
-                PIFS_DEBUG_MSG("separator_pos[1]: %i\r\n", separator_pos[1]);
-                PIFS_DEBUG_MSG("separator_pos[0]: %i\r\n", separator_pos[0]);
+                //PIFS_DEBUG_MSG("/state: %i\r\n", norm_state);
+                //PIFS_DEBUG_MSG("separator_pos[1]: %i\r\n", separator_pos[1]);
+                //PIFS_DEBUG_MSG("separator_pos[0]: %i\r\n", separator_pos[0]);
                 if (i == (path_len - 1))
                 {
                     i++;
@@ -126,7 +126,7 @@ void pifs_normalize_path(pifs_char_t * const a_path)
                 separator_pos[0] = i;
             }
         }
-        PIFS_DEBUG_MSG("end %s\r\n", a_path);
+        //PIFS_DEBUG_MSG("end %s\r\n", a_path);
     } while (is_deleted);
 }
 

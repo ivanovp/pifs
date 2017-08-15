@@ -1310,7 +1310,8 @@ pifs_status_t pifs_test_dir_r(void)
 
     if (ret == PIFS_SUCCESS)
     {
-        if (!pifs_is_file_exist("b/1"))
+        if (!pifs_is_file_exist("b/1") ||
+                pifs_is_file_exist("a/1"))
         {
            PIFS_ERROR_MSG("Rename was unsuccessful!\r\n");
            ret = PIFS_ERROR_GENERAL;
@@ -1332,6 +1333,96 @@ pifs_status_t pifs_test_dir_r(void)
         {
            PIFS_ERROR_MSG("Remove was unsuccessful!\r\n");
            ret = PIFS_ERROR_GENERAL;
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_remove("b/2");
+        if (ret != PIFS_SUCCESS)
+        {
+            PIFS_ERROR_MSG("Cannot remove file: %i!\r\n", ret);
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        if (pifs_is_file_exist("b/2"))
+        {
+           PIFS_ERROR_MSG("Remove was unsuccessful!\r\n");
+           ret = PIFS_ERROR_GENERAL;
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_remove("c/3");
+        if (ret != PIFS_SUCCESS)
+        {
+            PIFS_ERROR_MSG("Cannot remove file: %i!\r\n", ret);
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        if (pifs_is_file_exist("c/3"))
+        {
+           PIFS_ERROR_MSG("Remove was unsuccessful!\r\n");
+           ret = PIFS_ERROR_GENERAL;
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_remove("a/d/4");
+        if (ret != PIFS_SUCCESS)
+        {
+            PIFS_ERROR_MSG("Cannot remove file: %i!\r\n", ret);
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        if (pifs_is_file_exist("a/d/4"))
+        {
+           PIFS_ERROR_MSG("Remove was unsuccessful!\r\n");
+           ret = PIFS_ERROR_GENERAL;
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_rmdir("a/d");
+        if (ret != PIFS_SUCCESS)
+        {
+            PIFS_ERROR_MSG("Cannot remove directory: %i!\r\n", ret);
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_rmdir("/a");
+        if (ret != PIFS_SUCCESS)
+        {
+            PIFS_ERROR_MSG("Cannot remove directory: %i!\r\n", ret);
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_rmdir("/b");
+        if (ret != PIFS_SUCCESS)
+        {
+            PIFS_ERROR_MSG("Cannot remove directory: %i!\r\n", ret);
+        }
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_rmdir("/c");
+        if (ret != PIFS_SUCCESS)
+        {
+            PIFS_ERROR_MSG("Cannot remove directory: %i!\r\n", ret);
         }
     }
 

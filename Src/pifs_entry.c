@@ -21,7 +21,7 @@
 #include "pifs_entry.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 5
 #include "pifs_debug.h"
 
 pifs_status_t pifs_read_entry(pifs_block_address_t a_entry_list_block_address,
@@ -89,6 +89,9 @@ pifs_status_t pifs_append_entry(const pifs_entry_t * const a_entry,
     pifs_entry_t         entry; /* TODO do not store on stack, it can be large! */
     pifs_size_t          i;
     pifs_size_t          j;
+
+    PIFS_DEBUG_MSG("name: [%s] entry list address: %s\r\n", a_entry->name,
+                   pifs_ba_pa2str(ba, pa));
 
     for (j = 0; j < PIFS_ENTRY_LIST_SIZE_PAGE && !created && ret == PIFS_SUCCESS; j++)
     {

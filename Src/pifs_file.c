@@ -25,7 +25,7 @@
 #include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 3
 #include "pifs_debug.h"
 
 /**
@@ -1053,7 +1053,7 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
     entry_list_address = pifs.header.root_entry_list_address;
 #endif
 
-    PIFS_NOTICE_MSG("filename: '%s'\r\n", a_oldname);
+    PIFS_NOTICE_MSG("filename: '%s' -> '%s'\r\n", a_oldname, a_newname);
     ret = pifs_check_filename(a_oldname);
     if (ret == PIFS_SUCCESS)
     {
