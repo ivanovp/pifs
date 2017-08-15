@@ -1166,7 +1166,27 @@ pifs_status_t pifs_test_delta_r(const char * a_filename)
     return ret;
 }
 
-pifs_status_t pifs_test_dir(void)
+pifs_status_t pifs_test_dir_w(void)
+{
+    pifs_status_t ret = PIFS_SUCCESS;
+    pifs_char_t   cwd[PIFS_PATH_LEN_MAX];
+
+    printf("Entering root directory...\r\n");
+    ret = pifs_chdir(PIFS_ROOT_STR);
+
+    if (ret == PIFS_SUCCESS)
+    {
+        if (strncmp(pifs_getcwd(cwd, sizeof(cwd)), PIFS_ROOT_STR, sizeof(cwd)) != 0)
+        {
+            PIFS_ERROR_MSG("Invalid directory: %s\r\n", cwd);
+            ret = PIFS_ERROR_GENERAL;
+        }
+    }
+
+    return ret;
+}
+
+pifs_status_t pifs_test_dir_r(void)
 {
     pifs_status_t ret = PIFS_SUCCESS;
 
@@ -1256,6 +1276,13 @@ pifs_status_t pifs_test(void)
     }
 #endif
 
+#if ENABLE_DIRECTORY_TEST
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_test_dir_w();
+    }
+#endif
+
     /**************************************************************************/
     /**************************************************************************/
     /**************************************************************************/
@@ -1319,7 +1346,7 @@ pifs_status_t pifs_test(void)
 #if ENABLE_DIRECTORY_TEST
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_test_dir();
+        ret = pifs_test_dir_r();
     }
 #endif
 
