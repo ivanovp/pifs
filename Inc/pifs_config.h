@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-06-27 19:41:42 ivanovp {Time-stamp}
+ * Last modify: 2017-08-15 16:26:07 ivanovp {Time-stamp}
  * Licence:     GPL
  */
 #ifndef _INCLUDE_PIFS_CONFIG_H_
@@ -26,6 +26,8 @@
 #define PIFS_PATH_LEN_MAX               128u /**< Maximum length of path. Only relevent if PIFS_ENABLE_DIRECTORIES is 1. */
 #define PIFS_ENTRY_NUM_MAX              32u  /**< Maximum number of files and directories in a directory */
 #define PIFS_ENABLE_USER_DATA           1u   /**< 1: Add user data (pifs_user_data_t) to every file, 0: don't add user data */
+#define PIFS_ENABLE_DIRECTORIES         1u   /**< 1: Support directories, 0: only support root directory */
+#define PIFS_PATH_SEPARATOR_CHAR        '/'  /**< Character to separate directories in path, '/' or '\' */
 #define PIFS_MANAGEMENT_BLOCK_NUM       1u   /**< Number of management blocks. Minimum: 1 (Allocated area is twice of this number.) */
 #define PIFS_LEAST_WEARED_BLOCK_NUM     6u   /**< Number of stored least weared blocks */
 #define PIFS_DELTA_MAP_PAGE_NUM         2u   /**< Number of delta page maps */
@@ -41,8 +43,6 @@
 #define PIFS_STATIC_WEAR_LEVEL_LIMIT   20u
 #define PIFS_STATIC_WEAR_LEVEL_PERCENT 10u
 #define PIFS_CALC_TBR_IN_FREE_SPACE     0u   /**< 1: Free pages and to be released pages are counted, 0: only free pages counted */
-#define PIFS_ENABLE_DIRECTORIES         1u   /**< 1: Support directories, 0: only support root directory */
-#define PIFS_PATH_SEPARATOR_CHAR        '/'  /**< Character to separate directories in path, '/' or '\' */
 
 #define PIFS_PACKED_ATTRIBUTE           __attribute__((packed))
 #define PIFS_ALIGNED_ATTRIBUTE(align)   __attribute__((aligned(align)))

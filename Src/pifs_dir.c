@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-07-06 19:12:58 ivanovp {Time-stamp}
+ * Last modify: 2017-08-15 16:25:54 ivanovp {Time-stamp}
  * Licence:     GPL
  */
 #include <stdio.h>
@@ -236,7 +236,7 @@ bool_t pifs_is_directory_empty(const pifs_char_t * a_path)
 /**
  * @brief pifs_opendir Open directory for listing.
  *
- * @param[in] a_name Pointer to directory name. TODO currently path is omitted!
+ * @param[in] a_name Pointer to directory name. 
  * @return Pointer to file system's directory.
  */
 pifs_DIR * pifs_opendir(const pifs_char_t * a_name)

@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-06-15 12:28:40 ivanovp {Time-stamp}
+ * Last modify: 2017-08-15 16:25:42 ivanovp {Time-stamp}
  * Licence:     GPL
  */
 #include <stdio.h>
@@ -454,7 +454,7 @@ void cmdListDir (char* command, char* params)
                 else
 #endif
                 {
-                    printf("  %8i", pifs_filesize(dirent->d_name));
+                    printf("  %8i", dirent->d_filesize);
                 }
             }
             if (examine)

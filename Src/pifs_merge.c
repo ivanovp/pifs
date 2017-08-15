@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-07-06 19:12:58 ivanovp {Time-stamp}
+ * Last modify: 2017-08-15 16:25:49 ivanovp {Time-stamp}
  * Licence:     GPL
  */
 #include <stdio.h>
@@ -324,11 +324,11 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
 /**
  * @brief pifs_copy_entry_list copy list of files (entry list) from previous
  * management block.
- * TODO copy directory's attribute!
- * TODO use pifs_walk_dir or implement other method to enter directory and
- * copy them too!
  *
  * @param[in] a_old_header Pointer to previous file system's header.
+ * @param[in] a_new_header Pointer to new file system's header.
+ * @param[in] a_old_entry_list_address Pointer to old address of entry list.
+ * @param[in] a_new_entry_list_address Pointer to new address of entry list.
  * @return PIFS_SUCCESS if copy was successful.
  */
 static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
@@ -745,13 +745,15 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
         {
             /* Some pages could be erased, do data merge */
             ret = pifs_merge();
-#if PIFS_ENABLE_DIRECTORIES
             if (a_file)
             {
                 /* Update entry list address, as it may changed during merge! */
+#if PIFS_ENABLE_DIRECTORIES
                 a_file->entry_list_address = pifs.current_entry_list_address;
-            }
+#else
+                a_file->entry_list_address = pifs.header.root_entry_list_address;
 #endif
+            }
         }
         else
         {
