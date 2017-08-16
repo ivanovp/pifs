@@ -53,7 +53,7 @@ void pifs_delete_chars(pifs_char_t * a_string, pifs_size_t a_idx, pifs_size_t a_
  * @brief pifs_normalize_path Change "/aaa/bbb/ccc/../.." to "/aaa".
  * Used when directory changed.
  *
- * @param[ou] a_path Path to be normalized.
+ * @param[out] a_path Path to be normalized.
  */
 void pifs_normalize_path(pifs_char_t * const a_path)
 {
@@ -260,8 +260,8 @@ pifs_DIR * pifs_opendir(const pifs_char_t * a_name)
 #if PIFS_ENABLE_DIRECTORIES
     /* Resolve a_filename's relative/absolute file path and update
      * entry_list_address regarding that */
-    if (a_name[0] == PIFS_PATH_SEPARATOR_CHAR
-            && a_name[1] == PIFS_EOS)
+    if (!a_name || (a_name[0] == PIFS_PATH_SEPARATOR_CHAR
+                    && a_name[1] == PIFS_EOS))
     {
         /* Root directory: "/" or "\" */
         entry_list_address = pifs.header.root_entry_list_address;
@@ -486,7 +486,15 @@ pifs_status_t pifs_walk_dir(const pifs_char_t * const a_path, bool_t a_recursive
             {
                 if (a_recursive && PIFS_IS_DIR(dirent->d_attrib))
                 {
-                    strncpy(path, a_path, PIFS_PATH_LEN_MAX);
+                    if (a_path)
+                    {
+                        strncpy(path, a_path, PIFS_PATH_LEN_MAX);
+                    }
+                    else
+                    {
+                        path[0] = PIFS_ROOT_CHAR;
+                        path[1] = PIFS_EOS;
+                    }
                     pifs_append_path(path, PIFS_PATH_LEN_MAX, dirent->d_name);
                     PIFS_NOTICE_MSG("Entering directory '%s'...\r\n", path);
                     ret = pifs_walk_dir(path, TRUE, a_stop_at_error, a_dir_walker_func, a_func_data);

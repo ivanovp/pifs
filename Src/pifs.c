@@ -995,6 +995,7 @@ pifs_status_t pifs_check(void)
     PIFS_PRINT_MSG("Checking files in directory '%s'...\r\n", path);
     pifs.error_cntr = 0;
     /* Path = NULL -> find deleted files as well! */
+    /* TODO it cannot find deleted files in subdirectories as NULL cannot be the argument! */
     ret = pifs_walk_dir(NULL, TRUE, FALSE, pifs_dir_walker_check, NULL);
     if (pifs.error_cntr)
     {
