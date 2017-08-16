@@ -255,6 +255,7 @@ void cmdTestPifsDelta (char* command, char* params)
     }
 }
 
+#if PIFS_ENABLE_DIRECTORIES
 void cmdTestPifsDir (char* command, char* params)
 {
     (void) command;
@@ -263,6 +264,7 @@ void cmdTestPifsDir (char* command, char* params)
     pifs_test_dir_w();
     pifs_test_dir_r();
 }
+#endif
 
 void cmdPageInfo (char* command, char* params)
 {

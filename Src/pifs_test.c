@@ -34,7 +34,9 @@
 #if ENABLE_BASIC_TEST
 #define ENABLE_RENAME_TEST            1
 #endif
+#if PIFS_ENABLE_DIRECTORIES
 #define ENABLE_DIRECTORY_TEST         1
+#endif
 #if ENABLE_SMALL_FILES_TEST
 #define ENABLE_LIST_DIRECTORY_TEST    1
 #endif
@@ -1143,6 +1145,7 @@ pifs_status_t pifs_test_delta_r(const char * a_filename)
     return ret;
 }
 
+#if PIFS_ENABLE_DIRECTORIES
 pifs_status_t pifs_test_dir_w(void)
 {
     pifs_status_t ret = PIFS_SUCCESS;
@@ -1428,6 +1431,7 @@ pifs_status_t pifs_test_dir_r(void)
 
     return ret;
 }
+#endif
 
 pifs_status_t pifs_test(void)
 {
