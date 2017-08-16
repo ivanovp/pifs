@@ -21,7 +21,7 @@
 #include "pifs_entry.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 5
+#define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
 
 pifs_status_t pifs_read_entry(pifs_block_address_t a_entry_list_block_address,
@@ -290,8 +290,8 @@ pifs_status_t pifs_find_entry(pifs_entry_cmd_t a_entry_cmd,
     pifs_size_t          i;
     pifs_size_t          j;
 
-    PIFS_DEBUG_MSG("name: [%s] entry list address: %s\r\n", a_name,
-                   pifs_ba_pa2str(ba, pa));
+    PIFS_DEBUG_MSG("cmd: %i, name: [%s], entry list address: %s\r\n",
+                   a_entry_cmd, a_name, pifs_ba_pa2str(ba, pa));
 
     for (j = 0; j < PIFS_ENTRY_LIST_SIZE_PAGE && !found && !is_erased && ret == PIFS_SUCCESS; j++)
     {

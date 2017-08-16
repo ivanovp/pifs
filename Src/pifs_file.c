@@ -25,7 +25,7 @@
 #include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 3
+#define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
 
 /**
@@ -1001,7 +1001,12 @@ int pifs_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data)
  */
 int pifs_remove(const pifs_char_t * a_filename)
 {
-    pifs_status_t ret;
+    pifs_status_t       ret;
+#if PIFS_ENABLE_DIRECTORIES
+    pifs_char_t         filename[PIFS_FILENAME_LEN_MAX];
+#else
+    const pifs_char_t * filename = a_filename;
+#endif
 
     PIFS_NOTICE_MSG("filename: '%s'\r\n", a_filename);
     ret = pifs_check_filename(a_filename);
@@ -1010,10 +1015,18 @@ int pifs_remove(const pifs_char_t * a_filename)
         ret = pifs_internal_open(&pifs.internal_file, a_filename, "r", FALSE);
         if (ret == PIFS_SUCCESS)
         {
-            /* File already exist */
-            ret = pifs_delete_entry(a_filename,
-                                    pifs.internal_file.entry_list_address.block_address,
-                                    pifs.internal_file.entry_list_address.page_address);
+#if PIFS_ENABLE_DIRECTORIES
+            ret = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
+                                    filename, &pifs.internal_file.entry_list_address);
+
+            if (ret == PIFS_SUCCESS)
+#endif
+            {
+                /* File already exist */
+                ret = pifs_delete_entry(filename,
+                                        pifs.internal_file.entry_list_address.block_address,
+                                        pifs.internal_file.entry_list_address.page_address);
+            }
             if (ret == PIFS_SUCCESS)
             {
                 /* Mark allocated pages to be released */
@@ -1037,7 +1050,8 @@ int pifs_remove(const pifs_char_t * a_filename)
 int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
 {
     pifs_status_t       ret;
-    pifs_entry_t      * entry = &pifs.entry;
+    pifs_entry_t        entry; /* TODO try to avoid store on stack */
+    //pifs_entry_t      * entry = &pifs.entry; // It causes error! pifs_resolve_path uses as well
     pifs_address_t      entry_list_address;
 #if PIFS_ENABLE_DIRECTORIES
     pifs_char_t         oldname[PIFS_FILENAME_LEN_MAX];
@@ -1072,7 +1086,7 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
 #endif
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_find_entry(PIFS_DELETE_ENTRY, oldname, entry,
+        ret = pifs_find_entry(PIFS_DELETE_ENTRY, oldname, &entry,
                               entry_list_address.block_address,
                               entry_list_address.page_address);
     }
@@ -1086,8 +1100,8 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
     if (ret == PIFS_SUCCESS)
     {
         /* Change name in entry and append new entry */
-        strncpy(entry->name, newname, PIFS_FILENAME_LEN_MAX);
-        ret = pifs_append_entry(entry,
+        strncpy(entry.name, newname, PIFS_FILENAME_LEN_MAX);
+        ret = pifs_append_entry(&entry,
                                 entry_list_address.block_address,
                                 entry_list_address.page_address);
     }
