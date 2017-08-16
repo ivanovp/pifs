@@ -1151,6 +1151,9 @@ pifs_status_t pifs_test_dir_w(void)
     pifs_status_t ret = PIFS_SUCCESS;
     pifs_char_t   cwd[PIFS_PATH_LEN_MAX];
 
+    printf("-------------------------------------------------\r\n");
+    printf("Directory test: creating directories and writing files\r\n");
+
     printf("Entering root directory...\r\n");
     ret = pifs_chdir(PIFS_ROOT_STR);
 
@@ -1229,6 +1232,9 @@ pifs_status_t pifs_test_dir_r(void)
 {
     pifs_status_t ret = PIFS_SUCCESS;
     pifs_char_t   cwd[PIFS_PATH_LEN_MAX];
+
+    printf("-------------------------------------------------\r\n");
+    printf("Directory test: reading files\r\n");
 
     printf("Entering root directory...\r\n");
     ret = pifs_chdir(PIFS_ROOT_STR);

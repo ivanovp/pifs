@@ -206,6 +206,13 @@ pifs_status_t pifs_resolve_path(const pifs_char_t * a_path,
     return ret;
 }
 
+/**
+ * @brief pifs_is_directory_empty Check whether a directory is empty.
+ * Directory is empty if only "." and ".." entries exist.
+ *
+ * @param[in] a_path Path to directory to check.
+ * @return TRUE: directory is empty. FALSE: directory is not empty.
+ */
 bool_t pifs_is_directory_empty(const pifs_char_t * a_path)
 {
     bool_t          empty = TRUE;
@@ -612,9 +619,17 @@ int pifs_rmdir(const pifs_char_t * const a_filename)
 
         if (ret == PIFS_SUCCESS)
         {
-            ret = pifs_find_entry(PIFS_DELETE_ENTRY, filename, entry,
-                                  entry_list_address.block_address,
-                                  entry_list_address.page_address);
+            if (!PIFS_IS_DOT_DIR(filename))
+            {
+                ret = pifs_find_entry(PIFS_DELETE_ENTRY, filename, entry,
+                                      entry_list_address.block_address,
+                                      entry_list_address.page_address);
+            }
+            else
+            {
+                /* "." and ".." directories cannot be removed. */
+                ret = PIFS_ERROR_GENERAL;
+            }
         }
     }
     else
@@ -625,6 +640,12 @@ int pifs_rmdir(const pifs_char_t * const a_filename)
     return ret;
 }
 
+/**
+ * @brief pifs_chdir Change current directory.
+ *
+ * @param[in] a_filename Path to directory.
+ * @return PIFS_SUCCESS if directory successfully changed.
+ */
 int pifs_chdir(const pifs_char_t * const a_filename)
 {
     pifs_status_t     ret = PIFS_SUCCESS;
@@ -695,18 +716,27 @@ pifs_char_t * pifs_getcwd(pifs_char_t * a_buffer, size_t a_size)
 
     return a_buffer;
 }
-pifs_char_t * pifs_append_path(pifs_char_t * a_path1, size_t a_size, pifs_char_t * a_path2)
+
+/**
+ * @brief pifs_append_path Append path to another path.
+ *
+ * @param[out] a_path_dst   Destination path. Source path will be appended to this one.
+ * @param[in] a_size        Maximum length of destination path.
+ * @param[in] a_path2       Source path.
+ * @return Pointer to a_path_dst.
+ */
+pifs_char_t * pifs_append_path(pifs_char_t * a_path_dst, size_t a_size, const pifs_char_t * a_path_src)
 {
     size_t len;
 
-    len = strlen(a_path1);
-    if (a_path1[len - 1] != PIFS_PATH_SEPARATOR_CHAR
-            && a_path2[0] != PIFS_PATH_SEPARATOR_CHAR)
+    len = strlen(a_path_dst);
+    if (a_path_dst[len - 1] != PIFS_PATH_SEPARATOR_CHAR
+            && a_path_src[0] != PIFS_PATH_SEPARATOR_CHAR)
     {
-        strncat(a_path1, PIFS_PATH_SEPARATOR_STR, a_size);
+        strncat(a_path_dst, PIFS_PATH_SEPARATOR_STR, a_size);
     }
-    strncat(a_path1, a_path2, a_size);
+    strncat(a_path_dst, a_path_src, a_size);
 
-    return a_path1;
+    return a_path_dst;
 }
 #endif
