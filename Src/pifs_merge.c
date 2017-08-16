@@ -177,20 +177,23 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
     PIFS_NOTICE_MSG("start\r\n");
 
     /* Re-create file in the new management block */
-    (void)pifs_internal_open(&pifs.internal_file, a_old_entry->name, "w", FALSE);
+    ret = pifs_internal_open(&pifs.internal_file, a_old_entry->name, "w", FALSE);
     pifs.internal_file.entry.file_size = a_old_entry->file_size;
 #if PIFS_ENABLE_ATTRIBUTES
     pifs.internal_file.entry.attrib = a_old_entry->attrib;
 #endif
 #if PIFS_ENABLE_USER_DATA
-    memcpy(&pifs.internal_file.entry.user_data, &a_old_entry->user_data, PIFS_USER_DATA_SIZE_BYTE);
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_fsetuserdata(&pifs.internal_file, &a_old_entry->user_data);
+    }
 #endif
     if (pifs.internal_file.entry.file_size > 0 && pifs.internal_file.entry.file_size != PIFS_FILE_SIZE_ERASED)
     {
         pifs.internal_file.is_size_changed = TRUE;
     }
 
-    if (pifs.internal_file.status == PIFS_SUCCESS)
+    if (ret == PIFS_SUCCESS)
     {
         new_map_entry.address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
         new_map_entry.address.page_address = PIFS_PAGE_ADDRESS_INVALID;

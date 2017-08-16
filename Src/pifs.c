@@ -613,6 +613,8 @@ pifs_status_t pifs_init(void)
                        PIFS_HEADER_SIZE_BYTE, PIFS_LOGICAL_PAGE_SIZE_BYTE);
         ret = PIFS_ERROR_CONFIGURATION;
     }
+
+
     if (PIFS_ENTRY_SIZE_BYTE > PIFS_LOGICAL_PAGE_SIZE_BYTE)
     {
         PIFS_ERROR_MSG("Entry size (%lu) is larger than logical page (%u)!\r\n"
