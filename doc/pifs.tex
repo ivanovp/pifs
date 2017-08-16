@@ -1,0 +1,53 @@
+%\documentclass[a4paper,10pt,hungarian]{report}
+%\documentclass[a4paper,10pt,hungarian]{article}
+\documentclass[a4paper,10pt]{article}
+%a ,,hungarian'' opció csak a draftcopy csomaghoz kell!
+%\usepackage[latin2]{inputenc}
+%\usepackage[T1]{fontenc}
+%\usepackage[magyar]{babel}
+%\usepackage[left=2.5cm,right=2.5cm,top=2cm,bottom=2cm]{geometry}
+\usepackage[left=2.5cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{indentfirst}
+\sloppy
+%\usepackage{graphicx}
+%\usepackage{ifthen}
+%\usepackage{multicol}
+%\usepackage[outline]{draftcopy} %outline,bottom,light,none/first/firsttwo
+%\usepacgake{wasysym}
+%%%% Don't modify next two line! %%%%
+%.PDF.\usepackage{times}
+%.PDF.\usepackage[T1]{mathtime}
+\frenchspacing
+\author{Peter Ivanov \textless{}ivanovp@gmail.com\textgreater{}}
+\title{Pi file system (PiFS)}
+%%
+%\usepackage[dvips]{graphicx}
+
+%%
+
+\begin{document}
+\maketitle
+%\tableofcontents
+\section{Introduction}
+This file system was developed for embedded systems which use NOR flash as storage. It can be scaled from 4 Mbit to 256 Mbit memory sizes.
+The development started as teach-myself project and I released in hope that it will be useful for someone else as well.
+
+\section{Features}
+\begin{itemize}
+\item Small memory footprint
+\item Logical page size is user-defined
+\item Directory handling
+\item Dynamic wear-leveling
+\item Static wear-leveling (limited, work-in-progress)
+\item User data can be added for files: permissions, owner IDs, etc.
+\end{itemize}
+
+\section{Limitations}
+\begin{itemize}
+\item Only one NOR flash can be used
+\item Memory and file system configuration cannot be changed during run-time
+\item One directory can only store pre-defined number of files or directories
+\end{itemize}
+
+%\subsection{Alcím}
+\end{document}
