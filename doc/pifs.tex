@@ -3,6 +3,8 @@
 \documentclass[a4paper,10pt]{article}
 \usepackage{upgreek}
 \usepackage{relsize}
+\usepackage{scrextend}
+\addtokomafont{labelinglabel}{\sffamily}
 %a ,,hungarian'' opció csak a draftcopy csomaghoz kell!
 %\usepackage[latin2]{inputenc}
 %\usepackage[T1]{fontenc}
@@ -58,9 +60,10 @@ sizes.
 The development started as teach-myself project and I released the code in 
 hope that it will be useful for someone else as well.
 
-\section{Features of the \pifs{}}
+\subsection{Features of the \pifs{}}
 \begin{itemize}
 \item Small memory footprint
+\item Files can be opened for update ("r+", "w+", "a+" modes are supported)
 \item Size of logical page is user-defined
 \item Cache buffer for page (currently only one page is cached)
 \item Directory handling
@@ -71,12 +74,47 @@ hope that it will be useful for someone else as well.
 are not used by the file system
 \end{itemize}
 
-\section{Limitations of the \pifs{}}
+\subsection{Limitations of the \pifs{}}
 \begin{itemize}
-\item Only one NOR flash chip can be used
+\item Only one flash chip can be used (one volume is supported)
 \item Memory and file system configuration cannot be changed during run-time
 \item One directory can only store pre-defined number of files or directories
+\item Incompatible with FAT file system, therefore cannot be used for USB mass
+storage devices
 \end{itemize}
 
-%\subsection{Alcím}
+\section{Definitions, Acronyms and Abbreviations}
+\begin{labeling}{Management area} % <--- here goes the longest definition to measure the necessary space
+\item[NOR flash] Special type of EEPROMs, which manufactured using NOR gates.
+
+\item[Page] Array of several bytes in the flash memory. Number of bytes is power of two, usually 256 or 512 bytes.
+
+\item[Block] Composed of several pages. Usually a block contain 16, 256 or 1024 
+pages.
+
+\item[Erase] Change data bits to one (logical high level). Only a whole block can be erased, which means all bits of the block are set to one.
+
+\item[Program] Change data bits to zero (logical low level). Each bit of a page can be programmed individually.
+
+\item[Block address] Index of block in flash memory. Type: pifs\_block\_address\_t
+
+\item[Page address] Index of a page in a block. Type: pifs\_page\_address\_t
+
+\item[Page offset] Index of a byte in a page. Type: pifs\_page\_offset\_t
+
+\item[Data area] Blocks which hold the file's content.
+
+\item[Management area] Blocks which hold the file system's internal
+data, how much space is allocated, where are the data pages of files, etc.
+
+\item[Map page] Management page which is used to describe data pages of a file.
+
+\item[Entry list] Technically a directory of file system.
+
+\item[Entry] One file or directory in the directory.
+
+\item[TBR] To be released. A page which was used, but now it can erased then 
+allocated.
+\end{labeling}
+
 \end{document}
