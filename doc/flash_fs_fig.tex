@@ -21,12 +21,14 @@
         {
             % primary management
             \node[fit=(page\x0) (page\x\y), block,fill=red!30] (block\x){};
-            \node[below right] at (block\x.north west) {Block \x: p.mgmt};
+            \node[below right] at (block\x.north west) {Block \x: p.m.
+            \footnotemark{}};
         }
         {
             % secondary management
             \node[fit=(page\x0) (page\x\y), block,fill=red!20] (block\x){};
-            \node[below right] at (block\x.north west) {Block \x: s.mgmt};
+            \node[below right] at (block\x.north west) {Block \x: s.m.
+            \footnotemark{}};
         }
     }
     {
@@ -59,3 +61,7 @@
 \node[below right] at (flash.north west) {Flash memory};
 \end{pgfonlayer}
 \end{tikzpicture}
+            
+\footnotetext{Primary management block}
+\footnotetext{Secondary management block}
+
