@@ -1,6 +1,8 @@
 %\documentclass[a4paper,10pt,hungarian]{report}
 %\documentclass[a4paper,10pt,hungarian]{article}
 \documentclass[a4paper,10pt]{article}
+\usepackage{upgreek}
+\usepackage{relsize}
 %a ,,hungarian'' opció csak a draftcopy csomaghoz kell!
 %\usepackage[latin2]{inputenc}
 %\usepackage[T1]{fontenc}
@@ -18,8 +20,12 @@
 %.PDF.\usepackage{times}
 %.PDF.\usepackage[T1]{mathtime}
 \frenchspacing
+\newcommand{\mypi}{{\larger $\uppi$}}
+%\newcommand{\mypi}{{\larger $\pi$}}
+\newcommand{\pifs}{\mypi{}fs}
+\newcommand{\pifsl}{Pi file system}
 \author{Peter Ivanov \textless{}ivanovp@gmail.com\textgreater{}}
-\title{Pi file system (PiFS)}
+\title{\pifsl{} (\pifs{})}
 %%
 %\usepackage[dvips]{graphicx}
 
@@ -29,22 +35,45 @@
 \maketitle
 %\tableofcontents
 \section{Introduction}
-This file system was developed for embedded systems which use NOR flash as storage. It can be scaled from 4 Mbit to 256 Mbit memory sizes.
-The development started as teach-myself project and I released in hope that it will be useful for someone else as well.
+This file system was developed for embedded systems which use NOR flash as 
+storage. 
 
-\section{Features}
+NOR flash ICs have very low price nowadays (2017) and can be used
+to store files. But there are few problems to consider when designing a file
+system:
+\begin{itemize}
+\item NOR flashes can be programmed (set bits to zero) by pages, but only 
+can be erased (set bits to one) in a larger quantity, which are mostly called
+block in the datasheets. One page is usually 256 or 512 bytes, one block 
+consits of 16, 256, 1024, etc. pages. So typical block sizes are 4 KiB, 
+64 KiB, 256 KiB.
+\item Blocks can be erased ~10,000--100,000 times. After that data retention is 
+not guaranteed. Therefore all blocks should be erased uniformly. This method 
+is called wear leveling.
+\end{itemize}
+
+\pifs{} can be scaled from 4 Mbit (512 KiB) to 256 Mbit (32 MiB) memory 
+sizes.
+
+The development started as teach-myself project and I released the code in 
+hope that it will be useful for someone else as well.
+
+\section{Features of the \pifs{}}
 \begin{itemize}
 \item Small memory footprint
-\item Logical page size is user-defined
+\item Size of logical page is user-defined
+\item Cache buffer for page (currently only one page is cached)
 \item Directory handling
 \item Dynamic wear-leveling
 \item Static wear-leveling (limited, work-in-progress)
 \item User data can be added for files: permissions, owner IDs, etc.
+\item At the beginning of flash memory reserved blocks can be defined, which 
+are not used by the file system
 \end{itemize}
 
-\section{Limitations}
+\section{Limitations of the \pifs{}}
 \begin{itemize}
-\item Only one NOR flash can be used
+\item Only one NOR flash chip can be used
 \item Memory and file system configuration cannot be changed during run-time
 \item One directory can only store pre-defined number of files or directories
 \end{itemize}
