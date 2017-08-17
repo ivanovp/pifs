@@ -39,6 +39,8 @@
 \section{Introduction}
 This file system was developed for embedded systems which use NOR flash as 
 storage. 
+The development started as teach-myself project and I released the code in 
+hope that it will be useful for someone else as well.
 
 NOR flash ICs have very low price nowadays (2017) and can be used
 to store files. But there are few problems to consider when designing a file
@@ -54,11 +56,8 @@ not guaranteed. Therefore all blocks should be erased uniformly. This method
 is called wear leveling.
 \end{itemize}
 
-\pifs{} can be scaled from 4 Mbit (512 KiB) to 256 Mbit (32 MiB) memory 
-sizes.
-
-The development started as teach-myself project and I released the code in 
-hope that it will be useful for someone else as well.
+\pifs{} can be scaled from 4 Mbit (512 KiB), 256 Mbit (32 MiB), 
+theoretically up to 1 Gbit (128 MiB) memory sizes.
 
 \subsection{Features of the \pifs{}}
 \begin{itemize}
