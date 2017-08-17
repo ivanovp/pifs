@@ -1,6 +1,11 @@
 tags
 *.o
 *.d
+*.aux
+*.dvi
+*.log
+*.out
+*.swp
 flash.bin
 flash.stt
 flash_test

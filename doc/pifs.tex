@@ -10,6 +10,8 @@
 \usepackage{indentfirst}
 \usepackage{upgreek}
 \usepackage{relsize}
+\usepackage{hyperref}
+\usepackage{ifthen}
 \usepackage{scrextend}
 \addtokomafont{labelinglabel}{\sffamily}
 \usepackage{tikz}
@@ -28,6 +30,33 @@
 %\newcommand{\mypi}{{\larger $\pi$}}
 \newcommand{\pifs}{\mypi{}fs}
 \newcommand{\pifsl}{Pi file system}
+
+%%% TiKZ
+\tikzstyle{block} = [draw,fill=yellow!20,dashed,minimum size=7em,inner sep=0.45cm]
+\tikzstyle{page} = [draw,fill=brown!25,dashed,minimum width=5em,minimum height=2.5em]
+\tikzstyle{flash} = [draw,fill=gray!15,inner sep=0.45cm]
+% diameter of semicircle used to indicate that two lines are not connected
+\def\radius{.7mm} 
+\tikzstyle{branch}=[fill,shape=circle,minimum size=3pt,inner sep=0pt]
+\makeatletter
+\tikzset{
+    dot diameter/.store in=\dot@diameter,
+    dot diameter=2pt,
+    dot spacing/.store in=\dot@spacing,
+    dot spacing=8pt,
+    dots/.style={
+        line width=\dot@diameter,
+        line cap=round,
+        dash pattern=on 0pt off \dot@spacing
+    }
+}
+\makeatother
+% Define layers, otherwise gray blocks will hide pages
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{background2}
+\pgfsetlayers{background,background2,main}
+
+
 \author{Peter Ivanov \textless{}ivanovp@gmail.com\textgreater{}}
 \title{\pifsl{} (\pifs{})}
 %%
@@ -88,10 +117,10 @@ storage devices
 \begin{labeling}{Management area} % <--- here goes the longest definition to measure the necessary space
 \item[NOR flash] Special type of EEPROMs, which manufactured using NOR gates.
 
-\item[Page] Array of several bytes in the flash memory. Number of bytes is power of two, usually 256 or 512 bytes.
+\item[Page] Array of several bytes in the flash memory. Number of bytes is power of two, usually 256 or 512 bytes. See \autoref{fig:flash}.
 
 \item[Block] Composed of several pages. Usually a block contain 16, 256 or 1024 
-pages.
+pages. See \autoref{fig:flash}.
 
 \item[Erase] Change data bits to one (logical high level). Only a whole block can be erased, which means all bits of the block are set to one.
 
@@ -118,75 +147,18 @@ data, how much space is allocated, where are the data pages of files, etc.
 allocated.
 \end{labeling}
 
-
-\tikzstyle{block} = [draw,fill=yellow!20,dashed,minimum size=2em]
-\tikzstyle{page} = [draw,fill=brown!25,dashed,minimum size=2em]
-% diameter of semicircle used to indicate that two lines are not connected
-\def\radius{.7mm} 
-\tikzstyle{branch}=[fill,shape=circle,minimum size=3pt,inner sep=0pt]
-\makeatletter
-\tikzset{
-    dot diameter/.store in=\dot@diameter,
-    dot diameter=2pt,
-    dot spacing/.store in=\dot@spacing,
-    dot spacing=8pt,
-    dots/.style={
-        line width=\dot@diameter,
-        line cap=round,
-        dash pattern=on 0pt off \dot@spacing
-    }
-}
-\makeatother
-
-%%%%%%%%%%%%%%%%%%%%
-%%% Flash figure %%%
-%%%%%%%%%%%%%%%%%%%%
 \begin{figure}[h]
 \centering
-% Define layers, otherwise gray blocks will hide pages
-\pgfdeclarelayer{background}
-\pgfdeclarelayer{background2}
-\pgfsetlayers{background,background2,main}
-\begin{tikzpicture}[>=latex']
-%%% Draw blocks 0..2
-\foreach \x in {0,1,2} {
-    % Draw pages
-    \foreach \y in {0,1,2,3} {
-        %\node at (0,-\y) (input\y) {$i \y$};
-        \node[page] at (\x * 3,-\y) (page\x\y) {Page \y};
-    }
-    \def\y{5}
-    \node[page] at (\x * 3,-\y) (page\x\y) {Page n};
-    \draw[dots] (page\x3) -- (page\x\y);
-    \begin{pgfonlayer}{background2}
-    % Draw block
-    \node[fit=(page\x0) (page\x\y), block,inner sep=0.45cm] (block\x){};
-    \node[below right] at (block\x.north west) {Block \x};
-    \end{pgfonlayer}
-}
-%%% Draw block n
-\def\x{4}
-% Draw pages
-\foreach \y in {0,1,2,3} {
-    %\node at (0,-\y) (input\y) {$i \y$};
-    \node[page] at (\x * 3,-\y) (page\x\y) {Page \y};
-}
-\def\y{5}
-\node[page] at (\x * 3,-\y) (page\x\y) {Page n};
-\draw[dots] (page\x3) -- (page\x\y);
-\begin{pgfonlayer}{background2}
-% Draw block
-\node[fit=(page\x0) (page\x\y), block,inner sep=0.45cm] (block\x){};
-\draw[dots] (block2) -- (block\x);
-\node[below right] at (block\x.north west) {Block n};
-\end{pgfonlayer}
-
-\begin{pgfonlayer}{background}
-\node[fit=(block0) (block4),draw,dashed,fill=gray!15,inner sep=0.45cm] (flash){};
-\node[below right] at (flash.north west) {Flash memory};
-\end{pgfonlayer}
-\end{tikzpicture}
+\input{flash_fig}
 \caption{Flash memory layout}
+\label{fig:flash}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\input{flash_fs_fig}
+\caption{Flash memory layout when \pifs{} installed}
+\label{fig:flash_fs}
 \end{figure}
 
 \end{document}
