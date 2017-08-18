@@ -11,7 +11,10 @@ LD  = $(CROSS)g++
 OBJCOPY = $(CROSS)objcopy
 endif
 
-INCLUDE = -I./Inc
+INCLUDE = -I../../source/core
+INCLUDE += -I../../source/flash_drv/nor_emu
+INCLUDE += -I../../source/term
+INCLUDE += -I../../source/test
 
 # Options for compiler and linker as well
 COMMON_FLAGS =
@@ -31,23 +34,23 @@ LDFLAGS += -lpthread -lm
 # Set source files
 SRC_CPP =
 SRC_C =
-SRC_C += ./Src/buffer.c
-SRC_C += ./Src/flash.c
-SRC_C += ./Src/flash_test.c
-SRC_C += ./Src/main.c
-SRC_C += ./Src/parser.c
-SRC_C += ./Src/pifs.c
-SRC_C += ./Src/pifs_delta.c
-SRC_C += ./Src/pifs_dir.c
-SRC_C += ./Src/pifs_entry.c
-SRC_C += ./Src/pifs_file.c
-SRC_C += ./Src/pifs_fsbm.c
-SRC_C += ./Src/pifs_helper.c
-SRC_C += ./Src/pifs_map.c
-SRC_C += ./Src/pifs_merge.c
-SRC_C += ./Src/pifs_test.c
-SRC_C += ./Src/pifs_wear.c
-SRC_C += ./Src/term.c
+SRC_C += ../../source/core/pifs_test.c
+SRC_C += ../../source/core/pifs_entry.c
+SRC_C += ../../source/core/pifs.c
+SRC_C += ../../source/core/pifs_file.c
+SRC_C += ../../source/core/pifs_fsbm.c
+SRC_C += ../../source/core/pifs_delta.c
+SRC_C += ../../source/core/pifs_wear.c
+SRC_C += ../../source/core/pifs_helper.c
+SRC_C += ../../source/core/pifs_merge.c
+SRC_C += ../../source/core/pifs_map.c
+SRC_C += ../../source/core/pifs_dir.c
+SRC_C += ../../source/flash_drv/nor_emu/flash.c
+SRC_C += ../../source/term/term.c
+SRC_C += ../../source/term/parser.c
+SRC_C += ../../source/test/buffer.c
+SRC_C += ../../source/test/flash_test.c
+SRC_C += ../../demo/pc_emu/main.c
 SRC_S = 
 OBJ_CPP = $(patsubst %.cpp, %.o, $(SRC_CPP))
 OBJ_C   = $(patsubst %.c, %.o, $(SRC_C))

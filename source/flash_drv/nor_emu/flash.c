@@ -1,10 +1,10 @@
 /**
  * @file        flash.c
- * @brief       NOR flash emulator
+ * @brief       NOR flash emulator for PC
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-06-15 12:28:40 ivanovp {Time-stamp}
+ * Last modify: 2017-08-18 06:29:08 ivanovp {Time-stamp}
  * Licence:     GPL
  */
 #include <stdio.h>
