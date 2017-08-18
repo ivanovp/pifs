@@ -12,3 +12,5 @@ flash_test
 pifs_test
 *.pro.user*
 test.log
+RemoteSystemsTempFiles/
+Debug/
