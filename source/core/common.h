@@ -33,4 +33,6 @@ typedef unsigned char bool_t;
 #define ASCII_QUOTE         ('"')
 #define ASCII_APOSTROPHE    ('\'')
 
+#define ENABLE_WATCHDOG 1
+
 #endif /* _INCLUDE_COMMON_H_ */
