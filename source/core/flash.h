@@ -1,6 +1,6 @@
 /**
  * @file        flash.h
- * @brief       Header of flash routines
+ * @brief       Internal API of flash
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
@@ -64,21 +64,20 @@ typedef uint32_t pifs_page_address_t;
 #error PIFS_FLASH_PAGE_PER_BLOCK is too big!
 #endif
 
-// TODO PIFS_LOGICAL_PAGE_SIZE_BYTE shall be taken account here as well!
-#if (PIFS_FLASH_PAGE_SIZE_BYTE < 255)
+#if (PIFS_FLASH_PAGE_SIZE_BYTE < 255 && PIFS_LOGICAL_PAGE_SIZE_BYTE < 255)
 typedef uint8_t pifs_page_offset_t;
 #define PIFS_PAGE_OFFSET_INVALID   (UINT8_MAX - 1u)
 #define PIFS_PAGE_OFFSET_ERASED    (UINT8_MAX)
-#elif (PIFS_FLASH_PAGE_SIZE_BYTE < 65535)
+#elif (PIFS_FLASH_PAGE_SIZE_BYTE < 65535 && PIFS_LOGICAL_PAGE_SIZE_BYTE < 65535)
 typedef uint16_t pifs_page_offset_t;
 #define PIFS_PAGE_OFFSET_INVALID   (UINT16_MAX - 1u)
 #define PIFS_PAGE_OFFSET_ERASED    (UINT16_MAX)
-#elif (PIFS_FLASH_PAGE_SIZE_BYTE < 4294967295l)
+#elif (PIFS_FLASH_PAGE_SIZE_BYTE < 4294967295l && PIFS_LOGICAL_PAGE_SIZE_BYTE < 4294967295l)
 typedef uint32_t pifs_page_offset_t;
 #define PIFS_PAGE_OFFSET_INVALID   (UINT32_MAX - 1u)
 #define PIFS_PAGE_OFFSET_ERASED    (UINT32_MAX)
 #else
-#error PIFS_FLASH_PAGE_SIZE_BYTE is too big!
+#error PIFS_FLASH_PAGE_SIZE_BYTE or PIFS_LOGICAL_PAGE_SIZE_BYTE is too big!
 #endif
 
 /** Number of blocks used by the file system */
@@ -94,11 +93,57 @@ typedef uint32_t pifs_page_offset_t;
 /** Number of flash pages used by the file system */
 #define PIFS_FLASH_PAGE_NUM_FS      (PIFS_FLASH_BLOCK_NUM_FS * PIFS_FLASH_PAGE_PER_BLOCK)
 
+/**
+ * @brief pifs_flash_init Initialize flash driver.
+ *
+ * @return PIFS_SUCCESS if flash memory is identified and initialized.
+ */
 pifs_status_t pifs_flash_init(void);
+
+/**
+ * @brief pifs_flash_delete De-initialize flash driver.
+ *
+ * @return PIFS_SUCCESS if successfully de-initialized.
+ */
 pifs_status_t pifs_flash_delete(void);
+
+/**
+ * @brief pifs_flash_read Read from flash memory.
+ *
+ * @param[in] a_block_address Address of block.
+ * @param[in] a_page_address  Address of the page in block.
+ * @param[in] a_page_offset   Offset in page.
+ * @param[out] a_buf          Buffer to fill.
+ * @param[in] a_buf_size      Size of buffer.
+ * @return PIFS_SUCCESS if read successfully finished.
+ */
 pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address, pifs_page_offset_t a_page_offset, void * const a_buf, size_t a_buf_size);
+
+/**
+ * @brief pifs_flash_write Write to flash memory.
+ *
+ * @param[in] a_block_address Address of block.
+ * @param[in] a_page_address  Address of the page in block.
+ * @param[in] a_page_offset   Offset in page.
+ * @param[in] a_buf           Buffer to write.
+ * @param[in] a_buf_size      Size of buffer.
+ * @return PIFS_SUCCESS if write successfully finished.
+ */
 pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address, pifs_page_address_t a_page_offset, const void * const a_buf, size_t a_buf_size);
+
+/**
+ * @brief pifs_flash_erase Erase a block.
+ *
+ * @param[in] a_block_address Block to erase.
+ *
+ * @return PIFS_SUCCESS if block was erased successfully.
+ */
 pifs_status_t pifs_flash_erase(pifs_block_address_t a_block_address);
+
+/**
+ * @brief pifs_flash_print_stat Called by the terminal to print information
+ * about flash memory.
+ */
 void pifs_flash_print_stat(void);
 
 #ifdef __cplusplus

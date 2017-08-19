@@ -249,7 +249,7 @@ pifs_status_t pifs_flash_init(void)
 /**
  * @brief pifs_flash_delete De-initialize flash driver.
  *
- * @return
+ * @return PIFS_SUCCESS if successfully de-initialized.
  */
 pifs_status_t pifs_flash_delete(void)
 {
@@ -325,7 +325,7 @@ pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address, pifs_page_ad
 }
 
 /**
- * @brief pifs_flash_write Write flash memory.
+ * @brief pifs_flash_write Write to flash memory.
  *
  * @param[in] a_block_address Address of block.
  * @param[in] a_page_address  Address of the page in block.
@@ -438,6 +438,10 @@ pifs_status_t pifs_flash_erase(pifs_block_address_t a_block_address)
     return ret;
 }
 
+/**
+ * @brief pifs_flash_print_stat Called by the terminal to print information
+ * about flash memory.
+ */
 void pifs_flash_print_stat(void)
 {
 }

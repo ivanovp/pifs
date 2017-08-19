@@ -5,8 +5,7 @@
 %\usepackage[latin2]{inputenc}
 %\usepackage[T1]{fontenc}
 %\usepackage[magyar]{babel}
-%\usepackage[left=2.5cm,right=2.5cm,top=2cm,bottom=2cm]{geometry}
-\usepackage[left=2.5cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage[left=2.5cm,right=2.5cm,top=2cm,bottom=2cm]{geometry}
 \usepackage{indentfirst}
 \usepackage{upgreek}
 \usepackage{relsize}
@@ -167,18 +166,33 @@ allocated. If all pages in a block marked TBR, the block can be erased.
 \item[Merge] During merge management area is written, blocks are erased, delta pages are resolved and entry list is compacted. The data is copied from primary to secondary management area and the next secondary management area is selected.
 \end{labeling}
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \input{flash_fig}
 \caption{Flash memory layout}
 \label{fig:flash}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \input{flash_fs_fig}
 \caption{Flash memory layout when \pifs{} installed}
 \label{fig:flashfs}
 \end{figure}
+
+\section{Demonstration}
+In the 'demo' directory three applications can be found.
+\begin{enumerate}
+\item pc\_emu: PC application which uses NOR flash emulator. It can be compiled
+with GNU make an GCC.
+\item nucleo-f413zh\_pifs: Demo running on Nucleo-F413ZH board. There is no
+flash memory on the board, some prototype hardware should be created.
+It has internal debugger and virtual serial port. 
+It can be compiled with GNU make and GCC or with STM32 System Workbench.
+\item stm32\_f4ve\_pifs: Demo running on STM32-F4VE board. There is
+W25Q16DV NOR flash soldered on the board, but it has not got UART. So external
+debugger and USB-serial converter is needed.
+It can be compiled with GNU make and GCC or with STM32 System Workbench.
+\end{enumerate}
 
 \end{document}
