@@ -331,8 +331,8 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     bool_t                  enable_directories : 1;
 #endif
     /* file system status */
-    pifs_block_address_t    management_block_address;       /**< number of pifs_management_blocks */
-    pifs_block_address_t    next_management_block_address;  /**< Number of PIFS_MANAGEMENT_BLOCK_NUM */
+    pifs_block_address_t    management_block_address;       /**< Address of primary (active) management block */
+    pifs_block_address_t    next_management_block_address;  /**< Address of secndary (next) management block */
     pifs_address_t          free_space_bitmap_address;
     pifs_address_t          root_entry_list_address;        /**< Root directory */
     pifs_address_t          delta_map_address;

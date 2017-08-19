@@ -115,15 +115,17 @@ storage devices
 \end{itemize}
 
 \section{Definitions, Acronyms and Abbreviations}
-\begin{labeling}{Management area} % <--- here goes the longest definition to measure the necessary space
+\begin{labeling}{File system header} % <--- here goes the longest definition to measure the necessary space
 \item[NOR flash] Special type of EEPROMs, which manufactured using NOR gates.
 
-\item[Page] Array of several bytes in the flash memory. Number of bytes is power of two, usually 256 or 512 bytes. See \autoref{fig:flash}.
+\item[Page] Array of several bytes in the flash memory. Number of bytes is 
+power of two, usually 256 or 512 bytes. See \autoref{fig:flash}.
 
-\item[Block] Composed of several pages. Usually a block contain 16, 256 or 1024 
+\item[Block] Composed of several pages. Usually a block contain 16, 256 or 1024
 pages. See \autoref{fig:flash}.
 
-\item[Erase] Change data bits to one (logical high level). Only a whole block can be erased, which means all bits of the block are set to one.
+\item[Erase] Change data bits to one (logical high level). Only a whole block 
+can be erased, which means all bits of the block are set to one.
 
 \item[Program] Change data bits to zero (logical low level). Each bit of a page can be programmed individually.
 
@@ -136,7 +138,20 @@ pages. See \autoref{fig:flash}.
 \item[Data area] Blocks which hold the file's content.
 
 \item[Management area] Blocks which hold the file system's internal
-data, how much space is allocated, where are the data pages of files, etc.
+data, how much space is allocated, where are the data pages of files, etc. There are two types of management area: primary (active) management area, secondary (next) management area.
+
+\item[File system header] First page of active management area contains the
+header of file system. It describes address of free space bitmap, entry list,
+delta map, wear level list, etc.
+Type: pifs\_header\_t, variable: pifs.header.
+
+\item[FSBM] Free space bitmap. It stores information about all pages of flash memory:
+1 bit stores whether page is free, 1 bit stores if page is to be released.
+
+\item[Delta page] If content of a file is overwritten and original page
+cannot be overwritten because bits should be changed from 0 to 1, delta pages 
+are added. When the original page is read from a given address the content of
+delta page is provided from a different address.
 
 \item[Map page] Management page which is used to describe data pages of a file.
 
@@ -145,7 +160,9 @@ data, how much space is allocated, where are the data pages of files, etc.
 \item[Entry] One file or directory in the directory.
 
 \item[TBR] To be released. A page which was used, but now it can erased then 
-allocated.
+allocated. If all pages in a block marked TBR, the block can be erased.
+
+\item[Merge] During merge management area is written, blocks are erased, delta pages are resolved and entry list is compacted. The data is copied from primary to secondary management area and the next secondary management area is selected.
 \end{labeling}
 
 \begin{figure}[h]

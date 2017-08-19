@@ -6,9 +6,15 @@
 %%% Draw blocks 0..2
 \foreach \x in {0,1,2} {
     % Draw pages
-    \foreach \y in {0,1,2,3} {
-        %\node at (0,-\y) (input\y) {$i \y$};
-        \node[page] at (\x * 3,-\y) (page\x\y) {Page \y};
+    \foreach \y in {-1,0,1,2,3} {
+        \ifthenelse{-1 = \y}
+        {
+            % Invisible!
+            \node[draw=none] at (\x * 3,-\y) (page\x\y) {};
+        }
+        {
+            \node[page] at (\x * 3,-\y) (page\x\y) {Page \y};
+        }
     }
     \def\y{5}
     \node[page] at (\x * 3,-\y) (page\x\y) {Page n};
@@ -21,19 +27,19 @@
         {
             % primary management
             \node[fit=(page\x0) (page\x\y), block,fill=red!30] (block\x){};
-            \node[below right] at (block\x.north west) {Block \x: p.m.
-            \footnotemark{}};
+            \node[below right] at (block\x.north west) {\hbox{Block \x: \newline
+            primary management}};
         }
         {
             % secondary management
             \node[fit=(page\x0) (page\x\y), block,fill=red!20] (block\x){};
-            \node[below right] at (block\x.north west) {Block \x: s.m.
-            \footnotemark{}};
+            \node[below right] at (block\x.north west) {\hbox{Block \x: \newline
+            secondary management}};
         }
     }
     {
         % data
-        \node[fit=(page\x0) (page\x\y), block] (block\x){};
+        \node[fit=(page\x-1) (page\x\y), block] (block\x){};
         \node[below right] at (block\x.north west) {Block \x: data};
     }
 
@@ -42,9 +48,15 @@
 %%% Draw block n
 \def\x{4}
 % Draw pages
-\foreach \y in {0,1,2,3} {
-    %\node at (0,-\y) (input\y) {$i \y$};
-    \node[page] at (\x * 3,-\y) (page\x\y) {Page \y};
+\foreach \y in {-1,0,1,2,3} {
+    \ifthenelse{-1 = \y}
+    {
+        % Invisible!
+        \node[draw=none] at (\x * 3,-\y) (page\x\y) {};
+    }
+    {
+        \node[page] at (\x * 3,-\y) (page\x\y) {Page \y};
+    }
 }
 \def\y{5}
 \node[page] at (\x * 3,-\y) (page\x\y) {Page n};
@@ -62,6 +74,6 @@
 \end{pgfonlayer}
 \end{tikzpicture}
             
-\footnotetext{Primary management block}
-\footnotetext{Secondary management block}
+%\footnotetext{Primary management block}
+%\footnotetext{Secondary management block}
 
