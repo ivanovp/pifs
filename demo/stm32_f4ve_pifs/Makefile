@@ -1,4 +1,4 @@
-APP_NAME = nucleo-f413zh_pifs
+APP_NAME = stm32_f4ve_pifs
 
 ENABLE_CROSS_COMPILE = 1
 
@@ -36,7 +36,7 @@ CFLAGS += -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 CFLAGS += -D__weak="__attribute__((weak))"
 CFLAGS += -D__packed="__attribute__((__packed__))"
 CFLAGS += -DUSE_HAL_DRIVER
-CFLAGS += -DSTM32F413xx
+CFLAGS += -DSTM32F407xx
 CFLAGS += -DDEBUG=1
 CFLAGS += $(COMMON_FLAGS)
 CPPFLAGS = $(CFLAGS)
@@ -44,7 +44,7 @@ CFLAGS_A = $(CFLAGS) -D_ASSEMBLER_ -x assembler-with-cpp
 
 # Linker options
 LDFLAGS = $(COMMON_FLAGS)
-LDFLAGS += -specs=nosys.specs -specs=nano.specs -TSTM32F413ZHTx_FLASH.ld -Wl,-Map=output.map -Wl,--gc-sections -lm 
+LDFLAGS += -specs=nosys.specs -specs=nano.specs -TSTM32F407VETx_FLASH.ld -Wl,-Map=output.map -Wl,--gc-sections -lm 
 
 # Set source files
 SRC_CPP =
@@ -65,41 +65,41 @@ SRC_C += ../../source/term/term.c
 SRC_C += ../../source/test/buffer.c
 SRC_C += ../../source/test/flash_test.c
 SRC_C += ../../source/test/pifs_test.c
-SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/croutine.c
-SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/tasks.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma_ex.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ramfunc.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_iwdg.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c
+SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/croutine.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/event_groups.c
-SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/timers.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/list.c
-SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_3.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c
+SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_3.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/queue.c
-SRC_C += ./Src/stm32f4xx_hal_msp.c
-SRC_C += ./Src/system_stm32f4xx.c
+SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/tasks.c
+SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/timers.c
+SRC_C += ./Src/freertos.c
+SRC_C += ./Src/isr_handlers.c
 SRC_C += ./Src/main.c
+SRC_C += ./Src/stm32f4xx_hal_msp.c
 SRC_C += ./Src/stm32f4xx_hal_timebase_TIM.c
 SRC_C += ./Src/stm32f4xx_it.c
-SRC_C += ./Src/isr_handlers.c
-SRC_C += ./Src/freertos.c
+SRC_C += ./Src/system_stm32f4xx.c
 SRC_C += ./Src/uart.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma_ex.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ramfunc.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_iwdg.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c
-SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c
-SRC_S = ./startup/startup_stm32f413xx.s
+SRC_S = ./startup/startup_stm32f407xx.s
 OBJ_CPP = $(patsubst %.cpp, %.o, $(SRC_CPP))
 OBJ_C   = $(patsubst %.c, %.o, $(SRC_C))
 OBJ_S   = $(patsubst %.s, %.o, $(SRC_S))

@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-08-18 06:45:44 ivanovp {Time-stamp}
+ * Last modify: 2017-08-19 07:18:50 ivanovp {Time-stamp}
  * Licence:     GPL
  */
 #ifndef _INCLUDE_FLASH_CONFIG_H_
@@ -25,11 +25,8 @@
 #define FLASH_TYPE_W25Q256FV_32K    12  /**< 32 KiB sector mode */
 #define FLASH_TYPE_W25Q256FV_64K    13  /**< 64 KiB sector mode */
 
-#ifndef FLASH_TYPE
-#warning Using default flash type: FLASH_TYPE_M25P40!
 /** Type of flash memory */
 #define FLASH_TYPE                  FLASH_TYPE_M25P40
-#endif
 
 #if FLASH_TYPE == FLASH_TYPE_M25P40
 /* Geometry of ST M25P40 */
