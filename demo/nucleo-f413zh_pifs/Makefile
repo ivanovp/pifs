@@ -4,7 +4,7 @@ ENABLE_CROSS_COMPILE = 1
 
 # Tool chain settings
 ifeq ($(ENABLE_CROSS_COMPILE),1)
-CROSS = arm-none-eabi-
+CROSS = $(HOME)/Ac6/SystemWorkbench/plugins/fr.ac6.mcu.externaltools.arm-none.linux64_1.13.1.201705091103/tools/compiler/bin/arm-none-eabi-
 CPP = $(CROSS)g++
 CC  = $(CROSS)gcc
 LD  = $(CROSS)g++
@@ -25,11 +25,11 @@ INCLUDE += -I./Middlewares/Third_Party/FreeRTOS/Source/include
 INCLUDE += -I./Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS
 
 # Options for compiler and linker as well
-COMMON_FLAGS =
+COMMON_FLAGS = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
 
 # Compiler options
 CFLAGS = -c -O0 -ggdb3 $(INCLUDE)
-CFLAGS += -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
+CFLAGS += -fmessage-length=0 -ffunction-sections
 CFLAGS += -Wall -Wextra -Wno-format #-pedantic -std=c99
 CFLAGS += -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 CFLAGS += -D__weak="__attribute__((weak))"
@@ -43,7 +43,7 @@ CFLAGS_A = $(CFLAGS) -D_ASSEMBLER_ -x assembler-with-cpp
 
 # Linker options
 LDFLAGS = $(COMMON_FLAGS)
-LDFLAGS += -lm
+LDFLAGS += -specs=nosys.specs -specs=nano.specs -TSTM32F413ZHTx_FLASH.ld -Wl,-Map=output.map -Wl,--gc-sections -lm 
 
 # Set source files
 SRC_CPP =
@@ -98,7 +98,7 @@ SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_iwdg.c
 SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c
 SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c
 SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c
-SRC_S = 
+SRC_S = ./startup/startup_stm32f413xx.s
 OBJ_CPP = $(patsubst %.cpp, %.o, $(SRC_CPP))
 OBJ_C   = $(patsubst %.c, %.o, $(SRC_C))
 OBJ_S   = $(patsubst %.s, %.o, $(SRC_S))
@@ -109,9 +109,9 @@ DEP     = $(patsubst %.o, %.d, $(OBJ))
 
 .PHONY : all
 
-all : $(APP_NAME)
+all : $(APP_NAME).elf
 
-$(APP_NAME) : $(OBJ)
+$(APP_NAME).elf : $(OBJ)
 	$(CC) $(OBJ) -o $@ $(LDFLAGS) 
 
 $(APP_NAME).bin: $(APP_NAME)

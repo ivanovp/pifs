@@ -11,7 +11,8 @@ LD  = $(CROSS)g++
 OBJCOPY = $(CROSS)objcopy
 endif
 
-INCLUDE = -I../../source/core
+INCLUDE = -I.
+INCLUDE += -I../../source/core
 INCLUDE += -I../../source/flash_drv/nor_emu
 INCLUDE += -I../../source/term
 INCLUDE += -I../../source/test

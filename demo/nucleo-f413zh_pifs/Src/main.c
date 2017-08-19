@@ -102,17 +102,17 @@ void watchdogTask(void const * arg);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-inline void LED_on(void)
+void LED_on(void)
 {
     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
 }
 
-inline void LED_off(void)
+void LED_off(void)
 {
     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 }
 
-inline void LED_toggle(void)
+void LED_toggle(void)
 {
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 }

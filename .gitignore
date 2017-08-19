@@ -6,11 +6,13 @@ tags
 *.log
 *.out
 *.swp
+*.map
+*.pro.user*
 flash.bin
 flash.stt
 flash_test
 pifs_test
-*.pro.user*
 test.log
 RemoteSystemsTempFiles/
+.metadata
 Debug/
