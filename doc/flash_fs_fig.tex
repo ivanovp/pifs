@@ -10,7 +10,7 @@
         \ifthenelse{-1 = \y}
         {
             % Invisible!
-            \node[draw=none] at (\x * 3,-\y) (page\x\y) {};
+            \node[draw=none,minimum height=0.8cm] at (\x * 3,-\y) (page\x\y) {};
         }
         {
             \node[page] at (\x * 3,-\y) (page\x\y) {Page \y};
@@ -26,21 +26,19 @@
         \ifthenelse{0 = \x}
         {
             % primary management
-            \node[fit=(page\x0) (page\x\y), block,fill=red!30] (block\x){};
-            \node[below right] at (block\x.north west) {\hbox{Block \x: \newline
-            primary management}};
+            \node[fit=(page\x-1) (page\x\y), block,fill=red!30] (block\x){};
+            \node[below right,blocktext] at (block\x.north west) {Block \x: primary management};
         }
         {
             % secondary management
-            \node[fit=(page\x0) (page\x\y), block,fill=red!20] (block\x){};
-            \node[below right] at (block\x.north west) {\hbox{Block \x: \newline
-            secondary management}};
+            \node[fit=(page\x-1) (page\x\y), block,fill=red!20] (block\x){};
+            \node[below right,blocktext] at (block\x.north west) {Block \x: secondary management};
         }
     }
     {
         % data
         \node[fit=(page\x-1) (page\x\y), block] (block\x){};
-        \node[below right] at (block\x.north west) {Block \x: data};
+        \node[below right,blocktext] at (block\x.north west) {Block \x: data};
     }
 
     \end{pgfonlayer}
@@ -52,7 +50,7 @@
     \ifthenelse{-1 = \y}
     {
         % Invisible!
-        \node[draw=none] at (\x * 3,-\y) (page\x\y) {};
+        \node[draw=none,minimum height=0.8cm] at (\x * 3,-\y) (page\x\y) {};
     }
     {
         \node[page] at (\x * 3,-\y) (page\x\y) {Page \y};
@@ -63,9 +61,9 @@
 \draw[dots] (page\x3) -- (page\x\y);
 \begin{pgfonlayer}{background2}
 % Draw block
-\node[fit=(page\x0) (page\x\y), block] (block\x){};
+\node[fit=(page\x-1) (page\x\y), block] (block\x){};
 \draw[dots] (block2) -- (block\x);
-\node[below right] at (block\x.north west) {Block n: data};
+\node[below right,blocktext] at (block\x.north west) {Block n: data};
 \end{pgfonlayer}
 
 \begin{pgfonlayer}{background}

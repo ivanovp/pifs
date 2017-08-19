@@ -6,7 +6,7 @@
 %%% Draw blocks 0..2
 \foreach \x in {0,1,2} {
     % Draw pages
-    \foreach \y in {-1,0,1,2,3} {
+    \foreach \y in {0,1,2,3} {
         \node[page] at (\x * 3,-\y) (page\x\y) {Page \y};
     }
     \def\y{5}
@@ -14,8 +14,8 @@
     \draw[dots] (page\x3) -- (page\x\y);
     \begin{pgfonlayer}{background2}
     % Draw block
-    \node[fit=(page\x-1) (page\x\y), block] (block\x){};
-    \node[below right] at (block\x.north west) {Block \x};
+    \node[fit=(page\x0) (page\x\y), block] (block\x){};
+    \node[below right,blocktext] at (block\x.north west) {Block \x};
     \end{pgfonlayer}
 }
 %%% Draw block n
@@ -31,7 +31,7 @@
 % Draw block
 \node[fit=(page\x0) (page\x\y), block] (block\x){};
 \draw[dots] (block2) -- (block\x);
-\node[below right] at (block\x.north west) {Block n};
+\node[below right,blocktext] at (block\x.north west) {Block n};
 \end{pgfonlayer}
 
 \begin{pgfonlayer}{background}

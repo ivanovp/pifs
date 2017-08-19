@@ -32,8 +32,9 @@
 \newcommand{\pifsl}{Pi file system}
 
 %%% TiKZ
-\tikzstyle{block} = [draw,fill=yellow!20,dashed,minimum size=7em,inner sep=0.45cm]
-\tikzstyle{page} = [draw,fill=brown!25,dashed,minimum width=5em,minimum height=2.5em]
+\tikzstyle{block} = [draw,fill=yellow!20,dashed,minimum size=2.5cm,inner sep=0.45cm]
+\tikzstyle{blocktext} = [text width=2.4cm,align=left]
+\tikzstyle{page} = [draw,fill=brown!25,dashed,minimum width=2cm,minimum height=0.8cm,text width=1.6cm,align=left]
 \tikzstyle{flash} = [draw,fill=gray!15,inner sep=0.45cm]
 % diameter of semicircle used to indicate that two lines are not connected
 \def\radius{.7mm} 
@@ -135,10 +136,11 @@ can be erased, which means all bits of the block are set to one.
 
 \item[Page offset] Index of a byte in a page. Type: pifs\_page\_offset\_t
 
-\item[Data area] Blocks which hold the file's content.
+\item[Data area] Blocks which hold the file's content. See \autoref{fig:flashfs}.
 
 \item[Management area] Blocks which hold the file system's internal
 data, how much space is allocated, where are the data pages of files, etc. There are two types of management area: primary (active) management area, secondary (next) management area.
+See \autoref{fig:flashfs}.
 
 \item[File system header] First page of active management area contains the
 header of file system. It describes address of free space bitmap, entry list,
@@ -176,7 +178,7 @@ allocated. If all pages in a block marked TBR, the block can be erased.
 \centering
 \input{flash_fs_fig}
 \caption{Flash memory layout when \pifs{} installed}
-\label{fig:flash_fs}
+\label{fig:flashfs}
 \end{figure}
 
 \end{document}
