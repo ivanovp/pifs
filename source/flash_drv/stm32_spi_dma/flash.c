@@ -1,10 +1,10 @@
 /**
  * @file        flash.c
- * @brief       NOR flash emulator
+ * @brief       NOR flash driver for STM32
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-06-15 12:28:40 ivanovp {Time-stamp}
+ * Last modify: 2017-08-19 17:20:52 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,13 @@
 #include "flash.h"
 #include "pifs_debug.h"
 #include "uart.h"
+#if STM32F1xx
+#include "stm32f1xx_hal.h"
+#elif STM32F4xx
 #include "stm32f4xx_hal.h"
+#else
+#error Unknown STM32 variant!
+#endif
 #include "cmsis_os.h"
 
 #ifndef PIFS_FLASH_4BYTE_ADDRESS
@@ -35,7 +41,9 @@
 #endif
 
 #define FLASH_ENABLE_DEBUG          1
-#define FLASH_ENABLE_DMA            1
+#ifndef FLASH_ENABLE_DMA
+#define FLASH_ENABLE_DMA            0
+#endif
 #define FLASH_TIMEOUT_MS            1000
 #define FLASH_WRITE_TIMEOUT_MS      5000
 #define FLASH_DMA_TIMEOUT_MS        5

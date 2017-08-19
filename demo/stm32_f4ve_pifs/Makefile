@@ -13,7 +13,7 @@ OBJCOPY = $(CROSS)objcopy
 endif
 
 INCLUDE = -I../../source/core
-INCLUDE += -I../../source/flash_drv/stm32f4xx_spi_dma
+INCLUDE += -I../../source/flash_drv/stm32_spi_dma
 INCLUDE += -I../../source/term
 INCLUDE += -I../../source/test
 INCLUDE += -I./Inc
@@ -37,7 +37,9 @@ CFLAGS += -D__weak="__attribute__((weak))"
 CFLAGS += -D__packed="__attribute__((__packed__))"
 CFLAGS += -DUSE_HAL_DRIVER
 CFLAGS += -DSTM32F407xx
+CFLAGS += -DSTM32F4xx
 CFLAGS += -DDEBUG=1
+CFLAGS += -DFLASH_ENABLE_DMA=1
 CFLAGS += $(COMMON_FLAGS)
 CPPFLAGS = $(CFLAGS)
 CFLAGS_A = $(CFLAGS) -D_ASSEMBLER_ -x assembler-with-cpp
@@ -59,7 +61,7 @@ SRC_C += ../../source/core/pifs_helper.c
 SRC_C += ../../source/core/pifs_map.c
 SRC_C += ../../source/core/pifs_merge.c
 SRC_C += ../../source/core/pifs_wear.c
-SRC_C += ../../source/flash_drv/stm32f4xx_spi_dma/flash.c
+SRC_C += ../../source/flash_drv/stm32_spi_dma/flash.c
 SRC_C += ../../source/term/parser.c
 SRC_C += ../../source/term/term.c
 SRC_C += ../../source/test/buffer.c

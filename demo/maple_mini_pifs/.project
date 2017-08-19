@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>stm32_f4ve_pifs</name>
+	<name>maple_mini_pifs</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -176,7 +176,7 @@
 			<locationURI>PARENT-2-PROJECT_LOC/source/core/pifs_wear.h</locationURI>
 		</link>
 		<link>
-			<name>source/flash_drv/stm32f4xx_spi_dma</name>
+			<name>source/flash_drv/stm32_spi_dma</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
@@ -231,9 +231,9 @@
 			<locationURI>PARENT-2-PROJECT_LOC/source/test/pifs_test.h</locationURI>
 		</link>
 		<link>
-			<name>source/flash_drv/stm32f4xx_spi_dma/flash.c</name>
+			<name>source/flash_drv/stm32_spi_dma/flash.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/source/flash_drv/stm32f4xx_spi_dma/flash.c</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/source/flash_drv/stm32_spi_dma/flash.c</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

@@ -35,8 +35,8 @@ typedef unsigned char bool_t;
 #define TRUE            (1)
 #endif
 
-#define TOSTR(s)    XSTR(s)
-#define XSTR(s)     #s
+#define TOSTR(s)        XSTR(s)
+#define XSTR(s)         #s
 
 #define ASCII_CR            (13)
 #define ASCII_LF            (10)
@@ -47,5 +47,10 @@ typedef unsigned char bool_t;
 #define ASCII_APOSTROPHE    ('\'')
 
 #define ENABLE_WATCHDOG 1
+
+#define PWM_CH1         ( TIM_CHANNEL_1 )
+#define PWM_CH2         ( TIM_CHANNEL_2 )
+
+#define PI              ( 3.141592653589793 )
 
 #endif /* _INCLUDE_COMMON_H_ */
