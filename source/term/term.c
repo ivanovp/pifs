@@ -932,7 +932,6 @@ void cmdMap (char* command, char* params)
         //po = addr % PIFS_LOGICAL_PAGE_SIZE_BYTE;
         pa = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) % PIFS_LOGICAL_PAGE_PER_BLOCK;
         ba = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) / PIFS_LOGICAL_PAGE_PER_BLOCK;
-        printf("Map page %s\r\n\r\n", pifs_ba_pa2str(ba, pa));
 
         (void)pifs_print_map_page(ba, pa, UINT32_MAX);
     }
