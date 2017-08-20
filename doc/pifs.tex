@@ -15,7 +15,7 @@
 \addtokomafont{labelinglabel}{\sffamily}
 \usepackage{tikz}
 \usetikzlibrary{calc,fit,arrows,positioning}
-\sloppy
+%\sloppy
 %\usepackage{graphicx}
 %\usepackage{ifthen}
 %\usepackage{multicol}
@@ -77,7 +77,8 @@ hope that it will be useful for someone else as well.
 
 NOR flash ICs have very low price nowadays (2017) and can be used
 to store files. But there are few problems to consider when designing a file
-system:
+system as they are not working like magnetic devices (hard drives or floppy
+disks):
 \begin{itemize}
 \item NOR flashes can be programmed (set bits to zero) by pages, but only 
 can be erased (set bits to one) in a larger quantity, which are mostly called
@@ -149,12 +150,12 @@ can be programmed individually.
 \item[Block address] Index of block in flash memory. 
 Type: \code{pifs\_block\_address\_t}
 
-\item[Page address] Index of a page in a block. It can be flash page address
-for flash functions or logical page address for file system's functions.
+\item[Page address] Index of a page in a block. It can be flash (physical) page
+address for flash functions or logical page address for file system's functions.
 Type: \code{pifs\_page\_address\_t}
 
-\item[Page offset] Index of a byte in a page. It can be flash page offset
-for flash functions or logical page offset for file system's functions.
+\item[Page offset] Index of a byte in a page. It can be flash (physical) page 
+offset for flash functions or logical page offset for file system's functions.
 Type: \code{pifs\_page\_offset\_t}
 
 \item[Data area] Blocks which hold the file's content. 
@@ -206,13 +207,15 @@ allocated. If all pages in a block marked TBR, the block can be erased.
 \end{figure}
 
 \section{Demonstration}
-In the 'demo' directory three applications can be found.
+In the 'demo' directory four applications can be found. I developed them under
+Linux, but probably they can be compiled on Windows as well. 
 \begin{enumerate}
 \item pc\_emu: PC application which uses NOR flash emulator. It can be compiled
 with GNU make an GCC.
 \item maple\_mini\_pifs: Demo running on Maple Mini board, MCU is 
 STM32F103RCBT6. There is no NOR flash, UART and debugger on board. So 
 prototype should be created.
+It can be compiled with GNU make and GCC or with STM32 System Workbench.
 \item nucleo-f413zh\_pifs: Demo running on Nucleo-F413ZH board, MCU is
 STM32F413ZH. There is no NOR flash memory on the board, some prototype hardware 
 should be created.
@@ -226,12 +229,23 @@ It can be compiled with GNU make and GCC or with STM32 System Workbench.
 \end{enumerate}
 
 \subsection{Using demo}
-All applications based on a command interpreter which communicates over UART.
+All applications based on a command interpreter which communicates over UART
+or standard input/output when PC is used.
 There are commands to list directory, create and dump files, run some tests.
+
+Addresses are displayed in two formats at the same time:
+\begin{enumerate}
+\item \code{BAx/PAy} Block address (BA), page address (PA) format. 
+Where 'x' is index of block and 'y' is index of page in the block.
+Note: when logical page size is not equal to flash's page size it should be
+be checked which part of software uses the address.
+\item \code{@0xnnnn} Address in hexadecimal format in flash memory.
+Logical and physical page size does not affect this address.
+\end{enumerate}
 
 The commands:
 
-\begin{labeling}{append} % <--- here goes the longest definition to measure the necessary space
+\begin{labeling}{noprompt} % <--- here goes the longest definition to measure the necessary space
 \item[ls] List directory. Switches: \code{-l} display file size, \code{-e} 
 examine file (for debugging). \code{-e} switch displays address of first
 map page of file or entry list of directory.
@@ -255,13 +269,59 @@ is the address, second optional parameter in number of flash pages to display.
 Note: this command works with flash page size other ones work with logical 
 page size!
 Example: \code{dump 0x10000 2}
-\item[d] Alias to \code{dump}.
-\item[map] Decode and display a map page.
+\item[d]        Alias to \code{dump}.
+\item[map]      Decode and display a map page. The parameter should be the 
+address of map page. Example: \code{map 0x10D00}
+\item[m]        Alias to \code{map}.
+\item[fd]       Find delta pages of a page. Parameter is address of page.
+\item[info]     Print information about file system.
+\item[i]        Alias to \code{info}.
+\item[free]     Print info of free space
+\item[f]        Alias to \code{free}.
+\item[bi]       Print info of block.
+\item[pi]       Check if page is free, to be released or erased.
+\item[w]        Print wear level list, which is stored in the file system's
+header.
+\item[lw]       Generate least weared blocks' list.
+\item[eb]       Empty block: copy files which resides on the specified block.
+This command should be used only on blocks which has no free pages at all.
+Used during developing of static wear leveling.
+\item[sw]       Perform static wear leveling if necessary.
+\item[fs]       Print flash's statistics. Available only on emulated NOR
+flash memory.
+\item[erase]    Erase flash.
+\item[e]        Alias to \code{erase}. 
+\item[tstflash] Test flash.
+\item[tstpifs]  Test \pifsl: run all tests (except large file).
+\item[tp]       Alias to \code{tstpifs}
+\item[tb]       Test \pifsl: basic. File name can be changed if parameter is given.
+\item[ts]       Test \pifsl: small files.
+\item[tl]       Test \pifsl: large file.
+\item[tf]       Test \pifsl: full write.
+\item[tfrag]    Test \pifsl: fragment.
+\item[tsk]      Test \pifsl: seek.
+\item[td]       Test \pifsl: delta.
+\item[tdir]     Test \pifsl: directories. Only available if directories are 
+enabled.
+\item[y]        Debug command.
+\item[quit]     Quit.
+\item[q]        Alias to \code{quit}
+\item[noprompt] Prompt will not be displayed.
+\item[p]        Parameter test.
+\item[help]     Print help.
+\item[?]        Alias to \code{help}.
 \end{labeling}
 
 Example use of commands on a flash M25P40, where logical and flash page size 
-are the same (256 bytes):
+are the same (256 bytes). First it generates small files with 'ts', then
+examines the map page of file 'small0.tst', then dumps the pages of file with
+'d'.
+After that it dumps the file with 'df' which opens the file with 
+\code{pifs\_fopen()} and read with \code{pifs\_fread()}. Then it prints some
+information about blocks, file system and free space.
 \begin{verbatim}
+> ts
+...
 > l
 List directory '.'
 small0.tst                             512  BA1/PA13 @0x10D00
@@ -270,6 +330,7 @@ small2.tst                             512  BA1/PA15 @0x10F00
 small3.tst                             512  BA1/PA16 @0x11000
 small4.tst                             512  BA1/PA17 @0x11100
 small5.tst                             512  BA1/PA18 @0x11200
+...
 > m 0x10D00
 Map page BA1/PA13 @0x10D00
 
@@ -351,7 +412,71 @@ Dump file 'small0.tst'
 000001F0 F8 00 F9 00 FA 00 FB 00 FC 00 FD 00 FE 00 FF 00   ................
 
 End position: 512 bytes
+> bi
+      | Type    | Wear  | Free pages  | TBR pages
+Block |         | Level | Data | Mgmt | Data | Mgmt
+------+---------+-------+------+------+------+------
+    0 | Data    |     1 |  229 |    0 |   10 |    0
+    1 | PriMgmt |     1 |    0 |  190 |    0 |    4
+    2 | Data    |     0 |    0 |    0 |  224 |    0
+    3 | SecMgmt |     1 |    0 |    0 |    0 |    0
+    4 | Data    |     1 |  256 |    0 |    0 |    0
+    5 | Data    |     1 |  256 |    0 |    0 |    0
+    6 | Data    |     1 |  256 |    0 |    0 |    0
+    7 | Data    |     1 |  256 |    0 |    0 |    0
+> i
+Geometry of flash memory
+------------------------
+Size of flash memory (all):         524288 bytes, 512 KiB
+Size of flash memory (used by FS):  524288 bytes, 512 KiB
+Size of block:                      65536 bytes
+Size of page:                       256 bytes
+Number of blocks (all):             8
+Number of blocks (used by FS)):     8
+Number of pages/block:              256
+Number of pages (all):              2048
+Number of pages (used by FS)):      2048
 
+Geometry of file system
+-----------------------
+Size of logical page:               256 bytes
+Block address size:                 1 bytes
+Page address size:                  2 bytes
+Header size:                        71 bytes, 1 logical pages
+Entry size:                         48 bytes
+Entry size in a page:               240 bytes
+Entry list size:                    1792 bytes, 7 logical pages
+Free space bitmap size:             512 bytes, 2 logical pages
+Map header size:                    6 bytes
+Map entry size:                     4 bytes
+Number of map entries/page:         62
+Delta entry size:                   6 bytes
+Number of delta entries/page:       42
+Number of delta entries:            84
+Delta map size:                     512 bytes, 2 logical pages
+Wear level entry size:              3 bytes
+Number of wear level entries/page:  85
+Number of wear level entries:       8
+Wear level map size:                24 bytes, 1 logical pages
+Minimum management area:            13 logical pages, 1 blocks
+Recommended management area:        41 logical pages, 1 blocks
+Full reserved area for management:  131072 bytes, 512 logical pages
+Size of management area:            65536 bytes, 256 logical pages
+
+File system in RAM:                 2456 bytes
+Counter: 1
+Entry list at BA1/PA1 @0x10100
+Free space bitmap at BA1/PA8 @0x10800
+Delta page map at BA1/PA10 @0x10A00
+Wear level list at BA1/PA12 @0x10C00
+> f
+Free data area:                     320768 bytes, 1253 pages
+Free management area:               48640 bytes, 190 pages
+To be released data area:           59904 bytes, 234 pages
+To be released management area:     1024 bytes, 4 pages
+Free entries:                       10
+To be released entries:             4
 \end{verbatim}
+
 
 \end{document}
