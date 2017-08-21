@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2008
  *
  * Created:     2007-05-19 11:31:29
- * Last modify: 2008-04-24 11:10:35 ivanovp {Time-stamp}
+ * Last modify: 2017-08-21 21:21:06 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -38,8 +38,6 @@ extern uint16_t PARSER_parserCommandSize; ///< Number of commands in PARSER_pars
 
 /**
  * Struct for storing commands and their handlers.
- *
- * @author Peter Ivanov
  */
 struct parserCommand_t
 {
@@ -88,8 +86,6 @@ int main ()
     PARSER_init (commands);
 }
 </pre>
- *
- * @author Peter Ivanov
  *
  * @param parserCommand Pointer to struct of commands.
  */

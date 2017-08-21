@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-06-27 19:35:38 ivanovp {Time-stamp}
+ * Last modify: 2017-08-21 21:21:07 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -430,15 +430,15 @@ typedef struct
 } pifs_file_t;
 
 /**
- * Internal structure used by pifs_opendir(), pifs_listdir(), pifs_closedir().
+ * Internal structure used by pifs_opendir(), pifs_readdir(), pifs_closedir().
  */
 typedef struct
 {
-    bool_t         is_used PIFS_BOOL_SIZE;
-    bool_t         find_deleted PIFS_BOOL_SIZE;
-    pifs_size_t    entry_page_index;
-    pifs_address_t entry_list_address;
-    pifs_size_t    entry_list_index;
+    bool_t         is_used PIFS_BOOL_SIZE;      /**< TRUE: directory structure is opened, FALSE: directory structure is available */
+    bool_t         find_deleted PIFS_BOOL_SIZE; /**< For internal use. TRUE: find deleted entries as well */
+    pifs_size_t    entry_page_index;            /**< Actual index of entry page */
+    pifs_address_t entry_list_address;          /**< Address of entry list */
+    pifs_size_t    entry_list_index;            /**< */
     pifs_dirent_t  directory_entry;
     pifs_entry_t   entry; /**< Can be large, to avoid storing on stack */
 } pifs_dir_t;

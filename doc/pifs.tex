@@ -192,14 +192,14 @@ allocated. If all pages in a block marked TBR, the block can be erased.
 \item[Merge] During merge management area is written, blocks are erased, delta pages are resolved and entry list is compacted. The data is copied from primary to secondary management area and the next secondary management area is selected.
 \end{labeling}
 
-\begin{figure}[ht]
+\begin{figure}[!ht]
 \centering
 \input{flash_fig}
 \caption{Flash memory layout}
 \label{fig:flash}
 \end{figure}
 
-\begin{figure}[ht]
+\begin{figure}[!ht]
 \centering
 \input{flash_fs_fig}
 \caption{Flash memory layout when \pifs{} installed}
@@ -208,7 +208,7 @@ allocated. If all pages in a block marked TBR, the block can be erased.
 
 \section{Demonstration}
 In the 'demo' directory four applications can be found. I developed them under
-Linux, but probably they can be compiled on Windows as well. 
+Linux, but probably they can be compiled on Windows/cygwin as well. 
 \begin{enumerate}
 \item pc\_emu: PC application which uses NOR flash emulator. It can be compiled
 with GNU make an GCC.
@@ -231,17 +231,26 @@ It can be compiled with GNU make and GCC or with STM32 System Workbench.
 \subsection{Using demo}
 All applications based on a command interpreter which communicates over UART
 or standard input/output when PC is used.
-There are commands to list directory, create and dump files, run some tests.
+There are commands to list directory, create and dump files, run some tests
+and examine the file system.
 
 Addresses are displayed in two formats at the same time:
 \begin{enumerate}
 \item \code{BAx/PAy} Block address (BA), page address (PA) format. 
 Where 'x' is index of block and 'y' is index of page in the block.
+See \autoref{fig:flashaddr}
 Note: when logical page size is not equal to flash's page size it should be
 be checked which part of software uses the address.
 \item \code{@0xnnnn} Address in hexadecimal format in flash memory.
 Logical and physical page size does not affect this address.
 \end{enumerate}
+
+\begin{figure}[!ht]
+\centering
+\input{flash_addr_fig}
+\caption{Addressing of flash memory}
+\label{fig:flashaddr}
+\end{figure}
 
 The commands:
 

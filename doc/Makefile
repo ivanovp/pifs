@@ -24,7 +24,7 @@ PAPER = a4
 ADVANCED_PDF = no
 
 .PHONY: all
-all:	ps
+all:	pdf
 
 .PHONY: ps
 ps:	$(SOURCE).ps
@@ -127,4 +127,12 @@ cleanall:
 	$(SOURCE)_pdf.lof $(SOURCE)_pdf.lot \
 	$(SOURCE).pdf *.aux \
 	$(SOURCE).log $(SOURCE).toc $(HTML_DIR) *.pyc *~ dist
+
+.PHONY: doxygen
+doxygen:
+	@echo " * Running doxygen..."
+	doxygen doxygen.cfg
+	@echo " * Running TeX..."
+	cd doxygen/latex && $(MAKE)
+	cp doxygen/latex/refman.pdf .
 
