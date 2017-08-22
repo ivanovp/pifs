@@ -7,10 +7,10 @@
 \foreach \x in {0,1,2} {
     % Draw pages
     \foreach \y in {0,1,2,3} {
-        \node[page] at (\x * 3,-\y) (page\x\y) {Page \y \newline BA\x/PA\y};
+        \node[pagesmall] at (\x * 3,-\y) (page\x\y) {Page \y \newline BA\x/PA\y};
     }
     \def\y{5}
-    \node[page] at (\x * 3,-\y) (page\x\y) {Page n \newline BA\x/PAn};
+    \node[pagesmall] at (\x * 3,-\y) (page\x\y) {Page n \newline BA\x/PAn};
     \draw[dots] (page\x3) -- (page\x\y);
     \begin{pgfonlayer}{background2}
     % Draw block
@@ -22,10 +22,10 @@
 \def\x{4}
 % Draw pages
 \foreach \y in {0,1,2,3} {
-    \node[page] at (\x * 3,-\y) (page\x\y) {Page \y \newline BAn/PA\y};
+    \node[pagesmall] at (\x * 3,-\y) (page\x\y) {Page \y \newline BAn/PA\y};
 }
 \def\y{5}
-\node[page] at (\x * 3,-\y) (page\x\y) {Page n \newline BAn/PAn};
+\node[pagesmall] at (\x * 3,-\y) (page\x\y) {Page n \newline BAn/PAn};
 \draw[dots] (page\x3) -- (page\x\y);
 \begin{pgfonlayer}{background2}
 % Draw block
