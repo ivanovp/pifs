@@ -323,10 +323,10 @@ enabled.
 \item[?]        Alias to \code{help}.
 \end{labeling}
 
-Example use of commands on a flash M25P40, where logical and flash page size 
-are the same (256 bytes). First it generates small files with 'ts', then
-examines the map page of file 'small0.tst', then dumps the pages of file with
-'d'.
+Example use of commands on a flash M25P40, where logical page size is configured
+to the size of flash page size (256 bytes). First it generates small files with
+'ts', then examines the map page of file 'small0.tst', then dumps the pages of 
+file with 'd'.
 After that it dumps the file with 'df' which opens the file with 
 \code{pifs\_fopen()} and read with \code{pifs\_fread()}. Then it prints some
 information about blocks, file system and free space.

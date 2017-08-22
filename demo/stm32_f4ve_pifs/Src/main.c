@@ -49,6 +49,7 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 #include "cmsis_os.h"
+#include "fatfs.h"
 
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
@@ -68,6 +69,8 @@
 /* Private variables ---------------------------------------------------------*/
 IWDG_HandleTypeDef hiwdg;
 
+SD_HandleTypeDef hsd;
+
 SPI_HandleTypeDef hspi1;
 DMA_HandleTypeDef hdma_spi1_rx;
 DMA_HandleTypeDef hdma_spi1_tx;
@@ -83,6 +86,11 @@ osThreadId watchdogTaskHandle;
 osMutexDef(printf_mutex);
 osMutexId printf_mutex = NULL;
 uint32_t disableWatchdog = 0;
+FATFS sd_fat_fs;
+char disk_path[4];
+DIR dir;
+FILINFO filinfo;
+
 extern void defaultTask(void const * argument);
 /* USER CODE END PV */
 
@@ -93,6 +101,7 @@ static void MX_DMA_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_IWDG_Init(void);
+static void MX_SDIO_SD_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
@@ -170,6 +179,7 @@ int main(void)
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   MX_IWDG_Init();
+  MX_SDIO_SD_Init();
 
   /* USER CODE BEGIN 2 */
   UART_printf_("\r\n\r\nBoard initialized\r\n");
@@ -180,7 +190,6 @@ int main(void)
 #endif
   UART_printf_("Compiled on " __DATE__ " " __TIME__ "\r\n");
 #if ENABLE_WATCHDOG
-//  HAL_IWDG_Start(&hiwdg);
   UART_printf_("Watchdog started\r\n");
   HAL_IWDG_Refresh(&hiwdg);
 #else
@@ -225,12 +234,8 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_GPIO_TogglePin(D2_GPIO_Port, D2_Pin);
   while (1)
   {
-      HAL_GPIO_TogglePin(D2_GPIO_Port, D2_Pin);
-      HAL_GPIO_TogglePin(D3_GPIO_Port, D3_Pin);
-      HAL_Delay(500);
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
@@ -307,6 +312,20 @@ static void MX_IWDG_Init(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
+
+}
+
+/* SDIO init function */
+static void MX_SDIO_SD_Init(void)
+{
+
+  hsd.Instance = SDIO;
+  hsd.Init.ClockEdge = SDIO_CLOCK_EDGE_RISING;
+  hsd.Init.ClockBypass = SDIO_CLOCK_BYPASS_DISABLE;
+  hsd.Init.ClockPowerSave = SDIO_CLOCK_POWER_SAVE_DISABLE;
+  hsd.Init.BusWide = SDIO_BUS_WIDE_1B;
+  hsd.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
+  hsd.Init.ClockDiv = 0;
 
 }
 
@@ -388,6 +407,8 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, D2_Pin|D3_Pin, GPIO_PIN_RESET);
@@ -467,15 +488,39 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 /* StartDefaultTask function */
 void StartDefaultTask(void const * argument)
 {
+  /* init code for FATFS */
+  MX_FATFS_Init();
 
   /* USER CODE BEGIN 5 */
 #if ENABLE_TERMINAL
     pifs_status_t ret;
+    FRESULT       fres;
+
     ret = pifs_init();
     if (ret != PIFS_SUCCESS)
     {
         printf("ERROR: Cannot initialize file system: %i\r\n", ret);
     }
+
+    printf("Mounting SD card... ");
+    fres = f_mount(&sd_fat_fs, (TCHAR const*)disk_path, 0);
+    if (fres == FR_OK)
+    {
+        printf("Done.\r\n");
+        printf("Listing root directory:\r\n");
+        fres = f_findfirst(&dir, &filinfo, "", "*");
+        while (fres == FR_OK && filinfo.fname[0])
+        {
+            printf("%-32s %8i\r\n", filinfo.fname, filinfo.fsize);
+            fres = f_findnext(&dir, &filinfo);
+        }
+        f_closedir(&dir);
+    }
+    else
+    {
+        printf("ERROR: Cannot mount SD card: %i\r\n", fres);
+    }
+
     term_init();
     while (1)
     {

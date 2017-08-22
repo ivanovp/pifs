@@ -12,18 +12,21 @@ LD  = $(CROSS)g++
 OBJCOPY = $(CROSS)objcopy
 endif
 
+INCLUDE =
 INCLUDE = -I../../source/core
 INCLUDE += -I../../source/flash_drv/stm32_spi_dma
 INCLUDE += -I../../source/term
 INCLUDE += -I../../source/test
-INCLUDE += -I./Inc
-INCLUDE += -I./Drivers/STM32F4xx_HAL_Driver/Inc
-INCLUDE += -I./Drivers/STM32F4xx_HAL_Driver/Inc/Legacy
 INCLUDE += -I./Drivers/CMSIS/Device/ST/STM32F4xx/Include
 INCLUDE += -I./Drivers/CMSIS/Include
-INCLUDE += -I./Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F
-INCLUDE += -I./Middlewares/Third_Party/FreeRTOS/Source/include
+INCLUDE += -I./Drivers/STM32F4xx_HAL_Driver/Inc
+INCLUDE += -I./Drivers/STM32F4xx_HAL_Driver/Inc/Legacy
+INCLUDE += -I./Inc
+INCLUDE += -I./Middlewares/Third_Party/FatFs/src
+INCLUDE += -I./Middlewares/Third_Party/FatFs/src/drivers
 INCLUDE += -I./Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS
+INCLUDE += -I./Middlewares/Third_Party/FreeRTOS/Source/include
+INCLUDE += -I./Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F
 
 # Options for compiler and linker as well
 COMMON_FLAGS = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
@@ -80,10 +83,17 @@ SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c
 SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c
 SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c
 SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_sd.c
 SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c
 SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c
 SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c
 SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c
+SRC_C += ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_sdmmc.c
+SRC_C += ./Middlewares/Third_Party/FatFs/src/diskio.c
+SRC_C += ./Middlewares/Third_Party/FatFs/src/drivers/sd_diskio.c
+SRC_C += ./Middlewares/Third_Party/FatFs/src/ff.c
+SRC_C += ./Middlewares/Third_Party/FatFs/src/ff_gen_drv.c
+SRC_C += ./Middlewares/Third_Party/FatFs/src/option/syscall.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/croutine.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/event_groups.c
@@ -93,6 +103,8 @@ SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_3.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/queue.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/tasks.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/timers.c
+SRC_C += ./Src/bsp_driver_sd.c
+SRC_C += ./Src/fatfs.c
 SRC_C += ./Src/freertos.c
 SRC_C += ./Src/isr_handlers.c
 SRC_C += ./Src/main.c
