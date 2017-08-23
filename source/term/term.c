@@ -454,6 +454,7 @@ void cmdListDir (char* command, char* params)
                     break;
                 default:
                     printf("Unknown switch: %c\r\n", param[1]);
+                    break;
             }
         }
         else
@@ -516,11 +517,12 @@ void cmdRemove (char* command, char* params)
             {
                 switch (param[1])
                 {
-                case 'a':
-                    all = TRUE;
-                    break;
-                default:
-                    printf("Unknown switch: %c\r\n", param[1]);
+                    case 'a':
+                        all = TRUE;
+                        break;
+                    default:
+                        printf("Unknown switch: %c\r\n", param[1]);
+                        break;
                 }
             }
             else

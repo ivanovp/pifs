@@ -266,6 +266,12 @@ typedef uint8_t pifs_wear_level_bits_t;
         pifs_errno = status; \
     } while (0)
 
+/**
+ * Each block has specified role in the file system:
+ * management area, data area or reserved.
+ * Reserved blocks are not used by the file system, they can store code for
+ * boot or other type of data.
+ */
 typedef enum
 {
     /**
@@ -288,6 +294,7 @@ typedef enum
 
 /**
  * Address of a page in flash memory.
+ * This structure is used in RAM and flash memory as well.
  */
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
@@ -295,6 +302,11 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_page_address_t     page_address;
 } pifs_address_t;
 
+/**
+ * Type to store least weared blocks in the file system's header.
+ * It is used to speed up finding least weared blocks.
+ * This structure is used in RAM and flash memory as well.
+ */
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
     pifs_block_address_t    block_address;
@@ -303,59 +315,61 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 
 /**
  * File system's header.
+ * This structure is used in RAM and flash memory as well.
  */
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
-    uint32_t                magic;
+    uint32_t                magic;                      /**< Magic number to help finding the header at startup */
 #if PIFS_ENABLE_VERSION
-    uint8_t                 majorVersion;
-    uint8_t                 minorVersion;
+    uint8_t                 majorVersion;               /**< Major version of file system */
+    uint8_t                 minorVersion;               /**< Minor version of file system */
 #endif
     uint32_t                counter;
 #if PIFS_ENABLE_CONFIG_IN_FLASH
     /* Flash configuration */
-    uint16_t                flash_block_num_all;
-    uint16_t                flash_block_reserved_num;
-    uint16_t                flash_page_per_block;
-    uint16_t                flash_page_size_byte;
+    uint16_t                flash_block_num_all;        /**< Number of all blocks in the flash memory */
+    uint16_t                flash_block_reserved_num;   /**< Reserved blocks in the beginning of the flash memory */
+    uint16_t                flash_page_per_block;       /**< Number of flash (physical) pages in a block */
+    uint16_t                flash_page_size_byte;       /**< Size of flash (physical) page in bytes */
     /* File system configuration */
-    uint16_t                logical_page_size_byte;
-    uint16_t                filename_len_max;
-    uint16_t                entry_num_max;
-    uint16_t                user_data_size_byte;
-    uint8_t                 management_block_num;
-    uint16_t                least_weared_block_num;
-    uint16_t                delta_map_page_num;
-    uint8_t                 map_page_count_size;
-    bool_t                  use_delta_for_entries : 1;
-    bool_t                  enable_directories : 1;
+    uint16_t                logical_page_size_byte;     /**< Size of logical page in bytes */
+    uint16_t                filename_len_max;           /**< Maximum length of file name */
+    uint16_t                entry_num_max;              /**< Maximum number of entries in entry list (directory) */
+    uint16_t                user_data_size_byte;        /**< Number of data bytes per file */
+    uint8_t                 management_block_num;       /**< Number of management blocks */
+    uint16_t                least_weared_block_num;     /**< Number of least weared blocks in the list */
+    uint16_t                delta_map_page_num;         /**< Number of delta map pages */
+    uint8_t                 map_page_count_size;        /**< Size of map page count's type in bytes */
+    bool_t                  use_delta_for_entries : 1;  /**< TRUE: delta pages used for entries */
+    bool_t                  enable_directories : 1;     /**< TRUE: directories can be create, read */
 #endif
     /* file system status */
     pifs_block_address_t    management_block_address;       /**< Address of primary (active) management block */
-    pifs_block_address_t    next_management_block_address;  /**< Address of secndary (next) management block */
-    pifs_address_t          free_space_bitmap_address;
+    pifs_block_address_t    next_management_block_address;  /**< Address of secondary (next) management block */
+    pifs_address_t          free_space_bitmap_address;      /**< Address of free space bitmap (FSBM) */
     pifs_address_t          root_entry_list_address;        /**< Root directory */
-    pifs_address_t          delta_map_address;
-    pifs_address_t          wear_level_list_address;
+    pifs_address_t          delta_map_address;              /**< Address of delta map */
+    pifs_address_t          wear_level_list_address;        /**< Adress of wear level list */
     /** Data blocks with lowest erase counter value */
-    pifs_wear_level_t       least_weared_blocks[PIFS_LEAST_WEARED_BLOCK_NUM];
-    pifs_wear_level_cntr_t  wear_level_cntr_max;
+    pifs_wear_level_t       least_weared_blocks[PIFS_LEAST_WEARED_BLOCK_NUM];   /**< List of least weared blocks */
+    pifs_wear_level_cntr_t  wear_level_cntr_max;            /**< Maximum number of wear level */
     /** Checksum shall be the last element! */
-    pifs_checksum_t         checksum;
+    pifs_checksum_t         checksum;                       /**< Checksum of file system's header */
 } pifs_header_t;
 
 /**
  * File or directory entry.
+ * This structure is used in RAM and flash memory as well.
  */
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
-    pifs_char_t             name[PIFS_FILENAME_LEN_MAX];
+    pifs_char_t             name[PIFS_FILENAME_LEN_MAX];    /**< Name of file or directory */
 #if PIFS_ENABLE_ATTRIBUTES
-    uint8_t                 attrib;
+    uint8_t                 attrib;                         /**< Attribute's of file */
 #endif
     /* TODO implement file date and time! modified, created, etc? */
 #if PIFS_ENABLE_USER_DATA
-    pifs_user_data_t        user_data;
+    pifs_user_data_t        user_data;          /**< User defined data */
 #endif
     pifs_address_t          first_map_address;  /**< First map page's address */
     pifs_file_size_t        file_size;          /**< Bytes written to file */
@@ -363,35 +377,40 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 
 /**
  * Map's header.
+ * This structure is used in RAM and flash memory as well.
  */
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
-    pifs_address_t          prev_map_address;
-    pifs_address_t          next_map_address;
+    pifs_address_t          prev_map_address;   /**< Address of previous map */
+    pifs_address_t          next_map_address;   /**< Address of next map */
 } pifs_map_header_t;
 
 /**
  * Map of file's page.
+ * This structure is used in RAM and flash memory as well.
  */
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
-    pifs_address_t          address;
-    pifs_map_page_count_t   page_count;
+    pifs_address_t          address;            /**< Address of file's page */
+    pifs_map_page_count_t   page_count;         /**< Number of pages */
 } pifs_map_entry_t;
 
+/**
+ * Wear level (erase count) of a block.
+ * This structure is used in RAM and flash memory as well.
+ */
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
-    pifs_wear_level_cntr_t wear_level_cntr;
+    pifs_wear_level_cntr_t wear_level_cntr;     /**< Wear level count base */
+    /**
+     * When a bit is programmed it shall be added to wear level count to get
+     * the real wear level count */
     pifs_wear_level_bits_t wear_level_bits;
 } pifs_wear_level_entry_t;
 
-typedef struct PIFS_PACKED_ATTRIBUTE
-{
-    pifs_wear_level_entry_t wear_level[PIFS_FLASH_BLOCK_NUM_FS];
-} pifs_wear_level_list_t;
-
 /**
  * Delta page.
+ * This structure is used in RAM and flash memory as well.
  */
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
@@ -401,6 +420,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 
 /**
  * Actual status and parameters of an opened file.
+ * This structure is used only in RAM.
  */
 typedef struct
 {
@@ -431,6 +451,7 @@ typedef struct
 
 /**
  * Internal structure used by pifs_opendir(), pifs_readdir(), pifs_closedir().
+ * This structure is used only in RAM.
  */
 typedef struct
 {
@@ -445,23 +466,24 @@ typedef struct
 
 /**
  * Actual status of file system.
+ * This structure is used only in RAM.
  */
 typedef struct
 {
-    pifs_address_t          header_address;
-    bool_t                  is_header_found PIFS_BOOL_SIZE;
-    bool_t                  is_merging PIFS_BOOL_SIZE;
+    pifs_address_t          header_address;                               /**< Address of actual file system's header */
+    bool_t                  is_header_found PIFS_BOOL_SIZE;               /**< TRUE: file system's header found */
+    bool_t                  is_merging PIFS_BOOL_SIZE;                    /**< TRUE: merging is in progress */
     pifs_header_t           header;                                       /**< Actual header. */
     pifs_entry_t            entry;                                        /**< For merging */
     /* Page cache */
     pifs_address_t          cache_page_buf_address;                       /**< Address of cache_page_buf */
     uint8_t                 cache_page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];  /**< Flash page buffer for cache */
-    bool_t                  cache_page_buf_is_dirty;
+    bool_t                  cache_page_buf_is_dirty;                      /**< TRUE: cache page was changed and needs to be written to flash memory */
     /* Opened files and directories */
     pifs_file_t             file[PIFS_OPEN_FILE_NUM_MAX];                 /**< Opened files */
     pifs_file_t             internal_file;                                /**< Internally opened files */
     pifs_dir_t              dir[PIFS_OPEN_DIR_NUM_MAX];                   /**< Opened directories */
-    /* Delta pages */
+    /** Page buffer of delta map */
     uint8_t                 delta_map_page_buf[PIFS_DELTA_MAP_PAGE_NUM][PIFS_LOGICAL_PAGE_SIZE_BYTE];
     /** TRUE: delta_map_page_buf's content is valid */
     bool_t                  delta_map_page_is_read PIFS_BOOL_SIZE;
