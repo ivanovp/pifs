@@ -1,2 +1,11 @@
 #INCLUDEPATH += /usr/avr/include/
-#DEFINES += far=""
+DEFINES += __IO=
+DEFINES += _FILE_OFFSET_BITS=64 _GNU_SOURCE=1
+DEFINES += __weak="__attribute__((weak))"
+DEFINES += __packed="__attribute__((__packed__))"
+DEFINES += USE_HAL_DRIVER=1
+DEFINES += STM32F407xx=1
+DEFINES += STM32F4xx=1
+DEFINES += DEBUG=1
+DEFINES += FLASH_ENABLE_DMA=1
+DEFINES += ENABLE_DHT=1

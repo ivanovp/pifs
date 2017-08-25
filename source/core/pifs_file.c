@@ -378,9 +378,10 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
     {
         file->status = PIFS_SUCCESS;
         /* If opened in "a" mode always jump to end of file */
-        if (file->mode_append && file->write_pos != file->entry.file_size)
+        if (file->mode_append && file->write_pos != file->entry.file_size
+                && file->entry.file_size != PIFS_FILE_SIZE_ERASED)
         {
-            pifs_fseek(file, file->entry.file_size, PIFS_SEEK_SET);
+            pifs_fseek(file, 0, PIFS_SEEK_END);
         }
         if (file->status == PIFS_SUCCESS)
         {

@@ -43,6 +43,7 @@ CFLAGS += -DSTM32F407xx
 CFLAGS += -DSTM32F4xx
 CFLAGS += -DDEBUG=1
 CFLAGS += -DFLASH_ENABLE_DMA=1
+CFLAGS += -DENABLE_DHT=1
 CFLAGS += $(COMMON_FLAGS)
 CPPFLAGS = $(CFLAGS)
 CFLAGS_A = $(CFLAGS) -D_ASSEMBLER_ -x assembler-with-cpp
@@ -106,6 +107,7 @@ SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/queue.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/tasks.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/timers.c
 SRC_C += ./Src/bsp_driver_sd.c
+SRC_C += ./Src/dht.c
 SRC_C += ./Src/fatfs.c
 SRC_C += ./Src/freertos.c
 SRC_C += ./Src/isr_handlers.c

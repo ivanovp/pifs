@@ -55,9 +55,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <math.h>
 #include "common.h"
 #include "uart.h"
 #include "term.h"
+#include "dht.h"
 
 #define DISABLE_WATCHDOG_MAGIC  0xDEADBEEF
 #define ENABLE_TERMINAL         1
@@ -85,8 +87,11 @@ osThreadId defaultTaskHandle;
 /* Private variables ---------------------------------------------------------*/
 
 osThreadId watchdogTaskHandle;
+osThreadId measureTaskHandle;
 osMutexDef(printf_mutex);
 osMutexId printf_mutex = NULL;
+osSemaphoreId measure_finished;
+osSemaphoreDef(measure_finished);
 uint32_t disableWatchdog = 0;
 FATFS sd_fat_fs;
 char disk_path[4];
@@ -111,22 +116,11 @@ void StartDefaultTask(void const * argument);
 /* Private function prototypes -----------------------------------------------*/
 
 void watchdogTask(void const * arg);
+void measureTask(void const * arg);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
 static inline void LED_on(int number)
-{
-    if (number == 2)
-    {
-        HAL_GPIO_WritePin(D2_GPIO_Port, D2_Pin, GPIO_PIN_SET);
-    }
-    else if (number == 3)
-    {
-        HAL_GPIO_WritePin(D3_GPIO_Port, D3_Pin, GPIO_PIN_SET);
-    }
-}
-
-static inline void LED_off(int number)
 {
     if (number == 2)
     {
@@ -135,6 +129,18 @@ static inline void LED_off(int number)
     else if (number == 3)
     {
         HAL_GPIO_WritePin(D3_GPIO_Port, D3_Pin, GPIO_PIN_RESET);
+    }
+}
+
+static inline void LED_off(int number)
+{
+    if (number == 2)
+    {
+        HAL_GPIO_WritePin(D2_GPIO_Port, D2_Pin, GPIO_PIN_SET);
+    }
+    else if (number == 3)
+    {
+        HAL_GPIO_WritePin(D3_GPIO_Port, D3_Pin, GPIO_PIN_SET);
     }
 }
 
@@ -202,6 +208,15 @@ int main(void)
   setbuf(stdout, NULL);
   printf("+++ printf test! +++\r\n");
 
+  printf("Initialize DHT22 sensor... ");
+  if (DHT_init())
+  {
+      printf("Done.\r\n");
+  }
+  else
+  {
+      printf("Error!\r\n");
+  }
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -209,7 +224,11 @@ int main(void)
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
+  measure_finished = osSemaphoreCreate(osSemaphore(measure_finished), 1);
+  if (measure_finished)
+  {
+      osSemaphoreWait(measure_finished, osWaitForever);
+  }
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -224,6 +243,8 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   osThreadDef(watchdogTask, watchdogTask, osPriorityNormal, 0, 64);
   watchdogTaskHandle = osThreadCreate(osThread(watchdogTask), NULL);
+//  osThreadDef(measureTask, measureTask, osPriorityNormal, 0, 256);
+//  measureTaskHandle = osThreadCreate(osThread(measureTask), NULL);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -472,12 +493,16 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, D2_Pin|D3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, D2_Pin|D3_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(DHT22_GPIO_Port, DHT22_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : D2_Pin D3_Pin */
   GPIO_InitStruct.Pin = D2_Pin|D3_Pin;
@@ -501,6 +526,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF10_OTG_FS;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : DHT22_Pin */
+  GPIO_InitStruct.Pin = DHT22_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(DHT22_GPIO_Port, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 4 */
@@ -511,9 +543,6 @@ static void MX_GPIO_Init(void)
 void watchdogTask(void const * arg)
 {
 	(void) arg;
-
-    LED_on(2);
-    LED_off(3);
 
 	for ( ; ; )
 	{
@@ -532,8 +561,38 @@ void watchdogTask(void const * arg)
         }
 #endif
         LED_toggle(2);
-        LED_toggle(3);
         osDelay(500);
+    }
+}
+
+/**
+ * @brief measureTask DHT22 measurement task
+ * @param arg
+ */
+void measureTask(void const * arg)
+{
+    (void) arg;
+
+    DHT_read();
+
+    for ( ; ; )
+    {
+        osDelay(5000); /* Measure in every 5 second */
+        //osDelay(60000); /* Measure in every minute */
+        LED_on(3);
+        if (DHT_read())
+        {
+            osSemaphoreRelease(measure_finished);
+        }
+        else
+        {
+            /* Try again */
+            if (DHT_read())
+            {
+                osSemaphoreRelease(measure_finished);
+            }
+        }
+        LED_off(3);
     }
 }
 
@@ -555,6 +614,7 @@ void StartDefaultTask(void const * argument)
   MX_FATFS_Init();
 
   /* USER CODE BEGIN 5 */
+  //DHT_read();
 #if ENABLE_TERMINAL
     pifs_status_t ret;
     FRESULT       fres;
@@ -588,6 +648,39 @@ void StartDefaultTask(void const * argument)
     while (1)
     {
         term_task();
+#if 0
+        if (osSemaphoreWait(measure_finished, 1))
+        {
+            P_FILE * file;
+            size_t   written_bytes;
+            float    hum, temp;
+
+            hum = DHT_getHumPercent();
+            temp = DHT_getTempCelsius();
+            printf("Humidity:    %i.%i%%\r\n", (int)hum, (int)fabsf ((hum - (int)hum) * 10.0f));
+            printf("Temperature: %i.%i C\r\n", (int)temp, (int)fabsf ((temp - (int)temp) * 10.0f));
+
+            file = pifs_fopen("dht.bin", "a");
+            if (file)
+            {
+                written_bytes = pifs_fwrite(&hum, 1, sizeof(hum), file);
+                written_bytes += pifs_fwrite(&temp, 1, sizeof(temp), file);
+                if (written_bytes == sizeof(hum) + sizeof(temp))
+                {
+                    printf("Data saved!\r\n");
+                }
+                else
+                {
+                    printf("ERROR: Cannot save data. Code: %i\r\n", pifs_errno);
+                }
+                pifs_fclose(file);
+            }
+            else
+            {
+                printf("ERROR: Cannot open file!\r\n");
+            }
+        }
+#endif
     }
 #elif ENABLE_FLASH_TEST
     pifs_flash_init();
