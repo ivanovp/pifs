@@ -164,7 +164,9 @@ Type: \code{pifs\_page\_offset\_t}
 See \autoref{fig:flashfs}.
 
 \item[Management area] Blocks which hold the file system's internal
-data, how much space is allocated, where are the data pages of files, etc. There are two types of management area: primary (active) management area, secondary (next) management area.
+data, how much space is allocated, where are the data pages of files, etc. 
+There are two types of management area: primary (active) management area, 
+secondary (next) management area.
 See \autoref{fig:flashfs}.
 
 \item[File system header] First page of active management area contains the
@@ -191,7 +193,10 @@ disabled, only root entry list exist.
 \item[TBR] To be released. A page which was used, but now it can erased then 
 allocated. If all pages in a block marked TBR, the block can be erased.
 
-\item[Merge] During merge management area is written, blocks are erased, delta pages are resolved and entry list is compacted. The data is copied from primary to secondary management area and the next secondary management area is selected.
+\item[Merge] During merge management area is written, blocks are erased, delta
+pages are resolved and entry list is compacted. The data is copied from 
+primary to secondary management area and the next secondary management area 
+is selected.
 \end{labeling}
 
 \begin{figure}[!ht]
@@ -257,26 +262,27 @@ Logical and physical page size does not affect this address.
 The commands:
 
 \begin{labeling}{noprompt} % <--- here goes the longest definition to measure the necessary space
-\item[ls] List directory. Switches: \code{-l} display file size, \code{-e} 
-examine file (for debugging). \code{-e} switch displays address of first
-map page of file or entry list of directory.
-\item[l] List directory with switches: -l and -e (for debugging).
-\item[rm] Remove file. Switch: -a remove all files in the directory.
-\item[dumpf] Dump file in hexadecimal format.
-\item[df] Alias to \code{dumpf}.
-\item[cat] Read and print file to console.
-\item[create] Create file. You can type file until 'q' is entered in the 
+\item[ls]       List directory. Switches: \code{-l} display file size, 
+\code{-e} examine file (for debugging). \code{-e} switch displays address of 
+first map page of file or entry list of directory.
+\item[l]        List directory with switches: -l and -e (for debugging).
+\item[rm]       Remove file. Switch: -a remove all files in the directory.
+\item[dumpf]    Dump file in hexadecimal format.
+\item[df]       Alias to \code{dumpf}.
+\item[cat]      Read and print file to console.
+\item[create]   Create file. You can type file until 'q' is entered in the
 first character of a line.
-\item[append] Append to file. You can type file until 'q' is entered in the 
+\item[append]   Append to file. You can type file until 'q' is entered in the
 first character of a line.
-\item[cd] Change directory. Only available if directories are enabled.
-\item[mkdir] Make directory. Only available if directories are enabled.
-\item[rmdir] Remove an empty directory. Only available if directories are 
+\item[cd]       Change directory. Only available if directories are enabled.
+\item[mkdir]    Make directory. Only available if directories are enabled.
+\item[rmdir]    Remove an empty directory. Only available if directories are
 enabled.
-\item[cwd] Get current working directory. Only available if directories are 
-enabled.
-\item[dump] Read and show a flash page in hexadecimal format. First parameter
-is the address, second optional parameter in number of flash pages to display.
+\item[cwd]      Get current working directory. Only available if directories
+are enabled.
+\item[dump]     Read and show a flash page in hexadecimal format. First 
+parameter is the address, second optional parameter in number of flash pages
+to display.
 Note: this command works with flash page size other ones work with logical 
 page size!
 Example: \code{dump 0x10000 2}
@@ -489,5 +495,43 @@ Free entries:                       10
 To be released entries:             4
 \end{verbatim}
 
+\section{Using the file system}
+The API of file system is very similar to standard C API defined in 
+\fname{stdio.h}. The difference is that instead of \code{fopen()}
+\code{pifs\_fopen()} should be called and before opening a file 
+calling of \code{pifs\_init()} is necessary.
+
+Example:
+\begin{verbatim}
+#include <stdint.h>
+#include "api_pifs.h"
+
+int main(void)
+{
+    pifs_status_t pifs_status;
+    P_FILE      * file;
+    uint8_t       test_buf_w[512];
+    size_t        written_size;
+
+    pifs_status = pifs_init();
+    if (pifs_status == PIFS_SUCCESS)
+    {
+        file = pifs_fopen("demo.bin", "w");
+        if (file)
+        {
+            written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
+            if (written_size != sizeof(test_buf_w))
+            {
+                /* Error */
+            }
+            if (pifs_fclose(file))
+            {
+                /* Error */
+            }
+        }
+        pifs_status = pifs_delete();
+    }
+}
+\end{verbatim}
 
 \end{document}
