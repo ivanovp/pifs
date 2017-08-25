@@ -17,7 +17,6 @@
 \usetikzlibrary{calc,fit,arrows,positioning}
 %\sloppy
 %\usepackage{graphicx}
-%\usepackage{ifthen}
 %\usepackage{multicol}
 %\usepackage[outline]{draftcopy} %outline,bottom,light,none/first/firsttwo
 %\usepacgake{wasysym}
@@ -70,7 +69,7 @@
 
 \begin{document}
 \maketitle
-%\tableofcontents
+\tableofcontents
 \section{Introduction}
 This file system was developed for embedded systems which use NOR flash as 
 storage. 
@@ -215,19 +214,19 @@ is selected.
 
 \section{Demonstration}
 In the 'demo' directory four applications can be found. I developed them under
-Linux, but probably they can be compiled on Windows/cygwin as well. 
+Linux, but probably they can be compiled on \href{http://cygwin.com}{Windows/cygwin} as well. 
 \begin{enumerate}
 \item pc\_emu: PC application which uses NOR flash emulator. It can be compiled
 with GNU make an GCC.
-\item maple\_mini\_pifs: Demo running on Maple Mini board, MCU is 
+\item maple\_mini\_pifs: Demo running on \href{https://www.aliexpress.com/wholesale?SearchText=maple+mini}{Maple Mini board}, MCU is 
 STM32F103RCBT6. There is no NOR flash, UART and debugger on board. So 
 prototype should be created.
-It can be compiled with GNU make and GCC or with STM32 System Workbench.
-\item nucleo-f413zh\_pifs: Demo running on Nucleo-F413ZH board, MCU is
+It can be compiled with GNU make and GCC or with \href{http://www.st.com/en/development-tools/sw4stm32.html}{STM32 System Workbench}.
+\item nucleo-f413zh\_pifs: Demo running on \href{http://www.st.com/en/evaluation-tools/nucleo-f413zh.html}{Nucleo-F413ZH board}, MCU is
 STM32F413ZH. There is no NOR flash memory on the board, some prototype hardware 
 should be created.
 It has internal debugger and virtual serial port. 
-It can be compiled with GNU make and GCC or with STM32 System Workbench.
+It can be compiled with GNU make and GCC or with \href{http://www.st.com/en/development-tools/sw4stm32.html}{STM32 System Workbench}.
 \item stm32\_f4ve\_pifs: Demo running on STM32-F4VE board, MCU is STM32F407VE. 
 There is Winbond W25Q16DV NOR flash soldered on the board, but it has not got 
 UART. 
