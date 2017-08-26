@@ -20,6 +20,7 @@
 extern UART_HandleTypeDef huart1;
 
 extern osMutexId printf_mutex;
+extern osMutexId stdin_mutex;
 static char printf_buf[128];
 
 /* Private function prototypes -----------------------------------------------*/
@@ -112,24 +113,25 @@ int _write(int file, char *buf, int len)
 int _read(int file, char *buf, int len)
 {
     int cntr = 0;
-    if (printf_mutex)
+    if (stdin_mutex)
     {
         /* Inside OS context */
-        if (osMutexWait(printf_mutex, osWaitForever) == osOK)
+        if (osMutexWait(stdin_mutex, osWaitForever) == osOK)
         {
             HAL_UART_Receive(&huart1, buf, 1, HAL_MAX_DELAY);
-            HAL_UART_Transmit(&huart1, buf, 1, HAL_MAX_DELAY); /* Echo */
-            buf++;
-            cntr++;
-            while (HAL_UART_Receive(&huart1, buf, 1, 0) == HAL_OK && cntr < len)
+            if (osMutexWait(printf_mutex, osWaitForever) == osOK)
             {
                 HAL_UART_Transmit(&huart1, buf, 1, HAL_MAX_DELAY); /* Echo */
                 buf++;
                 cntr++;
-            }
-            if (printf_mutex)
-            {
+                while (HAL_UART_Receive(&huart1, buf, 1, 0) == HAL_OK && cntr < len)
+                {
+                    HAL_UART_Transmit(&huart1, buf, 1, HAL_MAX_DELAY); /* Echo */
+                    buf++;
+                    cntr++;
+                }
                 osMutexRelease(printf_mutex);
+                osMutexRelease(stdin_mutex);
             }
         }
     }

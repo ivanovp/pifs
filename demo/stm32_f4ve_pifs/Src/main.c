@@ -90,6 +90,8 @@ osThreadId watchdogTaskHandle;
 osThreadId measureTaskHandle;
 osMutexDef(printf_mutex);
 osMutexId printf_mutex = NULL;
+osMutexDef(stdin_mutex);
+osMutexId stdin_mutex = NULL;
 uint32_t disableWatchdog = 0;
 FATFS sd_fat_fs;
 char disk_path[4];
@@ -219,6 +221,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_MUTEX */
   printf_mutex = osMutexCreate(osMutex(printf_mutex));
+  stdin_mutex = osMutexCreate(osMutex(stdin_mutex));
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
