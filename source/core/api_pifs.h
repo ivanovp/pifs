@@ -90,28 +90,44 @@ typedef enum
 #endif
 
 #if PIFS_INVERT_ATTRIBUTE_BITS
+/** Macro to check if file is read-only */
 #define PIFS_IS_READONLY(attrib)        (!((attrib) & PIFS_ATTRIB_READONLY))
+/** Macro to check if file is hidden */
 #define PIFS_IS_HIDDEN(attrib)          (!((attrib) & PIFS_ATTRIB_HIDDEN))
+/** Macro to check if file is system file */
 #define PIFS_IS_SYSTEM(attrib)          (!((attrib) & PIFS_ATTRIB_SYSTEM))
+/** Macro to check if file is directory */
 #define PIFS_IS_DIR(attrib)             (!((attrib) & PIFS_ATTRIB_DIR))
+/** Macro to check if file should be archived */
 #define PIFS_IS_ARCHIVE(attrib)         (!((attrib) & PIFS_ATTRIB_ARCHIVE))
+/** Macro to check if file is deleted */
 #define PIFS_IS_DELETED(attrib)         (!((attrib) & PIFS_ATTRIB_DELETED))
+/** Macro to set file attribute */
 #define PIFS_SET_ATTRIB(attrib,bits)    do { \
         (attrib) &= ~(bits); \
     } while (0)
+/** Macro to clear file attribute */
 #define PIFS_CLEAR_ATTRIB(attrib,bits)  do { \
         (attrib) |= (bits); \
     } while (0)
 #else
+/** Macro to check if file is read-only */
 #define PIFS_IS_READONLY(attrib)        ((attrib) & PIFS_ATTRIB_READONLY)
+/** Macro to check if file is hidden */
 #define PIFS_IS_HIDDEN(attrib)          ((attrib) & PIFS_ATTRIB_HIDDEN)
+/** Macro to check if file is system file */
 #define PIFS_IS_SYSTEM(attrib)          ((attrib) & PIFS_ATTRIB_SYSTEM)
+/** Macro to check if file is directory */
 #define PIFS_IS_DIR(attrib)             ((attrib) & PIFS_ATTRIB_DIR)
+/** Macro to check if file should be archived */
 #define PIFS_IS_ARCHIVE(attrib)         ((attrib) & PIFS_ATTRIB_ARCHIVE)
+/** Macro to check if file is deleted */
 #define PIFS_IS_DELETED(attrib)         ((attrib) & PIFS_ATTRIB_DELETED)
+/** Macro to set file attribute */
 #define PIFS_SET_ATTRIB(attrib,bits)  do { \
         (attrib) |= (bits); \
     } while (0)
+/** Macro to clear file attribute */
 #define PIFS_CLEAR_ATTRIB(attrib,bits)    do { \
         (attrib) &= ~(bits); \
     } while (0)

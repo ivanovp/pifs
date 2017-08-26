@@ -37,6 +37,7 @@
 #include "pifs_fsbm.h"
 #include "pifs_wear.h"
 #include "pifs_merge.h"
+#include "pifs_os.h"
 
 #if ENABLE_DHT
 #include "dht.h"
@@ -1181,7 +1182,7 @@ void cmdHardFaultTest (char* command, char* params)
     (void) params;
 
     printf("Causing division by zero error in one second!\r\n");
-    PIFS_DELAY_MS(1000);
+    PIFS_OS_DELAY_MS(1000);
 
     y = 10;
     z = 0;

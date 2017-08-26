@@ -330,7 +330,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
             new_map_entry.page_count = 0;
         }
         /* Close internal file */
-        ret = pifs_fclose(&pifs.internal_file);
+        ret = pifs_internal_fclose(&pifs.internal_file);
         PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
 
@@ -511,7 +511,7 @@ pifs_status_t pifs_merge(void)
             /* Store position in file */
             PIFS_WARNING_MSG("read_pos: %i, write_pos: %i\r\n", file->read_pos, file->write_pos);
             file_pos[i] = file->read_pos;
-            pifs_fclose(file);
+            pifs_internal_fclose(file);
         }
     }
     /* #1 */
@@ -640,7 +640,7 @@ pifs_status_t pifs_merge(void)
                 {
                     PIFS_WARNING_MSG("Seeking to %i\r\n", file_pos[i]);
                     /* Seek to the stored position */
-                    ret = pifs_fseek(file, file_pos[i], PIFS_SEEK_SET);
+                    ret = pifs_internal_fseek(file, file_pos[i], PIFS_SEEK_SET);
                     if (ret != 0)
                     {
                         PIFS_ERROR_MSG("Seek error: %i\r\n", ret);

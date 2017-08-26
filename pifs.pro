@@ -62,6 +62,7 @@ source/core/pifs_helper.c \
 source/core/pifs_map.c \
 source/core/pifs_merge.c \
 source/core/pifs_wear.c \
+source/flash_drv/nor_emu/flash.c \
 source/flash_drv/stm32_spi_dma/flash.c \
 source/term/parser.c \
 source/term/term.c \
@@ -120,6 +121,7 @@ demo/stm32_f4ve_pifs/Inc/ffconf.h \
 demo/stm32_f4ve_pifs/Inc/flash_config.h \
 demo/stm32_f4ve_pifs/Inc/main.h \
 demo/stm32_f4ve_pifs/Inc/pifs_config.h \
+demo/stm32_f4ve_pifs/Inc/pifs_os.h \
 demo/stm32_f4ve_pifs/Inc/stm32f4xx_hal_conf.h \
 demo/stm32_f4ve_pifs/Inc/stm32f4xx_it.h \
 demo/stm32_f4ve_pifs/Inc/uart.h \

@@ -29,6 +29,9 @@
 #include "api_pifs.h"
 #include "flash.h"
 #include "pifs_config.h"
+#if PIFS_ENABLE_OS
+#include "pifs_os.h"
+#endif
 
 // NOTE handle endianness?
 //#define PIFS_MAGIC                        0x50494653u  /* PIFS */
@@ -265,6 +268,15 @@ typedef uint8_t pifs_wear_level_bits_t;
 #define PIFS_SET_ERRNO(status)          do { \
         pifs_errno = status; \
     } while (0)
+
+#if PIFS_ENABLE_OS
+extern PIFS_OS_MUTEX_TYPE pifs_mutex;
+#define PIFS_GET_MUTEX()     PIFS_OS_GET_MUTEX(pifs_mutex)
+#define PIFS_PUT_MUTEX()     PIFS_OS_PUT_MUTEX(pifs_mutex)
+#else
+#define PIFS_GET_MUTEX()
+#define PIFS_PUT_MUTEX()
+#endif
 
 /**
  * Each block has specified role in the file system:

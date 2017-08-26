@@ -25,6 +25,8 @@
 
 #include <unistd.h>
 
+#define PIFS_ENABLE_OS                  1u  /**< 1: OS is used, 0: no OS or FS is used from one task */
+#define PIFS_TASK_COUNT_MAX             4u  /**< Maximum number of tasks which use FS */
 /** PIFS_LOGICAL_PAGE_SIZE_BYTE
  * Allocation unit of file system.
  * Larger logical page needs more RAM and less pages in management area.
@@ -59,8 +61,6 @@
 
 #define PIFS_PACKED_ATTRIBUTE           __attribute__((packed))
 #define PIFS_ALIGNED_ATTRIBUTE(align)   __attribute__((aligned(align)))
-/** Task delay is used when flash initialization fails. */
-#define PIFS_DELAY_MS(ms)               usleep(ms * 1000)
 
 typedef char pifs_char_t;
 #define PIFS_CHAR_MAX   255

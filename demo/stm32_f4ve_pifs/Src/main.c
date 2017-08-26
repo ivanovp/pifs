@@ -90,8 +90,6 @@ osThreadId watchdogTaskHandle;
 osThreadId measureTaskHandle;
 osMutexDef(printf_mutex);
 osMutexId printf_mutex = NULL;
-osSemaphoreId measure_finished;
-osSemaphoreDef(measure_finished);
 uint32_t disableWatchdog = 0;
 FATFS sd_fat_fs;
 char disk_path[4];
@@ -224,11 +222,6 @@ int main(void)
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
-  measure_finished = osSemaphoreCreate(osSemaphore(measure_finished), 1);
-  if (measure_finished)
-  {
-      osSemaphoreWait(measure_finished, osWaitForever);
-  }
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -241,10 +234,10 @@ int main(void)
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  osThreadDef(watchdogTask, watchdogTask, osPriorityNormal, 0, 64);
+  osThreadDef(watchdogTask, watchdogTask, osPriorityRealtime, 0, 64);
   watchdogTaskHandle = osThreadCreate(osThread(watchdogTask), NULL);
-//  osThreadDef(measureTask, measureTask, osPriorityNormal, 0, 256);
-//  measureTaskHandle = osThreadCreate(osThread(measureTask), NULL);
+  osThreadDef(measureTask, measureTask, osPriorityAboveNormal, 0, 512);
+  measureTaskHandle = osThreadCreate(osThread(measureTask), NULL);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -571,25 +564,62 @@ void watchdogTask(void const * arg)
  */
 void measureTask(void const * arg)
 {
+    bool_t   measure_ok = FALSE;
+    float    hum;
+    float    temp;
+    P_FILE * file;
+    size_t   written_bytes;
+
     (void) arg;
 
+    printf("Measurement task started\r\n");
+
+    /* Drop first measurement */
     DHT_read();
 
     for ( ; ; )
     {
-        osDelay(5000); /* Measure in every 5 second */
+        osDelay(10000); /* Measure in every 10 second */
         //osDelay(60000); /* Measure in every minute */
+        measure_ok = FALSE;
         LED_on(3);
         if (DHT_read())
         {
-            osSemaphoreRelease(measure_finished);
+            measure_ok = TRUE;
         }
         else
         {
             /* Try again */
             if (DHT_read())
             {
-                osSemaphoreRelease(measure_finished);
+                measure_ok = TRUE;
+            }
+        }
+        if (measure_ok)
+        {
+            hum = DHT_getHumPercent();
+            temp = DHT_getTempCelsius();
+            printf("Humidity:    %i.%i%%\r\n", (int)hum, (int)fabsf ((hum - (int)hum) * 10.0f));
+            printf("Temperature: %i.%i C\r\n", (int)temp, (int)fabsf ((temp - (int)temp) * 10.0f));
+
+            file = pifs_fopen("dht.bin", "a");
+            if (file)
+            {
+                written_bytes = pifs_fwrite(&hum, 1, sizeof(hum), file);
+                written_bytes += pifs_fwrite(&temp, 1, sizeof(temp), file);
+                if (written_bytes == sizeof(hum) + sizeof(temp))
+                {
+                    printf("Data saved!\r\n");
+                }
+                else
+                {
+                    printf("ERROR: Cannot save data. Code: %i\r\n", pifs_errno);
+                }
+                pifs_fclose(file);
+            }
+            else
+            {
+                printf("ERROR: Cannot open file!\r\n");
             }
         }
         LED_off(3);
@@ -598,6 +628,8 @@ void measureTask(void const * arg)
 
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 {
+    (void) xTask;
+
     _print("\r\nStack overflow in task ");
     _print(pcTaskName);
     _print("\r\n");
@@ -614,7 +646,7 @@ void StartDefaultTask(void const * argument)
   MX_FATFS_Init();
 
   /* USER CODE BEGIN 5 */
-  //DHT_read();
+  (void) argument;
 #if ENABLE_TERMINAL
     pifs_status_t ret;
     FRESULT       fres;
@@ -648,39 +680,6 @@ void StartDefaultTask(void const * argument)
     while (1)
     {
         term_task();
-#if 0
-        if (osSemaphoreWait(measure_finished, 1))
-        {
-            P_FILE * file;
-            size_t   written_bytes;
-            float    hum, temp;
-
-            hum = DHT_getHumPercent();
-            temp = DHT_getTempCelsius();
-            printf("Humidity:    %i.%i%%\r\n", (int)hum, (int)fabsf ((hum - (int)hum) * 10.0f));
-            printf("Temperature: %i.%i C\r\n", (int)temp, (int)fabsf ((temp - (int)temp) * 10.0f));
-
-            file = pifs_fopen("dht.bin", "a");
-            if (file)
-            {
-                written_bytes = pifs_fwrite(&hum, 1, sizeof(hum), file);
-                written_bytes += pifs_fwrite(&temp, 1, sizeof(temp), file);
-                if (written_bytes == sizeof(hum) + sizeof(temp))
-                {
-                    printf("Data saved!\r\n");
-                }
-                else
-                {
-                    printf("ERROR: Cannot save data. Code: %i\r\n", pifs_errno);
-                }
-                pifs_fclose(file);
-            }
-            else
-            {
-                printf("ERROR: Cannot open file!\r\n");
-            }
-        }
-#endif
     }
 #elif ENABLE_FLASH_TEST
     pifs_flash_init();

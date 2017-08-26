@@ -270,6 +270,8 @@ pifs_DIR * pifs_opendir(const pifs_char_t * a_name)
     pifs_entry_t  * entry = &pifs.entry;
 #endif
 
+    PIFS_GET_MUTEX();
+
 #if PIFS_ENABLE_DIRECTORIES
     /* Resolve a_filename's relative/absolute file path and update
      * entry_list_address regarding that */
@@ -336,6 +338,8 @@ pifs_DIR * pifs_opendir(const pifs_char_t * a_name)
         PIFS_SET_ERRNO(ret);
     }
 
+    PIFS_PUT_MUTEX();
+
     return (pifs_DIR*) dir;
 }
 
@@ -377,6 +381,8 @@ struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
     pifs_entry_t  * entry = &dir->entry;
     pifs_dirent_t * dirent = NULL;
     bool_t          entry_found = FALSE;
+
+    PIFS_GET_MUTEX();
 
 #if PIFS_USE_DELTA_FOR_ENTRIES
     ret = pifs_read_delta(dir->entry_list_address.block_address,
@@ -428,6 +434,8 @@ struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
     }
     PIFS_SET_ERRNO(ret);
 
+    PIFS_PUT_MUTEX();
+
     return dirent;
 }
 
@@ -442,11 +450,15 @@ int pifs_closedir(pifs_DIR * const a_dirp)
     int           ret = -1;
     pifs_dir_t  * dir = (pifs_dir_t*) a_dirp;
 
+    PIFS_GET_MUTEX();
+
     if (dir->is_used)
     {
         dir->is_used = FALSE;
         ret = 0;
     }
+
+    PIFS_PUT_MUTEX();
 
     return ret;
 }
@@ -547,6 +559,8 @@ int pifs_mkdir(const pifs_char_t * const a_filename)
     pifs_address_t       entry_list_address = pifs.current_entry_list_address;
     pifs_char_t          filename[PIFS_FILENAME_LEN_MAX];
 
+    PIFS_GET_MUTEX();
+
     /* Resolve a_filename's relative/absolute file path and update
      * entry_list_address regarding that */
     ret = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
@@ -615,6 +629,8 @@ int pifs_mkdir(const pifs_char_t * const a_filename)
         }
     }
 
+    PIFS_PUT_MUTEX();
+
     return ret;
 }
 
@@ -628,8 +644,12 @@ int pifs_rmdir(const pifs_char_t * const a_filename)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_entry_t       * entry = &pifs.entry;
-    pifs_address_t       entry_list_address = pifs.current_entry_list_address;
+    pifs_address_t       entry_list_address;
     pifs_char_t          filename[PIFS_FILENAME_LEN_MAX];
+
+    PIFS_GET_MUTEX();
+
+    entry_list_address = pifs.current_entry_list_address;
 
     if (pifs_is_directory_empty(a_filename))
     {
@@ -658,6 +678,8 @@ int pifs_rmdir(const pifs_char_t * const a_filename)
         ret = PIFS_ERROR_DIRECTORY_NOT_EMPTY;
     }
 
+    PIFS_PUT_MUTEX();
+
     return ret;
 }
 
@@ -671,9 +693,13 @@ int pifs_chdir(const pifs_char_t * const a_filename)
 {
     pifs_status_t     ret = PIFS_SUCCESS;
     pifs_entry_t    * entry = &pifs.entry;
-    pifs_address_t    entry_list_address = pifs.current_entry_list_address;
+    pifs_address_t    entry_list_address;
     pifs_char_t       filename[PIFS_FILENAME_LEN_MAX];
     pifs_char_t       separator[2] = { PIFS_PATH_SEPARATOR_CHAR, 0 };
+
+    PIFS_GET_MUTEX();
+
+    entry_list_address = pifs.current_entry_list_address;
 
     if (a_filename[0] == PIFS_PATH_SEPARATOR_CHAR
             && a_filename[1] == PIFS_EOS)
@@ -721,6 +747,8 @@ int pifs_chdir(const pifs_char_t * const a_filename)
         }
     }
 
+    PIFS_PUT_MUTEX();
+
     return ret;
 }
 
@@ -733,7 +761,11 @@ int pifs_chdir(const pifs_char_t * const a_filename)
  */
 pifs_char_t * pifs_getcwd(pifs_char_t * a_buffer, size_t a_size)
 {
+    PIFS_GET_MUTEX();
+
     strncpy(a_buffer, pifs.cwd, a_size);
+
+    PIFS_PUT_MUTEX();
 
     return a_buffer;
 }

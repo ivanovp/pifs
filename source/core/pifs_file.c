@@ -36,6 +36,7 @@
 #include "pifs_merge.h"
 #include "pifs_wear.h"
 #include "pifs_dir.h"
+#include "pifs_file.h"
 #include "buffer.h" /* DEBUG */
 
 #define PIFS_DEBUG_LEVEL 2
@@ -229,6 +230,8 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
     pifs_file_t  * file = NULL;
     pifs_status_t  ret;
 
+    PIFS_GET_MUTEX();
+
     PIFS_NOTICE_MSG("filename: '%s' modes: %s\r\n", a_filename, a_modes);
     ret = pifs_get_file(&file);
     if (ret == PIFS_SUCCESS)
@@ -250,6 +253,9 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
     }
 
     PIFS_SET_ERRNO(ret);
+
+    PIFS_PUT_MUTEX();
+
     return (P_FILE*) file;
 }
 
@@ -373,6 +379,8 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
     pifs_size_t          free_management_page_count = 0;
     pifs_size_t          free_data_page_count = 0;
 
+    PIFS_GET_MUTEX();
+
     PIFS_NOTICE_MSG("filename: '%s', size: %i, count: %i\r\n", file->entry.name, a_size, a_count);
     if (pifs.is_header_found && file && file->is_opened && file->mode_write)
     {
@@ -381,7 +389,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
         if (file->mode_append && file->write_pos != file->entry.file_size
                 && file->entry.file_size != PIFS_FILE_SIZE_ERASED)
         {
-            pifs_fseek(file, 0, PIFS_SEEK_END);
+            pifs_internal_fseek(file, 0, PIFS_SEEK_END);
         }
         if (file->status == PIFS_SUCCESS)
         {
@@ -549,6 +557,9 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
     }
 
     PIFS_SET_ERRNO(file->status);
+
+    PIFS_PUT_MUTEX();
+
     return written_size / a_size;
 }
 
@@ -609,6 +620,8 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
     pifs_size_t          data_size = a_size * a_count;
     pifs_size_t          page_count = 0;
     pifs_page_offset_t   po;
+
+    PIFS_GET_MUTEX();
 
     PIFS_NOTICE_MSG("filename: '%s', size: %i, count: %i\r\n", file->entry.name, a_size, a_count);
     if (pifs.is_header_found && file && file->is_opened && file->mode_read)
@@ -681,6 +694,9 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
     }
 
     PIFS_SET_ERRNO(file->status);
+
+    PIFS_PUT_MUTEX();
+
     return read_size / a_size;
 }
 
@@ -690,6 +706,24 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
  * @return 0 if file close, PIFS_EOF if error occurred.
  */
 int pifs_fflush(P_FILE * a_file)
+{
+    int ret;
+
+    PIFS_GET_MUTEX();
+
+    ret = pifs_internal_fflush(a_file);
+
+    PIFS_PUT_MUTEX();
+
+    return ret;
+}
+
+/**
+ * @brief pifs_internal_fflush Flush cache, update file size.
+ * @param[in] a_file File to flush.
+ * @return 0 if file close, PIFS_EOF if error occurred.
+ */
+int pifs_internal_fflush(P_FILE * a_file)
 {
     int             ret = PIFS_EOF;
     pifs_file_t   * file = (pifs_file_t*) a_file;
@@ -712,6 +746,7 @@ int pifs_fflush(P_FILE * a_file)
     }
 
     PIFS_SET_ERRNO(file->status);
+
     return ret;
 }
 
@@ -723,11 +758,30 @@ int pifs_fflush(P_FILE * a_file)
  */
 int pifs_fclose(P_FILE * a_file)
 {
+    int ret;
+    pifs_file_t * file = (pifs_file_t*) a_file;
+
+    PIFS_GET_MUTEX();
+
+    ret = pifs_internal_fclose(file);
+
+    PIFS_PUT_MUTEX();
+
+    return ret;
+}
+
+/**
+ * @brief pifs_fclose Close file. Works like fclose().
+ * @param[in] a_file File to close.
+ * @return 0 if file close, PIFS_EOF if error occurred.
+ */
+int pifs_internal_fclose(P_FILE * a_file)
+{
     int ret = PIFS_EOF;
     pifs_file_t * file = (pifs_file_t*) a_file;
 
     PIFS_NOTICE_MSG("filename: '%s'\r\n", file->entry.name);
-    ret = pifs_fflush(a_file);
+    ret = pifs_internal_fflush(a_file);
     if (ret == 0)
     {
         file->is_opened = FALSE;
@@ -736,6 +790,7 @@ int pifs_fclose(P_FILE * a_file)
 
     return ret;
 }
+
 
 /**
  * @brief pifs_fseek Seek in opened file.
@@ -748,6 +803,29 @@ int pifs_fclose(P_FILE * a_file)
  * @return 0 if seek was successful. Non-zero if error occured.
  */
 int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
+{
+    int ret;
+
+    PIFS_GET_MUTEX();
+
+    ret = pifs_internal_fseek(a_file, a_offset, a_origin);
+
+    PIFS_PUT_MUTEX();
+
+    return ret;
+}
+
+/**
+ * @brief pifs_internal_fseek Seek in opened file.
+ *
+ * @param[in] a_file    File to seek.
+ * @param[in] a_offset  Offset to seek.
+ * @param[in] a_origin  Origin of offset. Can be
+ *                      PIFS_SEEK_SET, PIFS_SEEK_CUR, PIFS_SEEK_END.
+ *                      @see pifs_fseek_origin_t
+ * @return 0 if seek was successful. Non-zero if error occured.
+ */
+int pifs_internal_fseek(P_FILE * a_file, long int a_offset, int a_origin)
 {
     int                 ret = PIFS_ERROR_GENERAL;
     pifs_file_t       * file = (pifs_file_t*) a_file;
@@ -778,7 +856,7 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
                     /* (if position is close to current position) */
                     /* go backward using map header's previous address entry */
                     data_size = file->read_pos + a_offset;
-                    pifs_rewind(file); /* Zeroing file->read_pos! */
+                    pifs_internal_rewind(file); /* Zeroing file->read_pos! */
                 }
                 break;
             case PIFS_SEEK_SET:
@@ -789,7 +867,7 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
                 else
                 {
                     data_size = a_offset;
-                    pifs_rewind(file); /* Zeroing file->read_pos! */
+                    pifs_internal_rewind(file); /* Zeroing file->read_pos! */
                 }
                 target_pos = a_offset;
                 break;
@@ -807,7 +885,7 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
                     }
                     else
                     {
-                        pifs_rewind(file); /* Zeroing file->read_pos! */
+                        pifs_internal_rewind(file); /* Zeroing file->read_pos! */
                     }
                     target_pos = data_size;
                 }
@@ -911,6 +989,7 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
     }
 
     PIFS_SET_ERRNO(file->status);
+
     return ret;
 }
 
@@ -920,6 +999,22 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
  * @param[in] a_file Pointer to file.
  */
 void pifs_rewind(P_FILE * a_file)
+{
+    pifs_file_t * file = (pifs_file_t*) a_file;
+
+    PIFS_GET_MUTEX();
+
+    pifs_internal_rewind(file);
+
+    PIFS_PUT_MUTEX();
+}
+
+/**
+ * @brief pifs_internal_rewind Set file positions to zero.
+ *
+ * @param[in] a_file Pointer to file.
+ */
+void pifs_internal_rewind(P_FILE * a_file)
 {
     pifs_file_t * file = (pifs_file_t*) a_file;
 
@@ -951,11 +1046,15 @@ long int pifs_ftell(P_FILE * a_file)
     pifs_file_t * file = (pifs_file_t*) a_file;
     long int pos = -1;
 
+    PIFS_GET_MUTEX();
+
     PIFS_NOTICE_MSG("filename: '%s'\r\n", file->entry.name);
     if (pifs.is_header_found && file && file->is_opened)
     {
         pos = file->read_pos;
     }
+
+    PIFS_PUT_MUTEX();
 
     return pos;
 }
@@ -974,11 +1073,15 @@ int pifs_fgetuserdata(P_FILE * a_file, pifs_user_data_t * a_user_data)
     pifs_status_t  ret = PIFS_ERROR_GENERAL;
     pifs_file_t  * file = (pifs_file_t*) a_file;
 
+    PIFS_GET_MUTEX();
+
     if (file->is_opened)
     {
         memcpy(a_user_data, &file->entry.user_data, sizeof(pifs_user_data_t));
         ret = PIFS_SUCCESS;
     }
+
+    PIFS_PUT_MUTEX();
 
     return ret;
 }
@@ -994,6 +1097,9 @@ int pifs_fgetuserdata(P_FILE * a_file, pifs_user_data_t * a_user_data)
 int pifs_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data)
 {
     pifs_file_t  * file = (pifs_file_t*) a_file;
+    pifs_status_t  ret;
+
+    PIFS_GET_MUTEX();
 
     if (file->is_opened)
     {
@@ -1003,7 +1109,12 @@ int pifs_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data)
                                          file->entry_list_address.block_address,
                                          file->entry_list_address.page_address);
     }
-    return file->status;
+
+    ret = file->status;
+
+    PIFS_PUT_MUTEX();
+
+    return ret;
 }
 #endif
 
@@ -1021,6 +1132,8 @@ int pifs_remove(const pifs_char_t * a_filename)
 #else
     const pifs_char_t * filename = a_filename;
 #endif
+
+    PIFS_GET_MUTEX();
 
     PIFS_NOTICE_MSG("filename: '%s'\r\n", a_filename);
     ret = pifs_check_filename(a_filename);
@@ -1046,11 +1159,14 @@ int pifs_remove(const pifs_char_t * a_filename)
                 /* Mark allocated pages to be released */
                 ret = pifs_release_file_pages(&pifs.internal_file);
             }
-            ret = pifs_fclose(&pifs.internal_file);
+            ret = pifs_internal_fclose(&pifs.internal_file);
         }
     }
 
     PIFS_SET_ERRNO(ret);
+
+    PIFS_PUT_MUTEX();
+
     return ret;
 }
 
@@ -1074,6 +1190,8 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
     const pifs_char_t * oldname = a_oldname;
     const pifs_char_t * newname = a_newname;
 #endif
+
+    PIFS_GET_MUTEX();
 
 #if PIFS_ENABLE_DIRECTORIES
     entry_list_address = pifs.current_entry_list_address;
@@ -1121,6 +1239,9 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
     }
 
     PIFS_SET_ERRNO(ret);
+
+    PIFS_PUT_MUTEX();
+
     return ret;
 }
 
@@ -1201,6 +1322,8 @@ bool_t pifs_is_file_exist(const pifs_char_t * a_filename)
     const pifs_char_t * filename = a_filename;
 #endif
 
+    PIFS_GET_MUTEX();
+
 #if PIFS_ENABLE_DIRECTORIES
     entry_list_address = pifs.current_entry_list_address;
 #else
@@ -1228,6 +1351,8 @@ bool_t pifs_is_file_exist(const pifs_char_t * a_filename)
         is_file_exist = TRUE;
     }
 
+    PIFS_PUT_MUTEX();
+
     return is_file_exist;
 }
 
@@ -1240,7 +1365,12 @@ bool_t pifs_is_file_exist(const pifs_char_t * a_filename)
 int pifs_ferror(P_FILE * a_file)
 {
     pifs_file_t * file = (pifs_file_t*) a_file;
+
+    PIFS_GET_MUTEX();
+
     int ret = file->status;
+
+    PIFS_PUT_MUTEX();
 
     return ret;
 }
@@ -1253,7 +1383,13 @@ int pifs_ferror(P_FILE * a_file)
 int pifs_feof(P_FILE * a_file)
 {
     pifs_file_t * file = (pifs_file_t*) a_file;
-    int ret = file->read_pos == file->entry.file_size;
+    int ret;
+
+    PIFS_GET_MUTEX();
+
+    ret = file->read_pos == file->entry.file_size;
+
+    PIFS_PUT_MUTEX();
 
     return ret;
 }
@@ -1274,6 +1410,8 @@ long int pifs_filesize(const pifs_char_t * a_filename)
 #else
     const pifs_char_t * filename = a_filename;
 #endif
+
+    PIFS_GET_MUTEX();
 
 #if PIFS_ENABLE_DIRECTORIES
     entry_list_address = pifs.current_entry_list_address;
@@ -1305,6 +1443,8 @@ long int pifs_filesize(const pifs_char_t * a_filename)
     {
         PIFS_SET_ERRNO(status);
     }
+
+    PIFS_PUT_MUTEX();
 
     return filesize;
 }

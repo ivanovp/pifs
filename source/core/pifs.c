@@ -36,6 +36,7 @@
 #include "pifs_merge.h"
 #include "pifs_wear.h"
 #include "pifs_dir.h"
+#include "pifs_os.h"
 #include "buffer.h" /* DEBUG */
 
 #define PIFS_DEBUG_LEVEL 3
@@ -44,6 +45,12 @@
 bool_t pifs_initialized = FALSE;
 pifs_t pifs;
 int pifs_errno = PIFS_SUCCESS;
+#if PIFS_ENABLE_OS
+PIFS_OS_DEFINE_MUTEX(pifs_mutex);
+PIFS_OS_MUTEX_TYPE pifs_mutex;
+#endif
+
+
 
 /**
  * @brief pifs_calc_header_checksum Calculate checksum of the file system header.
@@ -591,6 +598,10 @@ pifs_status_t pifs_init(void)
     pifs_size_t          i;
     uint8_t              retry_cntr = 5;
 
+#if PIFS_ENABLE_OS
+    pifs_mutex = PIFS_OS_CREATE_MUTEX(pifs_mutex);
+#endif
+
     pifs_initialized = FALSE;
     pifs.header_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
     pifs.header_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
@@ -665,7 +676,7 @@ pifs_status_t pifs_init(void)
             ret = pifs_flash_init();
             if (ret != PIFS_SUCCESS)
             {
-                PIFS_DELAY_MS(250);
+                PIFS_OS_DELAY_MS(250);
             }
         } while (ret != PIFS_SUCCESS && retry_cntr--);
     }
@@ -812,6 +823,10 @@ pifs_status_t pifs_delete(void)
         ret = pifs_flush();
 
         ret = pifs_flash_delete();
+
+#if PIFS_ENABLE_OS
+        PIFS_OS_DELETE_MUTEX(pifs_mutex);
+#endif
 
         pifs_initialized = FALSE;
     }
