@@ -66,13 +66,20 @@ uint8_t DHT_dataReadErrorCntr = 0;
 static void delay_us(uint32_t us)
 {
     volatile uint32_t cycles;
-    uint32_t start = DWT->CYCCNT;
 
+    /* Calculate how many cycles necessary according to MCU's clock */
     cycles = (SystemCoreClock / (uint32_t)1000000) * us;
+
+    /* Enable trace and debug blocks */
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    /* Zero counter */
+    DWT->CYCCNT = 0;
+    /* Enable cycle counter */
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
     do
     {
-    } while((DWT->CYCCNT - start) < cycles);
+    } while (DWT->CYCCNT < cycles);
 }
 #pragma GCC pop_options
 
