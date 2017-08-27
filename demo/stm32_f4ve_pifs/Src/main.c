@@ -239,8 +239,8 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   osThreadDef(watchdogTask, watchdogTask, osPriorityRealtime, 0, 64);
   watchdogTaskHandle = osThreadCreate(osThread(watchdogTask), NULL);
-  osThreadDef(measureTask, measureTask, osPriorityAboveNormal, 0, 512);
-  measureTaskHandle = osThreadCreate(osThread(measureTask), NULL);
+//  osThreadDef(measureTask, measureTask, osPriorityAboveNormal, 0, 512);
+//  measureTaskHandle = osThreadCreate(osThread(measureTask), NULL);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -561,6 +561,62 @@ void watchdogTask(void const * arg)
     }
 }
 
+void save_measurement(void)
+{
+    float    hum;
+    float    temp;
+    typedef struct
+    {
+        float    hum;
+        float    temp;
+    } meas_t;
+    P_FILE * file;
+    size_t   written_bytes;
+    HAL_StatusTypeDef stat;
+    RTC_DateTypeDef date;
+    RTC_TimeTypeDef time;
+    meas_t   meas;
+
+    /* First time shall be read */
+    stat = HAL_RTC_GetTime(&hrtc, &time, RTC_FORMAT_BIN);
+    if (stat == HAL_OK)
+    {
+        printf("Hour: %i, min: %i, sec: %i\r\n", time.Hours, time.Minutes, time.Seconds);
+    }
+    /* After date shall be read */
+    stat = HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BIN);
+    if (stat == HAL_OK)
+    {
+        printf("Year: %i, month: %i, day: %i\r\n", date.Year, date.Month, date.Date);
+    }
+
+    hum = DHT_getHumPercent();
+    temp = DHT_getTempCelsius();
+    printf("Humidity:    %i.%i%%\r\n", (int)hum, (int)fabsf ((hum - (int)hum) * 10.0f));
+    printf("Temperature: %i.%i C\r\n", (int)temp, (int)fabsf ((temp - (int)temp) * 10.0f));
+
+    file = pifs_fopen("dht.bin", "a");
+    if (file)
+    {
+        meas.hum = hum;
+        meas.temp = temp;
+        written_bytes = pifs_fwrite(&meas, 1, sizeof(meas), file);
+        if (written_bytes == sizeof(meas))
+        {
+            printf("Data saved!\r\n");
+        }
+        else
+        {
+            printf("ERROR: Cannot save data. Code: %i\r\n", pifs_errno);
+        }
+        pifs_fclose(file);
+    }
+    else
+    {
+        printf("ERROR: Cannot open file!\r\n");
+    }
+}
+
 /**
  * @brief measureTask DHT22 measurement task
  * @param arg
@@ -568,10 +624,6 @@ void watchdogTask(void const * arg)
 void measureTask(void const * arg)
 {
     bool_t   measure_ok = FALSE;
-    float    hum;
-    float    temp;
-    P_FILE * file;
-    size_t   written_bytes;
 
     (void) arg;
 
@@ -600,30 +652,7 @@ void measureTask(void const * arg)
         }
         if (measure_ok)
         {
-            hum = DHT_getHumPercent();
-            temp = DHT_getTempCelsius();
-            printf("Humidity:    %i.%i%%\r\n", (int)hum, (int)fabsf ((hum - (int)hum) * 10.0f));
-            printf("Temperature: %i.%i C\r\n", (int)temp, (int)fabsf ((temp - (int)temp) * 10.0f));
-
-            file = pifs_fopen("dht.bin", "a");
-            if (file)
-            {
-                written_bytes = pifs_fwrite(&hum, 1, sizeof(hum), file);
-                written_bytes += pifs_fwrite(&temp, 1, sizeof(temp), file);
-                if (written_bytes == sizeof(hum) + sizeof(temp))
-                {
-                    printf("Data saved!\r\n");
-                }
-                else
-                {
-                    printf("ERROR: Cannot save data. Code: %i\r\n", pifs_errno);
-                }
-                pifs_fclose(file);
-            }
-            else
-            {
-                printf("ERROR: Cannot open file!\r\n");
-            }
+            save_measurement();
         }
         LED_off(3);
     }

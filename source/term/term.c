@@ -422,42 +422,16 @@ void cmdDebug (char* command, char* params)
 }
 
 #if ENABLE_DHT
+extern void save_measurement(void);
+
 void cmdDht (char* command, char* params)
 {
-    float hum;
-    float temp;
-    P_FILE * file;
-    size_t   written_bytes;
-
     (void) command;
     (void) params;
 
     if (DHT_read())
     {
-        hum = DHT_getHumPercent();
-        temp = DHT_getTempCelsius();
-        printf("Humidity:    %i.%i%%\r\n", (int)hum, (int)fabsf ((hum - (int)hum) * 10.0f));
-        printf("Temperature: %i.%i C\r\n", (int)temp, (int)fabsf ((temp - (int)temp) * 10.0f));
-
-        file = pifs_fopen("dht.bin", "a");
-        if (file)
-        {
-            written_bytes = pifs_fwrite(&hum, 1, sizeof(hum), file);
-            written_bytes += pifs_fwrite(&temp, 1, sizeof(temp), file);
-            if (written_bytes == sizeof(hum) + sizeof(temp))
-            {
-                printf("Data saved!\r\n");
-            }
-            else
-            {
-                printf("ERROR: Cannot save data. Code: %i\r\n", pifs_errno);
-            }
-            pifs_fclose(file);
-        }
-        else
-        {
-            printf("ERROR: Cannot open file!\r\n");
-        }
+        save_measurement();
     }
 }
 #endif
