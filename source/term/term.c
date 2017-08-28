@@ -1340,7 +1340,7 @@ void cmdHardFaultTest (char* command, char* params)
 
     y = 10;
     z = 0;
-    x = y /z;
+    x = y / z;
 
     printf("x: %i\r\n", x);
 }
@@ -1454,6 +1454,7 @@ parserCommand_t parserCommands[] =
     {"date",        "Set/get date",                     cmdDate},
     {"time",        "Set/get time",                     cmdTime},
 #endif
+    {"hf",          "HardFault test",                   cmdHardFaultTest},
     {"quit",        "Quit",                             cmdQuit},
     {"q",           "Quit",                             cmdQuit},
     {"noprompt",    "Prompt will not be displayed",     cmdNoPrompt},

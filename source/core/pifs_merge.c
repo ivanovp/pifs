@@ -198,7 +198,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
 #if PIFS_ENABLE_USER_DATA
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_fsetuserdata(&pifs.internal_file, &a_old_entry->user_data);
+        ret = pifs_internal_fsetuserdata(&pifs.internal_file, &a_old_entry->user_data);
     }
 #endif
     if (pifs.internal_file.entry.file_size > 0 && pifs.internal_file.entry.file_size != PIFS_FILE_SIZE_ERASED)

@@ -1096,10 +1096,29 @@ int pifs_fgetuserdata(P_FILE * a_file, pifs_user_data_t * a_user_data)
  */
 int pifs_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data)
 {
-    pifs_file_t  * file = (pifs_file_t*) a_file;
     pifs_status_t  ret;
 
     PIFS_GET_MUTEX();
+
+    ret = pifs_internal_fsetuserdata(a_file, a_user_data);
+
+    PIFS_PUT_MUTEX();
+
+    return ret;
+}
+
+/**
+ * @brief pifs_internal_fsetuserdata Non-standard function to set user defined data of
+ * file.
+ *
+ * @param[in] a_file        Pointer to file.
+ * @param[out] a_user_data  Pointer to user data structure to set.
+ * @return 0 if success.
+ */
+int pifs_internal_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data)
+{
+    pifs_file_t  * file = (pifs_file_t*) a_file;
+    pifs_status_t  ret;
 
     if (file->is_opened)
     {
@@ -1111,8 +1130,6 @@ int pifs_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data)
     }
 
     ret = file->status;
-
-    PIFS_PUT_MUTEX();
 
     return ret;
 }

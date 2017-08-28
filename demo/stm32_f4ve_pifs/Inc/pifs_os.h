@@ -24,9 +24,12 @@
 #define _INCLUDE_PIFS_OS_H_
 
 #include <stdint.h>
+#include <unwind.h>
+
 #include "cmsis_os.h"
 
 #include "common.h"
+#include "backtrace.h"
 #include "pifs_config.h"
 #include "pifs.h"
 
@@ -37,11 +40,12 @@
 #define PIFS_OS_DELETE_MUTEX(mutex)        osMutexDelete(mutex)
 /* For debugging */
 #if DEBUG
-#define PIFS_OS_GET_MUTEX(mutex)           do {  \
-        if (osMutexWait(mutex, 25000) != osOK)    \
-        {                                        \
+#define PIFS_OS_GET_MUTEX(mutex)           do { \
+        if (osMutexWait(mutex, 5000) != osOK)   \
+        {                                       \
             UART_printf("%s:%i Cannot get mutex\r\n", __FILE__, __LINE__); \
-        }                                        \
+            print_backtrace();                  \
+        }                                       \
     } while (0);
 #else
 #define PIFS_OS_GET_MUTEX(mutex)           osMutexWait(mutex,osWaitForever)

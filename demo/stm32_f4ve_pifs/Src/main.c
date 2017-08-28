@@ -199,6 +199,36 @@ int main(void)
   UART_printf_("RELEASE\r\n");
 #endif
   UART_printf_("Compiled on " __DATE__ " " __TIME__ "\r\n");
+
+  if (__HAL_RCC_GET_FLAG(RCC_FLAG_BORRST))
+  {
+      printf("POR/PDR or BOR reset.\r\n");
+  }
+  if (__HAL_RCC_GET_FLAG(RCC_FLAG_PINRST))
+  {
+      printf("Pin reset.\r\n");
+  }
+  if (__HAL_RCC_GET_FLAG(RCC_FLAG_PORRST))
+  {
+      printf("POR/PDR reset.\r\n");
+  }
+  if (__HAL_RCC_GET_FLAG(RCC_FLAG_SFTRST))
+  {
+      printf("Software reset.\r\n");
+  }
+  if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST))
+  {
+      printf("Independent Watchdog reset.\r\n");
+  }
+  if (__HAL_RCC_GET_FLAG(RCC_FLAG_WWDGRST))
+  {
+      printf("Window Watchdog reset.\r\n");
+  }
+  if (__HAL_RCC_GET_FLAG(RCC_FLAG_LPWRRST))
+  {
+      printf("Low Power reset.\r\n");
+  }
+  __HAL_RCC_CLEAR_RESET_FLAGS();
 #if ENABLE_WATCHDOG
   UART_printf_("Watchdog started\r\n");
   HAL_IWDG_Refresh(&hiwdg);

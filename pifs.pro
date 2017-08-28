@@ -39,6 +39,7 @@ demo/stm32_f4ve_pifs/Middlewares/Third_Party/FreeRTOS/Source/timers.c \
 demo/stm32_f4ve_pifs/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c \
 demo/stm32_f4ve_pifs/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c \
 demo/stm32_f4ve_pifs/Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_3.c \
+demo/stm32_f4ve_pifs/Src/backtrace.c \
 demo/stm32_f4ve_pifs/Src/bsp_driver_sd.c \
 demo/stm32_f4ve_pifs/Src/dht.c \
 demo/stm32_f4ve_pifs/Src/fatfs.c \
@@ -114,6 +115,7 @@ demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_sdmmc.h \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h \
 demo/stm32_f4ve_pifs/Inc/FreeRTOSConfig.h \
+demo/stm32_f4ve_pifs/Inc/backtrace.h \
 demo/stm32_f4ve_pifs/Inc/bsp_driver_sd.h \
 demo/stm32_f4ve_pifs/Inc/dht.h \
 demo/stm32_f4ve_pifs/Inc/fatfs.h \

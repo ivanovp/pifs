@@ -34,6 +34,7 @@ COMMON_FLAGS = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
 # Compiler options
 CFLAGS = -c -O0 -ggdb3 $(INCLUDE)
 CFLAGS += -fmessage-length=0 -ffunction-sections
+CFLAGS += -funwind-tables # for complete call stack
 CFLAGS += -Wall -Wextra -Wno-format #-pedantic -std=c99
 CFLAGS += -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 CFLAGS += -D__weak="__attribute__((weak))"
@@ -107,6 +108,7 @@ SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_3.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/queue.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/tasks.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/timers.c
+SRC_C += ./Src/backtrace.c
 SRC_C += ./Src/bsp_driver_sd.c
 SRC_C += ./Src/dht.c
 SRC_C += ./Src/fatfs.c
