@@ -47,6 +47,10 @@
 #include "stm32f4xx_hal.h"
 #endif
 
+#if STM32F4xx || STM32F1xx
+#include "uart.h"
+#endif
+
 #define ENABLE_DOS_ALIAS    0
 #define CMD_BUF_SIZE        128
 
@@ -1474,7 +1478,12 @@ bool_t getLine(uint8_t * a_buf, size_t a_buf_size)
 {
     size_t len;
     bool_t is_removed = FALSE;
+
+    /* TODO implement a non-blocking method! */
+//#if STM32F4xx || STM32F1xx
+//#else
     fgets((char*)a_buf, a_buf_size, stdin);
+//#endif
     do
     {
         is_removed = FALSE;
