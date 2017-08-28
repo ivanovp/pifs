@@ -1127,13 +1127,30 @@ int pifs_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data)
 int pifs_remove(const pifs_char_t * a_filename)
 {
     pifs_status_t       ret;
+
+    PIFS_GET_MUTEX();
+
+    ret = pifs_internal_remove(a_filename);
+
+    PIFS_PUT_MUTEX();
+
+    return ret;
+}
+
+/**
+ * @brief pifs_internal_remove Remove file.
+ *
+ * @param[in] a_filename Pointer to filename to be removed.
+ * @return 0 if file removed. Non-zero if file not found or file name is not valid.
+ */
+int pifs_internal_remove(const pifs_char_t * a_filename)
+{
+    pifs_status_t       ret;
 #if PIFS_ENABLE_DIRECTORIES
     pifs_char_t         filename[PIFS_FILENAME_LEN_MAX];
 #else
     const pifs_char_t * filename = a_filename;
 #endif
-
-    PIFS_GET_MUTEX();
 
     PIFS_NOTICE_MSG("filename: '%s'\r\n", a_filename);
     ret = pifs_check_filename(a_filename);
@@ -1164,8 +1181,6 @@ int pifs_remove(const pifs_char_t * a_filename)
     }
 
     PIFS_SET_ERRNO(ret);
-
-    PIFS_PUT_MUTEX();
 
     return ret;
 }
@@ -1203,10 +1218,10 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
     ret = pifs_check_filename(a_oldname);
     if (ret == PIFS_SUCCESS)
     {
-        if (pifs_is_file_exist(a_newname))
+        if (pifs_internal_is_file_exist(a_newname))
         {
             /* File already exist, remove! */
-            ret = pifs_remove(a_newname);
+            ret = pifs_internal_remove(a_newname);
         }
     }
 #if PIFS_ENABLE_DIRECTORIES
@@ -1312,6 +1327,26 @@ int pifs_copy(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
  */
 bool_t pifs_is_file_exist(const pifs_char_t * a_filename)
 {
+    pifs_status_t       ret;
+
+    PIFS_GET_MUTEX();
+
+    ret = pifs_internal_is_file_exist(a_filename);
+
+    PIFS_PUT_MUTEX();
+
+    return ret;
+}
+
+/**
+ * @brief pifs_is_file_exist Check whether a file exist.
+ * This is a non-standard file operation.
+ *
+ * @param[in] a_filename File name to be checked.
+ * @return TRUE: if file exist. FALSE: file does not exist.
+ */
+bool_t pifs_internal_is_file_exist(const pifs_char_t * a_filename)
+{
     pifs_status_t       ret = PIFS_ERROR_NO_MORE_RESOURCE;
     bool_t              is_file_exist = FALSE;
     pifs_address_t      entry_list_address;
@@ -1321,8 +1356,6 @@ bool_t pifs_is_file_exist(const pifs_char_t * a_filename)
 #else
     const pifs_char_t * filename = a_filename;
 #endif
-
-    PIFS_GET_MUTEX();
 
 #if PIFS_ENABLE_DIRECTORIES
     entry_list_address = pifs.current_entry_list_address;
@@ -1350,8 +1383,6 @@ bool_t pifs_is_file_exist(const pifs_char_t * a_filename)
     {
         is_file_exist = TRUE;
     }
-
-    PIFS_PUT_MUTEX();
 
     return is_file_exist;
 }

@@ -43,6 +43,10 @@
 #include "dht.h"
 #endif
 
+#if ENABLE_DATETIME
+#include "stm32f4xx_hal.h"
+#endif
+
 #define ENABLE_DOS_ALIAS    0
 #define CMD_BUF_SIZE        128
 
@@ -432,6 +436,178 @@ void cmdDht (char* command, char* params)
     if (DHT_read())
     {
         save_measurement();
+    }
+}
+#endif
+
+#if ENABLE_DATETIME
+extern RTC_HandleTypeDef hrtc;
+
+void printDateTime(void)
+{
+    HAL_StatusTypeDef stat;
+    RTC_DateTypeDef date;
+    RTC_TimeTypeDef time;
+
+    /* First time shall be read */
+    stat = HAL_RTC_GetTime(&hrtc, &time, RTC_FORMAT_BIN);
+    if (stat == HAL_OK)
+    {
+        printf("Hour: %i, min: %i, sec: %i\r\n", time.Hours, time.Minutes, time.Seconds);
+    }
+    /* After date shall be read */
+    stat = HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BIN);
+    if (stat == HAL_OK)
+    {
+        printf("Year: %i, month: %i, day: %i, weekday: %i\r\n",
+               date.Year, date.Month, date.Date, date.WeekDay);
+    }
+}
+
+void cmdDate (char* command, char* params)
+{
+    HAL_StatusTypeDef stat;
+    RTC_DateTypeDef date = { 0 };
+    bool_t param_ok = FALSE;
+    char * param;
+
+    (void) command;
+    (void) params;
+
+    if (params)
+    {
+        param = PARSER_getNextParam();
+        if (param[0] == '-' && param[1] == 'h')
+        {
+            printf("Usage:\r\n");
+            printf("  date <year> <month> <date> <dayofweek>\r\n");
+            printf("\r\n");
+            printf("Parameters:\r\n");
+            printf("year: year - 2000, 17 is 2017.\r\n");
+            printf("dayofweek: 1 Monday, 2 Tuesday, 7 Sunday\r\n");
+            printf("\r\n");
+            printf("Example:\r\n");
+            printf("date 17 8 28 1\r\n");
+            return;
+        }
+        date.Year = strtoul(param, NULL, 0);
+        param = PARSER_getNextParam();
+        if (param)
+        {
+            date.Month = strtoul(param, NULL, 0);
+            param = PARSER_getNextParam();
+            if (param)
+            {
+                date.Date = strtoul(param, NULL, 0);
+                param = PARSER_getNextParam();
+                if (param)
+                {
+                    date.WeekDay = strtoul(param, NULL, 0);
+                    param_ok = TRUE;
+                }
+            }
+        }
+        if (param_ok)
+        {
+            printf("Year: %i, month: %i, day: %i, weekday: %i\r\n",
+                   date.Year, date.Month, date.Date, date.WeekDay);
+            stat = HAL_RTC_SetDate(&hrtc, &date, RTC_FORMAT_BIN);
+            if (stat == HAL_OK)
+            {
+                printf("Date setting done.\r\n");
+            }
+            else
+            {
+                printf("ERROR: cannot set date! Code: %i\r\n", stat);
+            }
+        }
+        else
+        {
+            printf("Missing parameter!\r\n");
+        }
+    }
+    else
+    {
+        printDateTime();
+    }
+}
+
+void cmdTime (char* command, char* params)
+{
+    HAL_StatusTypeDef stat;
+    RTC_TimeTypeDef time = { 0 };
+    bool_t param_ok = FALSE;
+    char * param;
+    signed long l;
+
+    (void) command;
+    (void) params;
+
+    if (params)
+    {
+        param = PARSER_getNextParam();
+        if (param[0] == '-' && param[1] == 'h')
+        {
+            printf("Usage:\r\n");
+            printf("  time <hour> <min> <sec> <daylightsaving>\r\n");
+            printf("\r\n");
+            printf("Parameters:\r\n");
+            printf("daylightsaving: Can be 1, -1 or 0.\r\n");
+            printf("\r\n");
+            printf("Example:\r\n");
+            printf("time 14 5 0 0\r\n");
+            return;
+        }
+        time.Hours = strtoul(param, NULL, 0);
+        param = PARSER_getNextParam();
+        if (param)
+        {
+            time.Minutes = strtoul(param, NULL, 0);
+            param = PARSER_getNextParam();
+            if (param)
+            {
+                time.Seconds = strtoul(param, NULL, 0);
+                param = PARSER_getNextParam();
+                if (param)
+                {
+                    l = strtol(param, NULL, 0);
+                    if (l == 1)
+                    {
+                        time.DayLightSaving = RTC_DAYLIGHTSAVING_ADD1H;
+                    }
+                    else if (l == -1)
+                    {
+                        time.DayLightSaving = RTC_DAYLIGHTSAVING_SUB1H;
+                    }
+                    else
+                    {
+                        time.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+                    }
+                    param_ok = TRUE;
+                }
+            }
+        }
+        if (param_ok)
+        {
+            printf("Hour: %i, min: %i, sec: %i\r\n", time.Hours, time.Minutes, time.Seconds);
+            stat = HAL_RTC_SetTime(&hrtc, &time, RTC_FORMAT_BIN);
+            if (stat == HAL_OK)
+            {
+                printf("Time setting done.\r\n");
+            }
+            else
+            {
+                printf("ERROR: cannot set time! Code: %i\r\n", stat);
+            }
+        }
+        else
+        {
+            printf("Missing parameter!\r\n");
+        }
+    }
+    else
+    {
+        printDateTime();
     }
 }
 #endif
@@ -1269,6 +1445,10 @@ parserCommand_t parserCommands[] =
     {"y",           "Debug command",                    cmdDebug},
 #if ENABLE_DHT
     {"dht",         "Measure humidity",                 cmdDht},
+#endif
+#if ENABLE_DATETIME
+    {"date",        "Set/get date",                     cmdDate},
+    {"time",        "Set/get time",                     cmdTime},
 #endif
     {"quit",        "Quit",                             cmdQuit},
     {"q",           "Quit",                             cmdQuit},

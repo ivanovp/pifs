@@ -35,7 +35,17 @@
 #define PIFS_OS_DEFINE_MUTEX(mutex)        osMutexDef(mutex)
 #define PIFS_OS_CREATE_MUTEX(mutex)        osMutexCreate(mutex)
 #define PIFS_OS_DELETE_MUTEX(mutex)        osMutexDelete(mutex)
+/* For debugging */
+#if DEBUG
+#define PIFS_OS_GET_MUTEX(mutex)           do {  \
+        if (osMutexWait(mutex, 25000) != osOK)    \
+        {                                        \
+            UART_printf("%s:%i Cannot get mutex\r\n", __FILE__, __LINE__); \
+        }                                        \
+    } while (0);
+#else
 #define PIFS_OS_GET_MUTEX(mutex)           osMutexWait(mutex,osWaitForever)
+#endif
 #define PIFS_OS_PUT_MUTEX(mutex)           osMutexRelease(mutex)
 #define PIFS_OS_MUTEX_TYPE                 osMutexId
 

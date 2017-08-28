@@ -239,8 +239,8 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   osThreadDef(watchdogTask, watchdogTask, osPriorityRealtime, 0, 64);
   watchdogTaskHandle = osThreadCreate(osThread(watchdogTask), NULL);
-//  osThreadDef(measureTask, measureTask, osPriorityAboveNormal, 0, 512);
-//  measureTaskHandle = osThreadCreate(osThread(measureTask), NULL);
+  osThreadDef(measureTask, measureTask, osPriorityAboveNormal, 0, 512);
+  measureTaskHandle = osThreadCreate(osThread(measureTask), NULL);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -563,19 +563,23 @@ void watchdogTask(void const * arg)
 
 void save_measurement(void)
 {
-    float    hum;
-    float    temp;
-    typedef struct
+    typedef struct __attribute__((packed))
     {
+        uint8_t  hour;
+        uint8_t  min;
+        uint8_t  sec;
         float    hum;
         float    temp;
     } meas_t;
-    P_FILE * file;
-    size_t   written_bytes;
+    meas_t            meas;
+    float             hum;
+    float             temp;
+    P_FILE          * file;
+    size_t            written_bytes;
     HAL_StatusTypeDef stat;
-    RTC_DateTypeDef date;
-    RTC_TimeTypeDef time;
-    meas_t   meas;
+    RTC_DateTypeDef   date;
+    RTC_TimeTypeDef   time;
+    char              filename[PIFS_FILENAME_LEN_MAX + 1];
 
     /* First time shall be read */
     stat = HAL_RTC_GetTime(&hrtc, &time, RTC_FORMAT_BIN);
@@ -594,10 +598,14 @@ void save_measurement(void)
     temp = DHT_getTempCelsius();
     printf("Humidity:    %i.%i%%\r\n", (int)hum, (int)fabsf ((hum - (int)hum) * 10.0f));
     printf("Temperature: %i.%i C\r\n", (int)temp, (int)fabsf ((temp - (int)temp) * 10.0f));
+    snprintf(filename, sizeof(filename), "%02i%02i%02i.dat", date.Year, date.Month, date.Date);
 
-    file = pifs_fopen("dht.bin", "a");
+    file = pifs_fopen(filename, "a");
     if (file)
     {
+        meas.hour = time.Hours;
+        meas.min = time.Minutes;
+        meas.sec = time.Seconds;
         meas.hum = hum;
         meas.temp = temp;
         written_bytes = pifs_fwrite(&meas, 1, sizeof(meas), file);
