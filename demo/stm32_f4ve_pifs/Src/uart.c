@@ -141,6 +141,7 @@ int _read(int file, char *buf, int len)
         /* Inside OS context */
         if (osMutexWait(stdin_mutex, osWaitForever) == osOK)
         {
+            /* TODO This call will block HAL_UART_Transmit()!!! */
             HAL_UART_Receive(&huart1, buf, 1, HAL_MAX_DELAY);
             if (osMutexWait(printf_mutex, osWaitForever) == osOK)
             {

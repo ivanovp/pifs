@@ -360,6 +360,28 @@ pifs_status_t pifs_inc_write_address(pifs_file_t * a_file)
  */
 size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 {
+    size_t ret;
+
+    PIFS_GET_MUTEX();
+
+    ret = pifs_internal_fwrite(a_data, a_size, a_count, a_file);
+
+    PIFS_PUT_MUTEX();
+
+    return ret;
+}
+
+/**
+ * @brief pifs_internal_fwrite Write to file. Works like fwrite().
+ *
+ * @param[in] a_data    Pointer to buffer to write.
+ * @param[in] a_size    Size of data element to write.
+ * @param[in] a_count   Number of data elements to write.
+ * @param[in] a_file    Pointer to file.
+ * @return Number of data elements written.
+ */
+size_t pifs_internal_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
+{
     pifs_file_t        * file = (pifs_file_t*) a_file;
     uint8_t            * data = (uint8_t*) a_data;
     pifs_size_t          data_size = a_size * a_count;
@@ -378,8 +400,6 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
     bool_t               is_free_map_entry;
     pifs_size_t          free_management_page_count = 0;
     pifs_size_t          free_data_page_count = 0;
-
-    PIFS_GET_MUTEX();
 
     PIFS_NOTICE_MSG("filename: '%s', size: %i, count: %i\r\n", file->entry.name, a_size, a_count);
     if (pifs.is_header_found && file && file->is_opened && file->mode_write)
@@ -557,8 +577,6 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
     }
 
     PIFS_SET_ERRNO(file->status);
-
-    PIFS_PUT_MUTEX();
 
     return written_size / a_size;
 }
@@ -967,13 +985,13 @@ int pifs_internal_fseek(P_FILE * a_file, long int a_offset, int a_origin)
                     while (page_count && file->status == PIFS_SUCCESS)
                     {
                         chunk_size = PIFS_MIN(data_size, PIFS_LOGICAL_PAGE_SIZE_BYTE);
-                        file->status = pifs_fwrite(pifs.sc_page_buf, 1, chunk_size, file);
+                        file->status = pifs_internal_fwrite(pifs.sc_page_buf, 1, chunk_size, file);
                         data_size -= chunk_size;
                         page_count--;
                     }
                     if (data_size && file->status == PIFS_SUCCESS)
                     {
-                        file->status = pifs_fwrite(pifs.sc_page_buf, 1, data_size, file);
+                        file->status = pifs_internal_fwrite(pifs.sc_page_buf, 1, data_size, file);
                     }
 #else
                     file->status = PIFS_ERROR_SEEK_NOT_POSSIBLE;
