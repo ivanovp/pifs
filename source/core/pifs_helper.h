@@ -30,6 +30,10 @@
 #include "pifs_config.h"
 #include "pifs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 char * pifs_address2str(pifs_address_t * a_address);
 char * pifs_ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address);
 char * pifs_flash_address2str(pifs_address_t * a_address);
@@ -60,5 +64,9 @@ pifs_status_t pifs_add_ba_pa(pifs_block_address_t * a_block_address,
                              pifs_size_t a_page_count);
 pifs_status_t pifs_check_filename(const pifs_char_t *a_filename);
 pifs_status_t pifs_get_file(pifs_file_t **a_file);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _INCLUDE_PIFS_HELPER_H_ */

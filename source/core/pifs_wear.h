@@ -30,6 +30,10 @@
 #include "pifs_config.h"
 #include "pifs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 pifs_status_t pifs_wear_level_list_init(void);
 pifs_status_t pifs_get_wear_level(pifs_block_address_t a_block_address,
                                   pifs_header_t * a_header,
@@ -52,5 +56,9 @@ pifs_status_t pifs_check_block(pifs_char_t * a_filename,
 pifs_status_t pifs_empty_block(pifs_block_address_t a_block_address,
                                bool_t * a_is_emptied);
 pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _INCLUDE_PIFS_WEAR_H_ */

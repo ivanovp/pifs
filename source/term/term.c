@@ -1480,11 +1480,11 @@ bool_t getLine(uint8_t * a_buf, size_t a_buf_size)
     size_t len;
     bool_t is_removed = FALSE;
 
-    /* TODO implement a non-blocking method! */
-//#if STM32F4xx || STM32F1xx
-//#else
+#if STM32F4xx || STM32F1xx
+    UART_getLine(a_buf, a_buf_size);
+#else
     fgets((char*)a_buf, a_buf_size, stdin);
-//#endif
+#endif
     do
     {
         is_removed = FALSE;

@@ -37,6 +37,10 @@ typedef enum
     PIFS_CLEAR_ENTRY    /**< Zero all bytes of entry */
 } pifs_entry_cmd_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 pifs_status_t pifs_read_entry(pifs_block_address_t a_entry_list_block_address,
                               pifs_page_address_t a_entry_list_page_address,
                               pifs_size_t a_entry_idx,
@@ -67,5 +71,9 @@ pifs_status_t pifs_clear_entry(const pifs_char_t * a_name,
 pifs_status_t pifs_count_entries(pifs_size_t * a_free_entry_count, pifs_size_t * a_to_be_released_entry_count,
                               pifs_block_address_t a_entry_list_block_address,
                               pifs_page_address_t a_entry_list_page_address);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _INCLUDE_PIFS_ENTRY_H_ */

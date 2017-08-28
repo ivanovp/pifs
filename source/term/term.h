@@ -29,10 +29,18 @@
 #include "common.h"
 #include "parser.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern parserCommand_t parserCommands[];
 extern pifs_status_t pifs_status;
 
 void term_init (void);
 void term_task (void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _INCLUDE_TERM_H_ */

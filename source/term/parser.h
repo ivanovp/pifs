@@ -31,6 +31,10 @@
 #define PARSER_MAX_COMMAND_ITEMS    512
 #define PARSER_MAX_COMMAND_LENGTH   32
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct parserCommand_t parserCommand_t;
 
 extern parserCommand_t *PARSER_parserCommand;
@@ -94,4 +98,9 @@ void PARSER_init (parserCommand_t* commands);
 bool_t PARSER_process (const char* command, size_t size);
 
 char * PARSER_getNextParam(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif // __INCLUDE_PARSER_H

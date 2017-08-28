@@ -30,6 +30,10 @@
 #include "pifs_config.h"
 #include "pifs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
                                    pifs_page_address_t a_page_address,
                                    pifs_block_address_t * a_delta_block_address,
@@ -49,5 +53,9 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
                                bool_t * a_is_delta,
                                pifs_header_t * a_header);
 void pifs_reset_delta(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _INCLUDE_PIFS_DELTA_H_ */

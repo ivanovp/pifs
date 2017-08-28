@@ -30,7 +30,15 @@
 #include "pifs_config.h"
 #include "pifs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 pifs_status_t pifs_merge(void);
 pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_count_minimum);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _INCLUDE_PIFS_MERGE_H_ */

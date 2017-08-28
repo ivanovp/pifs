@@ -30,6 +30,11 @@
 #include "pifs_config.h"
 #include "pifs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /**
  * @brief pifs_file_walker_func_t
  * Callback function which is called for file's every data and map pages.
@@ -71,5 +76,9 @@ pifs_status_t pifs_walk_file_pages(pifs_file_t * a_file,
                                    pifs_file_walker_func_t a_file_walker_func,
                                    void * a_func_data);
 pifs_status_t pifs_release_file_pages(pifs_file_t * a_file);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _INCLUDE_PIFS_MAP_H_ */

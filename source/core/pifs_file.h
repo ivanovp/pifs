@@ -30,6 +30,10 @@
 #include "pifs_config.h"
 #include "pifs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 pifs_status_t pifs_internal_open(pifs_file_t * a_file,
                                  const pifs_char_t * a_filename,
                                  const pifs_char_t * a_modes, bool_t a_is_merge_allowed);
@@ -42,5 +46,9 @@ bool_t pifs_internal_is_file_exist(const pifs_char_t * a_filename);
 void pifs_internal_rewind(P_FILE * a_file);
 int pifs_internal_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data);
 int pifs_internal_remove(const pifs_char_t * a_filename);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _INCLUDE_PIFS_FILE_H_ */

@@ -33,6 +33,10 @@
 #include "pifs_os.h"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // NOTE handle endianness?
 //#define PIFS_MAGIC                        0x50494653u  /* PIFS */
 #define PIFS_MAGIC                          0x53464950u  /* PIFS */
@@ -535,4 +539,9 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
 pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
                                 pifs_page_address_t a_page_address,
                                 pifs_header_t * a_header, bool_t a_mark_pages);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _INCLUDE_PIFS_H_ */

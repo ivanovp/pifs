@@ -30,6 +30,10 @@
 #include "pifs_config.h"
 #include "pifs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
     pifs_page_count_t    page_count_minimum;  /**< Number of pages needed at least. */
@@ -97,5 +101,9 @@ pifs_status_t pifs_get_to_be_released_pages(pifs_size_t * a_free_management_page
                                             pifs_size_t * a_free_data_page_count);
 pifs_status_t pifs_get_free_pages(pifs_size_t * a_free_management_page_count,
                                   pifs_size_t * a_free_data_page_count);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _INCLUDE_PIFS_FSBM_H_ */

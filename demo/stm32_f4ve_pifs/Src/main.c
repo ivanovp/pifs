@@ -202,31 +202,31 @@ int main(void)
 
   if (__HAL_RCC_GET_FLAG(RCC_FLAG_BORRST))
   {
-      printf("POR/PDR or BOR reset.\r\n");
+      UART_printf_("POR/PDR or BOR reset.\r\n");
   }
   if (__HAL_RCC_GET_FLAG(RCC_FLAG_PINRST))
   {
-      printf("Pin reset.\r\n");
+      UART_printf_("Pin reset.\r\n");
   }
   if (__HAL_RCC_GET_FLAG(RCC_FLAG_PORRST))
   {
-      printf("POR/PDR reset.\r\n");
+      UART_printf_("POR/PDR reset.\r\n");
   }
   if (__HAL_RCC_GET_FLAG(RCC_FLAG_SFTRST))
   {
-      printf("Software reset.\r\n");
+      UART_printf_("Software reset.\r\n");
   }
   if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST))
   {
-      printf("Independent Watchdog reset.\r\n");
+      UART_printf_("Independent Watchdog reset.\r\n");
   }
   if (__HAL_RCC_GET_FLAG(RCC_FLAG_WWDGRST))
   {
-      printf("Window Watchdog reset.\r\n");
+      UART_printf_("Window Watchdog reset.\r\n");
   }
   if (__HAL_RCC_GET_FLAG(RCC_FLAG_LPWRRST))
   {
-      printf("Low Power reset.\r\n");
+      UART_printf_("Low Power reset.\r\n");
   }
   __HAL_RCC_CLEAR_RESET_FLAGS();
 #if ENABLE_WATCHDOG
@@ -615,19 +615,19 @@ void save_measurement(void)
     stat = HAL_RTC_GetTime(&hrtc, &time, RTC_FORMAT_BIN);
     if (stat == HAL_OK)
     {
-        printf("Hour: %i, min: %i, sec: %i\r\n", time.Hours, time.Minutes, time.Seconds);
+        UART_printf("Hour: %i, min: %i, sec: %i\r\n", time.Hours, time.Minutes, time.Seconds);
     }
     /* After date shall be read */
     stat = HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BIN);
     if (stat == HAL_OK)
     {
-        printf("Year: %i, month: %i, day: %i\r\n", date.Year, date.Month, date.Date);
+        UART_printf("Year: %i, month: %i, day: %i\r\n", date.Year, date.Month, date.Date);
     }
 
     hum = DHT_getHumPercent();
     temp = DHT_getTempCelsius();
-    printf("Humidity:    %i.%i%%\r\n", (int)hum, (int)fabsf ((hum - (int)hum) * 10.0f));
-    printf("Temperature: %i.%i C\r\n", (int)temp, (int)fabsf ((temp - (int)temp) * 10.0f));
+    UART_printf("Humidity:    %i.%i%%\r\n", (int)hum, (int)fabsf ((hum - (int)hum) * 10.0f));
+    UART_printf("Temperature: %i.%i C\r\n", (int)temp, (int)fabsf ((temp - (int)temp) * 10.0f));
     snprintf(filename, sizeof(filename), "%02i%02i%02i.dat", date.Year, date.Month, date.Date);
 
     file = pifs_fopen(filename, "a");
@@ -641,17 +641,17 @@ void save_measurement(void)
         written_bytes = pifs_fwrite(&meas, 1, sizeof(meas), file);
         if (written_bytes == sizeof(meas))
         {
-            printf("Data saved!\r\n");
+            UART_printf("Data saved!\r\n");
         }
         else
         {
-            printf("ERROR: Cannot save data. Code: %i\r\n", pifs_errno);
+            UART_printf("ERROR: Cannot save data. Code: %i\r\n", pifs_errno);
         }
         pifs_fclose(file);
     }
     else
     {
-        printf("ERROR: Cannot open file!\r\n");
+        UART_printf("ERROR: Cannot open file!\r\n");
     }
 }
 
@@ -665,7 +665,7 @@ void measureTask(void const * arg)
 
     (void) arg;
 
-    printf("Measurement task started\r\n");
+    UART_printf("Measurement task started\r\n");
 
     /* Drop first measurement */
     DHT_read();
