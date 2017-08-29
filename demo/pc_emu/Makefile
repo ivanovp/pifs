@@ -95,5 +95,5 @@ clean :
 
 .PHONY: tags
 tags:
-	ctags -R .
+	ctags -R . ../../source
 

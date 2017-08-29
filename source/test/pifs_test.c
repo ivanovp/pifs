@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-08-15 16:25:29 ivanovp {Time-stamp}
+ * Last modify: 2017-08-29 19:39:23 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -620,6 +620,7 @@ pifs_status_t pifs_test_wfragment_w(size_t a_fragment_size)
     size_t   written_size = 0;
     size_t   i;
     const char * filename = "fragwr.tst";
+    const char * filename2 = "fragwr2.tst";
 
     printf("-------------------------------------------------\r\n");
     printf("Fragment write test: writing file\r\n");
@@ -651,6 +652,34 @@ pifs_status_t pifs_test_wfragment_w(size_t a_fragment_size)
         ret = PIFS_ERROR_GENERAL;
     }
 
+    generate_buffer(92, filename2);
+
+    for (i = 0; i < sizeof(test_buf_w) * 10 && ret == PIFS_SUCCESS; i += a_fragment_size)
+    {
+        file = pifs_fopen(filename2, "a");
+        if (file)
+        {
+            printf("File opened for writing\r\n");
+            written_size = 0;
+            written_size = pifs_fwrite(&test_buf_w[i], 1, a_fragment_size, file);
+            if (written_size != a_fragment_size)
+            {
+                PIFS_TEST_ERROR_MSG("Cannot write file!\r\n");
+                ret = PIFS_ERROR_GENERAL;
+            }
+        }
+        else
+        {
+            PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
+            ret = PIFS_ERROR_GENERAL;
+        }
+        if (pifs_fclose(file))
+        {
+            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
+            ret = PIFS_ERROR_GENERAL;
+        }
+    }
+
     return ret;
 }
 
@@ -659,7 +688,9 @@ pifs_status_t pifs_test_wfragment_r(void)
     pifs_status_t ret = PIFS_SUCCESS;
     P_FILE * file;
     size_t   read_size = 0;
+    size_t   i;
     const char * filename = "fragwr.tst";
+    const char * filename2 = "fragwr2.tst";
 
     printf("-------------------------------------------------\r\n");
     printf("Write fragment test: reading file\r\n");
@@ -685,6 +716,39 @@ pifs_status_t pifs_test_wfragment_r(void)
         {
             PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
             ret = PIFS_ERROR_GENERAL;
+        }
+    }
+    else
+    {
+        PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
+        ret = PIFS_ERROR_GENERAL;
+    }
+    
+    memset(test_buf_r, 0, sizeof(test_buf_r));
+    file = pifs_fopen(filename2, "r");
+    if (file)
+    {
+        printf("File opened for reading\r\n");
+        generate_buffer(92, filename2);
+
+        for (i = 0; i < 10 && ret == PIFS_SUCCESS; i++)
+        {
+            read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
+            if (read_size != sizeof(test_buf_r))
+            {
+                PIFS_TEST_ERROR_MSG("Cannot read file!\r\n");
+                ret = PIFS_ERROR_GENERAL;
+            }
+            //print_buffer(test_buf_r, sizeof(test_buf_r), 0);
+            if (ret == PIFS_SUCCESS)
+            {
+                ret = check_buffers();
+            }
+            if (pifs_fclose(file))
+            {
+                PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
+                ret = PIFS_ERROR_GENERAL;
+            }
         }
     }
     else

@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-08-15 16:25:36 ivanovp {Time-stamp}
+ * Last modify: 2017-08-29 17:43:54 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -982,16 +982,16 @@ int pifs_internal_fseek(P_FILE * a_file, long int a_offset, int a_origin)
 #endif
                     data_size = target_pos - file->read_pos;
                     page_count = (data_size + PIFS_LOGICAL_PAGE_SIZE_BYTE - 1) / PIFS_LOGICAL_PAGE_SIZE_BYTE;
-                    while (page_count && file->status == PIFS_SUCCESS)
+                    while (page_count && data_size && file->status == PIFS_SUCCESS)
                     {
                         chunk_size = PIFS_MIN(data_size, PIFS_LOGICAL_PAGE_SIZE_BYTE);
-                        file->status = pifs_internal_fwrite(pifs.sc_page_buf, 1, chunk_size, file);
+                        (void)pifs_internal_fwrite(pifs.sc_page_buf, 1, chunk_size, file);
                         data_size -= chunk_size;
                         page_count--;
                     }
                     if (data_size && file->status == PIFS_SUCCESS)
                     {
-                        file->status = pifs_internal_fwrite(pifs.sc_page_buf, 1, data_size, file);
+                        (void)pifs_internal_fwrite(pifs.sc_page_buf, 1, data_size, file);
                     }
 #else
                     file->status = PIFS_ERROR_SEEK_NOT_POSSIBLE;
