@@ -462,7 +462,7 @@ typedef struct
     pifs_page_count_t       read_page_count;    /**< Page count to be read from 'read_address' */
     size_t                  write_pos;          /**< Position in file after last write */
     pifs_address_t          write_address;      /**< Last written page's address */
-    pifs_page_count_t       write_page_count;   /**< Page count to be ritten to 'write_address' */
+    pifs_page_count_t       write_page_count;   /**< Page count to be written to 'write_address' */
 } pifs_file_t;
 
 /**

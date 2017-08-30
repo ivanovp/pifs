@@ -198,7 +198,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
 #if PIFS_ENABLE_USER_DATA
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_internal_fsetuserdata(&pifs.internal_file, &a_old_entry->user_data);
+        ret = pifs_internal_fsetuserdata(&pifs.internal_file, &a_old_entry->user_data, FALSE);
     }
 #endif
     if (pifs.internal_file.entry.file_size > 0 && pifs.internal_file.entry.file_size != PIFS_FILE_SIZE_ERASED)
@@ -330,7 +330,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
             new_map_entry.page_count = 0;
         }
         /* Close internal file */
-        ret = pifs_internal_fclose(&pifs.internal_file);
+        ret = pifs_internal_fclose(&pifs.internal_file, FALSE);
         PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
 
@@ -500,6 +500,7 @@ pifs_status_t pifs_merge(void)
     pifs_size_t          file_pos[PIFS_OPEN_FILE_NUM_MAX] = { 0 };
 
     PIFS_WARNING_MSG("start\r\n");
+    PIFS_ASSERT(!pifs.is_merging);
     pifs.is_merging = TRUE;
     /* #0 */
     for (i = 0; i < PIFS_OPEN_FILE_NUM_MAX; i++)
@@ -511,7 +512,8 @@ pifs_status_t pifs_merge(void)
             /* Store position in file */
             PIFS_WARNING_MSG("read_pos: %i, write_pos: %i\r\n", file->read_pos, file->write_pos);
             file_pos[i] = file->read_pos;
-            pifs_internal_fclose(file);
+            /* TODO is this could close data loss? Merge is not allowed here to prevent endless loop. */
+            (void)pifs_internal_fclose(file, FALSE);
         }
     }
     /* #1 */

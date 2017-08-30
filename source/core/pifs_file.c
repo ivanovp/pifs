@@ -729,7 +729,7 @@ int pifs_fflush(P_FILE * a_file)
 
     PIFS_GET_MUTEX();
 
-    ret = pifs_internal_fflush(a_file);
+    ret = pifs_internal_fflush(a_file, TRUE);
 
     PIFS_PUT_MUTEX();
 
@@ -738,10 +738,11 @@ int pifs_fflush(P_FILE * a_file)
 
 /**
  * @brief pifs_internal_fflush Flush cache, update file size.
- * @param[in] a_file File to flush.
+ * @param[in] a_file          File to flush.
+ * @param[in] a_is_merge_allowed TRUE: merge is allowed when not enough space. FALSE: merge is not allowed.
  * @return 0 if file close, PIFS_EOF if error occurred.
  */
-int pifs_internal_fflush(P_FILE * a_file)
+int pifs_internal_fflush(P_FILE * a_file, bool_t a_is_merge_allowed)
 {
     int             ret = PIFS_EOF;
     pifs_file_t   * file = (pifs_file_t*) a_file;
@@ -757,7 +758,8 @@ int pifs_internal_fflush(P_FILE * a_file)
         {
             file->status = pifs_update_entry(file->entry.name, &file->entry,
                                              file->entry_list_address.block_address,
-                                             file->entry_list_address.page_address);
+                                             file->entry_list_address.page_address,
+                                             a_is_merge_allowed);
         }
         pifs_flush();
         ret = 0;
@@ -781,7 +783,7 @@ int pifs_fclose(P_FILE * a_file)
 
     PIFS_GET_MUTEX();
 
-    ret = pifs_internal_fclose(file);
+    ret = pifs_internal_fclose(file, TRUE);
 
     PIFS_PUT_MUTEX();
 
@@ -791,15 +793,16 @@ int pifs_fclose(P_FILE * a_file)
 /**
  * @brief pifs_fclose Close file. Works like fclose().
  * @param[in] a_file File to close.
+ * @param[in] a_is_merge_allowed TRUE: merge is allowed when not enough space. FALSE: merge is not allowed.
  * @return 0 if file close, PIFS_EOF if error occurred.
  */
-int pifs_internal_fclose(P_FILE * a_file)
+int pifs_internal_fclose(P_FILE * a_file, bool_t a_is_merge_allowed)
 {
     int ret = PIFS_EOF;
     pifs_file_t * file = (pifs_file_t*) a_file;
 
     PIFS_NOTICE_MSG("filename: '%s'\r\n", file->entry.name);
-    ret = pifs_internal_fflush(a_file);
+    ret = pifs_internal_fflush(a_file, a_is_merge_allowed);
     if (ret == 0)
     {
         file->is_opened = FALSE;
@@ -1118,7 +1121,7 @@ int pifs_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data)
 
     PIFS_GET_MUTEX();
 
-    ret = pifs_internal_fsetuserdata(a_file, a_user_data);
+    ret = pifs_internal_fsetuserdata(a_file, a_user_data, TRUE);
 
     PIFS_PUT_MUTEX();
 
@@ -1131,9 +1134,11 @@ int pifs_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data)
  *
  * @param[in] a_file        Pointer to file.
  * @param[out] a_user_data  Pointer to user data structure to set.
+ * @param[in] a_is_merge_allowed TRUE: merge is allowed when not enough space. FALSE: merge is not allowed.
  * @return 0 if success.
  */
-int pifs_internal_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data)
+int pifs_internal_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data,
+                               bool_t a_is_merge_allowed)
 {
     pifs_file_t  * file = (pifs_file_t*) a_file;
     pifs_status_t  ret;
@@ -1144,7 +1149,8 @@ int pifs_internal_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_
 
         file->status = pifs_update_entry(file->entry.name, &file->entry,
                                          file->entry_list_address.block_address,
-                                         file->entry_list_address.page_address);
+                                         file->entry_list_address.page_address,
+                                         a_is_merge_allowed);
     }
 
     ret = file->status;
@@ -1165,7 +1171,7 @@ int pifs_remove(const pifs_char_t * a_filename)
 
     PIFS_GET_MUTEX();
 
-    ret = pifs_internal_remove(a_filename);
+    ret = pifs_internal_remove(a_filename, TRUE);
 
     PIFS_PUT_MUTEX();
 
@@ -1176,9 +1182,10 @@ int pifs_remove(const pifs_char_t * a_filename)
  * @brief pifs_internal_remove Remove file.
  *
  * @param[in] a_filename Pointer to filename to be removed.
+ * @param[in] a_is_merge_allowed TRUE: merge is allowed when not enough space. FALSE: merge is not allowed.
  * @return 0 if file removed. Non-zero if file not found or file name is not valid.
  */
-int pifs_internal_remove(const pifs_char_t * a_filename)
+int pifs_internal_remove(const pifs_char_t * a_filename, bool_t a_is_merge_allowed)
 {
     pifs_status_t       ret;
 #if PIFS_ENABLE_DIRECTORIES
@@ -1211,7 +1218,7 @@ int pifs_internal_remove(const pifs_char_t * a_filename)
                 /* Mark allocated pages to be released */
                 ret = pifs_release_file_pages(&pifs.internal_file);
             }
-            ret = pifs_internal_fclose(&pifs.internal_file);
+            ret = pifs_internal_fclose(&pifs.internal_file, a_is_merge_allowed);
         }
     }
 
@@ -1256,7 +1263,7 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
         if (pifs_internal_is_file_exist(a_newname))
         {
             /* File already exist, remove! */
-            ret = pifs_internal_remove(a_newname);
+            ret = pifs_internal_remove(a_newname, TRUE);
         }
     }
 #if PIFS_ENABLE_DIRECTORIES

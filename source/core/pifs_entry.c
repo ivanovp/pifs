@@ -139,14 +139,19 @@ pifs_status_t pifs_append_entry(const pifs_entry_t * const a_entry,
 /**
  * @brief pifs_update_entry Find entry in entry list and update its content.
  *
- * @param a_name[in]    Pointer to name to find.
- * @param a_entry[in]   Pointer to entry to update. NULL: clear entry.
+ * @param[in] a_name[in]    Pointer to name to find.
+ * @param[in] a_entry[in]   Pointer to entry to update. NULL: clear entry.
+ * @param[in] a_entry_list_block_address Block address of entry list.
+ * @param[in] a_entry_list_page_address  Page address of entry list.
+ * @param[in] a_is_merge_allowed TRUE: merge is allowed when not enough space. FALSE: merge is not allowed.
+ *
  * @return PIFS_SUCCESS if entry found.
  * PIFS_ERROR_FILE_NOT_FOUND if entry not found.
  */
 pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const a_entry,
                                 pifs_block_address_t a_entry_list_block_address,
-                                pifs_page_address_t a_entry_list_page_address)
+                                pifs_page_address_t a_entry_list_page_address,
+                                bool_t a_is_merge_allowed)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_block_address_t ba = a_entry_list_block_address;
@@ -200,7 +205,7 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                         ret = pifs_append_entry(a_entry,
                                                 a_entry_list_block_address,
                                                 a_entry_list_page_address);
-                        if (ret == PIFS_ERROR_NO_MORE_SPACE)
+                        if (ret == PIFS_ERROR_NO_MORE_SPACE && a_is_merge_allowed)
                         {
                             /* If entry cannot be appended, merge the blocks */
                             ret = pifs_merge();
