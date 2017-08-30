@@ -510,8 +510,8 @@ pifs_status_t pifs_merge(void)
         if (file_is_opened[i])
         {
             /* Store position in file */
-            PIFS_WARNING_MSG("read_pos: %i, write_pos: %i\r\n", file->read_pos, file->write_pos);
-            file_pos[i] = file->read_pos;
+            PIFS_WARNING_MSG("rw_pos: %i\r\n", file->rw_pos);
+            file_pos[i] = file->rw_pos;
             /* TODO is this could close data loss? Merge is not allowed here to prevent endless loop. */
             (void)pifs_internal_fclose(file, FALSE);
         }

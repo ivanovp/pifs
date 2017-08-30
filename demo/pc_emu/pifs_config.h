@@ -50,7 +50,7 @@
 #define PIFS_OPTIMIZE_FOR_RAM           1u   /**< 1: Use less RAM, 0: Use more RAM, but faster code execution */
 #define PIFS_CHECK_IF_PAGE_IS_ERASED    1u   /**< 1: Check if page is erased */
 #define PIFS_USE_DELTA_FOR_ENTRIES      0u   /**< 1: Use delta pages for list entries, 0: don't use delta pages */
-#define PIFS_ENABLE_FSEEK_BEYOND_FILE   1u   /**< 1: Enable seeking beyond file size, 0: disable seeking beyond file size */
+#define PIFS_ENABLE_FSEEK_BEYOND_FILE   0u   /**< 1: Enable seeking beyond file size, 0: disable seeking beyond file size */
 #define PIFS_ENABLE_FSEEK_ERASED_VALUE  0u   /**< 1: Write 0xFF values when seeking beyond file size,
                                                   0: write 0 values when seeking beyond file size (default). */
 #define PIFS_STATIC_WEAR_LEVEL_LIMIT   20u
