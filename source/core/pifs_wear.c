@@ -376,7 +376,7 @@ pifs_status_t pifs_check_block(pifs_char_t * a_filename,
             {
                 is_block_used = TRUE;
             }
-            ret = pifs_inc_rw_address(&pifs.internal_file);
+            ret = pifs_inc_rw_address(&pifs.internal_file, TRUE);
         } while (ret == PIFS_SUCCESS && !is_block_used);
         if (ret == PIFS_ERROR_END_OF_FILE)
         {

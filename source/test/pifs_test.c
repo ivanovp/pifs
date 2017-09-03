@@ -744,11 +744,11 @@ pifs_status_t pifs_test_wfragment_r(void)
             {
                 ret = check_buffers();
             }
-            if (pifs_fclose(file))
-            {
-                PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
-                ret = PIFS_ERROR_GENERAL;
-            }
+        }
+        if (pifs_fclose(file))
+        {
+            PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
+            ret = PIFS_ERROR_GENERAL;
         }
     }
     else

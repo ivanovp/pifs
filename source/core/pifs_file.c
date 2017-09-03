@@ -316,7 +316,7 @@ pifs_char_t * pifs_tmpnamn(pifs_char_t * a_str, size_t a_size)
  *
  * @param[in] a_file Pointer to the internal file structure.
  */
-pifs_status_t pifs_inc_rw_address(pifs_file_t * a_file)
+pifs_status_t pifs_inc_rw_address(pifs_file_t * a_file, bool_t a_is_read)
 {
     //PIFS_DEBUG_MSG("started %s\r\n", pifs_address2str(&a_file->rw_address));
     a_file->rw_page_count--;
@@ -332,7 +332,10 @@ pifs_status_t pifs_inc_rw_address(pifs_file_t * a_file)
             //      print_buffer(&a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE, 0);
             if (pifs_is_buffer_erased(&a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
             {
-                a_file->status = PIFS_ERROR_END_OF_FILE;
+                if (a_is_read)
+                {
+                    a_file->status = PIFS_ERROR_END_OF_FILE;
+                }
             }
             else
             {
@@ -465,7 +468,7 @@ size_t pifs_internal_fwrite(const void * a_data, size_t a_size, size_t a_count, 
                                                     &pifs.header);
                     if (file->status == PIFS_SUCCESS && chunk_size == PIFS_LOGICAL_PAGE_SIZE_BYTE)
                     {
-                        pifs_inc_rw_address(file);
+                        pifs_inc_rw_address(file, FALSE);
                     }
                     data += chunk_size;
                     data_size -= chunk_size;
@@ -629,7 +632,7 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
                 read_size += chunk_size;
                 if (po + chunk_size >= PIFS_LOGICAL_PAGE_SIZE_BYTE)
                 {
-                    pifs_inc_rw_address(file);
+                    pifs_inc_rw_address(file, TRUE);
                 }
             }
         }
@@ -651,7 +654,7 @@ size_t pifs_fread(void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
                                                0, data, chunk_size);
                 if (file->status == PIFS_SUCCESS && chunk_size == PIFS_LOGICAL_PAGE_SIZE_BYTE)
                 {
-                    pifs_inc_rw_address(file);
+                    pifs_inc_rw_address(file, TRUE);
                 }
                 data += chunk_size;
                 data_size -= chunk_size;
@@ -893,7 +896,7 @@ int pifs_internal_fseek(P_FILE * a_file, long int a_offset, int a_origin)
                     seek_size += chunk_size;
                     if (po + chunk_size >= PIFS_LOGICAL_PAGE_SIZE_BYTE)
                     {
-                        pifs_inc_rw_address(file);
+                        pifs_inc_rw_address(file, TRUE);
                     }
                 }
             }
@@ -907,7 +910,7 @@ int pifs_internal_fseek(P_FILE * a_file, long int a_offset, int a_origin)
                     //PIFS_DEBUG_MSG("read %s\r\n", pifs_address2str(&file->rw_address));
                     if (file->status == PIFS_SUCCESS && chunk_size == PIFS_LOGICAL_PAGE_SIZE_BYTE)
                     {
-                        pifs_inc_rw_address(file);
+                        pifs_inc_rw_address(file, TRUE);
                         if (file->status == PIFS_ERROR_END_OF_FILE)
                         {
                             /* Reaching end of file is not an error */
