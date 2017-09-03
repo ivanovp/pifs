@@ -39,7 +39,7 @@
 #include "pifs_file.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 5
+#define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
 
 /**
@@ -812,7 +812,7 @@ int pifs_internal_fseek(P_FILE * a_file, long int a_offset, int a_origin)
     pifs_size_t         target_pos = 0;
     pifs_size_t         file_size = 0;
 
-    PIFS_WARNING_MSG("filename: '%s', filesize: %i, offset: %i, origin: %i, rw_pos: %i\r\n",
+    PIFS_NOTICE_MSG("filename: '%s', filesize: %i, offset: %i, origin: %i, rw_pos: %i\r\n",
                      file->entry.name, file->entry.file_size, a_offset, a_origin, file->rw_pos);
     if (pifs.is_header_found && file && file->is_opened)
     {
