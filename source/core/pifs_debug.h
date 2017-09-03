@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include "common.h"
 
-#if 0
+#if ENABLE_SW_TRAP == 0
 #define SOFTWARE_BREAKPOINT()
 #else
 #if defined(__i386__) || defined(__x86_64__)

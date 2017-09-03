@@ -1,6 +1,7 @@
 APP_NAME = pifs
 
 ENABLE_CROSS_COMPILE = 0
+DEBUG = 0
 
 # Tool chain settings
 ifeq ($(ENABLE_CROSS_COMPILE),1)
@@ -24,6 +25,10 @@ COMMON_FLAGS =
 CFLAGS = -c -O0 -ggdb3 $(INCLUDE)
 CFLAGS += -Wall -Wextra -Wno-format #-pedantic -std=c99
 CFLAGS += -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
+ifeq ($(DEBUG), 1)
+CFLAGS += -DENABLE_SW_TRAP=1
+CFLAGS += -DDEBUG=1
+endif
 CFLAGS += $(COMMON_FLAGS)
 CPPFLAGS = $(CFLAGS)
 CFLAGS_A = $(CFLAGS) -D_ASSEMBLER_ -x assembler-with-cpp

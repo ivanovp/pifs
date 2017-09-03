@@ -1,10 +1,10 @@
 /**
- * @file        pifs_test.c
- * @brief       Test of Pi file system
+ * @file        main.c
+ * @brief       Entry point of Pi file system's PC emulator
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-06-15 14:34:46 ivanovp {Time-stamp}
+ * Last modify: 2017-09-03 07:24:47 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify

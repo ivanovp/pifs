@@ -632,6 +632,7 @@ void cmdListDir (char* command, char* params)
     char               * param;
     bool_t               long_list = FALSE;
     bool_t               examine = FALSE;
+    bool_t               find_deleted = FALSE;
 
     (void) params;
 
@@ -639,6 +640,7 @@ void cmdListDir (char* command, char* params)
     {
         long_list = TRUE;
         examine = TRUE;
+        //find_deleted = TRUE;
     }
 
     while ((param = PARSER_getNextParam()))
@@ -652,6 +654,9 @@ void cmdListDir (char* command, char* params)
                     break;
                 case 'e':
                     examine = TRUE;
+                    break;
+                case 'd':
+                    find_deleted = TRUE;
                     break;
                 default:
                     printf("Unknown switch: %c\r\n", param[1]);
@@ -667,6 +672,8 @@ void cmdListDir (char* command, char* params)
     dir = pifs_opendir(path);
     if (dir != NULL)
     {
+        /* Changing internal variable of pifs_dir_t */
+        ((pifs_dir_t*) dir)->find_deleted = find_deleted;
         while ((dirent = pifs_readdir(dir)))
         {
             printf("%-32s", dirent->d_name);
@@ -685,7 +692,11 @@ void cmdListDir (char* command, char* params)
             }
             if (examine)
             {
-                printf("  %s", pifs_ba_pa2str(dirent->d_first_map_block_address, dirent->d_first_map_page_address));
+                printf("  %-20s", pifs_ba_pa2str(dirent->d_first_map_block_address, dirent->d_first_map_page_address));
+            }
+            if (PIFS_IS_DELETED(dirent->d_attrib))
+            {
+                printf(" DELETED");
             }
             printf("\r\n");
         }

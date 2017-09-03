@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-08-15 16:25:49 ivanovp {Time-stamp}
+ * Last modify: 2017-09-03 07:23:49 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -39,7 +39,7 @@
 #include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 5
 #include "pifs_debug.h"
 
 /**
@@ -201,11 +201,10 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
         ret = pifs_internal_fsetuserdata(&pifs.internal_file, &a_old_entry->user_data, FALSE);
     }
 #endif
-    if (pifs.internal_file.entry.file_size > 0 && pifs.internal_file.entry.file_size != PIFS_FILE_SIZE_ERASED)
+    if (pifs.internal_file.entry.file_size != PIFS_FILE_SIZE_ERASED)
     {
         pifs.internal_file.is_size_changed = TRUE;
     }
-
     if (ret == PIFS_SUCCESS)
     {
         new_map_entry.address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
@@ -694,7 +693,9 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
     if (ret == PIFS_SUCCESS && (free_data_pages < a_data_page_count_minimum
                                 || free_management_pages == 0 || free_entries == 0))
     {
-        if (free_entries == 0 && to_be_released_entries > 0)
+        /* PIFS_OPEN_FILE_NUM_MAX is checked because there should be enough space */
+        /* to close all opened files during merge! */
+        if (free_entries < PIFS_OPEN_FILE_NUM_MAX && to_be_released_entries > 0)
         {
             merge = TRUE;
         }

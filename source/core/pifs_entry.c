@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-07-06 19:12:58 ivanovp {Time-stamp}
+ * Last modify: 2017-09-03 07:23:17 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -84,6 +84,7 @@ pifs_status_t pifs_write_entry(pifs_block_address_t a_entry_list_block_address,
 
 /**
  * @brief pifs_append_entry Add an item to the entry list.
+ * TODO reserve PIFS_OPEN_FILE_NUM_MAX entries for merging!
  *
  * @param a_entry[in] Pointer to the entry to be added.
  * @return PIFS_SUCCESS if entry successfully added.
@@ -130,6 +131,7 @@ pifs_status_t pifs_append_entry(const pifs_entry_t * const a_entry,
     }
     if (!created)
     {
+        PIFS_ERROR_MSG("No more space!\r\n");
         ret = PIFS_ERROR_NO_MORE_SPACE;
     }
 
@@ -205,24 +207,20 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                         ret = pifs_append_entry(a_entry,
                                                 a_entry_list_block_address,
                                                 a_entry_list_page_address);
-                        if (ret == PIFS_ERROR_NO_MORE_SPACE && a_is_merge_allowed)
+                        if (ret == PIFS_ERROR_NO_MORE_SPACE)
                         {
-                            /* If entry cannot be appended, merge the blocks */
-                            ret = pifs_merge();
-                            if (ret == PIFS_SUCCESS)
-                            {
-                                ret = pifs_append_entry(a_entry,
-                                                        a_entry_list_block_address,
-                                                        a_entry_list_page_address);
-                            }
-                            if (ret == PIFS_SUCCESS)
-                            {
-                                PIFS_NOTICE_MSG("Entry appended\r\n");
-                            }
+                            /* If there is not enough space, nothing to do */
+                            /* pifs_merge_check() tries to release enough space */
+                            /* to be able to close all opened files for merge. */
+                            PIFS_ERROR_MSG("Cannot update entry!\r\n");
                         }
                         else
                         {
                             PIFS_NOTICE_MSG("Entry appended\r\n");
+                        }
+                        if (a_is_merge_allowed)
+                        {
+                            ret = pifs_merge_check(NULL, 0);
                         }
                     }
                 }

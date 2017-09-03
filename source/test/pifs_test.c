@@ -661,7 +661,7 @@ pifs_status_t pifs_test_wfragment_w(size_t a_fragment_size)
         {
             printf("File opened for writing\r\n");
             written_size = 0;
-            written_size = pifs_fwrite(&test_buf_w[i], 1, a_fragment_size, file);
+            written_size = pifs_fwrite(&test_buf_w[i % sizeof(test_buf_w)], 1, a_fragment_size, file);
             if (written_size != a_fragment_size)
             {
                 PIFS_TEST_ERROR_MSG("Cannot write file!\r\n");
