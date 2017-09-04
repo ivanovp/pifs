@@ -595,11 +595,13 @@ void save_measurement(void)
 {
     typedef struct __attribute__((packed))
     {
-        uint8_t  hour;
-        uint8_t  min;
-        uint8_t  sec;
-        float    hum;
-        float    temp;
+        uint8_t  hour : 5;
+        uint8_t  min : 6;
+        uint8_t  sec : 5;
+        int16_t  hum;
+        int16_t  temp;
+        //float    hum;
+        //float    temp;
     } meas_t;
     meas_t            meas;
     float             hum;
@@ -635,9 +637,11 @@ void save_measurement(void)
     {
         meas.hour = time.Hours;
         meas.min = time.Minutes;
-        meas.sec = time.Seconds;
-        meas.hum = hum;
-        meas.temp = temp;
+        meas.sec = time.Seconds >> 1;
+        //meas.hum = hum;
+        //meas.temp = temp;
+        meas.hum = (int16_t)(hum * 10.0f);
+        meas.temp = (int16_t)(temp * 10.0f);
         written_bytes = pifs_fwrite(&meas, 1, sizeof(meas), file);
         if (written_bytes == sizeof(meas))
         {
