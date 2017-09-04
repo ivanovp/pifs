@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created      2017-06-13 11:48:53
- * Last modify: 2017-06-16 19:07:42 ivanovp {Time-stamp}
+ * Last modify: 2017-09-04 20:43:30 ivanovp {Time-stamp}
  * Licence:     GPL
  */
 /* Includes ------------------------------------------------------------------*/
@@ -97,11 +97,12 @@ size_t UART_getLine(uint8_t * a_buf, size_t a_buf_size)
     {
         while (!__HAL_UART_GET_FLAG(&huart1, UART_FLAG_RXNE))
         {
-            //osDelay(1);
+            osDelay(1);
         }
         if (HAL_UART_Receive(&huart1, &ch, 1, 0) == HAL_OK)
         {
-        	a_buf[idx] = ch;
+            (void)HAL_UART_Transmit(&huart1, &ch, 1, HAL_MAX_DELAY);
+            a_buf[idx] = ch;
             idx++;
         }
     } while (ch != ASCII_LF && idx < a_buf_size);
