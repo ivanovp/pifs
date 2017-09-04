@@ -41,6 +41,7 @@
 
 #if ENABLE_DHT
 #include "dht.h"
+#include "fatfs.h"
 #endif
 
 #if ENABLE_DATETIME
@@ -60,6 +61,10 @@ static uint8_t prevBuf[CMD_BUF_SIZE] = { 0 }; /* Previous input from the serial 
 static char buf_r[PIFS_FLASH_PAGE_SIZE_BYTE];
 static char buf_w[PIFS_FLASH_PAGE_SIZE_BYTE];
 pifs_status_t pifs_status;
+
+#if ENABLE_DHT
+static uint8_t copy_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];
+#endif
 
 bool_t getLine(uint8_t * a_buf, size_t a_buf_size);
 
@@ -440,6 +445,85 @@ void cmdDht (char* command, char* params)
     if (DHT_read())
     {
         save_measurement();
+    }
+}
+
+void cmdCpDat (char* command, char* params)
+{
+    char               * path = ".";
+    pifs_DIR           * dir;
+    struct pifs_dirent * dirent;
+    pifs_status_t    ret = PIFS_ERROR_NO_MORE_RESOURCE;
+    pifs_file_t    * file = NULL;
+    FIL              file2;
+    FRESULT          fres;
+    pifs_size_t      read_bytes;
+    pifs_size_t      written_bytes;
+
+    (void) command;
+    (void) params;
+
+    dir = pifs_opendir(path);
+    if (dir != NULL)
+    {
+        while ((dirent = pifs_readdir(dir)))
+        {
+            printf("Copying %s... ", dirent->d_name);
+
+            file = pifs_fopen(dirent->d_name, "r");
+            if (file)
+            {
+                fres = f_open(&file2, dirent->d_name, FA_WRITE | FA_CREATE_ALWAYS);
+                if (fres == FR_OK)
+                {
+                    do
+                    {
+                        read_bytes = pifs_fread(copy_buf, 1,
+                                                PIFS_LOGICAL_PAGE_SIZE_BYTE, file);
+                        if (read_bytes > 0)
+                        {
+                            written_bytes = 0;
+                            fres = f_write(&file2, copy_buf, read_bytes, &written_bytes);
+                            if (fres != FR_OK || read_bytes != written_bytes)
+                            {
+                                printf("ERROR: Cannot write to card! Code: %i, read bytes: %i, written bytes: %i\r\n",
+                                       fres, read_bytes, written_bytes);
+                            }
+                        }
+                    } while (read_bytes > 0 && read_bytes == written_bytes);
+                    fres = f_close(&file2);
+                    if (fres != FR_OK)
+                    {
+                        printf("ERROR: Cannot close file on card! Code: %i\r\n", fres);
+                    }
+                }
+                else
+                {
+                    printf("ERROR: Cannot create on card! Code: %i\r\n", fres);
+                }
+                ret = pifs_fclose(file);
+                if (ret != PIFS_SUCCESS)
+                {
+                    printf("ERROR: Cannot close file on flash! Code: %i\r\n\r\n", ret);
+                }
+                if (ret == PIFS_SUCCESS && fres == FR_OK)
+                {
+                    printf("Done.\r\n");
+                }
+            }
+            else
+            {
+                printf("ERROR: Cannot open file '%s'\r\n", dirent->d_name);
+            }
+        }
+        if (pifs_closedir (dir) != 0)
+        {
+            printf("ERROR: Cannot close directory!\r\n");
+        }
+    }
+    else
+    {
+        printf("ERROR: Could not open the directory!\r\n");
     }
 }
 #endif
@@ -1460,6 +1544,7 @@ parserCommand_t parserCommands[] =
     {"y",           "Debug command",                    cmdDebug},
 #if ENABLE_DHT
     {"dht",         "Measure humidity",                 cmdDht},
+    {"cpdat",       "Copy measured data to SD/MMC card", cmdCpDat},
 #endif
 #if ENABLE_DATETIME
     {"date",        "Set/get date",                     cmdDate},
