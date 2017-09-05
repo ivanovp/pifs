@@ -24,11 +24,13 @@
 #define __UART_H
 
 #include <stdint.h>
+#include <string.h>
 
 extern void UART_putc(const char ch);
 extern void UART_printf_(const char * fmt, ...);
 extern void UART_printf(const char * fmt, ...);
 extern uint8_t UART_getchar(void);
+extern size_t UART_getLine(uint8_t * a_buf, size_t a_buf_size);
 
 /* Fallback functions for exception handlers */
 extern void _putchar(char c);
