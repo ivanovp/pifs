@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-08-29 19:39:23 ivanovp {Time-stamp}
+ * Last modify: 2017-09-05 16:33:55 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -650,6 +650,16 @@ pifs_status_t pifs_test_wfragment_w(size_t a_fragment_size)
     {
         PIFS_TEST_ERROR_MSG("Cannot open file!\r\n");
         ret = PIFS_ERROR_GENERAL;
+    }
+
+    if (pifs_is_file_exist(filename2))
+    {
+        /* File is opened in append mode, so we remove it */
+        ret = pifs_remove(filename2);
+        if (ret != PIFS_SUCCESS)
+        {
+            PIFS_TEST_ERROR_MSG("Cannot remove file '%s'!\r\n", filename2);
+        }
     }
 
     generate_buffer(92, filename2);

@@ -16,7 +16,7 @@
 \usepackage{tikz}
 \usetikzlibrary{calc,fit,arrows,positioning}
 %\sloppy
-%\usepackage{graphicx}
+\usepackage{graphicx}
 %\usepackage{multicol}
 %\usepackage[outline]{draftcopy} %outline,bottom,light,none/first/firsttwo
 %\usepacgake{wasysym}
@@ -114,6 +114,7 @@ sources.
 \item User data can be added for files: permissions, owner IDs, etc.
 \item At the beginning of flash memory reserved blocks can be defined, which 
 are not used by the file system
+\item File names are case-sensitive
 \end{itemize}
 
 \subsection{Limitations of the \pifs{}}
@@ -220,18 +221,39 @@ Linux, but probably they can be compiled on \href{http://cygwin.com}{Windows/cyg
 with GNU make an GCC.
 \item maple\_mini\_pifs: Demo running on \href{https://www.aliexpress.com/wholesale?SearchText=maple+mini}{Maple Mini board}, MCU is 
 STM32F103RCBT6. There is no NOR flash, UART and debugger on board. So 
-prototype should be created.
+prototype should be created as can be seen in \autoref{fig:maple_mini}.
 It can be compiled with GNU make and GCC or with \href{http://www.st.com/en/development-tools/sw4stm32.html}{STM32 System Workbench}.
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=70mm]{maple_mini.jpg}
+\caption{Maple Mini development board}
+\label{fig:maple_mini}
+\end{figure}
 \item nucleo-f413zh\_pifs: Demo running on \href{http://www.st.com/en/evaluation-tools/nucleo-f413zh.html}{Nucleo-F413ZH board}, MCU is
 STM32F413ZH. There is no NOR flash memory on the board, some prototype hardware 
-should be created.
+should be created as can be seen in \autoref{fig:nucleo_f413zh}.
 It has internal debugger and virtual serial port. 
 It can be compiled with GNU make and GCC or with \href{http://www.st.com/en/development-tools/sw4stm32.html}{STM32 System Workbench}.
-\item stm32\_f4ve\_pifs: Demo running on STM32-F4VE board, MCU is STM32F407VE. 
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=70mm]{nucleo-f413zh.jpg}
+\caption{Nucleo-F413ZH development board}
+\label{fig:nucleo_f413zh}
+\end{figure}
+\item stm32\_f4ve\_pifs: The most complex demo is running on STM32-F4VE board, 
+MCU is STM32F407VE. 
 There is Winbond W25Q16DV NOR flash soldered on the board, but it has not got 
-UART. 
-So external debugger and USB-serial converter is needed.
+UART.
+So external debugger and USB-serial converter is needed. See \autoref{fig:stm32_f4ve}.
+This application uses DHT22 sensor to collect humidity and temperature data
+and store them to NOR flash. The data can be copied to MMC/SD card.
 It can be compiled with GNU make and GCC or with STM32 System Workbench.
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=70mm]{stm32_f4ve.jpg}
+\caption{STM32-F4VE development board}
+\label{fig:stm32_f4ve}
+\end{figure}
 \end{enumerate}
 
 \subsection{Using demo}

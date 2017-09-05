@@ -52,7 +52,8 @@ $(SOURCE)_pdf.tex:	$(SOURCE).tex
 	perl -p -i -e "s/%.PDF.//;s/^(.*)%.PS./% PDF $1/" $@
 #	perl -p -i -e "s/%.PDF.//" $@
 else
-$(SOURCE).pdf:	$(SOURCE).ps
+#$(SOURCE).pdf:	$(SOURCE).ps
+$(SOURCE).pdf:	$(SOURCE).tex
 endif
 
 # Compressed 4 -> 1
@@ -97,9 +98,13 @@ endif
 	@echo " * Creating PS (PostScript) file..."
 	dvips -Z -D 600 -f -t$(PAPER) -o $@ $<
 
-%.pdf:	%.ps
+#%.pdf:	%.ps
+#	@echo " * Creating PDF (Portable Document Format)..."
+#	ps2pdf $< $@
+
+%.pdf:	%.tex
 	@echo " * Creating PDF (Portable Document Format)..."
-	ps2pdf $< $@
+	pdflatex $<
 
 .PHONY: html
 html:	$(SOURCE).tex

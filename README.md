@@ -13,6 +13,7 @@ Features:
  * User data can be added for files: permissions, owner IDs, etc.
  * At the beginning of flash memory reserved blocks can be defined, which 
 are not used by the file system
+ * File names are case-sensitive
 
 Limitations:
  * Only one flash chip can be used (one volume is supported)

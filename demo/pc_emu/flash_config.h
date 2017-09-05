@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-06-27 19:32:33 ivanovp {Time-stamp}
+ * Last modify: 2017-09-05 16:35:36 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -39,7 +39,7 @@
 #define FLASH_TYPE_W25Q256FV_64K    13  /**< 64 KiB sector mode */
 
 /** Type of emulated flash memory */
-#define FLASH_TYPE                  FLASH_TYPE_M25P40
+#define FLASH_TYPE                  FLASH_TYPE_W25Q16DV_64K
 
 #if FLASH_TYPE == FLASH_TYPE_M25P40
 /* Geometry of ST M25P40 */
