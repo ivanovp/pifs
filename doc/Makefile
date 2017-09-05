@@ -109,12 +109,10 @@ endif
 .PHONY: html
 html:	$(SOURCE).tex
 	@echo " * Creating HTML files..."
-	mkdir -v $(HTML_DIR)
-	latex2html -iso_language 'HU' \
-	-address '$(AUTHOR)<br> \
-	E-Mail: <a href="mailto:$(EMAIL)"> \
-	$(EMAIL)</a>' \
-	-split +1 -dir $(HTML_DIR) -html_version 3.2 -local_icons $<
+	-mkdir -v $(HTML_DIR)
+	latex2html -iso_language 'EN' \
+	-address '$(AUTHOR)<br> E-Mail: <a href="mailto:$(EMAIL)">$(EMAIL)</a>' \
+	-split +1 -dir $(HTML_DIR) -html_version 4.0 -local_icons $<
 
 .PHONY: clean
 clean:	cleanall

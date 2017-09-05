@@ -19,7 +19,8 @@ Limitations:
  * Only one flash chip can be used (one volume is supported)
  * Memory and file system configuration cannot be changed during run-time
  * One directory can only store pre-defined number of files or directories
- * No OS support yet, file system can be used only from one task
+ * Partial OS support: file system can be used from multiple tasks, but
+there is only one working directory for all tasks
  * Incompatible with FAT file system, therefore cannot be used for USB mass
 storage devices
 

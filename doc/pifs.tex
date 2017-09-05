@@ -72,7 +72,8 @@
 \tableofcontents
 \section{Introduction}
 This file system was developed for embedded systems which use NOR flash as 
-storage. 
+storage. It was designed mainly for ARM Cortex processors, but it can be ported
+to any 16/32-bit processor.
 The development started as teach-myself project and I released the code in 
 hope that it will be useful for someone else as well. 
 
@@ -96,11 +97,11 @@ theoretically up to 1 Gbit (128 MiB) memory sizes.
 
 The code is not MISRA compatible, but I've written MISRA code earlier and I 
 tend to use the rules.
-So I tried to use 'return' only at the end of functions, use 'break'
-once in 'while' cycles or not use it at all and call one function from 
-expressions (or not call functions at all from expressions). I didn't use
-'goto' in the sources of file system, but you may find them in STM32 HAL's 
-sources.
+So I tried to use '\code{return}' only at the end of functions, use 
+'\code{break}' once in '\code{while}' cycles or not use it at all and call one
+function from expressions (or not call functions at all from expressions). 
+I didn't use '\code{goto}' in the sources of file system, but you may find them
+in STM32 HAL's sources.
 
 \subsection{Features of the \pifs{}}
 \begin{itemize}
@@ -122,7 +123,8 @@ are not used by the file system
 \item Only one flash chip can be used (one volume is supported)
 \item Memory and file system configuration cannot be changed during run-time
 \item One directory can only store pre-defined number of files or directories
-\item No OS support yet, file system can be used only from one task
+\item Partial OS support: file system can be used from multiple tasks, but
+there is only one working directory for all tasks
 \item Incompatible with FAT file system, therefore cannot be used for USB mass
 storage devices
 \end{itemize}
@@ -221,24 +223,24 @@ Linux, but probably they can be compiled on \href{http://cygwin.com}{Windows/cyg
 with GNU make an GCC.
 \item maple\_mini\_pifs: Demo running on \href{https://www.aliexpress.com/wholesale?SearchText=maple+mini}{Maple Mini board}, MCU is 
 STM32F103RCBT6. There is no NOR flash, UART and debugger on board. So 
-prototype should be created as can be seen in \autoref{fig:maple_mini}.
+prototype should be created as can be seen in \autoref{fig:maplemini}.
 It can be compiled with GNU make and GCC or with \href{http://www.st.com/en/development-tools/sw4stm32.html}{STM32 System Workbench}.
 \begin{figure}[!ht]
 \centering
 \includegraphics[width=70mm]{maple_mini.jpg}
 \caption{Maple Mini development board}
-\label{fig:maple_mini}
+\label{fig:maplemini}
 \end{figure}
 \item nucleo-f413zh\_pifs: Demo running on \href{http://www.st.com/en/evaluation-tools/nucleo-f413zh.html}{Nucleo-F413ZH board}, MCU is
 STM32F413ZH. There is no NOR flash memory on the board, some prototype hardware 
-should be created as can be seen in \autoref{fig:nucleo_f413zh}.
+should be created as can be seen in \autoref{fig:nucleof413zh}.
 It has internal debugger and virtual serial port. 
 It can be compiled with GNU make and GCC or with \href{http://www.st.com/en/development-tools/sw4stm32.html}{STM32 System Workbench}.
 \begin{figure}[!ht]
 \centering
 \includegraphics[width=70mm]{nucleo-f413zh.jpg}
 \caption{Nucleo-F413ZH development board}
-\label{fig:nucleo_f413zh}
+\label{fig:nucleof413zh}
 \end{figure}
 \item stm32\_f4ve\_pifs: The most complex demo is running on STM32-F4VE board, 
 MCU is STM32F407VE. 
@@ -554,5 +556,84 @@ int main(void)
     }
 }
 \end{verbatim}
+
+\section{Porting flash driver}
+Defined types used by the flash driver:
+\begin{labeling}{pifs\_block\_address\_t} 
+\item[pifs\_block\_address\_t] Unsigned integer type to address
+a block in the flash memory. 
+%Its type is \code{uint8\_t} when \code{PIFS\_FLASH\_BLOCK\_NUM\_ALL} is less than 255.
+\item[pifs\_page\_address\_t] Unsigned integer type to address
+a page in the block. 
+\item[pifs\_page\_offset\_t] Unsigned integer type to address
+a byte in the page. 
+\end{labeling}
+These types are automatically defined in \fname{flash.h} according to geometry
+of flash. If maximum count of blocks is 4096, \code{pifs\_block\_address\_t}
+will be \code{uint16\_t}, if there are 64 blocks, it will be \code{uint8\_t}.
+
+The following functions shall be implemented to access the flash memory.
+\begin{verbatim}
+pifs_status_t pifs_flash_init(void);
+\end{verbatim}
+Initialize flash driver. It shall return \code{PIFS\_SUCCESS} if flash 
+memory is identified and initialized.
+
+\begin{verbatim}
+pifs_status_t pifs_flash_delete(void);
+\end{verbatim}
+De-initialize flash driver. It shall return \code{PIFS\_SUCCESS} if 
+flash memory was successfully de-initialized.
+
+\begin{verbatim}
+pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address, 
+        pifs_page_address_t a_page_address, pifs_page_offset_t a_page_offset, 
+        void * const a_buf, size_t a_buf_size);
+\end{verbatim}
+Read from flash memory. See \autoref{fig:flashaddr} how addressing works.
+Arguments:
+\begin{labeling}{a\_block\_address}
+\item[a\_block\_address]    Address of block. Input.
+\item[a\_page\_address]     Address of the page in block. Input.
+\item[a\_page\_offset]      Offset in page. Input.
+\item[a\_buf]               Buffer to fill. Output.
+\item[a\_buf\_size]         Size of buffer. Input.
+\end{labeling}
+It shall return \code{PIFS\_SUCCESS} if read successfully finished.
+
+
+\begin{verbatim}
+pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, 
+        pifs_page_address_t a_page_address, pifs_page_address_t a_page_offset,
+        const void * const a_buf, size_t a_buf_size);
+\end{verbatim}
+Write to flash memory. See \autoref{fig:flashaddr} how addressing works. 
+Arguments:
+\begin{labeling}{a\_block\_address}
+\item[a\_block\_address] Address of block. Input.
+\item[a\_page\_address]  Address of the page in block. Input.
+\item[a\_page\_offset]   Offset in page. Input.
+\item[a\_buf]            Buffer to write. Input.
+\item[a\_buf\_size]      Size of buffer. Input.
+\end{labeling}
+It shall return \code{PIFS\_SUCCESS} if write successfully finished.
+
+
+\begin{verbatim}
+pifs_status_t pifs_flash_erase(pifs_block_address_t a_block_address);
+\end{verbatim}
+Erase a block. See \autoref{fig:flashaddr} how addressing works. 
+Arguments:
+\begin{labeling}{a\_block\_address}
+\item[a\_block\_address] Address of block. Input.
+\end{labeling}
+It shall return \code{PIFS\_SUCCESS} if block was erased successfully.
+
+
+\begin{verbatim}
+void pifs_flash_print_stat(void);
+\end{verbatim}
+Called by the terminal to print information about flash memory. The body of
+function can be empty or can print useful data.
 
 \end{document}
