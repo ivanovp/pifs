@@ -76,6 +76,7 @@ SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/list.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_3.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM3/port.c
 SRC_C += ./Middlewares/Third_Party/FreeRTOS/Source/queue.c
+SRC_C += ./Src/backtrace.c
 SRC_C += ./Src/stm32f1xx_hal_msp.c
 SRC_C += ./Src/system_stm32f1xx.c
 SRC_C += ./Src/main.c

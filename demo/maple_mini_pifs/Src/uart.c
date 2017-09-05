@@ -99,6 +99,29 @@ uint8_t UART_getchar(void)
     return 0;
 }
 
+size_t UART_getLine(uint8_t * a_buf, size_t a_buf_size)
+{
+    size_t idx = 0;
+    uint8_t ch = 0;
+
+    do
+    {
+        while (!__HAL_UART_GET_FLAG(&huart2, UART_FLAG_RXNE))
+        {
+            osDelay(1);
+        }
+        if (HAL_UART_Receive(&huart2, &ch, 1, 0) == HAL_OK)
+        {
+            (void)HAL_UART_Transmit(&huart2, &ch, 1, HAL_MAX_DELAY);
+            a_buf[idx] = ch;
+            idx++;
+        }
+    } while (ch != ASCII_LF && idx < a_buf_size);
+
+    a_buf[idx] = 0;
+
+    return idx;
+}
 int _write(int file, char *buf, int len)
 {
     if (printf_mutex)
