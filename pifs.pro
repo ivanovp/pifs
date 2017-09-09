@@ -13,6 +13,7 @@ demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ramfunc.c \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_iwdg.c \
+demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_nand.c \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c \
@@ -24,6 +25,7 @@ demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c \
+demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_fsmc.c \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_sdmmc.c \
 demo/stm32_f4ve_pifs/Middlewares/Third_Party/FatFs/src/diskio.c \
 demo/stm32_f4ve_pifs/Middlewares/Third_Party/FatFs/src/ff.c \
@@ -101,6 +103,7 @@ demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ramfun
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_gpio.h \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_gpio_ex.h \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_iwdg.h \
+demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_nand.h \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h \
@@ -112,6 +115,7 @@ demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
+demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_fsmc.h \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_sdmmc.h \
 demo/stm32_f4ve_pifs/Drivers/STM32F4xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h \
 demo/stm32_f4ve_pifs/Inc/FreeRTOSConfig.h \

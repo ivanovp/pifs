@@ -412,6 +412,10 @@ void cmdStaticWear(char* command, char* params)
     printf("Ret: %i\r\n", ret);
 }
 
+#if ENABLE_DHT
+extern void ftest(void);
+#endif
+
 void cmdDebug (char* command, char* params)
 {
     pifs_status_t ret;
@@ -420,6 +424,9 @@ void cmdDebug (char* command, char* params)
     (void) command;
     (void) params;
 
+#if ENABLE_DHT
+    ftest();
+#else
     printf("Find to be released block...\r\n");
     ba = PIFS_BLOCK_ADDRESS_INVALID;
     ret = pifs_find_to_be_released_block(1, PIFS_BLOCK_TYPE_DATA, PIFS_FLASH_BLOCK_RESERVED_NUM,
@@ -432,6 +439,7 @@ void cmdDebug (char* command, char* params)
                              TRUE,
                              &pifs.header, &ba);
     printf("ret: %i, ba: %i\r\n", ret, ba);
+#endif
 }
 
 #if ENABLE_DHT
