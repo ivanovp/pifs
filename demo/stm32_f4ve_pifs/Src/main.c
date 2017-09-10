@@ -829,7 +829,7 @@ void StartDefaultTask(void const * argument)
     }
 
     printf("Mounting SD card... ");
-    fres = f_mount(&sd_fat_fs, (TCHAR const*)disk_path, 0);
+    fres = f_mount(&sd_fat_fs, (TCHAR const*)disk_path, 1);
     if (fres == FR_OK)
     {
         printf("Done.\r\n");
@@ -840,7 +840,26 @@ void StartDefaultTask(void const * argument)
             printf("%-32s %8i\r\n", filinfo.fname, filinfo.fsize);
             fres = f_findnext(&dir, &filinfo);
         }
-        f_closedir(&dir);
+        printf("Closing directory... ");
+        fres = f_closedir(&dir);
+        if (fres == FR_OK)
+        {
+            printf("Done.\r\n");
+        }
+        else
+        {
+            printf("ERROR: Cannot close directory: %i\r\n", fres);
+        }
+        printf("Un-mounting SD card... ");
+        fres = f_mount(NULL, (TCHAR const*)disk_path, 0);
+        if (fres == FR_OK)
+        {
+            printf("Done.\r\n");
+        }
+        else
+        {
+            printf("ERROR: Cannot unmount SD card: %i\r\n", fres);
+        }
     }
     else
     {

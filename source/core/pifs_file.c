@@ -43,6 +43,37 @@
 #include "pifs_debug.h"
 
 /**
+ * @brief pifs_check_open_mode Check if file was opened for writing and the
+ * same file was not opened for writing earlier.
+ *
+ * @param[in] a_file Pointer to file to be checked.
+ */
+pifs_status_t pifs_check_open_mode(pifs_file_t * a_file)
+{
+    pifs_status_t ret = PIFS_SUCCESS;
+    pifs_size_t   i;
+
+    if (a_file->mode_write)
+    {
+        /* Check all opened files */
+        for (i = 0; i < PIFS_OPEN_FILE_NUM_MAX && ret == PIFS_SUCCESS; i++)
+        {
+            if (a_file != &pifs.file[i]
+                    && pifs.file[i].is_opened
+                    && pifs.file[i].mode_write
+                    && pifs.file[i].entry.first_map_address.block_address == a_file->entry.first_map_address.block_address
+                    && pifs.file[i].entry.first_map_address.page_address == a_file->entry.first_map_address.page_address)
+            {
+                /* Same file is opened in write mode */
+                ret = PIFS_ERROR_INVALID_OPEN_MODE;
+            }
+        }
+    }
+
+    return ret;
+}
+
+/**
  * @brief pifs_internal_open Internally used function to open a file.
  * Note: this function shall be re-entrant, as it can be called from
  * pifs_merge(). Level of recursion is one and the second open
@@ -96,6 +127,10 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
             a_file->status = pifs_find_entry(PIFS_FIND_ENTRY, filename, &a_file->entry,
                                              a_file->entry_list_address.block_address,
                                              a_file->entry_list_address.page_address);
+        }
+        if (a_file->status == PIFS_SUCCESS && a_modes)
+        {
+            a_file->status = pifs_check_open_mode(a_file);
         }
         if ((a_file->mode_file_shall_exist || a_file->mode_append) && a_file->status == PIFS_SUCCESS)
         {

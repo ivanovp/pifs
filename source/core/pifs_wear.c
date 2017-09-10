@@ -399,6 +399,8 @@ typedef struct
 /**
  * @brief pifs_dir_walker_empty Callback function used during block emptying.
  * TODO copy only pages found in the specified block!
+ * TODO use a second level of lock mechanism to prevent user to write to file
+ * while it is copied! May be open file for writing as well is sufficient.
  *
  * @param[in] a_dirent Pointer to directory entry.
  *

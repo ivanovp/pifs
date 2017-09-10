@@ -456,6 +456,9 @@ void cmdDht (char* command, char* params)
     }
 }
 
+extern FATFS sd_fat_fs;
+extern char disk_path[4];
+
 void cmdCpDat (char* command, char* params)
 {
     char               * path = ".";
@@ -471,67 +474,89 @@ void cmdCpDat (char* command, char* params)
     (void) command;
     (void) params;
 
-    dir = pifs_opendir(path);
-    if (dir != NULL)
+    printf("Mounting SD card... ");
+    fres = f_mount(&sd_fat_fs, (TCHAR const*)disk_path, 1);
+    if (fres == FR_OK)
     {
-        while ((dirent = pifs_readdir(dir)))
-        {
-            printf("Copying %s... ", dirent->d_name);
+        printf("Done.\r\n");
 
-            file = pifs_fopen(dirent->d_name, "r");
-            if (file)
+        dir = pifs_opendir(path);
+        if (dir != NULL)
+        {
+            while ((dirent = pifs_readdir(dir)))
             {
-                fres = f_open(&file2, dirent->d_name, FA_WRITE | FA_CREATE_ALWAYS);
-                if (fres == FR_OK)
+                printf("Copying %s... ", dirent->d_name);
+
+                file = pifs_fopen(dirent->d_name, "r");
+                if (file)
                 {
-                    do
+                    fres = f_open(&file2, dirent->d_name, FA_WRITE | FA_CREATE_ALWAYS);
+                    if (fres == FR_OK)
                     {
-                        read_bytes = pifs_fread(copy_buf, 1,
-                                                PIFS_LOGICAL_PAGE_SIZE_BYTE, file);
-                        if (read_bytes > 0)
+                        do
                         {
-                            written_bytes = 0;
-                            fres = f_write(&file2, copy_buf, read_bytes, &written_bytes);
-                            if (fres != FR_OK || read_bytes != written_bytes)
+                            read_bytes = pifs_fread(copy_buf, 1,
+                                                    PIFS_LOGICAL_PAGE_SIZE_BYTE, file);
+                            if (read_bytes > 0)
                             {
-                                printf("ERROR: Cannot write to card! Code: %i, read bytes: %i, written bytes: %i\r\n",
-                                       fres, read_bytes, written_bytes);
+                                written_bytes = 0;
+                                fres = f_write(&file2, copy_buf, read_bytes, &written_bytes);
+                                if (fres != FR_OK || read_bytes != written_bytes)
+                                {
+                                    printf("ERROR: Cannot write to card! Code: %i, read bytes: %i, written bytes: %i\r\n",
+                                           fres, read_bytes, written_bytes);
+                                }
                             }
+                        } while (read_bytes > 0 && read_bytes == written_bytes);
+                        fres = f_close(&file2);
+                        if (fres != FR_OK)
+                        {
+                            printf("ERROR: Cannot close file on card! Code: %i\r\n", fres);
                         }
-                    } while (read_bytes > 0 && read_bytes == written_bytes);
-                    fres = f_close(&file2);
-                    if (fres != FR_OK)
+                    }
+                    else
                     {
-                        printf("ERROR: Cannot close file on card! Code: %i\r\n", fres);
+                        printf("ERROR: Cannot create on card! Code: %i\r\n", fres);
+                    }
+                    ret = pifs_fclose(file);
+                    if (ret != PIFS_SUCCESS)
+                    {
+                        printf("ERROR: Cannot close file on flash! Code: %i\r\n\r\n", ret);
+                    }
+                    if (ret == PIFS_SUCCESS && fres == FR_OK)
+                    {
+                        printf("Done.\r\n");
                     }
                 }
                 else
                 {
-                    printf("ERROR: Cannot create on card! Code: %i\r\n", fres);
-                }
-                ret = pifs_fclose(file);
-                if (ret != PIFS_SUCCESS)
-                {
-                    printf("ERROR: Cannot close file on flash! Code: %i\r\n\r\n", ret);
-                }
-                if (ret == PIFS_SUCCESS && fres == FR_OK)
-                {
-                    printf("Done.\r\n");
+                    printf("ERROR: Cannot open file '%s'\r\n", dirent->d_name);
                 }
             }
-            else
+            if (pifs_closedir (dir) != 0)
             {
-                printf("ERROR: Cannot open file '%s'\r\n", dirent->d_name);
+                printf("ERROR: Cannot close directory!\r\n");
             }
         }
-        if (pifs_closedir (dir) != 0)
+        else
         {
-            printf("ERROR: Cannot close directory!\r\n");
+            printf("ERROR: Could not open the directory!\r\n");
+        }
+
+        printf("Un-mounting SD card... ");
+        fres = f_mount(NULL, (TCHAR const*)disk_path, 0);
+        if (fres == FR_OK)
+        {
+            printf("Done.\r\n");
+        }
+        else
+        {
+            printf("ERROR: Cannot unmount SD card: %i\r\n", fres);
         }
     }
     else
     {
-        printf("ERROR: Could not open the directory!\r\n");
+        printf("ERROR: Cannot mount SD card: %i\r\n", fres);
     }
 }
 #endif
