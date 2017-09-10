@@ -56,6 +56,7 @@
 #define PIFS_STATIC_WEAR_LEVEL_LIMIT   20u
 #define PIFS_STATIC_WEAR_LEVEL_PERCENT 10u
 #define PIFS_CALC_TBR_IN_FREE_SPACE     0u   /**< 1: Free pages and to be released pages are counted, 0: only free pages counted */
+#define PIFS_FSCHECK_USE_STATIC_MEMORY  1u   /**< 1: Use static memory for file system check, 0: Use dynamic (malloc) for file system check */
 
 #define PIFS_PACKED_ATTRIBUTE           __attribute__((packed))
 #define PIFS_ALIGNED_ATTRIBUTE(align)   __attribute__((aligned(align)))

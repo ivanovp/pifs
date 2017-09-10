@@ -522,7 +522,16 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
         if (ret == PIFS_SUCCESS && !free_data_pages
                 && (diff >= PIFS_STATIC_WEAR_LEVEL_LIMIT || diff >= percent_limit))
         {
+            PIFS_NOTICE_MSG("Empty block %i... \r\n", ba);
             ret = pifs_empty_block(ba, &is_emptied);
+            if (ret == PIFS_SUCCESS)
+            {
+                PIFS_NOTICE_MSG("Block %i emptied\r\n", ba);
+            }
+            else
+            {
+                PIFS_ERROR_MSG("Cannot empty block %i: %i\r\n", ba, ret);
+            }
             if (is_emptied)
             {
                 a_max_block_num--;

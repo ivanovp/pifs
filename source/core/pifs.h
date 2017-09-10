@@ -511,6 +511,9 @@ typedef struct
     pifs_char_t             cwd[PIFS_PATH_LEN_MAX];                       /**< Current working directory */
     pifs_address_t          current_entry_list_address;                   /**< Entry list of current working directory */
 #endif
+#if PIFS_FSCHECK_USE_STATIC_MEMORY
+    uint8_t                 free_pages_buf[PIFS_FLASH_PAGE_NUM_FS / PIFS_BYTE_BITS];
+#endif
 } pifs_t;
 
 extern pifs_t pifs;
