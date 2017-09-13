@@ -79,17 +79,7 @@ uint8_t BSP_SD_Init(void)
   }
   /* HAL SD initialization */
   sd_state = HAL_SD_Init(&hsd);
-#ifdef BUS_4BITS
-  /* Configure SD Bus width */
-  if (sd_state == MSD_OK)
-  {
-    /* Enable wide operation */
-    if (HAL_SD_ConfigWideBusOperation(&hsd, SDIO_BUS_WIDE_4B) != HAL_OK)
-    {
-      sd_state = MSD_ERROR;
-    }
-  }
-#endif
+
   return sd_state;
 }
 /* USER CODE BEGIN AfterInitSection */

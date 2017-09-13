@@ -1,6 +1,6 @@
 /**
  ******************************************************************************
-  * @file    bsp_driver_sd.h (based on stm324x9i_eval_sd.h)
+  * @file    bsp_driver_sd.h for F4 (based on stm324x9i_eval_sd.h)
   * @brief   This file contains the common defines and functions prototypes for 
   *          the bsp_driver_sd.c driver.
   ******************************************************************************
@@ -48,8 +48,8 @@
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __STM32F4XX_SD_H
-#define __STM32F4XX_SD_H
+#ifndef __STM32F4_SD_H
+#define __STM32F4_SD_H
 
 #ifdef __cplusplus
  extern "C" {
@@ -58,31 +58,27 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
 
-/* Exported constants --------------------------------------------------------*/ 
-
+/* Exported types --------------------------------------------------------*/ 
 /** 
   * @brief SD Card information structure 
   */
-#ifndef BSP_SD_CardInfo
-  #define BSP_SD_CardInfo HAL_SD_CardInfoTypeDef
-#endif
+#define BSP_SD_CardInfo HAL_SD_CardInfoTypeDef
 
-/**  
+/* Exported constants --------------------------------------------------------*/ 
+/**
   * @brief  SD status structure definition  
   */     
 #define   MSD_OK                        ((uint8_t)0x00)
 #define   MSD_ERROR                     ((uint8_t)0x01)
-   
+
 /** 
   * @brief  SD transfer state definition  
   */     
 #define   SD_TRANSFER_OK                ((uint8_t)0x00)
 #define   SD_TRANSFER_BUSY              ((uint8_t)0x01)
-/** @defgroup STM324x9I_EVAL_SD_Exported_Constants STM324x9I EVAL SD Exported Constants
-  * @{
-  */ 
+
 #define SD_PRESENT               ((uint8_t)0x01)
-#define SD_NOT_PRESENT           ((uint8_t)0x00) 
+#define SD_NOT_PRESENT           ((uint8_t)0x00)
 #define SD_DATATIMEOUT           ((uint32_t)100000000)
 
 #ifdef OLD_API
@@ -129,6 +125,6 @@ uint8_t BSP_SD_IsDetected(void);
 }
 #endif
 
-#endif /* __STM32F4XX_SD_H */
+#endif /* __STM32F4_SD_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
