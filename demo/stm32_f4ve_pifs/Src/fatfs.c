@@ -54,6 +54,8 @@ FATFS SDFatFS;    /* File system object for SD logical drive */
 FIL SDFile;       /* File object for SD */
 
 /* USER CODE BEGIN Variables */
+#include "stm32f4xx_hal.h"
+extern RTC_HandleTypeDef hrtc;
 
 /* USER CODE END Variables */    
 
@@ -75,7 +77,26 @@ void MX_FATFS_Init(void)
 DWORD get_fattime(void)
 {
   /* USER CODE BEGIN get_fattime */
-  return 0;
+  DWORD date_time;
+  HAL_StatusTypeDef stat;
+  RTC_DateTypeDef   date = { 0 };
+  RTC_TimeTypeDef   time = { 0 };
+
+  /* First time shall be read */
+  stat = HAL_RTC_GetTime(&hrtc, &time, RTC_FORMAT_BIN);
+  if (stat == HAL_OK)
+  {
+//      UART_printf("Hour: %i, min: %i, sec: %i\r\n", time.Hours, time.Minutes, time.Seconds);
+  }
+  /* After date shall be read */
+  stat = HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BIN);
+  if (stat == HAL_OK)
+  {
+//      UART_printf("Year: %i, month: %i, day: %i\r\n", date.Year, date.Month, date.Date);
+  }
+  date_time = (DWORD)(date.Year + 2000 - 1980) << 25 | (DWORD)date.Month << 21 | (DWORD)date.Date << 16;
+  date_time |= (DWORD)time.Hours << 11 | (DWORD)time.Minutes << 5 | (DWORD)time.Seconds >> 1;
+  return date_time;
   /* USER CODE END get_fattime */  
 }
 
