@@ -167,42 +167,45 @@ uint8_t nand_buf[512];
  */
 void ftest(void)
 {
-  NAND_IDTypeDef nand_id;
-  HAL_StatusTypeDef stat;
-  NAND_AddressTypeDef address;
+    static uint32_t cntr = 0;
+    NAND_IDTypeDef nand_id;
+    HAL_StatusTypeDef stat;
+    NAND_AddressTypeDef address;
 
-  printf("Reading NAND ID... ");
-  stat = HAL_NAND_Read_ID(&hnand1, &nand_id);
-  if (stat == HAL_OK)
-  {
-      printf("Ok.\r\n");
-      printf("NAND ID: %02X %02X %02X %02X\r\n",
-             nand_id.Maker_Id,
-             nand_id.Device_Id,
-             nand_id.Third_Id,
-             nand_id.Fourth_Id);
-  }
-  else
-  {
-    printf("Error: %i\r\n", stat);
-  }
-
-  address.Block = 0;
-  address.Page = 0;
-  address.Plane = 0;
-  printf("Reading %i pages at BA%i/PA%i/PL%i...",
-         sizeof(nand_buf) / hnand1.Config.PageSize,
-         address.Block, address.Page, address.Plane);
-  stat = HAL_NAND_Read_Page_8b(&hnand1, &address, &nand_buf, sizeof(nand_buf) / hnand1.Config.PageSize);
-  if (stat == HAL_OK)
-  {
-      printf("Ok.\r\n");
-      print_buffer(nand_buf, sizeof(nand_buf), 0);
-  }
-  else
-  {
-    printf("Error: %i\r\n", stat);
-  }
+#if 0
+    printf("Reading NAND ID... ");
+    stat = HAL_NAND_Read_ID(&hnand1, &nand_id);
+    if (stat == HAL_OK)
+    {
+        printf("Ok.\r\n");
+        printf("NAND ID: %02X %02X %02X %02X\r\n",
+               nand_id.Maker_Id,
+               nand_id.Device_Id,
+               nand_id.Third_Id,
+               nand_id.Fourth_Id);
+    }
+    else
+    {
+        printf("Error: %i\r\n", stat);
+    }
+#endif
+    memset(nand_buf, 0xAA, sizeof(nand_buf));
+    address.Block = cntr;
+    address.Page = cntr++;
+    address.Plane = 0;
+    printf("Reading %i pages at BA%i/PA%i/PL%i...",
+           sizeof(nand_buf) / hnand1.Config.PageSize,
+           address.Block, address.Page, address.Plane);
+    stat = HAL_NAND_Read_Page_8b(&hnand1, &address, &nand_buf, sizeof(nand_buf) / hnand1.Config.PageSize);
+    if (stat == HAL_OK)
+    {
+        printf("Ok.\r\n");
+        print_buffer(nand_buf, sizeof(nand_buf), 0);
+    }
+    else
+    {
+        printf("Error: %i\r\n", stat);
+    }
 }
 
 void HAL_NAND_MspInit(NAND_HandleTypeDef *hnand)
@@ -357,8 +360,8 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   osThreadDef(watchdogTask, watchdogTask, osPriorityRealtime, 0, 64);
   watchdogTaskHandle = osThreadCreate(osThread(watchdogTask), NULL);
-  osThreadDef(measureTask, measureTask, osPriorityAboveNormal, 0, 512);
-  measureTaskHandle = osThreadCreate(osThread(measureTask), NULL);
+  //osThreadDef(measureTask, measureTask, osPriorityAboveNormal, 0, 512);
+  //measureTaskHandle = osThreadCreate(osThread(measureTask), NULL);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -665,8 +668,8 @@ static void MX_FSMC_Init(void)
   hnand1.Init.MemoryDataWidth = FSMC_NAND_PCC_MEM_BUS_WIDTH_8;
   hnand1.Init.EccComputation = FSMC_NAND_ECC_DISABLE;
   hnand1.Init.ECCPageSize = FSMC_NAND_ECC_PAGE_SIZE_512BYTE;
-  hnand1.Init.TCLRSetupTime = 7;
-  hnand1.Init.TARSetupTime = 7;
+  hnand1.Init.TCLRSetupTime = 0;
+  hnand1.Init.TARSetupTime = 0;
   /* hnand1.Config */
   hnand1.Config.PageSize = 512;
   hnand1.Config.SpareAreaSize = 16;
@@ -674,17 +677,17 @@ static void MX_FSMC_Init(void)
   hnand1.Config.BlockNbr = 2048;
   hnand1.Config.PlaneNbr = 1;
   hnand1.Config.PlaneSize = 2048;
-  hnand1.Config.ExtraCommandEnable = DISABLE;
+  hnand1.Config.ExtraCommandEnable = ENABLE;
   /* ComSpaceTiming */
-  ComSpaceTiming.SetupTime = 15;
-  ComSpaceTiming.WaitSetupTime = 15;
-  ComSpaceTiming.HoldSetupTime = 15;
-  ComSpaceTiming.HiZSetupTime = 15;
+  ComSpaceTiming.SetupTime = 249;
+  ComSpaceTiming.WaitSetupTime = 249;
+  ComSpaceTiming.HoldSetupTime = 250;
+  ComSpaceTiming.HiZSetupTime = 249;
   /* AttSpaceTiming */
-  AttSpaceTiming.SetupTime = 15;
-  AttSpaceTiming.WaitSetupTime = 15;
-  AttSpaceTiming.HoldSetupTime = 15;
-  AttSpaceTiming.HiZSetupTime = 15;
+  AttSpaceTiming.SetupTime = 249;
+  AttSpaceTiming.WaitSetupTime = 249;
+  AttSpaceTiming.HoldSetupTime = 250;
+  AttSpaceTiming.HiZSetupTime = 249;
 
   if (HAL_NAND_Init(&hnand1, &ComSpaceTiming, &AttSpaceTiming) != HAL_OK)
   {
