@@ -204,6 +204,40 @@ void ftest(void)
     printf("Error: %i\r\n", stat);
   }
 }
+
+void HAL_NAND_MspInit(NAND_HandleTypeDef *hnand)
+{
+    GPIO_InitTypeDef GPIO_InitStruct;
+
+    /* Peripheral clock enable */
+    __HAL_RCC_FSMC_CLK_ENABLE();
+
+    GPIO_InitStruct.Pin = GPIO_PIN_0
+            | GPIO_PIN_1
+            | GPIO_PIN_4
+            | GPIO_PIN_5
+            | GPIO_PIN_6
+            | GPIO_PIN_7
+            | GPIO_PIN_11
+            | GPIO_PIN_12
+            | GPIO_PIN_14
+            | GPIO_PIN_15;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF12_FSMC;
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_7
+            | GPIO_PIN_8
+            | GPIO_PIN_9
+            | GPIO_PIN_10;
+    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_6;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+}
 /* USER CODE END 0 */
 
 int main(void)
