@@ -208,6 +208,7 @@ void ftest(void)
     }
 }
 
+#if 0
 void HAL_NAND_MspInit(NAND_HandleTypeDef *hnand)
 {
     GPIO_InitTypeDef GPIO_InitStruct;
@@ -215,11 +216,26 @@ void HAL_NAND_MspInit(NAND_HandleTypeDef *hnand)
     /* Peripheral clock enable */
     __HAL_RCC_FSMC_CLK_ENABLE();
 
+    /* FSMC GPIO Configuration
+      PE7   ------> FSMC_D4
+      PE8   ------> FSMC_D5
+      PE9   ------> FSMC_D6
+      PE10  ------> FSMC_D7
+      PD0   ------> FSMC_D2
+      PD1   ------> FSMC_D3
+      PD4   ------> FSMC_NOE
+      PD5   ------> FSMC_NWE
+      PD6   ------> FSMC_NWAIT
+      PD7   ------> FSMC_NCE2
+      PD11  ------> FSMC_CLE
+      PD12  ------> FSMC_ALE
+      PD14  ------> FSMC_D0
+      PD15  ------> FSMC_D1
+      */
     GPIO_InitStruct.Pin = GPIO_PIN_0
             | GPIO_PIN_1
             | GPIO_PIN_4
             | GPIO_PIN_5
-            | GPIO_PIN_6
             | GPIO_PIN_7
             | GPIO_PIN_11
             | GPIO_PIN_12
@@ -241,6 +257,7 @@ void HAL_NAND_MspInit(NAND_HandleTypeDef *hnand)
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 }
+#endif
 /* USER CODE END 0 */
 
 int main(void)
@@ -675,19 +692,19 @@ static void MX_FSMC_Init(void)
   hnand1.Config.SpareAreaSize = 16;
   hnand1.Config.BlockSize = 32;
   hnand1.Config.BlockNbr = 2048;
-  hnand1.Config.PlaneNbr = 1;
-  hnand1.Config.PlaneSize = 2048;
-  hnand1.Config.ExtraCommandEnable = ENABLE;
+  hnand1.Config.PlaneNbr = 0;
+  hnand1.Config.PlaneSize = 0;
+  hnand1.Config.ExtraCommandEnable = DISABLE;
   /* ComSpaceTiming */
-  ComSpaceTiming.SetupTime = 249;
-  ComSpaceTiming.WaitSetupTime = 249;
-  ComSpaceTiming.HoldSetupTime = 250;
-  ComSpaceTiming.HiZSetupTime = 249;
+  ComSpaceTiming.SetupTime = 0;
+  ComSpaceTiming.WaitSetupTime = 2;
+  ComSpaceTiming.HoldSetupTime = 2;
+  ComSpaceTiming.HiZSetupTime = 4;
   /* AttSpaceTiming */
-  AttSpaceTiming.SetupTime = 249;
-  AttSpaceTiming.WaitSetupTime = 249;
-  AttSpaceTiming.HoldSetupTime = 250;
-  AttSpaceTiming.HiZSetupTime = 249;
+  AttSpaceTiming.SetupTime = 0;
+  AttSpaceTiming.WaitSetupTime = 2;
+  AttSpaceTiming.HoldSetupTime = 2;
+  AttSpaceTiming.HiZSetupTime = 4;
 
   if (HAL_NAND_Init(&hnand1, &ComSpaceTiming, &AttSpaceTiming) != HAL_OK)
   {

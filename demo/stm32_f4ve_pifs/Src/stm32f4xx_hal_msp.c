@@ -347,7 +347,97 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 }
 
 /* USER CODE BEGIN 1 */
+static uint32_t FSMC_Initialized = 0;
 
+static void HAL_FSMC_MspInit(void){
+  GPIO_InitTypeDef GPIO_InitStruct;
+  if (FSMC_Initialized) {
+    return;
+  }
+  FSMC_Initialized = 1;
+  /* Peripheral clock enable */
+  __HAL_RCC_FSMC_CLK_ENABLE();
+  
+  /** FSMC GPIO Configuration  
+  PE7   ------> FSMC_D4
+  PE8   ------> FSMC_D5
+  PE9   ------> FSMC_D6
+  PE10   ------> FSMC_D7
+  PD11   ------> FSMC_CLE
+  PD12   ------> FSMC_ALE
+  PD14   ------> FSMC_D0
+  PD15   ------> FSMC_D1
+  PD0   ------> FSMC_D2
+  PD1   ------> FSMC_D3
+  PD4   ------> FSMC_NOE
+  PD5   ------> FSMC_NWE
+  PD6   ------> FSMC_NWAIT
+  PD7   ------> FSMC_NCE2
+  */
+  GPIO_InitStruct.Pin = GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF12_FSMC;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_14|GPIO_PIN_15 
+                          |GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_5 
+                          |GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF12_FSMC;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  GPIO_InitStruct.Pin = GPIO_PIN_6;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF12_FSMC;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+}
+
+void HAL_NAND_MspInit(NAND_HandleTypeDef* hnand){
+  HAL_FSMC_MspInit();
+}
+
+static uint32_t FSMC_DeInitialized = 0;
+
+static void HAL_FSMC_MspDeInit(void){
+  if (FSMC_DeInitialized) {
+    return;
+  }
+  FSMC_DeInitialized = 1;
+  /* Peripheral clock enable */
+  __HAL_RCC_FSMC_CLK_DISABLE();
+  
+  /** FSMC GPIO Configuration  
+  PE7   ------> FSMC_D4
+  PE8   ------> FSMC_D5
+  PE9   ------> FSMC_D6
+  PE10   ------> FSMC_D7
+  PD11   ------> FSMC_CLE
+  PD12   ------> FSMC_ALE
+  PD14   ------> FSMC_D0
+  PD15   ------> FSMC_D1
+  PD0   ------> FSMC_D2
+  PD1   ------> FSMC_D3
+  PD4   ------> FSMC_NOE
+  PD5   ------> FSMC_NWE
+  PD6   ------> FSMC_NWAIT
+  PD7   ------> FSMC_NCE2
+  */
+  HAL_GPIO_DeInit(GPIOE, GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10);
+
+  HAL_GPIO_DeInit(GPIOD, GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_14|GPIO_PIN_15 
+                          |GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_5 
+                          |GPIO_PIN_6|GPIO_PIN_7);
+}
+
+void HAL_NAND_MspDeInit(NAND_HandleTypeDef* hnand){
+  HAL_FSMC_MspDeInit();
+}
 /* USER CODE END 1 */
 
 /**
