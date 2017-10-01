@@ -172,7 +172,7 @@ void ftest(void)
     HAL_StatusTypeDef stat;
     NAND_AddressTypeDef address;
 
-#if 0
+#if 1
     printf("Reading NAND ID... ");
     stat = HAL_NAND_Read_ID(&hnand1, &nand_id);
     if (stat == HAL_OK)
@@ -189,10 +189,37 @@ void ftest(void)
         printf("Error: %i\r\n", stat);
     }
 #endif
-    memset(nand_buf, 0xAA, sizeof(nand_buf));
     address.Block = cntr;
     address.Page = cntr++;
     address.Plane = 0;
+    printf("Erase block %i...", address.Block);
+    stat = HAL_NAND_Erase_Block(&hnand1, &address);
+    if (stat == HAL_OK)
+    {
+        printf("Ok.\r\n");
+    }
+    else
+    {
+        printf("Error: %i\r\n", stat);
+    }
+
+    fill_buffer(nand_buf, sizeof(nand_buf), FILL_TYPE_SEQUENCE_WORD, 1);
+
+    printf("Writing %i pages at BA%i/PA%i/PL%i...",
+           sizeof(nand_buf) / hnand1.Config.PageSize,
+           address.Block, address.Page, address.Plane);
+    stat = HAL_NAND_Write_Page_8b(&hnand1, &address, &nand_buf, sizeof(nand_buf) / hnand1.Config.PageSize);
+    if (stat == HAL_OK)
+    {
+        printf("Ok.\r\n");
+    }
+    else
+    {
+        printf("Error: %i\r\n", stat);
+    }
+
+    memset(nand_buf, 0, sizeof(nand_buf));
+
     printf("Reading %i pages at BA%i/PA%i/PL%i...",
            sizeof(nand_buf) / hnand1.Config.PageSize,
            address.Block, address.Page, address.Plane);
@@ -352,7 +379,17 @@ int main(void)
       printf("Error!\r\n");
   }
 
-  HAL_NAND_Reset(&hnand1);
+  HAL_StatusTypeDef stat;
+  printf("Reset NAND memory... ");
+  stat = HAL_NAND_Reset(&hnand1);
+  if (stat == HAL_OK)
+  {
+      printf("Ok.\r\n");
+  }
+  else
+  {
+      printf("Error: %i\r\n", stat);
+  }
 
   ftest();
   /* USER CODE END 2 */
@@ -685,26 +722,26 @@ static void MX_FSMC_Init(void)
   hnand1.Init.MemoryDataWidth = FSMC_NAND_PCC_MEM_BUS_WIDTH_8;
   hnand1.Init.EccComputation = FSMC_NAND_ECC_DISABLE;
   hnand1.Init.ECCPageSize = FSMC_NAND_ECC_PAGE_SIZE_512BYTE;
-  hnand1.Init.TCLRSetupTime = 0;
-  hnand1.Init.TARSetupTime = 0;
+  hnand1.Init.TCLRSetupTime = 1;
+  hnand1.Init.TARSetupTime = 1;
   /* hnand1.Config */
   hnand1.Config.PageSize = 512;
   hnand1.Config.SpareAreaSize = 16;
   hnand1.Config.BlockSize = 32;
   hnand1.Config.BlockNbr = 2048;
-  hnand1.Config.PlaneNbr = 0;
-  hnand1.Config.PlaneSize = 0;
-  hnand1.Config.ExtraCommandEnable = DISABLE;
+  hnand1.Config.PlaneNbr = 1;
+  hnand1.Config.PlaneSize = 2048;
+  hnand1.Config.ExtraCommandEnable = ENABLE;
   /* ComSpaceTiming */
-  ComSpaceTiming.SetupTime = 0;
-  ComSpaceTiming.WaitSetupTime = 2;
-  ComSpaceTiming.HoldSetupTime = 2;
-  ComSpaceTiming.HiZSetupTime = 4;
+  ComSpaceTiming.SetupTime = 2;
+  ComSpaceTiming.WaitSetupTime = 4;
+  ComSpaceTiming.HoldSetupTime = 4;
+  ComSpaceTiming.HiZSetupTime = 6;
   /* AttSpaceTiming */
-  AttSpaceTiming.SetupTime = 0;
-  AttSpaceTiming.WaitSetupTime = 2;
-  AttSpaceTiming.HoldSetupTime = 2;
-  AttSpaceTiming.HiZSetupTime = 4;
+  AttSpaceTiming.SetupTime = 2;
+  AttSpaceTiming.WaitSetupTime = 4;
+  AttSpaceTiming.HoldSetupTime = 4;
+  AttSpaceTiming.HiZSetupTime = 6;
 
   if (HAL_NAND_Init(&hnand1, &ComSpaceTiming, &AttSpaceTiming) != HAL_OK)
   {
