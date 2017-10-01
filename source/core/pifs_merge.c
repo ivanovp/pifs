@@ -600,6 +600,10 @@ pifs_status_t pifs_merge(void)
     }
     if (ret == PIFS_SUCCESS)
     {
+        ret = pifs_generate_most_weared_blocks(&pifs.header);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
         PIFS_NOTICE_MSG("Next management block: %i, ret: %i\r\n", next_mgmt_ba, ret);
         /* Add next management block's address to the current header */
         /* and calculate checksum */

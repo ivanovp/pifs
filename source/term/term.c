@@ -353,7 +353,7 @@ void cmdWearLevel (char* command, char* params)
     }
 }
 
-void cmdGenerateWearLevel(char* command, char* params)
+void cmdLeastWearedBlocks(char* command, char* params)
 {
     pifs_status_t           ret = PIFS_SUCCESS;
     pifs_wear_level_entry_t wear_level;
@@ -372,6 +372,28 @@ void cmdGenerateWearLevel(char* command, char* params)
     {
         ret = pifs_get_wear_level(pifs.header.least_weared_blocks[i].block_address, &pifs.header, &wear_level);
         printf("%5i | %i\r\n", pifs.header.least_weared_blocks[i].block_address, wear_level.wear_level_cntr);
+    }
+}
+
+void cmdMostWearedBlocks(char* command, char* params)
+{
+    pifs_status_t           ret = PIFS_SUCCESS;
+    pifs_wear_level_entry_t wear_level;
+    pifs_size_t             i;
+
+    (void) command;
+    (void) params;
+
+    ret = pifs_generate_most_weared_blocks(&pifs.header);
+
+    printf("Block | Erase count\r\n");
+    printf("------+------------\r\n");
+    for (i = 0;
+         i < PIFS_MOST_WEARED_BLOCK_NUM && ret == PIFS_SUCCESS;
+         i++)
+    {
+        ret = pifs_get_wear_level(pifs.header.most_weared_blocks[i].block_address, &pifs.header, &wear_level);
+        printf("%5i | %i\r\n", pifs.header.most_weared_blocks[i].block_address, wear_level.wear_level_cntr);
     }
 }
 
@@ -1555,7 +1577,8 @@ parserCommand_t parserCommands[] =
     {"bi",          "Print info of block",              cmdBlockInfo},
     {"pi",          "Check if page is free/to be released/erased", cmdPageInfo},
     {"w",           "Print wear level list",            cmdWearLevel},
-    {"lw",          "Generate least weared blocks' list", cmdGenerateWearLevel},
+    {"lw",          "Print least weared blocks' list",  cmdLeastWearedBlocks},
+    {"mw",          "Print most weared blocks' list",   cmdMostWearedBlocks},
     {"eb",          "Empty block",                      cmdEmptyBlock},
     {"sw",          "Static wear leveling",             cmdStaticWear},
     {"fs",          "Print flash's statistics",         cmdFlashStat},

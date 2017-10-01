@@ -105,7 +105,6 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
     a_file->entry_list_address = pifs.header.root_entry_list_address;
 #endif
     a_file->status = PIFS_SUCCESS;
-    a_file->rw_pos = 0;
     a_file->rw_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
     a_file->rw_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
     a_file->rw_pos = 0;

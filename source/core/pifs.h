@@ -255,6 +255,12 @@ typedef uint8_t pifs_wear_level_bits_t;
 #if PIFS_LEAST_WEARED_BLOCK_NUM > PIFS_FLASH_BLOCK_NUM_FS - PIFS_MANAGEMENT_BLOCK_NUM * 2
 #error PIFS_LEAST_WEARED_BLOCK_NUM shall not be greater than PIFS_FLASH_BLOCK_NUM_FS - PIFS_MANAGEMENT_BLOCK_NUM * 2!
 #endif
+#if PIFS_MOST_WEARED_BLOCK_NUM < 1
+#error PIFS_MOST_WEARED_BLOCK_NUM shall be 1 at minimum!
+#endif
+#if PIFS_MOST_WEARED_BLOCK_NUM > PIFS_FLASH_BLOCK_NUM_FS - PIFS_MANAGEMENT_BLOCK_NUM * 2
+#error PIFS_MOST_WEARED_BLOCK_NUM shall not be greater than PIFS_FLASH_BLOCK_NUM_FS - PIFS_MANAGEMENT_BLOCK_NUM * 2!
+#endif
 #if PIFS_ENABLE_DIRECTORIES && !PIFS_ENABLE_ATTRIBUTES
 #error PIFS_ENABLE_ATTRIBUTES shall be 1 if PIFS_ENABLE_DIRECTORIES is 1!
 #endif
@@ -344,7 +350,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 #if PIFS_ENABLE_CONFIG_IN_FLASH
     /* Flash configuration */
     uint16_t                flash_block_num_all;        /**< Number of all blocks in the flash memory */
-    uint16_t                flash_block_reserved_num;   /**< Reserved blocks in the beginning of the flash memory */
+    uint16_t                flash_block_reserved_num;   /**< Reserved blocks at the beginning of the flash memory */
     uint16_t                flash_page_per_block;       /**< Number of flash (physical) pages in a block */
     uint16_t                flash_page_size_byte;       /**< Size of flash (physical) page in bytes */
     /* File system configuration */
@@ -354,6 +360,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     uint16_t                user_data_size_byte;        /**< Number of data bytes per file */
     uint8_t                 management_block_num;       /**< Number of management blocks */
     uint16_t                least_weared_block_num;     /**< Number of least weared blocks in the list */
+    uint16_t                most_weared_block_num;      /**< Number of most weared blocks in the list */
     uint16_t                delta_map_page_num;         /**< Number of delta map pages */
     uint8_t                 map_page_count_size;        /**< Size of map page count's type in bytes */
     bool_t                  use_delta_for_entries : 1;  /**< TRUE: delta pages used for entries */
@@ -368,6 +375,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_address_t          wear_level_list_address;        /**< Adress of wear level list */
     /** Data blocks with lowest erase counter value */
     pifs_wear_level_t       least_weared_blocks[PIFS_LEAST_WEARED_BLOCK_NUM];   /**< List of least weared blocks */
+    pifs_wear_level_t       most_weared_blocks[PIFS_MOST_WEARED_BLOCK_NUM];     /**< List of most weared blocks */
     pifs_wear_level_cntr_t  wear_level_cntr_max;            /**< Maximum number of wear level */
     /** Checksum shall be the last element! */
     pifs_checksum_t         checksum;                       /**< Checksum of file system's header */
@@ -485,6 +493,8 @@ typedef struct
     pifs_address_t          header_address;                               /**< Address of actual file system's header */
     bool_t                  is_header_found PIFS_BOOL_SIZE;               /**< TRUE: file system's header found */
     bool_t                  is_merging PIFS_BOOL_SIZE;                    /**< TRUE: merging is in progress */
+    /* TODO what if is_wear_leveling is 1 and user creates a file, not the static wear leveling's copy? */
+    bool_t                  is_wear_leveling PIFS_BOOL_SIZE;              /**< TRUE: wear leveling is in progress */
     pifs_header_t           header;                                       /**< Actual header. */
     pifs_entry_t            entry;                                        /**< For merging */
     /* Page cache */

@@ -307,6 +307,11 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
             a_header->least_weared_blocks[i].block_address = PIFS_BLOCK_ADDRESS_ERASED;
             a_header->least_weared_blocks[i].wear_level_cntr = PIFS_WEAR_LEVEL_CNTR_MAX;
         }
+        for (i = 0; i < PIFS_MOST_WEARED_BLOCK_NUM; i++)
+        {
+            a_header->most_weared_blocks[i].block_address = PIFS_BLOCK_ADDRESS_ERASED;
+            a_header->most_weared_blocks[i].wear_level_cntr = PIFS_WEAR_LEVEL_CNTR_MAX;
+        }
         a_header->wear_level_cntr_max = PIFS_WEAR_LEVEL_CNTR_MAX;
     }
 #if PIFS_ENABLE_CONFIG_IN_FLASH
@@ -322,6 +327,7 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
     a_header->user_data_size_byte = PIFS_USER_DATA_SIZE_BYTE;
     a_header->management_block_num = PIFS_MANAGEMENT_BLOCK_NUM;
     a_header->least_weared_block_num = PIFS_LEAST_WEARED_BLOCK_NUM;
+    a_header->most_weared_block_num = PIFS_MOST_WEARED_BLOCK_NUM;
     a_header->delta_map_page_num = PIFS_DELTA_MAP_PAGE_NUM;
     a_header->map_page_count_size = PIFS_MAP_PAGE_COUNT_SIZE;
     a_header->use_delta_for_entries = PIFS_USE_DELTA_FOR_ENTRIES;
@@ -607,6 +613,7 @@ pifs_status_t pifs_init(void)
     pifs.header_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
     pifs.is_header_found = FALSE;
     pifs.is_merging = FALSE;
+    pifs.is_wear_leveling = FALSE;
     memset(&pifs.header, 0, PIFS_HEADER_SIZE_BYTE);
     memset(pifs.cache_page_buf, 0, PIFS_LOGICAL_PAGE_SIZE_BYTE);
     pifs.cache_page_buf_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
@@ -728,6 +735,7 @@ pifs_status_t pifs_init(void)
                                 && header.user_data_size_byte == PIFS_USER_DATA_SIZE_BYTE
                                 && header.management_block_num == PIFS_MANAGEMENT_BLOCK_NUM
                                 && header.least_weared_block_num == PIFS_LEAST_WEARED_BLOCK_NUM
+                                && header.most_weared_block_num == PIFS_MOST_WEARED_BLOCK_NUM
                                 && header.delta_map_page_num == PIFS_DELTA_MAP_PAGE_NUM
                                 && header.map_page_count_size == PIFS_MAP_PAGE_COUNT_SIZE
                                 && header.use_delta_for_entries == PIFS_USE_DELTA_FOR_ENTRIES

@@ -45,6 +45,7 @@
 #define PIFS_PATH_SEPARATOR_CHAR        '/'  /**< Character to separate directories in path, '/' or '\' */
 #define PIFS_MANAGEMENT_BLOCK_NUM       1u   /**< Number of management blocks. Minimum: 1 (Allocated area is twice of this number.) */
 #define PIFS_LEAST_WEARED_BLOCK_NUM     6u   /**< Number of stored least weared blocks */
+#define PIFS_MOST_WEARED_BLOCK_NUM      6u  /**< Number of stored most weared blocks */
 #define PIFS_DELTA_MAP_PAGE_NUM         2u   /**< Number of delta page maps */
 #define PIFS_CHECKSUM_SIZE              4u   /**< Size of checksum variable in bytes. Valid values are 1, 2 and 4. */
 #define PIFS_MAP_PAGE_COUNT_SIZE        1u   /**< Size of page count variable of map entry in bytes. Valid values are 1, 2 and 4. */

@@ -343,18 +343,35 @@ pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_minimum,
     find.is_same_block = FALSE;
     find.header = &pifs.header;
 
-    /* Dynamic wear leveling */
-    for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_ERROR_NO_MORE_SPACE; i++)
+    /* Check if static wear leveling is in progress */
+    if (!pifs.is_wear_leveling)
     {
-        /* Try to find free pages in the least weared block */
-        find.start_block_address = pifs.header.least_weared_blocks[i].block_address;
-        find.end_block_address = find.start_block_address + 1;
-        ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
+        /* No static wear leveling on-going, normal operation */
+        /* Dynamic wear leveling */
+        for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_ERROR_NO_MORE_SPACE; i++)
+        {
+            /* Try to find free pages in the least weared block */
+            find.start_block_address = pifs.header.least_weared_blocks[i].block_address;
+            find.end_block_address = find.start_block_address + 1;
+            ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
+        }
+    }
+    else
+    {
+        /* Static wear leveling is copying static file from a lesser weared
+         * block to most weared block */
+        for (i = 0; i < PIFS_MOST_WEARED_BLOCK_NUM && ret == PIFS_ERROR_NO_MORE_SPACE; i++)
+        {
+            /* Try to find free pages in the most weared block */
+            find.start_block_address = pifs.header.most_weared_blocks[i].block_address;
+            find.end_block_address = find.start_block_address + 1;
+            ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
+        }
     }
 
     if (ret != PIFS_SUCCESS)
     {
-        /* No success, try to find page in anywhere */
+        /* No success, try to find page anywhere */
         find.start_block_address = PIFS_FLASH_BLOCK_RESERVED_NUM;
         find.end_block_address = PIFS_FLASH_BLOCK_NUM_ALL;
         ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
