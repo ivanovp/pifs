@@ -1329,6 +1329,10 @@ void cmdFileInfo (char* command, char* params)
     size_t   read;
     size_t   file_size;
     pifs_address_t address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID };
+    pifs_block_address_t dba;
+    pifs_page_address_t  dpa;
+    bool_t is_map_full;
+    int ret;
 
     (void) command;
 
@@ -1348,7 +1352,18 @@ void cmdFileInfo (char* command, char* params)
                     printf("Map address: %s\r\n", pifs_address2str(&file->actual_map_address));
                     address = file->actual_map_address;
                 }
-                printf("Position address: %s\r\n", pifs_address2str(&file->rw_address));
+                printf("Position address: %s ", pifs_address2str(&file->rw_address));
+                ret = pifs_find_delta_page(file->rw_address.block_address,
+                                           file->rw_address.page_address,
+                                           &dba, &dpa, &is_map_full,
+                                           &pifs.header);
+                if (ret == PIFS_SUCCESS &&
+                        (file->rw_address.block_address != dba
+                         || file->rw_address.page_address != dpa))
+                {
+                    printf("-> %s", pifs_ba_pa2str(dba, dpa));
+                }
+                printf("\r\n");
                 read = pifs_fread(buf_r, 1, sizeof(buf_r), file);
             } while (read > 0);
             printf("End position: %i bytes\r\n", pifs_ftell(file));
