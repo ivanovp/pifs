@@ -1323,6 +1323,48 @@ void cmdFindDelta (char* command, char* params)
     }
 }
 
+void cmdFileInfo (char* command, char* params)
+{
+    pifs_file_t * file;
+    size_t   read;
+    size_t   file_size;
+    pifs_address_t address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID };
+
+    (void) command;
+
+    if (params)
+    {
+        file_size = pifs_filesize(params);
+        printf("File name: '%s'\r\n", params);
+        printf("File size: %i bytes\r\n", file_size);
+        file = pifs_fopen(params, "r");
+        if (file)
+        {
+            do
+            {
+                if ((address.block_address != file->actual_map_address.block_address)
+                        && (address.page_address != file->actual_map_address.page_address))
+                {
+                    printf("Map address: %s\r\n", pifs_address2str(&file->actual_map_address));
+                    address = file->actual_map_address;
+                }
+                printf("Position address: %s\r\n", pifs_address2str(&file->rw_address));
+                read = pifs_fread(buf_r, 1, sizeof(buf_r), file);
+            } while (read > 0);
+            printf("End position: %i bytes\r\n", pifs_ftell(file));
+            pifs_fclose(file);
+        }
+        else
+        {
+            printf("ERROR: Cannot open file!\r\n");
+        }
+    }
+    else
+    {
+        printf("ERROR: Missing parameter!\r\n");
+    }
+}
+
 void cmdPifsInfo (char* command, char* params)
 {
     (void) command;
@@ -1570,6 +1612,7 @@ parserCommand_t parserCommands[] =
     {"map",         "Print map page",                   cmdMap},
     {"m",           "Print map page",                   cmdMap},
     {"fd",          "Find delta pages of a page",       cmdFindDelta},
+    {"fi",          "Print info about a file",          cmdFileInfo},
     {"info",        "Print info of Pi file system",     cmdPifsInfo},
     {"i",           "Print info of Pi file system",     cmdPifsInfo},
     {"free",        "Print info of free space",         cmdFreeSpaceInfo},
