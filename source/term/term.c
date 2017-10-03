@@ -1328,7 +1328,8 @@ void cmdFileInfo (char* command, char* params)
     pifs_file_t * file;
     size_t   read;
     size_t   file_size;
-    pifs_address_t address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID };
+    pifs_address_t map_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID };
+    pifs_address_t rw_address;
     pifs_block_address_t dba;
     pifs_page_address_t  dpa;
     bool_t is_map_full;
@@ -1346,25 +1347,31 @@ void cmdFileInfo (char* command, char* params)
         {
             do
             {
-                if ((address.block_address != file->actual_map_address.block_address)
-                        && (address.page_address != file->actual_map_address.page_address))
+                if ((map_address.block_address != file->actual_map_address.block_address)
+                        && (map_address.page_address != file->actual_map_address.page_address))
                 {
-                    printf("Map address: %s\r\n", pifs_address2str(&file->actual_map_address));
-                    address = file->actual_map_address;
+                    printf("Map's address: %s\r\n", pifs_address2str(&file->actual_map_address));
+                    map_address = file->actual_map_address;
                 }
-                printf("Position address: %s ", pifs_address2str(&file->rw_address));
-                ret = pifs_find_delta_page(file->rw_address.block_address,
-                                           file->rw_address.page_address,
-                                           &dba, &dpa, &is_map_full,
-                                           &pifs.header);
-                if (ret == PIFS_SUCCESS &&
-                        (file->rw_address.block_address != dba
-                         || file->rw_address.page_address != dpa))
-                {
-                    printf("-> %s", pifs_ba_pa2str(dba, dpa));
-                }
-                printf("\r\n");
+                /* Save R/W address before it changes due to reading */
+                rw_address = file->rw_address;
                 read = pifs_fread(buf_r, 1, sizeof(buf_r), file);
+                if (read > 0)
+                {
+                    /* Read was successfull print info */
+                    printf("Data page's address: %s ", pifs_address2str(&rw_address));
+                    ret = pifs_find_delta_page(rw_address.block_address,
+                                               rw_address.page_address,
+                                               &dba, &dpa, &is_map_full,
+                                               &pifs.header);
+                    if (ret == PIFS_SUCCESS &&
+                            (rw_address.block_address != dba
+                             || rw_address.page_address != dpa))
+                    {
+                        printf("-> %s", pifs_ba_pa2str(dba, dpa));
+                    }
+                    printf("\r\n");
+                }
             } while (read > 0);
             printf("End position: %i bytes\r\n", pifs_ftell(file));
             pifs_fclose(file);
