@@ -308,10 +308,8 @@ typedef enum
     PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT = 0x02,
     /** Data stored in the block. */
     PIFS_BLOCK_TYPE_DATA = 0x04,
-    /** Any type of the above. */
-    PIFS_BLOCK_TYPE_ANY = 0x07,
     /** Reserved block */
-    PIFS_BLOCK_TYPE_RESERVED = 0x08
+    PIFS_BLOCK_TYPE_RESERVED = 0x08,
 } pifs_block_type_t;
 
 /**

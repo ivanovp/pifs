@@ -117,11 +117,20 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
     }
     if (a_file->status == PIFS_SUCCESS)
     {
-#if PIFS_ENABLE_DIRECTORIES
-        a_file->status = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
-                                           filename, &a_file->entry_list_address);
-        if (a_file->status == PIFS_SUCCESS)
+#if PIFS_ENABLE_STATIC_WEAR_LEVEL
+        if (a_file->mode_write && !pifs.is_merging)
+        {
+            pifs_static_wear_leveling(PIFS_STATIC_WEAR_LEVEL_BLOCKS);
+        }
 #endif
+#if PIFS_ENABLE_DIRECTORIES
+        if (a_file->status == PIFS_SUCCESS)
+        {
+            a_file->status = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
+                                               filename, &a_file->entry_list_address);
+        }
+#endif
+        if (a_file->status == PIFS_SUCCESS)
         {
             a_file->status = pifs_find_entry(PIFS_FIND_ENTRY, filename, &a_file->entry,
                                              a_file->entry_list_address.block_address,

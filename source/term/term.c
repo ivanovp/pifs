@@ -1325,15 +1325,15 @@ void cmdFindDelta (char* command, char* params)
 
 void cmdFileInfo (char* command, char* params)
 {
-    pifs_file_t * file;
-    size_t   read;
-    size_t   file_size;
-    pifs_address_t map_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID };
-    pifs_address_t rw_address;
+    pifs_file_t        * file;
+    size_t               read;
+    size_t               file_size;
+    pifs_address_t       map_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID };
+    pifs_address_t       rw_address;
     pifs_block_address_t dba;
     pifs_page_address_t  dpa;
-    bool_t is_map_full;
-    int ret;
+    bool_t               is_map_full;
+    int                  ret;
 
     (void) command;
 
