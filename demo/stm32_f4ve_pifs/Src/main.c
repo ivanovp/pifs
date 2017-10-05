@@ -414,8 +414,8 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   osThreadDef(watchdogTask, watchdogTask, osPriorityRealtime, 0, 64);
   watchdogTaskHandle = osThreadCreate(osThread(watchdogTask), NULL);
-  //osThreadDef(measureTask, measureTask, osPriorityAboveNormal, 0, 512);
-  //measureTaskHandle = osThreadCreate(osThread(measureTask), NULL);
+  osThreadDef(measureTask, measureTask, osPriorityAboveNormal, 0, 512);
+  measureTaskHandle = osThreadCreate(osThread(measureTask), NULL);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */

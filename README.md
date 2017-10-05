@@ -9,7 +9,7 @@ Features:
  * Cache buffer for page (currently only one page is cached)
  * Directory handling
  * Dynamic wear-leveling
- * Static wear-leveling (limited, work-in-progress)
+ * Static wear-leveling
  * User data can be added for files: permissions, owner IDs, etc.
  * At the beginning of flash memory reserved blocks can be defined, which 
 are not used by the file system
