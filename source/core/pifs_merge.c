@@ -631,6 +631,10 @@ pifs_status_t pifs_merge(void)
     /* #12 */
     if (ret == PIFS_SUCCESS)
     {
+        ret = pifs_get_free_pages(&i, &pifs.free_data_page_num);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
         /* Re-open files */
         for (i = 0; i < PIFS_OPEN_FILE_NUM_MAX && ret == PIFS_SUCCESS; i++)
         {
@@ -638,6 +642,8 @@ pifs_status_t pifs_merge(void)
             if (file_is_opened[i])
             {
                 /* Do not create new file, as it has already done */
+                /* TODO save and restore mode_create_new_file and mode_file_shall_exist?
+                 * to their original value? */
                 file->mode_create_new_file = FALSE;
                 file->mode_file_shall_exist = TRUE;
                 ret = pifs_internal_open(file, file->entry.name, NULL, FALSE);

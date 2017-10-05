@@ -515,6 +515,7 @@ typedef struct
     /** General page buffer use by pifs_fseek, pifs_copy buffer, sc=seek, copy */
     uint8_t                 sc_page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];
     uint32_t                error_cntr;         /**< File system's integrity check uses it */
+    pifs_size_t             free_data_page_num;
 #if PIFS_ENABLE_DIRECTORIES
     pifs_char_t             cwd[PIFS_PATH_LEN_MAX];                       /**< Current working directory */
     pifs_address_t          current_entry_list_address;                   /**< Entry list of current working directory */

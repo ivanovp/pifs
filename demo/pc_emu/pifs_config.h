@@ -54,13 +54,12 @@
 #define PIFS_ENABLE_FSEEK_BEYOND_FILE   0u   /**< 1: Enable seeking beyond file size, 0: disable seeking beyond file size */
 #define PIFS_ENABLE_FSEEK_ERASED_VALUE  0u   /**< 1: Write 0xFF values when seeking beyond file size,
                                                   0: write 0 values when seeking beyond file size (default). */
-#define PIFS_STATIC_WEAR_BLOCK_NUM      1u   /**< Number flash blocks reserved for static wear leveling */
-/* TODO implement reserving PIFS_STATIC_WEAR_BLOCK_NUM! */
-#define PIFS_ENABLE_STATIC_WEAR_LEVEL   0u   /**< 1: Automatic static wear leveling
+#define PIFS_STATIC_WEAR_RSV_BLOCK_NUM  1u   /**< Number flash blocks reserved for static wear leveling */
+#define PIFS_ENABLE_AUTO_STATIC_WEAR    1u   /**< 1: Automatic static wear leveling
                                                   0: Manual static wear leveling */
 #define PIFS_STATIC_WEAR_LEVEL_BLOCKS   1u   /**< Number flash blocks that will be copied during wear leveling at the same time */
-#define PIFS_STATIC_WEAR_LEVEL_LIMIT   20u
-#define PIFS_STATIC_WEAR_LEVEL_PERCENT 10u
+/** If number of erase count is greater than limit, file resides in the block will be moved */
+#define PIFS_STATIC_WEAR_LEVEL_LIMIT  500u
 #define PIFS_CALC_TBR_IN_FREE_SPACE     0u   /**< 1: Free pages and to be released pages are counted, 0: only free pages counted */
 #define PIFS_FSCHECK_USE_STATIC_MEMORY  1u   /**< 1: Use static memory for file system check, 0: Use dynamic (malloc) for file system check */
 

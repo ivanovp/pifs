@@ -336,45 +336,55 @@ pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_minimum,
     pifs_find_t     find;
     pifs_size_t     i;
 
-    find.page_count_minimum = a_page_count_minimum;
-    find.page_count_desired = a_page_count_desired;
-    find.block_type = a_block_type;
-    find.is_free = TRUE;
-    find.is_same_block = FALSE;
-    find.header = &pifs.header;
-
-    /* Check if static wear leveling is in progress */
-    if (!pifs.is_wear_leveling)
+    if (a_block_type != PIFS_BLOCK_TYPE_DATA
+            || pifs.is_wear_leveling
+            || pifs.free_data_page_num >= PIFS_STATIC_WEAR_RSV_BLOCK_NUM * PIFS_FLASH_PAGE_PER_BLOCK)
     {
-        /* No static wear leveling on-going, normal operation */
-        /* Dynamic wear leveling */
-        for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_ERROR_NO_MORE_SPACE; i++)
+        find.page_count_minimum = a_page_count_minimum;
+        find.page_count_desired = a_page_count_desired;
+        find.block_type = a_block_type;
+        find.is_free = TRUE;
+        find.is_same_block = FALSE;
+        find.header = &pifs.header;
+
+        /* Check if static wear leveling is in progress */
+        if (!pifs.is_wear_leveling)
         {
-            /* Try to find free pages in the least weared block */
-            find.start_block_address = pifs.header.least_weared_blocks[i].block_address;
-            find.end_block_address = find.start_block_address + 1;
+            /* No static wear leveling on-going, normal operation */
+            /* Dynamic wear leveling */
+            for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_ERROR_NO_MORE_SPACE; i++)
+            {
+                /* Try to find free pages in the least weared block */
+                find.start_block_address = pifs.header.least_weared_blocks[i].block_address;
+                find.end_block_address = find.start_block_address + 1;
+                ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
+            }
+        }
+        else
+        {
+            /* Static wear leveling is copying static file from a lesser weared
+             * block to most weared block */
+            for (i = 0; i < PIFS_MOST_WEARED_BLOCK_NUM && ret == PIFS_ERROR_NO_MORE_SPACE; i++)
+            {
+                /* Try to find free pages in the most weared block */
+                find.start_block_address = pifs.header.most_weared_blocks[i].block_address;
+                find.end_block_address = find.start_block_address + 1;
+                ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
+            }
+        }
+
+        if (ret != PIFS_SUCCESS)
+        {
+            /* No success, try to find page anywhere */
+            find.start_block_address = PIFS_FLASH_BLOCK_RESERVED_NUM;
+            find.end_block_address = PIFS_FLASH_BLOCK_NUM_ALL;
             ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
         }
-    }
-    else
-    {
-        /* Static wear leveling is copying static file from a lesser weared
-         * block to most weared block */
-        for (i = 0; i < PIFS_MOST_WEARED_BLOCK_NUM && ret == PIFS_ERROR_NO_MORE_SPACE; i++)
-        {
-            /* Try to find free pages in the most weared block */
-            find.start_block_address = pifs.header.most_weared_blocks[i].block_address;
-            find.end_block_address = find.start_block_address + 1;
-            ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
-        }
-    }
 
-    if (ret != PIFS_SUCCESS)
-    {
-        /* No success, try to find page anywhere */
-        find.start_block_address = PIFS_FLASH_BLOCK_RESERVED_NUM;
-        find.end_block_address = PIFS_FLASH_BLOCK_NUM_ALL;
-        ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
+        if (ret == PIFS_SUCCESS && a_block_type == PIFS_BLOCK_TYPE_DATA)
+        {
+            pifs.free_data_page_num -= *a_page_count_found;
+        }
     }
 
     return ret;

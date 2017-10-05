@@ -39,7 +39,7 @@
 #include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 3
+#define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
 
 /**
@@ -504,9 +504,7 @@ pifs_status_t pifs_dir_walker_empty(pifs_dirent_t * a_dirent, void * a_func_data
             PIFS_NOTICE_MSG("File '%s' uses block %i\r\n", a_dirent->d_name, empty_block->block_address);
             pifs_tmpnamn(tmp_filename, PIFS_FILENAME_LEN_MAX);
             PIFS_NOTICE_MSG("Copy '%s' to '%s'...\r\n", a_dirent->d_name, tmp_filename);
-            pifs.is_wear_leveling = TRUE;
             ret = pifs_copy(a_dirent->d_name, tmp_filename);
-            pifs.is_wear_leveling = FALSE;
             if (ret == PIFS_SUCCESS)
             {
                 PIFS_NOTICE_MSG("Done\r\n");
@@ -581,57 +579,52 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
     pifs_block_address_t    ba;
     bool_t                  is_emptied;
     pifs_wear_level_cntr_t  diff;
-    pifs_wear_level_cntr_t  percent_limit;
     bool_t                  is_data_block;
 
-    percent_limit = (uint32_t)pifs.header.wear_level_cntr_max * PIFS_STATIC_WEAR_LEVEL_PERCENT / 100;
-    if (percent_limit < 10)
+    if (!pifs.is_wear_leveling)
     {
-        percent_limit = 10;
-    }
+        pifs.is_wear_leveling = TRUE;
 
-    PIFS_NOTICE_MSG("Wear level counter maximum:        %i\r\n",
-                    pifs.header.wear_level_cntr_max);
-    PIFS_NOTICE_MSG("Static wear level limit (delta):   %i\r\n",
-                    PIFS_STATIC_WEAR_LEVEL_LIMIT);
-    PIFS_NOTICE_MSG("Static wear level limit (percent): %i\r\n",
-                    percent_limit);
+        PIFS_NOTICE_MSG("Wear level counter maximum: %i\r\n",
+                        pifs.header.wear_level_cntr_max);
+        PIFS_NOTICE_MSG("Static wear level limit:    %i\r\n",
+                        PIFS_STATIC_WEAR_LEVEL_LIMIT);
 
-    for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_SUCCESS
-         && a_max_block_num; i++)
-    {
-        ba = pifs.header.least_weared_blocks[i].block_address;
-        /* TODO this static wear leveling calculation should be revised! */
-        diff = pifs.header.wear_level_cntr_max - pifs.header.least_weared_blocks[i].wear_level_cntr;
-        ret = pifs_get_pages(TRUE, ba,
-                             1, &free_management_pages, &free_data_pages);
-        is_data_block = pifs_is_block_type(ba, PIFS_BLOCK_TYPE_DATA, &pifs.header);
-        PIFS_NOTICE_MSG("Block %3i, free data pages: %3i, diff: %i\r\n", ba, free_data_pages, diff);
-        if (ret == PIFS_SUCCESS && !free_data_pages
-                && (diff >= PIFS_STATIC_WEAR_LEVEL_LIMIT || diff >= percent_limit)
-                && is_data_block)
+        for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_SUCCESS
+             && a_max_block_num; i++)
         {
-            PIFS_NOTICE_MSG("Empty block %i... \r\n", ba);
-            is_emptied = FALSE;
-            ret = pifs_empty_block(ba, &is_emptied);
-            if (ret == PIFS_SUCCESS)
+            ba = pifs.header.least_weared_blocks[i].block_address;
+            diff = pifs.header.wear_level_cntr_max - pifs.header.least_weared_blocks[i].wear_level_cntr;
+            ret = pifs_get_pages(TRUE, ba,
+                                 1, &free_management_pages, &free_data_pages);
+            is_data_block = pifs_is_block_type(ba, PIFS_BLOCK_TYPE_DATA, &pifs.header);
+            PIFS_NOTICE_MSG("Block %3i, free data pages: %3i, diff: %i\r\n", ba, free_data_pages, diff);
+            if (ret == PIFS_SUCCESS && !free_data_pages
+                    && diff >= PIFS_STATIC_WEAR_LEVEL_LIMIT
+                    && is_data_block)
             {
-                if (is_emptied)
+                PIFS_NOTICE_MSG("Empty block %i... \r\n", ba);
+                is_emptied = FALSE;
+                ret = pifs_empty_block(ba, &is_emptied);
+                if (ret == PIFS_SUCCESS)
                 {
-                    PIFS_NOTICE_MSG("Block %i was emptied\r\n", ba);
+                    if (is_emptied)
+                    {
+                        PIFS_NOTICE_MSG("Block %i was emptied\r\n", ba);
+                    }
+                    else
+                    {
+                        PIFS_NOTICE_MSG("Block %i was not emptied\r\n", ba);
+                    }
                 }
                 else
                 {
-                    PIFS_NOTICE_MSG("Block %i was not emptied\r\n", ba);
+                    PIFS_ERROR_MSG("Cannot empty block %i: %i\r\n", ba, ret);
                 }
-            }
-            else
-            {
-                PIFS_ERROR_MSG("Cannot empty block %i: %i\r\n", ba, ret);
-            }
-            if (is_emptied)
-            {
-                a_max_block_num--;
+                if (is_emptied)
+                {
+                    a_max_block_num--;
+                }
             }
         }
     }

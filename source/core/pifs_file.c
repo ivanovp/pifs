@@ -117,12 +117,6 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
     }
     if (a_file->status == PIFS_SUCCESS)
     {
-#if PIFS_ENABLE_STATIC_WEAR_LEVEL
-        if (a_file->mode_write && !pifs.is_merging)
-        {
-            pifs_static_wear_leveling(PIFS_STATIC_WEAR_LEVEL_BLOCKS);
-        }
-#endif
 #if PIFS_ENABLE_DIRECTORIES
         if (a_file->status == PIFS_SUCCESS)
         {
@@ -299,6 +293,14 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
     PIFS_SET_ERRNO(ret);
 
     PIFS_PUT_MUTEX();
+
+#if PIFS_ENABLE_AUTO_STATIC_WEAR
+    /* Do wear leveling outside of mutex protection */
+    if (file && file->mode_write && !pifs.is_merging)
+    {
+        (void)pifs_static_wear_leveling(PIFS_STATIC_WEAR_LEVEL_BLOCKS);
+    }
+#endif
 
     return (P_FILE*) file;
 }

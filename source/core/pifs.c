@@ -802,6 +802,7 @@ pifs_status_t pifs_init(void)
             /* Current working directory is the root directory */
             pifs.current_entry_list_address = pifs.header.root_entry_list_address;
 #endif
+            ret = pifs_get_free_pages(&i, &pifs.free_data_page_num);
             pifs_initialized = TRUE;
 #if PIFS_DEBUG_LEVEL >= 6
             print_buffer(&pifs.header, sizeof(pifs.header), 0);
