@@ -1574,7 +1574,6 @@ void cmdQuit (char* command, char* params)
 
 /**
  * Print available commands and brief help.
- * TODO Verbose help of commands.
  */
 void cmdHelp (char *command, char *params)
 {

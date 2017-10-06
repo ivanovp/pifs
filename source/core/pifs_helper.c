@@ -152,13 +152,19 @@ char * pifs_yes_no(bool_t expression)
     }
 }
 
-void pifs_print_page_info(size_t addr, pifs_size_t cntr)
+/**
+ * @brief pifs_print_page_info Print information about logical page(s).
+ *
+ * @param[in] a_addr Address of page.
+ * @param[in] a_cntr Number of pages.
+ */
+void pifs_print_page_info(size_t a_addr, pifs_size_t a_cntr)
 {
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
 
-    pa = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) % PIFS_LOGICAL_PAGE_PER_BLOCK;
-    ba = (addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) / PIFS_LOGICAL_PAGE_PER_BLOCK;
+    pa = (a_addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) % PIFS_LOGICAL_PAGE_PER_BLOCK;
+    ba = (a_addr / PIFS_LOGICAL_PAGE_SIZE_BYTE) / PIFS_LOGICAL_PAGE_PER_BLOCK;
     printf("Page                    Free    TBR     Erased\r\n");
     do
     {
@@ -174,13 +180,21 @@ void pifs_print_page_info(size_t addr, pifs_size_t cntr)
             printf("ERROR: Invalid address!\r\n");
             break;
         }
-        if (cntr > 1)
+        if (a_cntr > 1)
         {
             pifs_inc_ba_pa(&ba, &pa);
         }
-    } while (--cntr);
+    } while (--a_cntr);
 }
 
+/**
+ * @brief pifs_print_map_page Read and print map page's data.
+ *
+ * @param[in] a_block_address Block address of page.
+ * @param[in] a_page_address  Page address of page.
+ * @param[in] a_count         Number of pages.
+ * @return PIFS_SUCCESS if all pages were read successfully.
+ */
 pifs_status_t pifs_print_map_page(pifs_block_address_t a_block_address,
                                   pifs_page_address_t a_page_address,
                                   pifs_size_t a_count)
@@ -242,6 +256,12 @@ pifs_status_t pifs_print_map_page(pifs_block_address_t a_block_address,
     return ret;
 }
 
+/**
+ * @brief pifs_is_address_valid Check if address is valid.
+ *
+ * @param[in] a_address Pointer to address to check.
+ * @return TRUE: address is valid. FALSE: address is invalid.
+ */
 bool_t pifs_is_address_valid(pifs_address_t * a_address)
 {
     bool_t valid = (a_address->block_address < PIFS_FLASH_BLOCK_NUM_ALL)

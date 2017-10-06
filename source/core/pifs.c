@@ -772,12 +772,7 @@ pifs_status_t pifs_init(void)
             /* No file system header found, so create brand new one */
             PIFS_WARNING_MSG("No file system header found, creating...\r\n");
             pifs.header.counter = 0;
-            /* FIXME use random block? */
-#if 1
             ba = PIFS_FLASH_BLOCK_RESERVED_NUM;
-#else
-            ba = PIFS_FLASH_BLOCK_RESERVED_NUM + rand() % (PIFS_FLASH_BLOCK_NUM_FS);
-#endif
             pa = 0;
             ret = pifs_header_init(ba, pa, ba + PIFS_MANAGEMENT_BLOCK_NUM, &pifs.header);
             if (ret == PIFS_SUCCESS)

@@ -373,8 +373,6 @@ pifs_status_t pifs_release_file_page(pifs_file_t * a_file,
     pifs_status_t ret;
 
     (void) a_file;
-    (void) a_block_address;
-    (void) a_page_address;
     (void) a_func_data;
 
     if (a_map_page)

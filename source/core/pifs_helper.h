@@ -44,7 +44,7 @@ pifs_status_t pifs_print_map_page(pifs_block_address_t a_block_address,
                                   pifs_page_address_t a_page_address,
                                   pifs_size_t a_count);
 char * pifs_yes_no(bool_t expression);
-void pifs_print_page_info (size_t addr, pifs_size_t cntr);
+void pifs_print_page_info (size_t a_addr, pifs_size_t a_cntr);
 bool_t pifs_is_address_valid(pifs_address_t * a_address);
 bool_t pifs_is_block_type(pifs_block_address_t a_block_address,
                           pifs_block_type_t a_block_type,

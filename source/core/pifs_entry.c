@@ -32,6 +32,7 @@
 #include "pifs_helper.h"
 #include "pifs_delta.h"
 #include "pifs_entry.h"
+#include "pifs_merge.h"
 #include "buffer.h" /* DEBUG */
 
 #define PIFS_DEBUG_LEVEL 2
