@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-07-06 19:12:58 ivanovp {Time-stamp}
+ * Last modify: 2017-10-06 16:48:53 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -580,7 +580,7 @@ void pifs_print_free_space_info(void)
                                  pifs.header.root_entry_list_address.block_address,
                                  pifs.header.root_entry_list_address.page_address);
     }
-    if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)
+    if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_ENTRY)
     {
         PIFS_PRINT_MSG("Free entries:                       %lu\r\n", free_entries);
         PIFS_PRINT_MSG("To be released entries:             %lu\r\n", to_be_released_entries);

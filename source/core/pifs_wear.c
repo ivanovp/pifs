@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-07-06 19:12:58 ivanovp {Time-stamp}
+ * Last modify: 2017-10-06 16:49:35 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -525,10 +525,8 @@ pifs_status_t pifs_dir_walker_empty(pifs_dirent_t * a_dirent, void * a_func_data
                 PIFS_ERROR_MSG("Cannot copy '%s' to '%s'!\r\n",
                                a_dirent->d_name, tmp_filename);
             }
-        }
-        if (ret == PIFS_SUCCESS)
-        {
-            empty_block->is_block_emptied = TRUE;
+
+            empty_block->is_block_emptied = (ret == PIFS_SUCCESS);
         }
     }
 

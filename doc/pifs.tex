@@ -134,10 +134,15 @@ storage devices
 \item[NOR flash] Special type of EEPROMs, which manufactured using NOR gates.
 
 \item[Page] Array of several bytes in the flash memory. Number of bytes is 
-power of two, usually 256 or 512 bytes. See \autoref{fig:flash}.
+power of two, usually 256 or 512 bytes. Data can be programmed in page size
+units. The same page can be programmed multiple times and bits 
+can be programmed one by one this way.
+Pages cannot be erased individually.
+See \autoref{fig:flash}.
 
 \item[Block] Composed of several pages. Usually a block contain 16, 256 or 1024
-pages. See \autoref{fig:flash}.
+pages. Data can be erased in block size units.
+See \autoref{fig:flash}.
 
 \item[Logical page] Allocation unit of file system. User configurable option.
 Larger logical page needs more RAM and less pages in management area.
@@ -145,11 +150,12 @@ Smaller logical page needs less RAM and more pages in management area.
 It shall be larger or equal to page size. 
 Define: \code{PIFS\_LOGICAL\_PAGE\_SIZE\_BYTE}
 
-\item[Erase] Change data bits to one (logical high level). Only a whole block 
-can be erased, which means all bits of the block are set to one.
+\item[Erase] Change data bits to one (logical high level) is called erasing. 
+Only a whole block can be erased, which means all bits of the block are set to one.
 
-\item[Program] Change data bits to zero (logical low level). Each bit of a page
-can be programmed individually.
+\item[Program] Change data bits to zero (logical low level) is called programming. 
+One page can be programmed at a time, but the same page can be programmed
+multiple times. Therefore each bit of a page can be programmed individually.
 
 \item[Block address] Index of block in flash memory. 
 Type: \code{pifs\_block\_address\_t}
@@ -522,7 +528,8 @@ To be released entries:             4
 The API of file system is very similar to standard C API defined in 
 \fname{stdio.h}. The difference is that instead of \code{fopen()}
 \code{pifs\_fopen()} should be called and before opening a file 
-calling of \code{pifs\_init()} is necessary.
+calling of \code{pifs\_init()} is necessary. Furthermore only
+binary mode is supported, opening file in mode "r" is always "rb".
 
 Example:
 \begin{verbatim}

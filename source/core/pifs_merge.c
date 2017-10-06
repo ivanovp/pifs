@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-09-03 07:23:49 ivanovp {Time-stamp}
+ * Last modify: 2017-10-06 16:49:45 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -362,10 +362,8 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
     pifs_page_address_t  new_entry_list_pa = a_new_entry_list_address->page_address;
     pifs_block_address_t old_entry_list_ba = a_old_entry_list_address->block_address;
     pifs_page_address_t  old_entry_list_pa = a_old_entry_list_address->page_address;
-    //pifs_entry_t       * entry = &pifs.entry;
     /* TODO entry can be large, try to avoid store on stack */
-    pifs_entry_t         stack_entry; /* To make function re-entrant */
-    pifs_entry_t       * entry = &stack_entry;
+    pifs_entry_t         entry;
 #if PIFS_ENABLE_DIRECTORIES
     pifs_entry_t         new_dir_entry;
 #endif
@@ -375,25 +373,25 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
     {
         for (i = 0; i < PIFS_ENTRY_PER_PAGE && ret == PIFS_SUCCESS && !end; i++)
         {
-            ret = pifs_read(old_entry_list_ba, old_entry_list_pa, i * PIFS_ENTRY_SIZE_BYTE, entry,
+            ret = pifs_read(old_entry_list_ba, old_entry_list_pa, i * PIFS_ENTRY_SIZE_BYTE, &entry,
                             PIFS_ENTRY_SIZE_BYTE);
             /* Check if entry is valid */
-            if (!pifs_is_buffer_erased(entry, PIFS_ENTRY_SIZE_BYTE))
+            if (!pifs_is_buffer_erased(&entry, PIFS_ENTRY_SIZE_BYTE))
             {
                 PIFS_NOTICE_MSG("name: %s, size: %i, attrib: 0x%02X\r\n",
-                                entry->name, entry->file_size, entry->attrib);
-                if (!pifs_is_entry_deleted(entry))
+                                entry.name, entry.file_size, entry.attrib);
+                if (!pifs_is_entry_deleted(&entry))
                 {
 #if PIFS_ENABLE_DIRECTORIES
-                    if (PIFS_IS_DIR(entry->attrib))
+                    if (PIFS_IS_DIR(entry.attrib))
                     {
-                        if (!PIFS_IS_DOT_DIR(entry->name))
+                        if (!PIFS_IS_DOT_DIR(entry.name))
                         {
                             /* Copy directory */
-                            ret = pifs_mkdir(entry->name);
+                            ret = pifs_mkdir(entry.name);
                             if (ret == PIFS_SUCCESS)
                             {
-                                ret = pifs_find_entry(PIFS_FIND_ENTRY, entry->name,
+                                ret = pifs_find_entry(PIFS_FIND_ENTRY, entry.name,
                                                       &new_dir_entry,
                                                       pifs.current_entry_list_address.block_address,
                                                       pifs.current_entry_list_address.page_address);
@@ -401,13 +399,13 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
                             if (ret == PIFS_SUCCESS)
                             {
                                 /* Enter new directory */
-                                ret = pifs_chdir(entry->name);
+                                ret = pifs_chdir(entry.name);
                             }
                             if (ret == PIFS_SUCCESS)
                             {
                                 /* Copy entry list of directory */
                                 ret = pifs_copy_entry_list(a_old_header, a_new_header,
-                                                           &entry->first_map_address,
+                                                           &entry.first_map_address,
                                                            &new_dir_entry.first_map_address);
                             }
                             if (ret == PIFS_SUCCESS)
@@ -421,7 +419,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
 #endif
                     {
                         /* Create file in the new management area and copy map */
-                        ret = pifs_copy_map(entry, a_old_header, a_new_header);
+                        ret = pifs_copy_map(&entry, a_old_header, a_new_header);
 #if PIFS_DEBUG_LEVEL >= 3
                         k++;
                         if (((k + 1) % PIFS_ENTRY_PER_PAGE) == 0)
@@ -437,7 +435,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
                 }
                 else
                 {
-                    PIFS_NOTICE_MSG("name %s DELETED\r\n", entry->name);
+                    PIFS_NOTICE_MSG("name %s DELETED\r\n", entry.name);
                 }
             }
             else
@@ -511,7 +509,8 @@ pifs_status_t pifs_merge(void)
             /* Store position in file */
             PIFS_WARNING_MSG("rw_pos: %i\r\n", file->rw_pos);
             file_pos[i] = file->rw_pos;
-            /* TODO is this could close data loss? Merge is not allowed here to prevent endless loop. */
+            /* This will never cause data loss. There shall be enough free
+             * entries in the entry list. */
             (void)pifs_internal_fclose(file, FALSE);
         }
     }
@@ -579,10 +578,10 @@ pifs_status_t pifs_merge(void)
     {
         /* Find next management blocks address */
         /* Old header's primary management blocks and data blocks are allowed */
-        /* TODO this won't find PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT as they are */
-        /* marked used. Simply remove 'PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT |' ? */
+        /* This won't find PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT as they are */
+        /* marked used. */
         ret = pifs_find_block_wl(PIFS_MANAGEMENT_BLOCK_NUM,
-                                 PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT | PIFS_BLOCK_TYPE_DATA,
+                                 PIFS_BLOCK_TYPE_DATA,
                                  FALSE,
                                  &old_header,
                                  &next_mgmt_ba);
@@ -701,11 +700,11 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
 //                        free_entries, to_be_released_entries);
     }
     if (ret == PIFS_SUCCESS && (free_data_pages < a_data_page_count_minimum
-                                || free_management_pages == 0 || free_entries == 0))
+                                || free_management_pages == 0 || free_entries <= PIFS_OPEN_FILE_NUM_MAX))
     {
         /* PIFS_OPEN_FILE_NUM_MAX is checked because there should be enough space */
         /* to close all opened files during merge! */
-        if (free_entries < PIFS_OPEN_FILE_NUM_MAX && to_be_released_entries > 0)
+        if (free_entries <= PIFS_OPEN_FILE_NUM_MAX && to_be_released_entries > 0)
         {
             merge = TRUE;
         }

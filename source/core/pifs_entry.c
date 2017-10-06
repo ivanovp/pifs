@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-09-03 07:23:17 ivanovp {Time-stamp}
+ * Last modify: 2017-10-06 16:48:51 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -37,6 +37,17 @@
 #define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
 
+/**
+ * @brief pifs_read_entry Read one file or directory entry from entry list.
+ *
+ * @param[in] a_entry_list_block_address Block address of entry list.
+ * @param[in] a_entry_list_page_address  Page address of entry list.
+ * @param[in] a_entry_idx                Index of entry in the entry list.
+ * @param[out] a_entry                   Pointer to entry to fill.
+ * @param[out] a_is_erased               TRUE: entry is erased (emptry),
+ *                                       FALSE: entry is written.
+ * @return PIFS_SUCCESS if entry was read successfully.
+ */
 pifs_status_t pifs_read_entry(pifs_block_address_t a_entry_list_block_address,
                               pifs_page_address_t a_entry_list_page_address,
                               pifs_size_t a_entry_idx,
@@ -62,6 +73,15 @@ pifs_status_t pifs_read_entry(pifs_block_address_t a_entry_list_block_address,
     return ret;
 }
 
+/**
+ * @brief pifs_write_entry Write one file or directory entry to entry list.
+ *
+ * @param[in] a_entry_list_block_address Block address of entry list.
+ * @param[in] a_entry_list_page_address  Page address of entry list.
+ * @param[in] a_entry_idx                Index of entry in the entry list.
+ * @param[out] a_entry                   Pointer to entry to write.
+ * @return PIFS_SUCCESS if entry was written successfully.
+ */
 pifs_status_t pifs_write_entry(pifs_block_address_t a_entry_list_block_address,
                               pifs_page_address_t a_entry_list_page_address,
                               pifs_size_t a_entry_idx,
@@ -84,11 +104,10 @@ pifs_status_t pifs_write_entry(pifs_block_address_t a_entry_list_block_address,
 
 /**
  * @brief pifs_append_entry Add an item to the entry list.
- * TODO reserve PIFS_OPEN_FILE_NUM_MAX entries for merging!
  *
  * @param a_entry[in] Pointer to the entry to be added.
  * @return PIFS_SUCCESS if entry successfully added.
- * PIFS_ERROR_NO_MORE_SPACE if entry list is full.
+ * PIFS_ERROR_NO_MORE_ENTRY if entry list is full.
  * PIFS_ERROR_FLASH_WRITE if flash write failed.
  */
 pifs_status_t pifs_append_entry(const pifs_entry_t * const a_entry,
@@ -103,9 +122,27 @@ pifs_status_t pifs_append_entry(const pifs_entry_t * const a_entry,
     pifs_entry_t         entry; /* TODO do not store on stack, it can be large! */
     pifs_size_t          i;
     pifs_size_t          j;
+    pifs_size_t          free_entry_count;
+    pifs_size_t          to_be_released_entry_count;
 
     PIFS_DEBUG_MSG("name: [%s] entry list address: %s\r\n", a_entry->name,
                    pifs_ba_pa2str(ba, pa));
+
+    if (!pifs.is_merging)
+    {
+        /* Not merging, normal operation.
+         * PIFS_OPEN_FILE_NUM_MAX entries are reserved for merging, check if 
+         * there is enough entries left.
+         */
+        ret = pifs_count_entries(&free_entry_count, &to_be_released_entry_count,
+                a_entry_list_block_address,
+                a_entry_list_page_address);
+
+        if (ret == PIFS_SUCCESS && free_entry_count <= PIFS_OPEN_FILE_NUM_MAX)
+        {
+            ret = PIFS_ERROR_NO_MORE_ENTRY;
+        }
+    }
 
     for (j = 0; j < PIFS_ENTRY_LIST_SIZE_PAGE && !created && ret == PIFS_SUCCESS; j++)
     {
@@ -129,10 +166,10 @@ pifs_status_t pifs_append_entry(const pifs_entry_t * const a_entry,
         }
         ret = pifs_inc_ba_pa(&ba, &pa);
     }
-    if (!created)
+    if (ret == PIFS_SUCCESS && !created)
     {
         PIFS_ERROR_MSG("No more space!\r\n");
-        ret = PIFS_ERROR_NO_MORE_SPACE;
+        ret = PIFS_ERROR_NO_MORE_ENTRY;
     }
 
     return ret;
@@ -207,7 +244,7 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                         ret = pifs_append_entry(a_entry,
                                                 a_entry_list_block_address,
                                                 a_entry_list_page_address);
-                        if (ret == PIFS_ERROR_NO_MORE_SPACE)
+                        if (ret == PIFS_ERROR_NO_MORE_ENTRY)
                         {
                             /* If there is not enough space, nothing to do */
                             /* pifs_merge_check() tries to release enough space */
@@ -400,7 +437,7 @@ pifs_status_t pifs_clear_entry(const pifs_char_t * a_name,
  *
  * @param a_entry[in] Pointer to the entry to be added.
  * @return PIFS_SUCCESS if entry successfully added.
- * PIFS_ERROR_NO_MORE_SPACE if entry list is full.
+ * PIFS_ERROR_NO_MORE_ENTRY if entry list is full.
  * PIFS_ERROR_FLASH_WRITE if flash write failed.
  */
 pifs_status_t pifs_count_entries(pifs_size_t * a_free_entry_count, pifs_size_t * a_to_be_released_entry_count,
