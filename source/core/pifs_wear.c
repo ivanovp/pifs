@@ -449,6 +449,8 @@ pifs_status_t pifs_check_block(pifs_char_t * a_filename,
     pifs_status_t ret;
     bool_t        is_block_used = FALSE;
 
+    PIFS_GET_MUTEX();
+
     ret = pifs_internal_open(&pifs.internal_file, a_filename, "r", FALSE);
     if (ret == PIFS_SUCCESS)
     {
@@ -469,6 +471,8 @@ pifs_status_t pifs_check_block(pifs_char_t * a_filename,
     }
     *a_is_block_used = is_block_used;
 
+    PIFS_PUT_MUTEX();
+
     return ret;
 }
 
@@ -480,7 +484,8 @@ typedef struct
 
 /**
  * @brief pifs_dir_walker_empty Callback function used during block emptying.
- * TODO copy only pages found in the specified block!
+ * Not only pages found in the specified block are copied, but the whole file
+ * in hope that it will be in one block.
  * TODO use a second level of lock mechanism to prevent user to write to file
  * while it is copied! May be open file for writing as well is sufficient.
  *
@@ -579,6 +584,8 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
     pifs_wear_level_cntr_t  diff;
     bool_t                  is_data_block;
 
+    PIFS_GET_MUTEX();
+
     if (!pifs.is_wear_leveling)
     {
         pifs.is_wear_leveling = TRUE;
@@ -603,7 +610,9 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
             {
                 PIFS_NOTICE_MSG("Empty block %i... \r\n", ba);
                 is_emptied = FALSE;
+                PIFS_PUT_MUTEX();
                 ret = pifs_empty_block(ba, &is_emptied);
+                PIFS_GET_MUTEX();
                 if (ret == PIFS_SUCCESS)
                 {
                     if (is_emptied)
@@ -626,6 +635,8 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
             }
         }
     }
+
+    PIFS_PUT_MUTEX();
 
     return ret;
 }

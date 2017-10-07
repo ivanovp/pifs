@@ -29,14 +29,21 @@
 #include "common.h"
 #include "pifs_config.h"
 #include "pifs.h"
+#include "pifs_debug.h"
 
 /** Task delay is used when flash initialization fails. */
 #define PIFS_OS_DELAY_MS(ms)               usleep(ms * 1000)
-#define PIFS_OS_DEFINE_MUTEX(mutex)        
-#define PIFS_OS_CREATE_MUTEX(mutex)        
+#define PIFS_OS_DEFINE_MUTEX(mutex)
+#define PIFS_OS_CREATE_MUTEX(mutex)        FALSE
 #define PIFS_OS_DELETE_MUTEX(mutex)        
-#define PIFS_OS_GET_MUTEX(mutex)           
-#define PIFS_OS_PUT_MUTEX(mutex)           
-#define PIFS_OS_MUTEX_TYPE                 
+#define PIFS_OS_GET_MUTEX(mutex)           do { \
+      PIFS_ASSERT(mutex == FALSE); \
+      mutex = TRUE; \
+    } while (0)
+#define PIFS_OS_PUT_MUTEX(mutex)           do { \
+      PIFS_ASSERT(mutex == TRUE); \
+      mutex = FALSE; \
+    } while (0)
+#define PIFS_OS_MUTEX_TYPE                 bool_t
 
 #endif /* _INCLUDE_PIFS_OS_H_ */

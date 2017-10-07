@@ -827,6 +827,8 @@ pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
     size_t        to_be_released_data_page_count = 0;
 #endif
 
+    PIFS_GET_MUTEX();
+
     *a_free_management_page_count = 0;
     *a_free_data_page_count = 0;
     ret = pifs_get_free_pages(a_free_management_page_count, a_free_data_page_count);
@@ -848,6 +850,8 @@ pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
         *a_free_data_bytes = *a_free_data_page_count * PIFS_LOGICAL_PAGE_SIZE_BYTE;
     }
 
+    PIFS_PUT_MUTEX();
+
     return ret;
 }
 
@@ -863,6 +867,8 @@ pifs_status_t pifs_get_to_be_released_space(size_t * a_to_be_released_management
 {
     pifs_status_t ret = PIFS_ERROR_GENERAL;
 
+    PIFS_GET_MUTEX();
+
     ret = pifs_get_to_be_released_pages(a_to_be_released_management_page_count, a_to_be_released_data_page_count);
 
     if (ret == PIFS_SUCCESS)
@@ -870,6 +876,8 @@ pifs_status_t pifs_get_to_be_released_space(size_t * a_to_be_released_management
         *a_to_be_released_management_bytes = *a_to_be_released_management_page_count * PIFS_LOGICAL_PAGE_SIZE_BYTE;
         *a_to_be_released_data_bytes = *a_to_be_released_data_page_count * PIFS_LOGICAL_PAGE_SIZE_BYTE;
     }
+
+    PIFS_PUT_MUTEX();
 
     return ret;
 }

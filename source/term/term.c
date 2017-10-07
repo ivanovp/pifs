@@ -1460,6 +1460,10 @@ void cmdBlockInfo (char* command, char* params)
             {
                 cntr = strtoul(param, NULL, 0);
             }
+            else
+            {
+                cntr = 1;
+            }
         }
     }
     //printf("Addr: 0x%X\r\n", addr);

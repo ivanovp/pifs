@@ -388,7 +388,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
                         if (!PIFS_IS_DOT_DIR(entry.name))
                         {
                             /* Copy directory */
-                            ret = pifs_mkdir(entry.name);
+                            ret = pifs_internal_mkdir(entry.name);
                             if (ret == PIFS_SUCCESS)
                             {
                                 ret = pifs_find_entry(PIFS_FIND_ENTRY, entry.name,
@@ -399,7 +399,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
                             if (ret == PIFS_SUCCESS)
                             {
                                 /* Enter new directory */
-                                ret = pifs_chdir(entry.name);
+                                ret = pifs_internal_chdir(entry.name);
                             }
                             if (ret == PIFS_SUCCESS)
                             {
@@ -411,7 +411,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
                             if (ret == PIFS_SUCCESS)
                             {
                                 /* Go back to this directory */
-                                ret = pifs_chdir(PIFS_DOUBLE_DOT_STR);
+                                ret = pifs_internal_chdir(PIFS_DOUBLE_DOT_STR);
                             }
                         }
                     }
@@ -458,6 +458,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
 
 /**
  * @brief pifs_merge Merge management and data pages. Erase to be released pages.
+ * Note: the caller shall provide mutex protection!
  *
  * Steps of merging:
  * #0 Close opened files, but store actual file position.

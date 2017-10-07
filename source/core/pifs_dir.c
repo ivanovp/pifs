@@ -229,20 +229,20 @@ pifs_status_t pifs_resolve_path(const pifs_char_t * a_path,
 bool_t pifs_is_directory_empty(const pifs_char_t * a_path)
 {
     bool_t          empty = TRUE;
-    pifs_DIR      * dir;
+    pifs_dir_t    * dir;
     pifs_dirent_t * dirent;
 
-    dir = pifs_opendir(a_path);
+    dir = pifs_internal_opendir(a_path);
     if (dir != NULL)
     {
-        while ((dirent = pifs_readdir(dir)))
+        while ((dirent = pifs_internal_readdir(dir)))
         {
             if (!PIFS_IS_DOT_DIR(dirent->d_name))
             {
                 empty = FALSE;
             }
         }
-        if (pifs_closedir (dir) != 0)
+        if (pifs_internal_closedir (dir) != 0)
         {
             PIFS_ERROR_MSG("Cannot close directory!\r\n");
         }
@@ -256,10 +256,29 @@ bool_t pifs_is_directory_empty(const pifs_char_t * a_path)
 /**
  * @brief pifs_opendir Open directory for listing.
  *
- * @param[in] a_name Pointer to directory name. 
+ * @param[in] a_name Pointer to directory name.
  * @return Pointer to file system's directory.
  */
 pifs_DIR * pifs_opendir(const pifs_char_t * a_name)
+{
+    pifs_DIR dir;
+
+    PIFS_GET_MUTEX();
+
+    dir = pifs_internal_opendir(a_name);
+
+    PIFS_PUT_MUTEX();
+
+    return dir;
+}
+
+/**
+ * @brief pifs_internal_opendir Open directory for listing.
+ *
+ * @param[in] a_name Pointer to directory name. 
+ * @return Pointer to file system's directory.
+ */
+pifs_dir_t * pifs_internal_opendir(const pifs_char_t * a_name)
 {
     pifs_status_t   ret = PIFS_SUCCESS;
     pifs_size_t     i;
@@ -269,8 +288,6 @@ pifs_DIR * pifs_opendir(const pifs_char_t * a_name)
     pifs_char_t     filename[PIFS_FILENAME_LEN_MAX];
     pifs_entry_t  * entry = &pifs.entry;
 #endif
-
-    PIFS_GET_MUTEX();
 
 #if PIFS_ENABLE_DIRECTORIES
     /* Resolve a_filename's relative/absolute file path and update
@@ -338,9 +355,7 @@ pifs_DIR * pifs_opendir(const pifs_char_t * a_name)
         PIFS_SET_ERRNO(ret);
     }
 
-    PIFS_PUT_MUTEX();
-
-    return (pifs_DIR*) dir;
+    return dir;
 }
 
 /**
@@ -376,13 +391,30 @@ static pifs_status_t pifs_inc_entry(pifs_dir_t * a_dir)
  */
 struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
 {
+    struct pifs_dirent * dirent;
+
+    PIFS_GET_MUTEX();
+
+    dirent = (struct pifs_dirent*) pifs_internal_readdir((pifs_dir_t*) a_dirp);
+
+    PIFS_PUT_MUTEX();
+
+    return dirent;
+}
+
+/**
+ * @brief pifs_internal_readdir Read one directory entry from opened directory.
+ *
+ * @param[in] a_dirp Pointer to the opened directory.
+ * @return Entry if found or NULL.
+ */
+pifs_dirent_t * pifs_internal_readdir(pifs_dir_t * a_dirp)
+{
     pifs_status_t   ret = PIFS_SUCCESS;
     pifs_dir_t    * dir = (pifs_dir_t*) a_dirp;
     pifs_entry_t  * entry = &dir->entry;
     pifs_dirent_t * dirent = NULL;
     bool_t          entry_found = FALSE;
-
-    PIFS_GET_MUTEX();
 
 #if PIFS_USE_DELTA_FOR_ENTRIES
     ret = pifs_read_delta(dir->entry_list_address.block_address,
@@ -434,8 +466,6 @@ struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
     }
     PIFS_SET_ERRNO(ret);
 
-    PIFS_PUT_MUTEX();
-
     return dirent;
 }
 
@@ -447,18 +477,33 @@ struct pifs_dirent * pifs_readdir(pifs_DIR * a_dirp)
  */
 int pifs_closedir(pifs_DIR * const a_dirp)
 {
-    int           ret = -1;
-    pifs_dir_t  * dir = (pifs_dir_t*) a_dirp;
+    int ret;
 
     PIFS_GET_MUTEX();
+
+    ret = pifs_internal_closedir((pifs_dir_t*) a_dirp);
+
+    PIFS_PUT_MUTEX();
+
+    return ret;
+}
+
+/**
+ * @brief pifs_internal_closedir Close opened directory.
+ *
+ * @param[in] a_dirp Pointer to directory to close.
+ * @return 0 if successfully closed, -1 if directory was not opened.
+ */
+int pifs_internal_closedir(pifs_dir_t * const a_dirp)
+{
+    int           ret = -1;
+    pifs_dir_t  * dir = (pifs_dir_t*) a_dirp;
 
     if (dir->is_used)
     {
         dir->is_used = FALSE;
         ret = 0;
     }
-
-    PIFS_PUT_MUTEX();
 
     return ret;
 }
@@ -551,6 +596,25 @@ pifs_status_t pifs_walk_dir(const pifs_char_t * const a_path, bool_t a_recursive
  */
 int pifs_mkdir(const pifs_char_t * const a_filename)
 {
+    int ret;
+
+    PIFS_GET_MUTEX();
+
+    ret = pifs_internal_mkdir(a_filename);
+
+    PIFS_PUT_MUTEX();
+
+    return ret;
+}
+
+/**
+ * @brief pifs_mkdir Create directory.
+ *
+ * @param[in] a_filename Path to create.
+ * @return PIFS_SUCCESS if directory successfully created.
+ */
+pifs_status_t pifs_internal_mkdir(const pifs_char_t * const a_filename)
+{
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_entry_t       * entry = &pifs.entry;
     pifs_block_address_t ba;
@@ -558,8 +622,6 @@ int pifs_mkdir(const pifs_char_t * const a_filename)
     pifs_page_count_t    page_count_found;
     pifs_address_t       entry_list_address = pifs.current_entry_list_address;
     pifs_char_t          filename[PIFS_FILENAME_LEN_MAX];
-
-    PIFS_GET_MUTEX();
 
     /* Resolve a_filename's relative/absolute file path and update
      * entry_list_address regarding that */
@@ -629,8 +691,6 @@ int pifs_mkdir(const pifs_char_t * const a_filename)
         }
     }
 
-    PIFS_PUT_MUTEX();
-
     return ret;
 }
 
@@ -691,13 +751,30 @@ int pifs_rmdir(const pifs_char_t * const a_filename)
  */
 int pifs_chdir(const pifs_char_t * const a_filename)
 {
+    int ret;
+
+    PIFS_GET_MUTEX();
+
+    ret = pifs_internal_chdir(a_filename);
+
+    PIFS_PUT_MUTEX();
+
+    return ret;
+}
+
+/**
+ * @brief pifs_chdir Change current directory.
+ *
+ * @param[in] a_filename Path to directory.
+ * @return PIFS_SUCCESS if directory successfully changed.
+ */
+pifs_status_t pifs_internal_chdir(const pifs_char_t * const a_filename)
+{
     pifs_status_t     ret = PIFS_SUCCESS;
     pifs_entry_t    * entry = &pifs.entry;
     pifs_address_t    entry_list_address;
     pifs_char_t       filename[PIFS_FILENAME_LEN_MAX];
     pifs_char_t       separator[2] = { PIFS_PATH_SEPARATOR_CHAR, 0 };
-
-    PIFS_GET_MUTEX();
 
     entry_list_address = pifs.current_entry_list_address;
 
@@ -746,8 +823,6 @@ int pifs_chdir(const pifs_char_t * const a_filename)
             }
         }
     }
-
-    PIFS_PUT_MUTEX();
 
     return ret;
 }

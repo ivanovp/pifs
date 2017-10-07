@@ -452,8 +452,10 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
     {
         /* Deliberately avoiding return code, it is not an error */
         /* if there is no more space */
+        PIFS_PUT_MUTEX();
         (void)pifs_get_free_space(&free_management_bytes, &free_data_bytes,
                                   &free_management_pages, &free_data_pages);
+        PIFS_GET_MUTEX();
         PIFS_INFO_MSG("Free data area:                     %lu bytes, %lu pages\r\n",
                       free_data_bytes, free_data_pages);
         PIFS_INFO_MSG("Free management area:               %lu bytes, %lu pages\r\n",
@@ -607,6 +609,8 @@ pifs_status_t pifs_init(void)
 #if PIFS_ENABLE_OS
     pifs_mutex = PIFS_OS_CREATE_MUTEX(pifs_mutex);
 #endif
+
+    PIFS_GET_MUTEX();
 
     pifs_initialized = FALSE;
     pifs.header_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
@@ -808,6 +812,8 @@ pifs_status_t pifs_init(void)
 #endif
         }
     }
+
+    PIFS_PUT_MUTEX();
 
     return ret;
 }

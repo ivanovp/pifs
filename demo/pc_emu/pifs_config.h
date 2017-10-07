@@ -23,7 +23,7 @@
 #ifndef _INCLUDE_PIFS_CONFIG_H_
 #define _INCLUDE_PIFS_CONFIG_H_
 
-#define PIFS_ENABLE_OS                  0u  /**< 1: OS is used, 0: no OS or FS is used from one task */
+#define PIFS_ENABLE_OS                  1u  /**< 1: OS is used, 0: no OS or FS is used from one task */
 #define PIFS_TASK_COUNT_MAX             4u  /**< Maximum number of tasks which use FS */
 /** PIFS_LOGICAL_PAGE_SIZE_BYTE
  * Allocation unit of file system.

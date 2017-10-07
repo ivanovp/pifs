@@ -78,6 +78,7 @@ pifs_status_t pifs_check_open_mode(pifs_file_t * a_file)
  * Note: this function shall be re-entrant, as it can be called from
  * pifs_merge(). Level of recursion is one and the second open
  * uses the pifs.internal_file.
+ * Note: the caller shall provide mutex protection!
  *
  * @param[in] a_file                Pointer to internal file structure.
  * @param[in] a_filename            Pointer to file name.
@@ -422,6 +423,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
 
 /**
  * @brief pifs_internal_fwrite Write to file. Works like fwrite().
+ * Note: the caller shall provide mutex protection!
  *
  * @param[in] a_data    Pointer to buffer to write.
  * @param[in] a_size    Size of data element to write.
@@ -738,6 +740,8 @@ int pifs_fflush(P_FILE * a_file)
 
 /**
  * @brief pifs_internal_fflush Flush cache, update file size.
+ * Note: the caller shall provide mutex protection!
+ *
  * @param[in] a_file          File to flush.
  * @param[in] a_is_merge_allowed TRUE: merge is allowed when not enough space. FALSE: merge is not allowed.
  * @return 0 if file close, PIFS_EOF if error occurred.
@@ -792,6 +796,8 @@ int pifs_fclose(P_FILE * a_file)
 
 /**
  * @brief pifs_fclose Close file. Works like fclose().
+ * Note: the caller shall provide mutex protection!
+ *
  * @param[in] a_file File to close.
  * @param[in] a_is_merge_allowed TRUE: merge is allowed when not enough space. FALSE: merge is not allowed.
  * @return 0 if file close, PIFS_EOF if error occurred.
@@ -838,6 +844,7 @@ int pifs_fseek(P_FILE * a_file, long int a_offset, int a_origin)
 
 /**
  * @brief pifs_internal_fseek Seek in opened file.
+ * Note: the caller shall provide mutex protection!
  *
  * @param[in] a_file    File to seek.
  * @param[in] a_offset  Offset to seek.
@@ -1031,6 +1038,7 @@ void pifs_rewind(P_FILE * a_file)
 
 /**
  * @brief pifs_internal_rewind Set file positions to zero.
+ * Note: the caller shall provide mutex protection!
  *
  * @param[in] a_file Pointer to file.
  */
@@ -1130,6 +1138,7 @@ int pifs_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data)
 /**
  * @brief pifs_internal_fsetuserdata Non-standard function to set user defined data of
  * file.
+ * Note: the caller shall provide mutex protection!
  *
  * @param[in] a_file        Pointer to file.
  * @param[out] a_user_data  Pointer to user data structure to set.
@@ -1179,6 +1188,7 @@ int pifs_remove(const pifs_char_t * a_filename)
 
 /**
  * @brief pifs_internal_remove Remove file.
+ * Note: the caller shall provide mutex protection!
  *
  * @param[in] a_filename Pointer to filename to be removed.
  * @param[in] a_is_merge_allowed TRUE: merge is allowed when not enough space. FALSE: merge is not allowed.
@@ -1382,6 +1392,7 @@ bool_t pifs_is_file_exist(const pifs_char_t * a_filename)
 /**
  * @brief pifs_is_file_exist Check whether a file exist.
  * This is a non-standard file operation.
+ * Note: the caller shall provide mutex protection!
  *
  * @param[in] a_filename File name to be checked.
  * @return TRUE: if file exist. FALSE: file does not exist.
