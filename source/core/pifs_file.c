@@ -795,7 +795,7 @@ int pifs_fclose(P_FILE * a_file)
 }
 
 /**
- * @brief pifs_fclose Close file. Works like fclose().
+ * @brief pifs_internal_fclose Close file. Works like fclose().
  * Note: the caller shall provide mutex protection!
  *
  * @param[in] a_file File to close.

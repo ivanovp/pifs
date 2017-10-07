@@ -33,7 +33,8 @@
 
 /** Task delay is used when flash initialization fails. */
 #define PIFS_OS_DELAY_MS(ms)               usleep(ms * 1000)
-#define PIFS_OS_DEFINE_MUTEX(mutex)
+/* For mutex debugging */
+#define PIFS_OS_DEFINE_MUTEX(mutex)        extern bool_t mutex
 #define PIFS_OS_CREATE_MUTEX(mutex)        FALSE
 #define PIFS_OS_DELETE_MUTEX(mutex)        
 #define PIFS_OS_GET_MUTEX(mutex)           do { \
