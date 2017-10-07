@@ -1484,13 +1484,23 @@ void cmdBlockInfo (char* command, char* params)
         }
         if (ret == PIFS_SUCCESS)
         {
-            printf("%5i | %-7s | %5i | %4i | %4i | %4i | %4i\r\n", ba,
-                   block_type2str(ba),
-                   wear_level.wear_level_cntr,
-                   free_data_pages,
-                   free_management_pages,
-                   to_be_released_data_pages,
-                   to_be_released_management_pages);
+            if (!pifs_is_block_type(ba, PIFS_BLOCK_TYPE_SECONDARY_MANAGEMENT, &pifs.header))
+            {
+                /* Not secondary management block */
+                printf("%5i | %-7s | %5i | %4i | %4i | %4i | %4i\r\n", ba,
+                       block_type2str(ba),
+                       wear_level.wear_level_cntr,
+                       free_data_pages,
+                       free_management_pages,
+                       to_be_released_data_pages,
+                       to_be_released_management_pages);
+            }
+            else
+            {
+                printf("%5i | %-7s | %5i |  N/A |  N/A |  N/A |  N/A\r\n", ba,
+                       block_type2str(ba),
+                       wear_level.wear_level_cntr);
+            }
         }
         else
         {
