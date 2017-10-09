@@ -293,15 +293,18 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
 
     PIFS_SET_ERRNO(ret);
 
-    PIFS_PUT_MUTEX();
-
 #if PIFS_ENABLE_AUTO_STATIC_WEAR
     /* Do wear leveling outside of mutex protection */
     if (file && file->mode_write && !pifs.is_merging)
     {
+        PIFS_PUT_MUTEX();
         (void)pifs_static_wear_leveling(PIFS_STATIC_WEAR_LEVEL_BLOCKS);
     }
+    else
 #endif
+    {
+        PIFS_PUT_MUTEX();
+    }
 
     return (P_FILE*) file;
 }
@@ -556,9 +559,20 @@ size_t pifs_internal_fwrite(const void * a_data, size_t a_size, size_t a_count, 
                     {
                         page_count_needed_limited = PIFS_MAP_PAGE_COUNT_INVALID - 1;
                     }
-                    file->status = pifs_find_free_page_wl(1, page_count_needed_limited,
-                                                          PIFS_BLOCK_TYPE_DATA,
-                                                          &ba, &pa, &page_count_found);
+                    /* Find a block in the previous data block */
+                    file->status = pifs_find_page(1, page_count_needed_limited,
+                                                  PIFS_BLOCK_TYPE_DATA,
+                                                  TRUE, FALSE,
+                                                  file->map_entry.address.block_address,
+                                                  &ba, &pa, &page_count_found);
+                    if (file->status == PIFS_ERROR_NO_MORE_SPACE
+                            || ba != file->map_entry.address.block_address)
+                    {
+                        /* If last used block is full, try to find a not so weared block */
+                        file->status = pifs_find_free_page_wl(1, page_count_needed_limited,
+                                                              PIFS_BLOCK_TYPE_DATA,
+                                                              &ba, &pa, &page_count_found);
+                    }
                     PIFS_DEBUG_MSG("%u pages found. %s, status: %i\r\n",
                                    page_count_found, pifs_ba_pa2str(ba, pa), file->status);
                     if (file->status == PIFS_SUCCESS)
