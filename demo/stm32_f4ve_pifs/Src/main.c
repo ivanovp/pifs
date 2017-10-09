@@ -780,6 +780,8 @@ void watchdogTask(void const * arg)
     }
 }
 
+#define MEAS_SIZE   42
+
 void save_measurement(void)
 {
     typedef struct __attribute__((packed))
@@ -792,7 +794,8 @@ void save_measurement(void)
         //float    hum;
         //float    temp;
     } meas_t;
-    meas_t            meas;
+    static meas_t     meas[MEAS_SIZE];
+    static uint8_t    meas_idx = 0;
     float             hum;
     float             temp;
     P_FILE          * file;
@@ -806,45 +809,51 @@ void save_measurement(void)
     stat = HAL_RTC_GetTime(&hrtc, &time, RTC_FORMAT_BIN);
     if (stat == HAL_OK)
     {
-        UART_printf("Hour: %i, min: %i, sec: %i\r\n", time.Hours, time.Minutes, time.Seconds);
-    }
-    /* After date shall be read */
-    stat = HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BIN);
-    if (stat == HAL_OK)
-    {
-        UART_printf("Year: %i, month: %i, day: %i\r\n", date.Year, date.Month, date.Date);
-    }
-
-    hum = DHT_getHumPercent();
-    temp = DHT_getTempCelsius();
-    UART_printf("Humidity:    %i.%i%%\r\n", (int)hum, (int)fabsf ((hum - (int)hum) * 10.0f));
-    UART_printf("Temperature: %i.%i C\r\n", (int)temp, (int)fabsf ((temp - (int)temp) * 10.0f));
-    snprintf(filename, sizeof(filename), "%02i%02i%02i.dat", date.Year, date.Month, date.Date);
-
-    file = pifs_fopen(filename, "a");
-    if (file)
-    {
-        meas.hour = time.Hours;
-        meas.min = time.Minutes;
-        meas.sec = time.Seconds >> 1;
-        //meas.hum = hum;
-        //meas.temp = temp;
-        meas.hum = (int16_t)(hum * 10.0f);
-        meas.temp = (int16_t)(temp * 10.0f);
-        written_bytes = pifs_fwrite(&meas, 1, sizeof(meas), file);
-        if (written_bytes == sizeof(meas))
+        /* After date shall be read */
+        stat = HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BIN);
+        if (stat == HAL_OK)
         {
-            UART_printf("Data saved!\r\n");
+            UART_printf("%02i-%02i-%02i %02i:%02i:%02i  ",
+                        date.Year, date.Month, date.Date,
+                        time.Hours, time.Minutes, time.Seconds);
+            hum = DHT_getHumPercent();
+            temp = DHT_getTempCelsius();
+            UART_printf("Humidity: %i.%i%%  ", (int)hum, (int)fabsf ((hum - (int)hum) * 10.0f));
+            UART_printf("T: %i.%i C  ", (int)temp, (int)fabsf ((temp - (int)temp) * 10.0f));
+            snprintf(filename, sizeof(filename), "%02i%02i%02i.dat", date.Year, date.Month, date.Date);
+            UART_printf("%i/%i\r\n", meas_idx + 1, MEAS_SIZE);
+
+            meas[meas_idx].hour = time.Hours;
+            meas[meas_idx].min = time.Minutes;
+            meas[meas_idx].sec = time.Seconds >> 1;
+            //meas[meas_idx].hum = hum;
+            //meas[meas_idx].temp = temp;
+            meas[meas_idx].hum = (int16_t)(hum * 10.0f);
+            meas[meas_idx].temp = (int16_t)(temp * 10.0f);
+            meas_idx++;
+            if (meas_idx == MEAS_SIZE)
+            {
+                meas_idx = 0;
+                file = pifs_fopen(filename, "a");
+                if (file)
+                {
+                    written_bytes = pifs_fwrite(&meas, 1, sizeof(meas), file);
+                    if (written_bytes == sizeof(meas))
+                    {
+                        UART_printf("Data saved!\r\n");
+                    }
+                    else
+                    {
+                        UART_printf("ERROR: Cannot save data. Code: %i\r\n", pifs_errno);
+                    }
+                    pifs_fclose(file);
+                }
+                else
+                {
+                    UART_printf("ERROR: Cannot open file!\r\n");
+                }
+            }
         }
-        else
-        {
-            UART_printf("ERROR: Cannot save data. Code: %i\r\n", pifs_errno);
-        }
-        pifs_fclose(file);
-    }
-    else
-    {
-        UART_printf("ERROR: Cannot open file!\r\n");
     }
 }
 
