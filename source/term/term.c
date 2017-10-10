@@ -1691,7 +1691,7 @@ parserCommand_t parserCommands[] =
     {"tdir",        "Test Pi file system: directories", cmdTestPifsDir},
 #endif
 #if tskKERNEL_VERSION_MAJOR >= 8
-    {"tl",          "Task list",                        cmdTaskList},
+    {"tskl",        "Task list",                        cmdTaskList},
 #endif
     {"y",           "Debug command",                    cmdDebug},
 #if ENABLE_DHT
