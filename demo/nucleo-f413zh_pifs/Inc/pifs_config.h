@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-08-15 16:26:07 ivanovp {Time-stamp}
+ * Last modify: 2017-10-10 20:53:44 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -80,6 +80,10 @@ typedef struct
     uint32_t ctime;
     uint32_t cdate;
 } pifs_user_data_t;
+#endif
+
+#ifndef __weak
+#define __weak __attribute__((weak))
 #endif
 
 #endif /* _INCLUDE_PIFS_CONFIG_H_ */
