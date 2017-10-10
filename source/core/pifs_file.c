@@ -822,7 +822,21 @@ int pifs_internal_fclose(P_FILE * a_file, bool_t a_is_merge_allowed)
     pifs_file_t * file = (pifs_file_t*) a_file;
 
     PIFS_NOTICE_MSG("filename: '%s'\r\n", file->entry.name);
-    ret = pifs_internal_fflush(a_file, a_is_merge_allowed);
+#if PIFS_ENABLE_USER_DATA && PIFS_UPDATE_USER_DATA_ON_FCLOSE
+    if (!pifs.is_merging && file->mode_write)
+    {
+        ret = pifs_update_userdata(&file->entry.user_data);
+        if (ret == PIFS_SUCCESS)
+        {
+            /* File entry will be updated */
+            file->is_size_changed = TRUE;
+        }
+    }
+#endif
+    if (ret == PIFS_EOF || ret == PIFS_SUCCESS)
+    {
+        ret = pifs_internal_fflush(a_file, a_is_merge_allowed);
+    }
     if (ret == 0)
     {
         file->is_opened = FALSE;
@@ -1179,6 +1193,23 @@ int pifs_internal_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_
 
     return ret;
 }
+
+#if PIFS_UPDATE_USER_DATA_ON_FCLOSE
+/**
+ * @brief pifs_update_userdata User call-back function which is called when
+ * pifs_fclose() is used.
+ *
+ * @param[inout] a_user_data User data to be updated.
+ * @return 0: if user-data was updated successfully. -1 (PIFS_EOF) user-data
+ * was not updated.
+ */
+__weak int pifs_update_userdata(pifs_user_data_t * a_user_data)
+{
+    (void) a_user_data;
+
+    return PIFS_EOF;
+}
+#endif
 #endif
 
 /**

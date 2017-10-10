@@ -434,9 +434,23 @@ void cmdStaticWear(char* command, char* params)
     printf("Ret: %i\r\n", ret);
 }
 
+#if tskKERNEL_VERSION_MAJOR >= 8
+void cmdTaskList(char * command, char * params)
+{
+    static char buf[6 * 40]; /* 40 bytes per task */
+
+    (void) command;
+    (void) params;
+
+    vTaskList(buf);
+    puts(buf);
+}
+#endif
+
 #if ENABLE_DHT
 extern void ftest(void);
 #endif
+
 
 void cmdDebug (char* command, char* params)
 {
@@ -448,7 +462,8 @@ void cmdDebug (char* command, char* params)
 
 #if ENABLE_DHT
     ftest();
-#else
+#endif
+#if 0
     printf("Find to be released block...\r\n");
     ba = PIFS_BLOCK_ADDRESS_INVALID;
     ret = pifs_find_to_be_released_block(1, PIFS_BLOCK_TYPE_DATA, PIFS_FLASH_BLOCK_RESERVED_NUM,
@@ -1674,6 +1689,9 @@ parserCommand_t parserCommands[] =
     {"td",          "Test Pi file system: delta",       cmdTestPifsDelta},
 #if PIFS_ENABLE_DIRECTORIES
     {"tdir",        "Test Pi file system: directories", cmdTestPifsDir},
+#endif
+#if tskKERNEL_VERSION_MAJOR >= 8
+    {"tl",          "Task list",                        cmdTaskList},
 #endif
     {"y",           "Debug command",                    cmdDebug},
 #if ENABLE_DHT

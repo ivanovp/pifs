@@ -3,7 +3,7 @@ pifs - Pi file system
 File system for embedded system with NOR flash media
 
 Features:
- * Small memory footprint
+ * Small memory footprint (3-4 KiB static, 1-3 KiB stack/task)
  * Files can be opened for update ("r+", "w+", "a+" modes are supported)
  * Size of logical page is user-defined
  * Cache buffer for page (currently only one page is cached)
