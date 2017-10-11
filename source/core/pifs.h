@@ -288,6 +288,11 @@ extern PIFS_OS_MUTEX_TYPE pifs_mutex;
 #define PIFS_PUT_MUTEX()
 #endif
 
+/** This is the only place, where Pi number can be found in the source code
+ * of Pi file system and it is not used at all!
+ */
+#define PIFS_PI              3.14159265358979323846
+
 /**
  * Each block has specified role in the file system:
  * management area, data area or reserved.

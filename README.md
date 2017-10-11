@@ -1,6 +1,7 @@
 pifs - Pi file system 
 =====================
-File system for embedded system with NOR flash media
+File system for embedded system with NOR flash media.
+It was named after greek letter Pi and it does not use the Pi constant 3.14159...
 
 Features:
  * Small memory footprint (3-4 KiB static, 1-3 KiB stack/task)
