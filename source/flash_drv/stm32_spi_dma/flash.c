@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-08-19 17:20:52 ivanovp {Time-stamp}
+ * Last modify: 2017-10-11 18:21:06 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -158,11 +158,8 @@ pifs_status_t pifs_flash_wait(void)
 {
     pifs_status_t ret = PIFS_ERROR_FLASH_TIMEOUT;
     uint32_t      tick_start;
-    uint32_t      tick_end;
 
-    /* TODO handle when tick_end overflows! */
     tick_start = osKernelSysTick();
-    tick_end = tick_start + FLASH_WRITE_TIMEOUT_TICK;
     do
     {
         SET_CS_LOW();
@@ -177,7 +174,7 @@ pifs_status_t pifs_flash_wait(void)
             }
         }
         SET_CS_HIGH();
-    } while (ret != PIFS_SUCCESS && tick_end > osKernelSysTick());
+    } while (ret != PIFS_SUCCESS && (osKernelSysTick() - tick_start) < FLASH_WRITE_TIMEOUT_TICK);
 
     return ret;
 }

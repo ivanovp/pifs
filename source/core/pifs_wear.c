@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-10-06 16:49:35 ivanovp {Time-stamp}
+ * Last modify: 2017-10-11 18:20:57 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -241,7 +241,18 @@ pifs_status_t pifs_copy_wear_level_list(pifs_header_t * a_old_header, pifs_heade
 }
 
 /**
- * @brief pifs_get_block_wear_stats Get least weared block.
+ * @brief pifs_get_block_wear_stats Get least and most weared block.
+ *
+ * @param[in] a_block_type           Block type to take into account. Example: PIFS_BLOCK_TYPE_DATA
+ * @param[in] a_header               Pointer to file system's header. Usually &pifs.header
+ * @param[out] a_block_address_min   Pointer to block address of least weared block 
+ *                                   or NULL if data is not relevant.
+ * @param[out] a_block_address_max   Pointer to block address of most weared block
+ *                                   or NULL if data is not relevant.
+ * @param[out] a_wear_level_cntr_min Pointer to wear level counter of least weared block
+ *                                   or NULL if data is not relevant.
+ * @param[out] a_wear_level_cntr_max Pointer to wear level counter of most weared block
+ *                                   or NULL if data is not relevant.
  *
  * @return PIFS_SUCCESS if get successfully.
  */
@@ -322,6 +333,10 @@ pifs_status_t pifs_generate_least_weared_blocks(pifs_header_t * a_header)
     pifs_size_t               i;
     pifs_size_t               j;
     bool_t                    used = FALSE;
+#if 0
+    pifs_size_t               management_page_count;
+    pifs_size_t               data_page_count;
+#endif
 
     ret = pifs_get_block_wear_stats(PIFS_BLOCK_TYPE_DATA,
             a_header,
@@ -355,8 +370,20 @@ pifs_status_t pifs_generate_least_weared_blocks(pifs_header_t * a_header)
                             && wear_level_entry.wear_level_cntr >= wear_level_cntr_min
                             && wear_level_entry.wear_level_cntr < last_wear_level_cntr )
                     {
+#if 1
                         a_header->least_weared_blocks[i].block_address = ba;
                         last_wear_level_cntr = wear_level_entry.wear_level_cntr;
+#else
+                        /* Get free pages in this block */
+                        /* TODO Unfortunately this will get pages for the same block again and again */
+                        /* Needs to be optimized */
+                        ret = pifs_get_pages(TRUE, ba, 1, &management_page_count, &data_page_count);
+                        if ( ret == PIFS_SUCCESS && data_page_count > 0)
+                        {
+                            a_header->least_weared_blocks[i].block_address = ba;
+                            last_wear_level_cntr = wear_level_entry.wear_level_cntr;
+                        }
+#endif
                     }
                 }
             }
@@ -385,6 +412,10 @@ pifs_status_t pifs_generate_most_weared_blocks(pifs_header_t * a_header)
     pifs_size_t               i;
     pifs_size_t               j;
     bool_t                    used = FALSE;
+#if 0
+    pifs_size_t               management_page_count;
+    pifs_size_t               data_page_count;
+#endif
 
     ret = pifs_get_block_wear_stats(PIFS_BLOCK_TYPE_DATA,
             a_header,
@@ -397,7 +428,6 @@ pifs_status_t pifs_generate_most_weared_blocks(pifs_header_t * a_header)
     for (i = 1; i < PIFS_MOST_WEARED_BLOCK_NUM && ret == PIFS_SUCCESS; i++)
     {
         last_wear_level_cntr = 0;
-//        last_wear_level_cntr = PIFS_WEAR_LEVEL_CNTR_MAX;
         for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_FS
              && ret == PIFS_SUCCESS; ba++)
         {
@@ -419,8 +449,20 @@ pifs_status_t pifs_generate_most_weared_blocks(pifs_header_t * a_header)
                             && wear_level_entry.wear_level_cntr <= wear_level_cntr_max
                             && wear_level_entry.wear_level_cntr > last_wear_level_cntr )
                     {
+#if 1
                         a_header->most_weared_blocks[i].block_address = ba;
                         last_wear_level_cntr = wear_level_entry.wear_level_cntr;
+#else
+                        /* Get free pages in this block */
+                        /* TODO Unfortunately this will get pages for the same block again and again */
+                        /* Needs to be optimized */
+                        ret = pifs_get_pages(TRUE, ba, 1, &management_page_count, &data_page_count);
+                        if ( ret == PIFS_SUCCESS && data_page_count > 0)
+                        {
+                            a_header->most_weared_blocks[i].block_address = ba;
+                            last_wear_level_cntr = wear_level_entry.wear_level_cntr;
+                        }
+#endif
                     }
                 }
             }
@@ -486,8 +528,6 @@ typedef struct
  * @brief pifs_dir_walker_empty Callback function used during block emptying.
  * Not only pages found in the specified block are copied, but the whole file
  * in hope that it will be in one block.
- * TODO use a second level of lock mechanism to prevent user to write to file
- * while it is copied! May be open file for writing as well is sufficient.
  *
  * @param[in] a_dirent Pointer to directory entry.
  *

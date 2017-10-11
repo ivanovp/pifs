@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-10-06 16:49:45 ivanovp {Time-stamp}
+ * Last modify: 2017-10-11 18:20:53 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -362,7 +362,6 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
     pifs_page_address_t  new_entry_list_pa = a_new_entry_list_address->page_address;
     pifs_block_address_t old_entry_list_ba = a_old_entry_list_address->block_address;
     pifs_page_address_t  old_entry_list_pa = a_old_entry_list_address->page_address;
-    /* TODO entry can be large, try to avoid store on stack */
     pifs_entry_t         entry;
 #if PIFS_ENABLE_DIRECTORIES
     pifs_entry_t         new_dir_entry;
@@ -462,7 +461,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
  *
  * Steps of merging:
  * #0 Close opened files, but store actual file position.
- * #1 Erase next management blocks
+ * #1 Erase next management blocks.
  * #2 Initialize file system's header, but not write. Next management blocks'
  *    address is not initialized and checksum is not calculated.
  * #3 Copy wear level list.

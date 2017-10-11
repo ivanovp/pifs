@@ -823,9 +823,12 @@ int pifs_internal_fclose(P_FILE * a_file, bool_t a_is_merge_allowed)
 
     PIFS_NOTICE_MSG("filename: '%s'\r\n", file->entry.name);
 #if PIFS_ENABLE_USER_DATA && PIFS_UPDATE_USER_DATA_ON_FCLOSE
-    if (!pifs.is_merging && file->mode_write)
+    /* Not checking file->mode_write, callback function should decide if it
+     * is necessary to update user-data or not.
+     */
+    if (!pifs.is_merging)
     {
-        ret = pifs_update_userdata(&file->entry.user_data);
+        ret = pifs_update_userdata_cb(file->mode_write, &file->entry.user_data);
         if (ret == PIFS_SUCCESS)
         {
             /* File entry will be updated */
@@ -1199,12 +1202,14 @@ int pifs_internal_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_
  * @brief pifs_update_userdata User call-back function which is called when
  * pifs_fclose() is used.
  *
- * @param[inout] a_user_data User data to be updated.
+ * @param[in]    a_is_mode_write  TRUE: file is opened for writing.
+ * @param[inout] a_user_data      User data to be updated.
  * @return 0: if user-data was updated successfully. -1 (PIFS_EOF) user-data
  * was not updated.
  */
-__weak int pifs_update_userdata(pifs_user_data_t * a_user_data)
+__weak int pifs_update_userdata_cb(bool_t a_is_mode_write, pifs_user_data_t * a_user_data)
 {
+    (void) a_is_mode_write;
     (void) a_user_data;
 
     return PIFS_EOF;
@@ -1291,8 +1296,7 @@ int pifs_internal_remove(const pifs_char_t * a_filename, bool_t a_is_merge_allow
 int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
 {
     pifs_status_t       ret;
-    pifs_entry_t        entry; /* TODO try to avoid store on stack */
-    //pifs_entry_t      * entry = &pifs.entry; // It causes error! pifs_resolve_path uses as well
+    pifs_entry_t        entry;
     pifs_address_t      entry_list_address;
 #if PIFS_ENABLE_DIRECTORIES
     pifs_char_t         oldname[PIFS_FILENAME_LEN_MAX];
@@ -1361,7 +1365,8 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
  * Note: this function shall not use pifs.internal_file as merge could be
  * needed which uses the pifs.internal_file!
  *
- * @param[in] a_oldname Existing file's name.
+ * @param[in] a_oldname Existing file's name. Opened in 'r+' mode to prevent
+ *                      modifying from another task during copy.
  * @param[in] a_newname New file name.
  * @return 0: if copy was successfuly. Other: error occurred.
  */
@@ -1375,7 +1380,7 @@ int pifs_copy(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
 
     PIFS_NOTICE_MSG("oldname: '%s', newname: '%s'\r\n", a_oldname, a_newname);
 
-    file = pifs_fopen(a_oldname, "r");
+    file = pifs_fopen(a_oldname, "r+");
     if (file)
     {
         file2 = pifs_fopen(a_newname, "w");

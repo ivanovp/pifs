@@ -183,7 +183,7 @@ long int pifs_ftell(P_FILE * a_file);
 int pifs_fgetuserdata(P_FILE * a_file, pifs_user_data_t * a_user_data);
 int pifs_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data);
 #if PIFS_UPDATE_USER_DATA_ON_FCLOSE
-int pifs_update_userdata(pifs_user_data_t * a_user_data);
+int pifs_update_userdata_cb(bool_t a_is_mode_write, pifs_user_data_t * a_user_data);
 #endif
 #endif
 int pifs_remove(const pifs_char_t * a_filename);

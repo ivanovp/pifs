@@ -389,7 +389,6 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 #if PIFS_ENABLE_ATTRIBUTES
     uint8_t                 attrib;                         /**< Attribute's of file */
 #endif
-    /* TODO implement file date and time! modified, created, etc? */
 #if PIFS_ENABLE_USER_DATA
     pifs_user_data_t        user_data;          /**< User defined data */
 #endif
