@@ -475,12 +475,8 @@ void cmdTaskList(char * command, char * params)
 extern void ftest(void);
 #endif
 
-
 void cmdDebug (char* command, char* params)
 {
-    pifs_status_t ret;
-    pifs_block_address_t ba;
-
     (void) command;
     (void) params;
 
@@ -488,6 +484,9 @@ void cmdDebug (char* command, char* params)
     ftest();
 #endif
 #if 0
+    pifs_status_t ret;
+    pifs_block_address_t ba;
+
     printf("Find to be released block...\r\n");
     ba = PIFS_BLOCK_ADDRESS_INVALID;
     ret = pifs_find_to_be_released_block(1, PIFS_BLOCK_TYPE_DATA, PIFS_FLASH_BLOCK_RESERVED_NUM,
