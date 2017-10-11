@@ -3,8 +3,11 @@ pifs - Pi file system
 File system for embedded system with NOR flash media.
 It was named after greek letter Pi and it does not use the Pi constant 3.14159...
 
+For more detailed documentation see pifs.pdf in doc/ directory.
+
 Features:
  * Small memory footprint (3-4 KiB static, 1-3 KiB stack/task)
+ * Compatible with standard C functions: fopen(), fwrite(), fread(), fclose() 
  * Files can be opened for update ("r+", "w+", "a+" modes are supported)
  * Size of logical page is user-defined
  * Cache buffer for page (currently only one page is cached)

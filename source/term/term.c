@@ -1700,7 +1700,6 @@ parserCommand_t parserCommands[] =
     {"sw",          "Static wear leveling",             cmdStaticWear},
     {"fs",          "Print flash's statistics",         cmdFlashStat},
     {"erase",       "Erase flash",                      cmdErase},
-    {"e",           "Erase flash",                      cmdErase},
     {"tstflash",    "Test flash",                       cmdTestFlash},
     {"tstpifs",     "Test Pi file system: all",         cmdTestPifs},
     {"tp",          "Test Pi file system: all",         cmdTestPifs},

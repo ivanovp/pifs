@@ -107,6 +107,8 @@ in STM32 HAL's sources.
 \begin{itemize}
 \item Small memory footprint (3-4 KiB static, 1-3 KiB stack/task)
 \item Files can be opened for update ("r+", "w+", "a+" modes are supported)
+\item Compatible with standard C functions: \code{fopen()}, \code{fwrite()}, 
+\code{fread()}, \code{fclose()}
 \item Size of logical page is user-defined
 \item Cache buffer for page (currently only one page is cached)
 \item Directory handling
@@ -328,17 +330,17 @@ address of map page. Example: \code{map 0x10D00}
 \item[pi]       Check if page is free, to be released or erased.
 \item[w]        Print wear level list, which is stored in the file system's
 header.
-\item[lw]       Generate least weared blocks' list.
+\item[lw]       Print least weared blocks' list.
+\item[mw]       Print most weared blocks' list.
 \item[eb]       Empty block: copy files which resides on the specified block.
 This command should be used only on blocks which has no free pages at all.
 Used during developing of static wear leveling.
 \item[sw]       Perform static wear leveling if necessary.
 \item[fs]       Print flash's statistics. Available only on emulated NOR
 flash memory.
-\item[erase]    Erase flash.
-\item[e]        Alias to \code{erase}. 
-\item[tstflash] Test flash.
-\item[tstpifs]  Test \pifsl: run all tests (except large file).
+\item[erase]    Erase flash. It destroys file system!
+\item[tstflash] Test flash. It destroys file sytem during test!
+\item[tstpifs]  Test \pifsl: run all file system tests (except large file).
 \item[tp]       Alias to \code{tstpifs}
 \item[tb]       Test \pifsl: basic. File name can be changed if parameter is given.
 \item[ts]       Test \pifsl: small files.
