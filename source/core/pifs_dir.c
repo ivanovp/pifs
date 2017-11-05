@@ -144,6 +144,77 @@ void pifs_normalize_path(pifs_char_t * const a_path)
 }
 
 /**
+ * @brief pifs_resolve_dir Walk through directories and find last directory's
+ * entry.
+ * Example: a_path = "/aaa/bbb/ccc/ddd". After running
+ * a_resolved_entry_list_address will be address of "ddd".
+ *
+ * @param[in] a_path                         Path to be walked.
+ * @param[in] a_current_entry_list_address   Current entry list's address.
+ * @param[out] a_resolved_entry_list_address Last directory's entry list.
+ * @return PIFS_SUCCESS if entry list's address is resolved.
+ */
+pifs_status_t pifs_resolve_dir(const pifs_char_t * a_path,
+                                pifs_address_t a_current_entry_list_address,
+                                pifs_address_t * const a_resolved_entry_list_address)
+{
+    pifs_status_t       ret = PIFS_SUCCESS;
+    const pifs_char_t * curr_path_pos = a_path;
+    pifs_char_t       * curr_separator_pos = NULL;
+    pifs_address_t      entry_list_address = a_current_entry_list_address;
+    pifs_char_t         name[PIFS_FILENAME_LEN_MAX]; /* TODO try to avoid stack use */
+    pifs_entry_t      * entry = &pifs.entry;
+    pifs_size_t         len;
+    bool_t              end = FALSE;
+
+    PIFS_DEBUG_MSG("path: [%s]\r\n", a_path);
+    /* Check if it is an absolute path */
+    if (a_path[0] == PIFS_PATH_SEPARATOR_CHAR)
+    {
+        /* Absolute path, start from root entry list */
+        curr_path_pos++;
+        entry_list_address = pifs.header.root_entry_list_address;
+    }
+    do
+    {
+        curr_separator_pos = strchr(curr_path_pos, PIFS_PATH_SEPARATOR_CHAR);
+        if (!curr_separator_pos)
+        {
+            curr_separator_pos = curr_path_pos + strlen(curr_path_pos);
+            end = TRUE;
+        }
+        len = curr_separator_pos - curr_path_pos;
+        memcpy(name, curr_path_pos, len);
+        name[len] = PIFS_EOS;
+        PIFS_DEBUG_MSG("name: [%s]\r\n", name);
+        ret = pifs_find_entry(PIFS_FIND_ENTRY, name, entry,
+                              entry_list_address.block_address,
+                              entry_list_address.page_address);
+        if (ret == PIFS_SUCCESS)
+        {
+            if (PIFS_IS_DIR(entry->attrib))
+            {
+                entry_list_address = entry->first_map_address;
+            }
+            else
+            {
+                PIFS_ERROR_MSG("'%s' is not directory!\r\n", entry->name);
+                ret = PIFS_ERROR_IS_NOT_DIRECTORY;
+            }
+        }
+        curr_path_pos = curr_separator_pos + 1;
+    } while (ret == PIFS_SUCCESS && !end);
+    if (ret == PIFS_SUCCESS)
+    {
+        *a_resolved_entry_list_address = entry_list_address;
+    }
+    PIFS_INFO_MSG("entry list address: %s\r\n",
+                   pifs_address2str(a_resolved_entry_list_address));
+
+    return ret;
+}
+
+/**
  * @brief pifs_resolve_path Walk through directories and find last directory's
  * entry.
  * Example: a_path = "/aaa/bbb/ccc/ddd/name.txt". After running a_filename
@@ -289,6 +360,17 @@ pifs_address_t * pifs_get_task_current_entry_list_address(void)
     if (task_id < PIFS_TASK_COUNT_MAX)
     {
         current_entry_list_address = &pifs.current_entry_list_address[task_id];
+    }
+    else
+    {
+        task_id = 0;
+    }
+
+    if (current_entry_list_address->block_address == PIFS_BLOCK_ADDRESS_INVALID
+            || current_entry_list_address->page_address == PIFS_PAGE_ADDRESS_INVALID)
+    {
+        pifs_resolve_dir(pifs.cwd[task_id], pifs.header.root_entry_list_address,
+                         current_entry_list_address);
     }
 
     return current_entry_list_address;
@@ -816,7 +898,6 @@ pifs_status_t pifs_internal_chdir(const pifs_char_t * const a_filename)
     pifs_entry_t    * entry = &pifs.entry;
     pifs_address_t    entry_list_address;
     pifs_address_t  * current_entry_list_address;
-    pifs_char_t       filename[PIFS_FILENAME_LEN_MAX];
     pifs_char_t       separator[2] = { PIFS_PATH_SEPARATOR_CHAR, 0 };
     pifs_char_t     * cwd;
 
@@ -836,36 +917,23 @@ pifs_status_t pifs_internal_chdir(const pifs_char_t * const a_filename)
     {
         /* Resolve a_filename's relative/absolute file path and update */
         /* entry_list_address regarding that */
-        ret = pifs_resolve_path(a_filename, *current_entry_list_address,
-                                filename, &entry_list_address);
+        ret = pifs_resolve_dir(a_filename, *current_entry_list_address,
+                               &entry_list_address);
 
         if (ret == PIFS_SUCCESS)
         {
-            ret = pifs_find_entry(PIFS_FIND_ENTRY, filename, entry,
-                                  entry_list_address.block_address,
-                                  entry_list_address.page_address);
-        }
-        if (ret == PIFS_SUCCESS)
-        {
-            if (PIFS_IS_DIR(entry->attrib))
+            /* Update current working directory (cwd) */
+            *current_entry_list_address = entry->first_map_address;
+            if (cwd[strlen(cwd) - 1] != PIFS_PATH_SEPARATOR_CHAR)
             {
-                /* Update current working directory (cwd) */
-                *current_entry_list_address = entry->first_map_address;
-                if (cwd[strlen(cwd) - 1] != PIFS_PATH_SEPARATOR_CHAR)
-                {
-                    strncat(cwd, separator, PIFS_PATH_LEN_MAX);
-                }
-                strncat(cwd, a_filename, PIFS_PATH_LEN_MAX);
-                pifs_normalize_path(cwd);
-                if (cwd[0] == PIFS_EOS)
-                {
-                    cwd[0] = PIFS_PATH_SEPARATOR_CHAR;
-                    cwd[1] = PIFS_EOS;
-                }
+                strncat(cwd, separator, PIFS_PATH_LEN_MAX);
             }
-            else
+            strncat(cwd, a_filename, PIFS_PATH_LEN_MAX);
+            pifs_normalize_path(cwd);
+            if (cwd[0] == PIFS_EOS)
             {
-                ret = PIFS_ERROR_IS_NOT_DIRECTORY;
+                cwd[0] = PIFS_PATH_SEPARATOR_CHAR;
+                cwd[1] = PIFS_EOS;
             }
         }
     }

@@ -41,6 +41,9 @@ extern "C" {
 #endif
 
 typedef pifs_status_t (*pifs_dir_walker_func_t)(pifs_dirent_t * a_dirent, void * a_fund_data);
+pifs_status_t pifs_resolve_dir(const pifs_char_t * a_path,
+                                pifs_address_t a_current_entry_list_address,
+                                pifs_address_t * const a_resolved_entry_list_address);
 pifs_status_t pifs_resolve_path(const pifs_char_t * a_path,
                                 pifs_address_t a_current_entry_list_address,
                                 pifs_char_t * const a_filename,

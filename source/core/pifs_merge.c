@@ -651,6 +651,7 @@ pifs_status_t pifs_merge(void)
                  * to their original value? */
                 file->mode_create_new_file = FALSE;
                 file->mode_file_shall_exist = TRUE;
+                /* TODO file->entry.name is not enough, full path should be stored!? */
                 ret = pifs_internal_open(file, file->entry.name, NULL, FALSE);
                 if (ret == PIFS_SUCCESS && file_pos[i])
                 {

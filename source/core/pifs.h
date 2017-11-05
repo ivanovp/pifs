@@ -459,6 +459,7 @@ typedef struct
     bool_t                  mode_append PIFS_BOOL_SIZE;
     bool_t                  mode_file_shall_exist PIFS_BOOL_SIZE;
     bool_t                  mode_deleted PIFS_BOOL_SIZE;
+    /* TODO entry_list_address shall be updated for every opened file after pifs_merge() */
     pifs_address_t          entry_list_address; /**< Entry list (directory) where the file belongs to */
     pifs_entry_t            entry;              /**< File's entry, one element of entry list */
     pifs_status_t           status;             /**< Last file operation's result */
