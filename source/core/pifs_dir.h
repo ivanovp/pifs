@@ -45,6 +45,7 @@ pifs_status_t pifs_resolve_path(const pifs_char_t * a_path,
                                 pifs_address_t a_current_entry_list_address,
                                 pifs_char_t * const a_filename,
                                 pifs_address_t * const a_resolved_entry_list_address);
+pifs_address_t * pifs_get_task_current_entry_list_address(void);
 pifs_dir_t * pifs_internal_opendir(const pifs_char_t * a_name);
 pifs_dirent_t *pifs_internal_readdir(pifs_dir_t * a_dirp);
 int pifs_internal_closedir(pifs_dir_t * const a_dirp);

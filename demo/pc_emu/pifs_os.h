@@ -46,5 +46,7 @@
       mutex = FALSE; \
     } while (0)
 #define PIFS_OS_MUTEX_TYPE                 bool_t
+#define PIFS_OS_TASK_ID_TYPE               uint8_t
+#define PIFS_OS_GET_TASK_ID()              0
 
 #endif /* _INCLUDE_PIFS_OS_H_ */

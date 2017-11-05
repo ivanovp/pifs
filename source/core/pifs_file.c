@@ -101,7 +101,7 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
 
     PIFS_ASSERT(!a_file->is_opened);
 #if PIFS_ENABLE_DIRECTORIES
-    a_file->entry_list_address = pifs.current_entry_list_address;
+    a_file->entry_list_address = *pifs_get_task_current_entry_list_address();
 #else
     a_file->entry_list_address = pifs.header.root_entry_list_address;
 #endif
@@ -121,7 +121,7 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
 #if PIFS_ENABLE_DIRECTORIES
         if (a_file->status == PIFS_SUCCESS)
         {
-            a_file->status = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
+            a_file->status = pifs_resolve_path(a_filename, *pifs_get_task_current_entry_list_address(),
                                                filename, &a_file->entry_list_address);
         }
 #endif
@@ -204,7 +204,7 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
             {
                 /* Update entry list address, as it may changed during merge! */
 #if PIFS_ENABLE_DIRECTORIES
-                a_file->status = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
+                a_file->status = pifs_resolve_path(a_filename, *pifs_get_task_current_entry_list_address(),
                                                    filename, &a_file->entry_list_address);
 #else
                 a_file->entry_list_address = pifs.header.root_entry_list_address;
@@ -1261,7 +1261,7 @@ int pifs_internal_remove(const pifs_char_t * a_filename, bool_t a_is_merge_allow
         if (ret == PIFS_SUCCESS)
         {
 #if PIFS_ENABLE_DIRECTORIES
-            ret = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
+            ret = pifs_resolve_path(a_filename, *pifs_get_task_current_entry_list_address(),
                                     filename, &pifs.internal_file.entry_list_address);
 
             if (ret == PIFS_SUCCESS)
@@ -1309,7 +1309,7 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
     PIFS_GET_MUTEX();
 
 #if PIFS_ENABLE_DIRECTORIES
-    entry_list_address = pifs.current_entry_list_address;
+    entry_list_address = *pifs_get_task_current_entry_list_address();
 #else
     entry_list_address = pifs.header.root_entry_list_address;
 #endif
@@ -1327,7 +1327,7 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
 #if PIFS_ENABLE_DIRECTORIES
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_resolve_path(a_oldname, pifs.current_entry_list_address,
+        ret = pifs_resolve_path(a_oldname, *pifs_get_task_current_entry_list_address(),
                                 oldname, &entry_list_address);
     }
 #endif
@@ -1340,7 +1340,7 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
 #if PIFS_ENABLE_DIRECTORIES
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_resolve_path(a_newname, pifs.current_entry_list_address,
+        ret = pifs_resolve_path(a_newname, *pifs_get_task_current_entry_list_address(),
                                 newname, &entry_list_address);
     }
 #endif
@@ -1460,7 +1460,7 @@ bool_t pifs_internal_is_file_exist(const pifs_char_t * a_filename)
 #endif
 
 #if PIFS_ENABLE_DIRECTORIES
-    entry_list_address = pifs.current_entry_list_address;
+    entry_list_address = *pifs_get_task_current_entry_list_address();
 #else
     entry_list_address = pifs.header.root_entry_list_address;
 #endif
@@ -1470,7 +1470,7 @@ bool_t pifs_internal_is_file_exist(const pifs_char_t * a_filename)
 #if PIFS_ENABLE_DIRECTORIES
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
+        ret = pifs_resolve_path(a_filename, *pifs_get_task_current_entry_list_address(),
                                 filename, &entry_list_address);
     }
 #endif
@@ -1547,7 +1547,7 @@ long int pifs_filesize(const pifs_char_t * a_filename)
     PIFS_GET_MUTEX();
 
 #if PIFS_ENABLE_DIRECTORIES
-    entry_list_address = pifs.current_entry_list_address;
+    entry_list_address = *pifs_get_task_current_entry_list_address();
 #else
     entry_list_address = pifs.header.root_entry_list_address;
 #endif
@@ -1557,7 +1557,7 @@ long int pifs_filesize(const pifs_char_t * a_filename)
 #if PIFS_ENABLE_DIRECTORIES
     if (status == PIFS_SUCCESS)
     {
-        status = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
+        status = pifs_resolve_path(a_filename, *pifs_get_task_current_entry_list_address(),
                                    filename, &entry_list_address);
     }
 #endif

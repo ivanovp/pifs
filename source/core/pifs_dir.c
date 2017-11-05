@@ -251,6 +251,48 @@ bool_t pifs_is_directory_empty(const pifs_char_t * a_path)
     PIFS_DEBUG_MSG("%s empty: %s\r\n", a_path, pifs_yes_no(empty));
     return empty;
 }
+
+/**
+ * @brief pifs_get_task_cwd Get current task's working directory.
+ * Note: caller shall provide mutex protection!
+ *
+ * @return Pointer to task's current working directory.
+ */
+pifs_char_t * pifs_get_task_cwd(void)
+{
+    PIFS_OS_TASK_ID_TYPE task_id;
+    pifs_char_t        * cwd = pifs.cwd[0];
+
+    task_id = PIFS_OS_GET_TASK_ID();
+
+    if (task_id < PIFS_TASK_COUNT_MAX)
+    {
+        cwd = pifs.cwd[task_id];
+    }
+
+    return cwd;
+}
+
+/**
+ * @brief pifs_get_task_current_entry_list_address Get current task's working directory.
+ * Note: caller shall provide mutex protection!
+ *
+ * @return Pointer to task's current working directory.
+ */
+pifs_address_t * pifs_get_task_current_entry_list_address(void)
+{
+    PIFS_OS_TASK_ID_TYPE task_id;
+    pifs_address_t     * current_entry_list_address = &pifs.current_entry_list_address[0];
+
+    task_id = PIFS_OS_GET_TASK_ID();
+
+    if (task_id < PIFS_TASK_COUNT_MAX)
+    {
+        current_entry_list_address = &pifs.current_entry_list_address[task_id];
+    }
+
+    return current_entry_list_address;
+}
 #endif
 
 /**
@@ -284,7 +326,7 @@ pifs_dir_t * pifs_internal_opendir(const pifs_char_t * a_name)
     pifs_size_t     i;
     pifs_dir_t    * dir = NULL;
 #if PIFS_ENABLE_DIRECTORIES
-    pifs_address_t  entry_list_address = pifs.current_entry_list_address;
+    pifs_address_t  entry_list_address = *pifs_get_task_current_entry_list_address();
     pifs_char_t     filename[PIFS_FILENAME_LEN_MAX];
     pifs_entry_t  * entry = &pifs.entry;
 #endif
@@ -302,11 +344,11 @@ pifs_dir_t * pifs_internal_opendir(const pifs_char_t * a_name)
             && a_name[1] == PIFS_EOS)
     {
         /* Current directory: "." */
-        entry_list_address = pifs.current_entry_list_address;
+        entry_list_address = *pifs_get_task_current_entry_list_address();
     }
     else
     {
-        ret = pifs_resolve_path(a_name, pifs.current_entry_list_address,
+        ret = pifs_resolve_path(a_name, entry_list_address,
                                 filename, &entry_list_address);
         if (ret == PIFS_SUCCESS)
         {
@@ -620,12 +662,12 @@ pifs_status_t pifs_internal_mkdir(const pifs_char_t * const a_filename)
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
     pifs_page_count_t    page_count_found;
-    pifs_address_t       entry_list_address = pifs.current_entry_list_address;
+    pifs_address_t       entry_list_address = *pifs_get_task_current_entry_list_address();
     pifs_char_t          filename[PIFS_FILENAME_LEN_MAX];
 
     /* Resolve a_filename's relative/absolute file path and update
      * entry_list_address regarding that */
-    ret = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
+    ret = pifs_resolve_path(a_filename, entry_list_address,
                             filename, &entry_list_address);
 
     if (ret == PIFS_SUCCESS)
@@ -709,13 +751,13 @@ int pifs_rmdir(const pifs_char_t * const a_filename)
 
     PIFS_GET_MUTEX();
 
-    entry_list_address = pifs.current_entry_list_address;
+    entry_list_address = *pifs_get_task_current_entry_list_address();
 
     if (pifs_is_directory_empty(a_filename))
     {
         /* Resolve a_filename's relative/absolute file path and update */
         /* entry_list_address regarding that */
-        ret = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
+        ret = pifs_resolve_path(a_filename, entry_list_address,
                                 filename, &entry_list_address);
 
         if (ret == PIFS_SUCCESS)
@@ -773,24 +815,28 @@ pifs_status_t pifs_internal_chdir(const pifs_char_t * const a_filename)
     pifs_status_t     ret = PIFS_SUCCESS;
     pifs_entry_t    * entry = &pifs.entry;
     pifs_address_t    entry_list_address;
+    pifs_address_t  * current_entry_list_address;
     pifs_char_t       filename[PIFS_FILENAME_LEN_MAX];
     pifs_char_t       separator[2] = { PIFS_PATH_SEPARATOR_CHAR, 0 };
+    pifs_char_t     * cwd;
 
-    entry_list_address = pifs.current_entry_list_address;
+    current_entry_list_address = pifs_get_task_current_entry_list_address();
+    entry_list_address = *current_entry_list_address;
+    cwd = pifs_get_task_cwd();
 
     if (a_filename[0] == PIFS_PATH_SEPARATOR_CHAR
             && a_filename[1] == PIFS_EOS)
     {
         /* Root directory: "/" or "\" */
-        pifs.current_entry_list_address = pifs.header.root_entry_list_address;
-        pifs.cwd[0] = PIFS_PATH_SEPARATOR_CHAR;
-        pifs.cwd[1] = PIFS_EOS;
+        *current_entry_list_address = pifs.header.root_entry_list_address;
+        cwd[0] = PIFS_PATH_SEPARATOR_CHAR;
+        cwd[1] = PIFS_EOS;
     }
     else
     {
         /* Resolve a_filename's relative/absolute file path and update */
         /* entry_list_address regarding that */
-        ret = pifs_resolve_path(a_filename, pifs.current_entry_list_address,
+        ret = pifs_resolve_path(a_filename, *current_entry_list_address,
                                 filename, &entry_list_address);
 
         if (ret == PIFS_SUCCESS)
@@ -803,18 +849,18 @@ pifs_status_t pifs_internal_chdir(const pifs_char_t * const a_filename)
         {
             if (PIFS_IS_DIR(entry->attrib))
             {
-                /* Update current working directory (pifs.cwd) */
-                pifs.current_entry_list_address = entry->first_map_address;
-                if (pifs.cwd[strlen(pifs.cwd) - 1] != PIFS_PATH_SEPARATOR_CHAR)
+                /* Update current working directory (cwd) */
+                *current_entry_list_address = entry->first_map_address;
+                if (cwd[strlen(cwd) - 1] != PIFS_PATH_SEPARATOR_CHAR)
                 {
-                    strncat(pifs.cwd, separator, PIFS_PATH_LEN_MAX);
+                    strncat(cwd, separator, PIFS_PATH_LEN_MAX);
                 }
-                strncat(pifs.cwd, a_filename, PIFS_PATH_LEN_MAX);
-                pifs_normalize_path((pifs_char_t*)&pifs.cwd);
-                if (pifs.cwd[0] == PIFS_EOS)
+                strncat(cwd, a_filename, PIFS_PATH_LEN_MAX);
+                pifs_normalize_path(cwd);
+                if (cwd[0] == PIFS_EOS)
                 {
-                    pifs.cwd[0] = PIFS_PATH_SEPARATOR_CHAR;
-                    pifs.cwd[1] = PIFS_EOS;
+                    cwd[0] = PIFS_PATH_SEPARATOR_CHAR;
+                    cwd[1] = PIFS_EOS;
                 }
             }
             else
@@ -836,9 +882,12 @@ pifs_status_t pifs_internal_chdir(const pifs_char_t * const a_filename)
  */
 pifs_char_t * pifs_getcwd(pifs_char_t * a_buffer, size_t a_size)
 {
+    pifs_char_t * cwd;
+
     PIFS_GET_MUTEX();
 
-    strncpy(a_buffer, pifs.cwd, a_size);
+    cwd = pifs_get_task_cwd();
+    strncpy(a_buffer, cwd, a_size);
 
     PIFS_PUT_MUTEX();
 

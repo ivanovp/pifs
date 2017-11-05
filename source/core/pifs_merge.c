@@ -364,6 +364,8 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
     pifs_page_address_t  old_entry_list_pa = a_old_entry_list_address->page_address;
     pifs_entry_t         entry;
 #if PIFS_ENABLE_DIRECTORIES
+    /* TODO save cwd and restore? */
+    pifs_address_t       current_entry_list_address;
     pifs_entry_t         new_dir_entry;
 #endif
 
@@ -390,10 +392,11 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
                             ret = pifs_internal_mkdir(entry.name);
                             if (ret == PIFS_SUCCESS)
                             {
+                                current_entry_list_address = *pifs_get_task_current_entry_list_address();
                                 ret = pifs_find_entry(PIFS_FIND_ENTRY, entry.name,
                                                       &new_dir_entry,
-                                                      pifs.current_entry_list_address.block_address,
-                                                      pifs.current_entry_list_address.page_address);
+                                                      current_entry_list_address.block_address,
+                                                      current_entry_list_address.page_address);
                             }
                             if (ret == PIFS_SUCCESS)
                             {
@@ -561,7 +564,10 @@ pifs_status_t pifs_merge(void)
         /* Copy file entry list and process delta pages */
         /* This should be before resetting delta pages! */
 #if PIFS_ENABLE_DIRECTORIES
-        pifs.current_entry_list_address = new_header.root_entry_list_address;
+        for (i = 0; i < PIFS_TASK_COUNT_MAX; i++)
+        {
+            pifs.current_entry_list_address[i] = new_header.root_entry_list_address;
+        }
 #endif
         ret = pifs_copy_entry_list(&old_header, &new_header,
                                    &old_header.root_entry_list_address,
@@ -777,7 +783,8 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
             {
                 /* Update entry list address, as it may changed during merge! */
 #if PIFS_ENABLE_DIRECTORIES
-                a_file->entry_list_address = pifs.current_entry_list_address;
+                /* TODO all file's entry list address shall be updated! */
+                a_file->entry_list_address = *pifs_get_task_current_entry_list_address();
 #else
                 a_file->entry_list_address = pifs.header.root_entry_list_address;
 #endif

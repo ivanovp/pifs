@@ -52,5 +52,7 @@
 #endif
 #define PIFS_OS_PUT_MUTEX(mutex)           osMutexRelease(mutex)
 #define PIFS_OS_MUTEX_TYPE                 osMutexId
+#define PIFS_OS_TASK_ID_TYPE               uint8_t
+#define PIFS_OS_GET_TASK_ID()              0
 
 #endif /* _INCLUDE_PIFS_OS_H_ */

@@ -633,8 +633,11 @@ pifs_status_t pifs_init(void)
     memset(pifs.sc_page_buf, 0, sizeof(pifs.sc_page_buf));
     pifs.error_cntr = 0;
 #if PIFS_ENABLE_DIRECTORIES
-    pifs.cwd[0] = PIFS_ROOT_CHAR;
-    pifs.cwd[1] = PIFS_EOS;
+    for (i = 0; i < PIFS_TASK_COUNT_MAX; i++)
+    {
+        pifs.cwd[i][0] = PIFS_ROOT_CHAR;
+        pifs.cwd[i][1] = PIFS_EOS;
+    }
 #endif
 
 #if PIFS_DEBUG_LEVEL >= 5
@@ -799,7 +802,10 @@ pifs_status_t pifs_init(void)
         {
 #if PIFS_ENABLE_DIRECTORIES
             /* Current working directory is the root directory */
-            pifs.current_entry_list_address = pifs.header.root_entry_list_address;
+            for (i = 0; i < PIFS_TASK_COUNT_MAX; i++)
+            {
+                pifs.current_entry_list_address[i] = pifs.header.root_entry_list_address;
+            }
 #endif
             ret = pifs_get_free_pages(&i, &pifs.free_data_page_num);
             pifs_initialized = TRUE;

@@ -521,8 +521,9 @@ typedef struct
     uint32_t                error_cntr;         /**< File system's integrity check uses it */
     pifs_size_t             free_data_page_num;
 #if PIFS_ENABLE_DIRECTORIES
-    pifs_char_t             cwd[PIFS_PATH_LEN_MAX];                       /**< Current working directory */
-    pifs_address_t          current_entry_list_address;                   /**< Entry list of current working directory */
+    pifs_char_t             cwd[PIFS_TASK_COUNT_MAX][PIFS_PATH_LEN_MAX];  /**< Current working directory */
+    /* TODO current_entry_list_address shall be removed and cwd shall be used instead! */
+    pifs_address_t          current_entry_list_address[PIFS_TASK_COUNT_MAX]; /**< Entry list of current working directory */
 #endif
 #if PIFS_FSCHECK_USE_STATIC_MEMORY
     uint8_t                 free_pages_buf[PIFS_FLASH_PAGE_NUM_FS / PIFS_BYTE_BITS];
