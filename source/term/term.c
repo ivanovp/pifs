@@ -162,7 +162,7 @@ void cmdTestPifsBasic (char* command, char* params)
     (void) params;
 
     param = PARSER_getNextParam();
-    if (param[0] == '-' && param[1] == 'r')
+    if (param && param[0] == '-' && param[1] == 'r')
     {
         filename = pifs_tmpnam(buf);
     }
