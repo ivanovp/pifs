@@ -10,6 +10,7 @@ tags
 *.elf
 *.bak
 *.pro.user*
+*.tmp
 flash.bin
 flash.stt
 flash_test

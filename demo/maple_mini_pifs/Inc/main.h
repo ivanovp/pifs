@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * File Name          : main.h
+  * File Name          : main.hpp
   * Description        : This file contains the common defines of the application
   ******************************************************************************
   * This notice applies to any and all portions of this file
@@ -50,6 +50,7 @@
 #define __MAIN_H
   /* Includes ------------------------------------------------------------------*/
 
+/* Includes ------------------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdint.h>
 /* USER CODE END Includes */
@@ -60,30 +61,15 @@
 #define SPI_CS_GPIO_Port GPIOA
 #define LED_BLUE_Pin GPIO_PIN_1
 #define LED_BLUE_GPIO_Port GPIOB
-#define DISP_DIG0_Pin GPIO_PIN_2
-#define DISP_DIG0_GPIO_Port GPIOB
-#define DISP_DIG1_Pin GPIO_PIN_10
-#define DISP_DIG1_GPIO_Port GPIOB
-#define DISP_DIG2_Pin GPIO_PIN_11
-#define DISP_DIG2_GPIO_Port GPIOB
-#define DISP_SEG4_Pin GPIO_PIN_12
-#define DISP_SEG4_GPIO_Port GPIOB
-#define DISP_SEG5_Pin GPIO_PIN_13
-#define DISP_SEG5_GPIO_Port GPIOB
-#define DISP_SEG6_Pin GPIO_PIN_14
-#define DISP_SEG6_GPIO_Port GPIOB
-#define DISP_SEG7_Pin GPIO_PIN_15
-#define DISP_SEG7_GPIO_Port GPIOB
-#define DISP_SEG0_Pin GPIO_PIN_4
-#define DISP_SEG0_GPIO_Port GPIOB
-#define DISP_SEG1_Pin GPIO_PIN_5
-#define DISP_SEG1_GPIO_Port GPIOB
-#define DISP_SEG2_Pin GPIO_PIN_6
-#define DISP_SEG2_GPIO_Port GPIOB
-#define DISP_SEG3_Pin GPIO_PIN_7
-#define DISP_SEG3_GPIO_Port GPIOB
 #define BUT_Pin GPIO_PIN_8
 #define BUT_GPIO_Port GPIOB
+
+/* ########################## Assert Selection ############################## */
+/**
+  * @brief Uncomment the line below to expanse the "assert_param" macro in the 
+  *        HAL drivers code
+  */
+/* #define USE_FULL_ASSERT    1U */
 
 /* USER CODE BEGIN Private defines */
 extern void _putchar(char c);
@@ -93,9 +79,15 @@ extern void _printHex16 (uint16_t aNum);
 extern void _printHex8 (uint8_t aNum);
 /* USER CODE END Private defines */
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
 void _Error_Handler(char *, int);
 
 #define Error_Handler() _Error_Handler(__FILE__, __LINE__)
+#ifdef __cplusplus
+}
+#endif
 
 /**
   * @}

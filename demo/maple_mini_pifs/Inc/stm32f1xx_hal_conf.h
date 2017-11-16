@@ -57,7 +57,7 @@
 /*#define HAL_CORTEX_MODULE_ENABLED   */
 /*#define HAL_CRC_MODULE_ENABLED   */
 /*#define HAL_DAC_MODULE_ENABLED   */
-#define HAL_DMA_MODULE_ENABLED
+/*#define HAL_DMA_MODULE_ENABLED   */
 /*#define HAL_ETH_MODULE_ENABLED   */
 /*#define HAL_FLASH_MODULE_ENABLED   */
 #define HAL_GPIO_MODULE_ENABLED
@@ -152,7 +152,7 @@
   * @brief Uncomment the line below to expanse the "assert_param" macro in the 
   *        HAL drivers code
   */
-/* #define USE_FULL_ASSERT    1 */
+/* #define USE_FULL_ASSERT    1U */
 
 /* ################## Ethernet peripheral configuration ##################### */
 

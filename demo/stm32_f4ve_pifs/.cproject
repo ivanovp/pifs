@@ -42,7 +42,7 @@
 									<listOptionValue builtIn="false" value="../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS" />
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include" />
 									<listOptionValue builtIn="false" value="../Inc" />
-								<listOptionValue builtIn="false" value="../Middlewares/Third_Party/FatFs/src/drivers" /><listOptionValue builtIn="false" value="../Middlewares/Third_Party/FatFs/src" /></option>
+								<listOptionValue builtIn="false" value="../Middlewares/Third_Party/FatFs/src" /></option>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1191689269" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__weak=&quot;__attribute__((weak))&quot;" />
 									<listOptionValue builtIn="false" value="__packed=&quot;__attribute__((__packed__))&quot;" />
@@ -128,7 +128,7 @@
 									<listOptionValue builtIn="false" value="../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS" />
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include" />
 									<listOptionValue builtIn="false" value="../Inc" />
-								<listOptionValue builtIn="false" value="../Middlewares/Third_Party/FatFs/src/drivers" /><listOptionValue builtIn="false" value="../Middlewares/Third_Party/FatFs/src" /></option>
+								<listOptionValue builtIn="false" value="../Middlewares/Third_Party/FatFs/src" /></option>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1191689269" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__weak=&quot;__attribute__((weak))&quot;" />
 									<listOptionValue builtIn="false" value="__packed=&quot;__attribute__((__packed__))&quot;" />
