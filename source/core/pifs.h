@@ -196,6 +196,8 @@ typedef uint32_t pifs_checksum_t;
 #error PIFS_CHECKSUM_SIZE is invalid! Valid values are 1, 2 or 4.
 #endif
 
+#define PIFS_CHECKSUM_SIZE_BYTE     (sizeof(pifs_checksum_t))
+
 #if PIFS_FLASH_PAGE_NUM_FS < 256
 typedef uint8_t pifs_bit_pos_t;
 #elif PIFS_FLASH_PAGE_NUM_FS < 65536

@@ -1188,7 +1188,7 @@ void cmdMakeDir (char* command, char* params)
 void cmdChDir (char* command, char* params)
 {
     char cwd[PIFS_PATH_LEN_MAX];
-    const char * name;
+    char * name;
     int ret;
 
     (void) command;

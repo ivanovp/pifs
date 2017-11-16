@@ -154,12 +154,12 @@ void pifs_normalize_path(pifs_char_t * const a_path)
  * @param[out] a_resolved_entry_list_address Last directory's entry list.
  * @return PIFS_SUCCESS if entry list's address is resolved.
  */
-pifs_status_t pifs_resolve_dir(const pifs_char_t * a_path,
+pifs_status_t pifs_resolve_dir(pifs_char_t * const a_path,
                                 pifs_address_t a_current_entry_list_address,
                                 pifs_address_t * const a_resolved_entry_list_address)
 {
     pifs_status_t       ret = PIFS_SUCCESS;
-    const pifs_char_t * curr_path_pos = a_path;
+    pifs_char_t       * curr_path_pos = a_path;
     pifs_char_t       * curr_separator_pos = NULL;
     pifs_address_t      entry_list_address = a_current_entry_list_address;
     pifs_char_t         name[PIFS_FILENAME_LEN_MAX]; /* TODO try to avoid stack use */
@@ -873,7 +873,7 @@ int pifs_rmdir(const pifs_char_t * const a_filename)
  * @param[in] a_filename Path to directory.
  * @return PIFS_SUCCESS if directory successfully changed.
  */
-int pifs_chdir(const pifs_char_t * const a_filename)
+int pifs_chdir(pifs_char_t * const a_filename)
 {
     int ret;
 
@@ -892,7 +892,7 @@ int pifs_chdir(const pifs_char_t * const a_filename)
  * @param[in] a_filename Path to directory.
  * @return PIFS_SUCCESS if directory successfully changed.
  */
-pifs_status_t pifs_internal_chdir(const pifs_char_t * const a_filename)
+pifs_status_t pifs_internal_chdir(pifs_char_t * const a_filename)
 {
     pifs_status_t     ret = PIFS_SUCCESS;
     pifs_entry_t    * entry = &pifs.entry;

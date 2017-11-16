@@ -44,6 +44,9 @@
  */
 pifs_status_t pifs_read_first_map_entry(pifs_file_t * a_file)
 {
+    pifs_checksum_t checksum;
+    bool_t          is_erased;
+
     a_file->map_entry_idx = 0;
     a_file->actual_map_address = a_file->entry.first_map_address;
     PIFS_DEBUG_MSG("Map address %s\r\n",
@@ -57,6 +60,22 @@ pifs_status_t pifs_read_first_map_entry(pifs_file_t * a_file)
                                  a_file->entry.first_map_address.page_address,
                                  PIFS_MAP_HEADER_SIZE_BYTE, &a_file->map_entry,
                                  PIFS_MAP_ENTRY_SIZE_BYTE);
+    }
+    if (a_file->status == PIFS_SUCCESS)
+    {
+        is_erased = pifs_is_buffer_erased(&a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
+        if (!is_erased)
+        {
+            checksum = pifs_calc_checksum(&a_file->map_entry,
+                                          PIFS_MAP_ENTRY_SIZE_BYTE - PIFS_CHECKSUM_SIZE_BYTE);
+            if (checksum != a_file->map_entry.checksum)
+            {
+                a_file->status = PIFS_ERROR_CHECKSUM;
+            }
+        }
+    }
+    if (a_file->status == PIFS_SUCCESS)
+    {
         PIFS_DEBUG_MSG("Map entry %s, page count: %i\r\n",
                        pifs_address2str(&a_file->map_entry.address),
                        a_file->map_entry.page_count);
@@ -75,6 +94,9 @@ pifs_status_t pifs_read_first_map_entry(pifs_file_t * a_file)
  */
 pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
 {
+    pifs_checksum_t checksum;
+    bool_t          is_erased;
+
     a_file->map_entry_idx++;
     if (a_file->map_entry_idx >= PIFS_MAP_ENTRY_PER_PAGE)
     {
@@ -102,9 +124,25 @@ pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
                                    PIFS_MAP_HEADER_SIZE_BYTE + a_file->map_entry_idx * PIFS_MAP_ENTRY_SIZE_BYTE,
                                    &a_file->map_entry,
                                    PIFS_MAP_ENTRY_SIZE_BYTE);
-//        PIFS_DEBUG_MSG("Map entry %s, page count: %i\r\n",
-//                       pifs_address2str(&a_file->map_entry.address),
-//                       a_file->map_entry.page_count);
+    }
+    if (a_file->status == PIFS_SUCCESS)
+    {
+        is_erased = pifs_is_buffer_erased(&a_file->map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
+        if (!is_erased)
+        {
+            checksum = pifs_calc_checksum(&a_file->map_entry,
+                                          PIFS_MAP_ENTRY_SIZE_BYTE - PIFS_CHECKSUM_SIZE_BYTE);
+            if (checksum != a_file->map_entry.checksum)
+            {
+                a_file->status = PIFS_ERROR_CHECKSUM;
+            }
+        }
+    }
+    if (a_file->status == PIFS_SUCCESS)
+    {
+        PIFS_DEBUG_MSG("Map entry %s, page count: %i\r\n",
+                       pifs_address2str(&a_file->map_entry.address),
+                       a_file->map_entry.page_count);
     }
 
     return a_file->status;
@@ -235,6 +273,8 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
         a_file->map_entry.address.block_address = a_block_address;
         a_file->map_entry.address.page_address = a_page_address;
         a_file->map_entry.page_count = a_page_count;
+        a_file->map_entry.checksum = pifs_calc_checksum(&a_file->map_entry,
+                                                        PIFS_MAP_ENTRY_SIZE_BYTE - PIFS_CHECKSUM_SIZE_BYTE);
         PIFS_DEBUG_MSG("Create map entry #%lu for %s\r\n", a_file->map_entry_idx,
                        pifs_ba_pa2str(a_block_address, a_page_address));
         a_file->status = pifs_write(ba, pa, PIFS_MAP_HEADER_SIZE_BYTE

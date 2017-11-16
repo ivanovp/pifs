@@ -200,7 +200,7 @@ int pifs_closedir(pifs_DIR * const a_dirp);
 #if PIFS_ENABLE_DIRECTORIES
 int pifs_mkdir(const pifs_char_t * const a_filename);
 int pifs_rmdir(const pifs_char_t * const a_filename);
-int pifs_chdir(const pifs_char_t * const a_filename);
+int pifs_chdir(pifs_char_t * const a_filename);
 pifs_char_t * pifs_getcwd(pifs_char_t * a_buffer, size_t a_size);
 pifs_char_t * pifs_append_path(pifs_char_t * a_path_dst, size_t a_size, const pifs_char_t *a_path2);
 #endif

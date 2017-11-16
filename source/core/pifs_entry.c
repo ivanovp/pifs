@@ -73,7 +73,7 @@ pifs_status_t pifs_read_entry(pifs_block_address_t a_entry_list_block_address,
 
         if (!(*a_is_erased))
         {
-            checksum = pifs_calc_checksum(a_entry, sizeof(pifs_entry_t) - sizeof(pifs_checksum_t));
+            checksum = pifs_calc_checksum(a_entry, PIFS_ENTRY_SIZE_BYTE - PIFS_CHECKSUM_SIZE_BYTE);
 
             if (checksum != a_entry->checksum)
             {
