@@ -220,27 +220,11 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
 #endif
                 a_file->entry.first_map_address.block_address = ba;
                 a_file->entry.first_map_address.page_address = pa;
-#if 0
-                a_file->status = pifs_append_entry(&a_file->entry,
-                                                   a_file->entry_list_address.block_address,
-                                                   a_file->entry_list_address.page_address);
+                a_file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, TRUE);
                 if (a_file->status == PIFS_SUCCESS)
-#endif
                 {
-                    PIFS_DEBUG_MSG("Entry created\r\n");
-                    a_file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, TRUE);
-                    if (a_file->status == PIFS_SUCCESS)
-                    {
-                        a_file->is_opened = TRUE;
-                    }
+                    a_file->is_opened = TRUE;
                 }
-#if 0
-                else
-                {
-                    PIFS_DEBUG_MSG("Cannot create entry!\r\n");
-                    PIFS_SET_ERRNO(PIFS_ERROR_NO_MORE_ENTRY);
-                }
-#endif
             }
             else
             {
@@ -1192,15 +1176,11 @@ int pifs_internal_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_
     pifs_file_t  * file = (pifs_file_t*) a_file;
     pifs_status_t  ret;
 
+    (void) a_is_merge_allowed;
+
     if (file->is_opened)
     {
         memcpy(&file->entry.user_data, a_user_data, sizeof(pifs_user_data_t));
-#if 0
-        file->status = pifs_update_entry(file->entry.name, &file->entry,
-                                         file->entry_list_address.block_address,
-                                         file->entry_list_address.page_address,
-                                         a_is_merge_allowed);
-#endif
     }
 
     ret = file->status;

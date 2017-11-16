@@ -66,9 +66,6 @@ pifs_status_t pifs_find_entry(pifs_entry_cmd_t entry_cmd,
 pifs_status_t pifs_delete_entry(const pifs_char_t * a_name,
                                 pifs_block_address_t a_entry_list_block_address,
                                 pifs_page_address_t a_entry_list_page_address);
-pifs_status_t pifs_clear_entry(const pifs_char_t * a_name,
-                               pifs_block_address_t a_entry_list_block_address,
-                               pifs_page_address_t a_entry_list_page_address);
 pifs_status_t pifs_count_entries(pifs_size_t * a_free_entry_count, pifs_size_t * a_to_be_released_entry_count,
                               pifs_block_address_t a_entry_list_block_address,
                               pifs_page_address_t a_entry_list_page_address);
