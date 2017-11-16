@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-10-10 20:51:59 ivanovp {Time-stamp}
+ * Last modify: 2017-11-15 10:50:02 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -46,6 +46,7 @@
 #define PIFS_LEAST_WEARED_BLOCK_NUM     15u  /**< Number of stored least weared blocks */
 #define PIFS_MOST_WEARED_BLOCK_NUM      15u  /**< Number of stored most weared blocks */
 #define PIFS_DELTA_MAP_PAGE_NUM         2u   /**< Number of delta page maps */
+#define PIFS_ENABLE_CRC                 1u   /**< Use CRC for headers and entries. */
 #define PIFS_CHECKSUM_SIZE              4u   /**< Size of checksum variable in bytes. Valid values are 1, 2 and 4. */
 #define PIFS_MAP_PAGE_COUNT_SIZE        1u   /**< Size of page count variable of map entry in bytes. Valid values are 1, 2 and 4. */
 #define PIFS_ENABLE_CONFIG_IN_FLASH     1u   /**< 1: Store file system's configuration in flash memory */

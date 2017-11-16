@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-10-06 16:48:51 ivanovp {Time-stamp}
+ * Last modify: 2017-11-16 19:08:50 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -58,6 +58,7 @@ pifs_status_t pifs_read_entry(pifs_block_address_t a_entry_list_block_address,
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_block_address_t ba = a_entry_list_block_address;
     pifs_page_address_t  pa = a_entry_list_page_address;
+    pifs_checksum_t      checksum;
 
 #if PIFS_USE_DELTA_FOR_ENTRIES
     ret = pifs_read_delta(ba, pa, a_entry_idx * PIFS_ENTRY_SIZE_BYTE, a_entry,
@@ -69,6 +70,16 @@ pifs_status_t pifs_read_entry(pifs_block_address_t a_entry_list_block_address,
     if (ret == PIFS_SUCCESS)
     {
         *a_is_erased = pifs_is_buffer_erased(a_entry, PIFS_ENTRY_SIZE_BYTE);
+
+        if (!(*a_is_erased))
+        {
+            checksum = pifs_calc_checksum(a_entry, sizeof(pifs_entry_t) - sizeof(pifs_checksum_t));
+
+            if (checksum != a_entry->checksum)
+            {
+                ret = PIFS_ERROR_CHECKSUM;
+            }
+        }
     }
 
     return ret;
@@ -80,17 +91,24 @@ pifs_status_t pifs_read_entry(pifs_block_address_t a_entry_list_block_address,
  * @param[in] a_entry_list_block_address Block address of entry list.
  * @param[in] a_entry_list_page_address  Page address of entry list.
  * @param[in] a_entry_idx                Index of entry in the entry list.
+ * @param[in] a_calc_crc                 TRUE: calculate CRC field
  * @param[out] a_entry                   Pointer to entry to write.
  * @return PIFS_SUCCESS if entry was written successfully.
  */
 pifs_status_t pifs_write_entry(pifs_block_address_t a_entry_list_block_address,
                               pifs_page_address_t a_entry_list_page_address,
                               pifs_size_t a_entry_idx,
-                              const pifs_entry_t * const a_entry)
+                              bool_t a_calc_crc,
+                              pifs_entry_t * const a_entry)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_block_address_t ba = a_entry_list_block_address;
     pifs_page_address_t  pa = a_entry_list_page_address;
+            
+    if (a_calc_crc)
+    {
+        a_entry->checksum = pifs_calc_checksum(a_entry, sizeof(pifs_entry_t) - sizeof(pifs_checksum_t));
+    }
 
 #if PIFS_USE_DELTA_FOR_ENTRIES
     ret = pifs_write_delta(ba, pa, a_entry_idx * PIFS_ENTRY_SIZE_BYTE, a_entry,
@@ -111,7 +129,7 @@ pifs_status_t pifs_write_entry(pifs_block_address_t a_entry_list_block_address,
  * PIFS_ERROR_NO_MORE_ENTRY if entry list is full.
  * PIFS_ERROR_FLASH_WRITE if flash write failed.
  */
-pifs_status_t pifs_append_entry(const pifs_entry_t * const a_entry,
+pifs_status_t pifs_append_entry(pifs_entry_t * const a_entry,
                                 pifs_block_address_t a_entry_list_block_address,
                                 pifs_page_address_t a_entry_list_page_address)
 {
@@ -149,11 +167,12 @@ pifs_status_t pifs_append_entry(const pifs_entry_t * const a_entry,
     {
         for (i = 0; i < PIFS_ENTRY_PER_PAGE && !created && ret == PIFS_SUCCESS; i++)
         {
-            ret = pifs_read_entry(ba, pa, i, &entry, &is_erased);
+            is_erased = FALSE;
+            (void)pifs_read_entry(ba, pa, i, &entry, &is_erased);
             if (is_erased)
             {
                 /* Empty entry found */
-                ret = pifs_write_entry(ba, pa, i, a_entry);
+                ret = pifs_write_entry(ba, pa, i, TRUE, a_entry);
                 if (ret == PIFS_SUCCESS)
                 {
                     created = TRUE;
@@ -219,47 +238,30 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
                 /* Entry found */
                 /* Copy entry */
 #if PIFS_USE_DELTA_FOR_ENTRIES
-                ret = pifs_write_entry(ba, pa, i, a_entry);
+                ret = pifs_write_entry(ba, pa, i, TRUE, a_entry);
 #else
-                if (pifs_is_buffer_programmable(&entry, a_entry, PIFS_ENTRY_SIZE_BYTE))
+                /* Clear entry because file content will be re-used */
+                memset(&entry, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
+                ret = pifs_write_entry(ba, pa, i, FALSE, &entry);
+                if (ret == PIFS_SUCCESS)
                 {
-                    PIFS_NOTICE_MSG("Entry can be updated\r\n");
-                    ret = pifs_write_entry(ba, pa, i, a_entry);
-                }
-                else
-                {
-                    PIFS_NOTICE_MSG("Original entry:\r\n");
-#if PIFS_DEBUG_LEVEL >= 3
-                    print_buffer(&entry, PIFS_ENTRY_SIZE_BYTE, 0);
-#endif
-                    PIFS_NOTICE_MSG("New entry:\r\n");
-#if PIFS_DEBUG_LEVEL >= 3
-                    print_buffer(a_entry, PIFS_ENTRY_SIZE_BYTE, 0);
-#endif
-                    PIFS_NOTICE_MSG("Entry CANNOT be updated!\r\n");
-                    /* Clear entry because file content will be re-used */
-                    memset(&entry, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
-                    ret = pifs_write_entry(ba, pa, i, &entry);
-                    if (ret == PIFS_SUCCESS)
+                    ret = pifs_append_entry(a_entry,
+                            a_entry_list_block_address,
+                            a_entry_list_page_address);
+                    if (ret == PIFS_ERROR_NO_MORE_ENTRY)
                     {
-                        ret = pifs_append_entry(a_entry,
-                                                a_entry_list_block_address,
-                                                a_entry_list_page_address);
-                        if (ret == PIFS_ERROR_NO_MORE_ENTRY)
-                        {
-                            /* If there is not enough space, nothing to do */
-                            /* pifs_merge_check() tries to release enough space */
-                            /* to be able to close all opened files for merge. */
-                            PIFS_ERROR_MSG("Cannot update entry!\r\n");
-                        }
-                        else
-                        {
-                            PIFS_NOTICE_MSG("Entry appended\r\n");
-                        }
-                        if (a_is_merge_allowed)
-                        {
-                            ret = pifs_merge_check(NULL, 0);
-                        }
+                        /* If there is not enough space, nothing to do */
+                        /* pifs_merge_check() tries to release enough space */
+                        /* to be able to close all opened files for merge. */
+                        PIFS_ERROR_MSG("Cannot update entry!\r\n");
+                    }
+                    else
+                    {
+                        PIFS_NOTICE_MSG("Entry appended\r\n");
+                    }
+                    if (a_is_merge_allowed)
+                    {
+                        ret = pifs_merge_check(NULL, 0);
                     }
                 }
 #endif
@@ -370,15 +372,16 @@ pifs_status_t pifs_find_entry(pifs_entry_cmd_t a_entry_cmd,
                 }
                 else if (a_entry_cmd == PIFS_DELETE_ENTRY || a_entry_cmd == PIFS_CLEAR_ENTRY)
                 {
-                    if (a_entry_cmd == PIFS_DELETE_ENTRY)
-                    {
-                        pifs_mark_entry_deleted(&entry);
-                    }
-                    else
+                    // CRC would be wrong!
+//                    if (a_entry_cmd == PIFS_DELETE_ENTRY)
+//                    {
+//                        pifs_mark_entry_deleted(&entry);
+//                    }
+//                    else
                     {
                         memset(&entry, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
                     }
-                    ret = pifs_write_entry(ba, pa, i, &entry);
+                    ret = pifs_write_entry(ba, pa, i, FALSE, &entry);
                 }
                 found = TRUE;
             }

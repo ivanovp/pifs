@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-10-06 16:48:53 ivanovp {Time-stamp}
+ * Last modify: 2017-11-16 19:08:51 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -60,15 +60,9 @@ PIFS_OS_MUTEX_TYPE pifs_mutex;
  */
 static pifs_checksum_t pifs_calc_header_checksum(pifs_header_t * a_pifs_header)
 {
-    uint8_t * ptr = (uint8_t*) a_pifs_header;
-    pifs_checksum_t checksum = (pifs_checksum_t) UINT32_MAX;
-    uint8_t cntr = sizeof(pifs_header_t) - sizeof(pifs_checksum_t); /* Skip checksum */
-    
-    while (cntr--)
-    {
-        checksum += *ptr;
-        ptr++;
-    }
+    pifs_checksum_t checksum;
+
+    checksum = pifs_calc_checksum(a_pifs_header, sizeof(pifs_header_t) - sizeof(pifs_checksum_t));
 
     return checksum;
 }
@@ -332,6 +326,7 @@ pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
     a_header->map_page_count_size = PIFS_MAP_PAGE_COUNT_SIZE;
     a_header->use_delta_for_entries = PIFS_USE_DELTA_FOR_ENTRIES;
     a_header->enable_directories = PIFS_ENABLE_DIRECTORIES;
+    a_header->enable_crc = PIFS_ENABLE_CRC;
 #endif
     address.block_address = a_block_address;
     address.page_address = a_page_address;
@@ -746,7 +741,8 @@ pifs_status_t pifs_init(void)
                                 && header.delta_map_page_num == PIFS_DELTA_MAP_PAGE_NUM
                                 && header.map_page_count_size == PIFS_MAP_PAGE_COUNT_SIZE
                                 && header.use_delta_for_entries == PIFS_USE_DELTA_FOR_ENTRIES
-                                && header.enable_directories == PIFS_ENABLE_DIRECTORIES)
+                                && header.enable_directories == PIFS_ENABLE_DIRECTORIES
+                                && header.enable_directories == PIFS_ENABLE_CRC)
 #endif
                         {
                             pifs.is_header_found = TRUE;

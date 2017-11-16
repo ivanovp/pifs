@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-10-11 18:20:53 ivanovp {Time-stamp}
+ * Last modify: 2017-11-15 13:41:17 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -39,7 +39,7 @@
 #include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 5
 #include "pifs_debug.h"
 
 /**
@@ -667,6 +667,7 @@ pifs_status_t pifs_merge(void)
         }
     }
     pifs.is_merging = FALSE;
+    printf("ret: %i\r\n", ret);
     PIFS_ASSERT(ret == PIFS_SUCCESS);
     PIFS_WARNING_MSG("stop\r\n");
 

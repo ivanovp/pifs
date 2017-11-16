@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-07-06 19:12:58 ivanovp {Time-stamp}
+ * Last modify: 2017-11-15 12:28:02 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,10 +30,46 @@
 #include "pifs.h"
 #include "pifs_fsbm.h"
 #include "pifs_helper.h"
+#include "pifs_crc8.h"
 #include "buffer.h"
 
 #define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
+
+/**
+ * @brief pifs_calc_checksum Calculate checksum or CRC of a buffer.
+ *
+ * @param[in] a_buf         Pointer to the buffer.
+ * @param[in] a_buf_size    Length of buffer.
+ * @return The calculated checksum.
+ */
+pifs_checksum_t pifs_calc_checksum(void * a_buf, size_t a_buf_size)
+{
+#if PIFS_ENABLE_CRC
+    pifs_checksum_t checksum = (pifs_checksum_t) crc_init();
+
+    checksum = crc_update(checksum, a_buf, a_buf_size);
+    checksum = crc_finalize(checksum);
+#else
+    uint8_t * ptr = (uint8_t*) a_buf;
+    pifs_checksum_t checksum = (pifs_checksum_t) PIFS_CHECKSUM_ERASED;
+    uint8_t cntr = a_buf_size;
+
+    while (cntr--)
+    {
+        checksum = crc;
+        ptr++;
+    }
+#endif
+
+    if (checksum == PIFS_CHECKSUM_ERASED)
+    {
+        checksum++;
+    }
+
+    return checksum;
+}
+
 
 #if PIFS_DEBUG_LEVEL >= 1
 /**
@@ -140,6 +176,13 @@ void pifs_print_cache(void)
 #endif
 }
 
+/**
+ * Convert boolean to human readable string.
+ *
+ * @param[in] expression    True or false.
+ *
+ * @return "Yes" if true. Otherwise "No".
+ */
 char * pifs_yes_no(bool_t expression)
 {
     if (expression)
@@ -699,3 +742,4 @@ pifs_status_t pifs_get_file(pifs_file_t * * a_file)
 
     return ret;
 }
+

@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-06-16 13:08:53 ivanovp {Time-stamp}
+ * Last modify: 2017-11-15 12:38:38 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -62,6 +62,7 @@ typedef enum
     PIFS_ERROR_IS_NOT_DIRECTORY = 23,
     PIFS_ERROR_DIRECTORY_NOT_EMPTY = 24,
     PIFS_ERROR_INTEGRITY = 25,
+    PIFS_ERROR_CHECKSUM = 26,
 } pifs_status_t;
 
 #define PIFS_EACCES     PIFS_ERROR_FILE_NOT_FOUND

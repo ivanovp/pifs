@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-08-21 21:21:07 ivanovp {Time-stamp}
+ * Last modify: 2017-11-16 19:09:07 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -183,7 +183,7 @@ extern "C" {
 /** Convert from flash page to logical page */
 #define PIFS_FP2LP(fp)              ((fp) / PIFS_FLASH_PAGE_PER_LOGICAL_PAGE)
 
-#if PIFS_CHECKSUM_SIZE == 1
+#if PIFS_CHECKSUM_SIZE == 1 || PIFS_ENABLE_CRC
 typedef uint8_t pifs_checksum_t;
 #define PIFS_CHECKSUM_ERASED    (UINT8_MAX)
 #elif PIFS_CHECKSUM_SIZE == 2
@@ -368,6 +368,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     uint8_t                 map_page_count_size;        /**< Size of map page count's type in bytes */
     bool_t                  use_delta_for_entries : 1;  /**< TRUE: delta pages used for entries */
     bool_t                  enable_directories : 1;     /**< TRUE: directories can be create, read */
+    bool_t                  enable_crc : 1;             /**< TRUE: CRC is calculate, FALSE: checksum is calculated */
 #endif
     /* file system status */
     pifs_block_address_t    management_block_address;       /**< Address of primary (active) management block */
@@ -399,6 +400,8 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 #endif
     pifs_address_t          first_map_address;  /**< First map page's address */
     pifs_file_size_t        file_size;          /**< Bytes written to file */
+    /** Checksum shall be the last element! */
+    pifs_checksum_t         checksum;
 } pifs_entry_t;
 
 /**
@@ -408,7 +411,9 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 typedef struct PIFS_PACKED_ATTRIBUTE
 {
     pifs_address_t          prev_map_address;   /**< Address of previous map */
+    pifs_checksum_t         prev_map_checksum;
     pifs_address_t          next_map_address;   /**< Address of next map */
+    pifs_checksum_t         next_map_checksum;
 } pifs_map_header_t;
 
 /**
@@ -419,6 +424,8 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 {
     pifs_address_t          address;            /**< Address of file's page */
     pifs_map_page_count_t   page_count;         /**< Number of pages */
+    /** Checksum shall be the last element! */
+    pifs_checksum_t         checksum;
 } pifs_map_entry_t;
 
 /**
@@ -432,6 +439,8 @@ typedef struct PIFS_PACKED_ATTRIBUTE
      * When a bit is programmed it shall be added to wear level count to get
      * the real wear level count */
     pifs_wear_level_bits_t wear_level_bits;
+    /** Checksum shall be the last element! */
+    pifs_checksum_t         checksum;
 } pifs_wear_level_entry_t;
 
 /**
@@ -442,6 +451,8 @@ typedef struct PIFS_PACKED_ATTRIBUTE
 {
     pifs_address_t          delta_address;
     pifs_address_t          orig_address;
+    /** Checksum shall be the last element! */
+    pifs_checksum_t         checksum;
 } pifs_delta_entry_t;
 
 /**

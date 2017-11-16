@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-06-27 19:35:38 ivanovp {Time-stamp}
+ * Last modify: 2017-11-15 12:28:13 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -34,6 +34,7 @@
 extern "C" {
 #endif
 
+pifs_checksum_t pifs_calc_checksum(void * a_buf, size_t a_buf_size);
 char * pifs_address2str(pifs_address_t * a_address);
 char * pifs_ba_pa2str(pifs_block_address_t a_block_address, pifs_page_address_t a_page_address);
 char * pifs_flash_address2str(pifs_address_t * a_address);

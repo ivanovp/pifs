@@ -42,6 +42,7 @@ SRC_CPP =
 SRC_C =
 SRC_C += ../../demo/pc_emu/main.c
 SRC_C += ../../source/core/pifs.c
+SRC_C += ../../source/core/pifs_crc8.c
 SRC_C += ../../source/core/pifs_delta.c
 SRC_C += ../../source/core/pifs_dir.c
 SRC_C += ../../source/core/pifs_entry.c

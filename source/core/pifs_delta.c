@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-07-06 19:12:58 ivanovp {Time-stamp}
+ * Last modify: 2017-11-16 19:08:53 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -95,6 +95,10 @@ static pifs_status_t pifs_write_delta_map_page(pifs_size_t a_delta_map_page_idx,
  * a_delta_block_address and a_delta_page_address will contain the
  * address of delta page if found or the original address (a_block_address,
  * a_page_address) if not found.
+ * TODO Delta map pages could be assigned for different blocks.
+ * This means that if a different block is read the delta map pages should
+ * be read again. It should be as fast as possible to find the corresponding
+ * delta map page...
  *
  * @param[in] a_block_address           Block address to search.
  * @param[in] a_page_address            Page address to search.

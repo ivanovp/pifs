@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-06-27 19:35:38 ivanovp {Time-stamp}
+ * Last modify: 2017-11-16 19:09:08 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -49,8 +49,9 @@ pifs_status_t pifs_read_entry(pifs_block_address_t a_entry_list_block_address,
 pifs_status_t pifs_write_entry(pifs_block_address_t a_entry_list_block_address,
                               pifs_page_address_t a_entry_list_page_address,
                               pifs_size_t a_entry_idx,
-                              const pifs_entry_t * const a_entry);
-pifs_status_t pifs_append_entry(const pifs_entry_t * const a_entry,
+                              bool_t a_calc_crc,
+                              pifs_entry_t * const a_entry);
+pifs_status_t pifs_append_entry(pifs_entry_t * const a_entry,
                                 pifs_block_address_t a_entry_list_block_address,
                                 pifs_page_address_t a_entry_list_page_address);
 pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const a_entry,

@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-08-29 17:43:54 ivanovp {Time-stamp}
+ * Last modify: 2017-11-16 19:08:52 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -220,10 +220,12 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
 #endif
                 a_file->entry.first_map_address.block_address = ba;
                 a_file->entry.first_map_address.page_address = pa;
+#if 0
                 a_file->status = pifs_append_entry(&a_file->entry,
                                                    a_file->entry_list_address.block_address,
                                                    a_file->entry_list_address.page_address);
                 if (a_file->status == PIFS_SUCCESS)
+#endif
                 {
                     PIFS_DEBUG_MSG("Entry created\r\n");
                     a_file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, TRUE);
@@ -232,11 +234,13 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
                         a_file->is_opened = TRUE;
                     }
                 }
+#if 0
                 else
                 {
                     PIFS_DEBUG_MSG("Cannot create entry!\r\n");
                     PIFS_SET_ERRNO(PIFS_ERROR_NO_MORE_ENTRY);
                 }
+#endif
             }
             else
             {
@@ -778,6 +782,12 @@ int pifs_internal_fflush(P_FILE * a_file, bool_t a_is_merge_allowed)
                                              file->entry_list_address.block_address,
                                              file->entry_list_address.page_address,
                                              a_is_merge_allowed);
+            if (file->status == PIFS_ERROR_FILE_NOT_FOUND)
+            {
+                file->status = pifs_append_entry(&file->entry,
+                                                 file->entry_list_address.block_address,
+                                                 file->entry_list_address.page_address);
+            }
         }
         pifs_flush();
         ret = 0;
@@ -1185,11 +1195,12 @@ int pifs_internal_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_
     if (file->is_opened)
     {
         memcpy(&file->entry.user_data, a_user_data, sizeof(pifs_user_data_t));
-
+#if 0
         file->status = pifs_update_entry(file->entry.name, &file->entry,
                                          file->entry_list_address.block_address,
                                          file->entry_list_address.page_address,
                                          a_is_merge_allowed);
+#endif
     }
 
     ret = file->status;
