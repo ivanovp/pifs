@@ -674,6 +674,8 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
                 }
             }
         }
+
+        pifs.is_wear_leveling = FALSE;
     }
 
     PIFS_PUT_MUTEX();

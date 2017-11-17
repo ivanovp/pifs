@@ -37,7 +37,7 @@
 #include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 2
+#define PIFS_DEBUG_LEVEL 5
 #include "pifs_debug.h"
 
 #if PIFS_ENABLE_DIRECTORIES
@@ -724,7 +724,7 @@ int pifs_mkdir(const pifs_char_t * const a_filename)
 
     PIFS_GET_MUTEX();
 
-    ret = pifs_internal_mkdir(a_filename);
+    ret = pifs_internal_mkdir(a_filename, TRUE);
 
     PIFS_PUT_MUTEX();
 
@@ -737,7 +737,7 @@ int pifs_mkdir(const pifs_char_t * const a_filename)
  * @param[in] a_filename Path to create.
  * @return PIFS_SUCCESS if directory successfully created.
  */
-pifs_status_t pifs_internal_mkdir(const pifs_char_t * const a_filename)
+pifs_status_t pifs_internal_mkdir(const pifs_char_t * const a_filename, bool_t a_is_merge_allowed)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_entry_t       * entry = &pifs.entry;
@@ -764,6 +764,10 @@ pifs_status_t pifs_internal_mkdir(const pifs_char_t * const a_filename)
     }
     else if (ret == PIFS_ERROR_FILE_NOT_FOUND)
     {
+        if (a_is_merge_allowed)
+        {
+            ret = pifs_merge_check(NULL, 1);
+        }
         /* Order of steps to create a directory: */
         /* #1 Find free pages for entry list */
         /* #2 Create entry of a_file, which contains the entry list's address */

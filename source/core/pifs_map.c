@@ -101,19 +101,28 @@ pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
     if (a_file->map_entry_idx >= PIFS_MAP_ENTRY_PER_PAGE)
     {
         a_file->map_entry_idx = 0;
-        if (a_file->map_header.next_map_address.block_address < PIFS_BLOCK_ADDRESS_INVALID
-                && a_file->map_header.next_map_address.page_address < PIFS_PAGE_ADDRESS_INVALID)
+        checksum = pifs_calc_checksum(&a_file->map_header.next_map_address,
+                                      PIFS_ADDRESS_SIZE_BYTE - PIFS_CHECKSUM_SIZE_BYTE);
+        if (checksum == a_file->map_header.next_map_checksum)
         {
-            a_file->actual_map_address = a_file->map_header.next_map_address;
-//            PIFS_DEBUG_MSG("Next map address %s\r\n",
-//                           pifs_address2str(&a_file->actual_map_address));
-            a_file->status = pifs_read(a_file->actual_map_address.block_address,
-                                       a_file->actual_map_address.page_address,
-                                       0, &a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE);
+            if (a_file->map_header.next_map_address.block_address < PIFS_BLOCK_ADDRESS_INVALID
+                    && a_file->map_header.next_map_address.page_address < PIFS_PAGE_ADDRESS_INVALID)
+            {
+                a_file->actual_map_address = a_file->map_header.next_map_address;
+                //            PIFS_DEBUG_MSG("Next map address %s\r\n",
+                //                           pifs_address2str(&a_file->actual_map_address));
+                a_file->status = pifs_read(a_file->actual_map_address.block_address,
+                                           a_file->actual_map_address.page_address,
+                                           0, &a_file->map_header, PIFS_MAP_HEADER_SIZE_BYTE);
+            }
+            else
+            {
+                a_file->status = PIFS_ERROR_END_OF_FILE;
+            }
         }
         else
         {
-            a_file->status = PIFS_ERROR_END_OF_FILE;
+            a_file->status = PIFS_ERROR_CHECKSUM;
         }
     }
     if (a_file->status == PIFS_SUCCESS)
@@ -234,6 +243,8 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
             /* Set jump address for last map */
             a_file->map_header.next_map_address.block_address = ba;
             a_file->map_header.next_map_address.page_address = pa;
+            a_file->map_header.next_map_checksum = pifs_calc_checksum(&a_file->map_header.next_map_address,
+                                                                      PIFS_ADDRESS_SIZE_BYTE);
             a_file->status = pifs_write(a_file->actual_map_address.block_address,
                                         a_file->actual_map_address.page_address,
                                         0,
@@ -249,6 +260,8 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
             memset(&a_file->map_header, PIFS_FLASH_ERASED_BYTE_VALUE, PIFS_MAP_HEADER_SIZE_BYTE);
             a_file->map_header.prev_map_address.block_address = a_file->actual_map_address.block_address;
             a_file->map_header.prev_map_address.page_address = a_file->actual_map_address.page_address;
+            a_file->map_header.prev_map_checksum = pifs_calc_checksum(&a_file->map_header.prev_map_address,
+                                                                      PIFS_ADDRESS_SIZE_BYTE);
             /* Update actual map's address */
             a_file->actual_map_address.block_address = ba;
             a_file->actual_map_address.page_address = pa;
@@ -314,6 +327,8 @@ pifs_status_t pifs_walk_file_pages(pifs_file_t * a_file,
     pifs_size_t             i;
     bool_t                  erased = FALSE;
     pifs_page_offset_t      po = PIFS_MAP_HEADER_SIZE_BYTE;
+    pifs_checksum_t         checksum;
+    bool_t                  end = FALSE;
 
     PIFS_ASSERT(a_file_walker_func);
     PIFS_DEBUG_MSG("Searching in map entry at %s\r\n", pifs_ba_pa2str(ba, pa));
@@ -337,36 +352,45 @@ pifs_status_t pifs_walk_file_pages(pifs_file_t * a_file,
                 }
                 else
                 {
-                    /* Map entry found */
-                    mba = a_file->map_entry.address.block_address;
-                    mpa = a_file->map_entry.address.page_address;
-                    page_count = a_file->map_entry.page_count;
-                    PIFS_DEBUG_MSG("Map entry %s, page count: %i\r\n",
-                                   pifs_ba_pa2str(mba, mpa),
-                                   page_count);
-                    if (page_count && page_count < PIFS_MAP_PAGE_COUNT_INVALID)
+                    checksum = pifs_calc_checksum(&a_file->map_entry,
+                                                  PIFS_MAP_ENTRY_SIZE_BYTE - PIFS_CHECKSUM_SIZE_BYTE);
+                    if (checksum == a_file->map_entry.checksum)
                     {
-                        a_file->status = pifs_find_delta_page(mba, mpa,
-                                                              &delta_ba, &delta_pa, NULL,
-                                                              &pifs.header);
-                        while (page_count-- && a_file->status == PIFS_SUCCESS)
+                        /* Map entry found */
+                        mba = a_file->map_entry.address.block_address;
+                        mpa = a_file->map_entry.address.page_address;
+                        page_count = a_file->map_entry.page_count;
+                        PIFS_DEBUG_MSG("Map entry %s, page count: %i\r\n",
+                                       pifs_ba_pa2str(mba, mpa),
+                                       page_count);
+                        if (page_count && page_count < PIFS_MAP_PAGE_COUNT_INVALID)
                         {
-                            /* Call callback function */
-                            a_file->status = (*a_file_walker_func)(a_file, mba, mpa,
-                                                                   delta_ba, delta_pa,
-                                                                   FALSE, a_func_data);
-                            if (page_count)
+                            a_file->status = pifs_find_delta_page(mba, mpa,
+                                                                  &delta_ba, &delta_pa, NULL,
+                                                                  &pifs.header);
+                            while (page_count-- && a_file->status == PIFS_SUCCESS)
                             {
-                                if (a_file->status == PIFS_SUCCESS)
+                                /* Call callback function */
+                                a_file->status = (*a_file_walker_func)(a_file, mba, mpa,
+                                                                       delta_ba, delta_pa,
+                                                                       FALSE, a_func_data);
+                                if (page_count)
                                 {
-                                    a_file->status = pifs_inc_ba_pa(&delta_ba, &delta_pa);
-                                }
-                                if (a_file->status == PIFS_SUCCESS)
-                                {
-                                    a_file->status = pifs_inc_ba_pa(&mba, &mpa);
+                                    if (a_file->status == PIFS_SUCCESS)
+                                    {
+                                        a_file->status = pifs_inc_ba_pa(&delta_ba, &delta_pa);
+                                    }
+                                    if (a_file->status == PIFS_SUCCESS)
+                                    {
+                                        a_file->status = pifs_inc_ba_pa(&mba, &mpa);
+                                    }
                                 }
                             }
                         }
+                    }
+                    else
+                    {
+                        a_file->status = PIFS_ERROR_CHECKSUM;
                     }
                 }
                 po += PIFS_MAP_ENTRY_SIZE_BYTE;
@@ -379,12 +403,28 @@ pifs_status_t pifs_walk_file_pages(pifs_file_t * a_file,
                                                    PIFS_BLOCK_ADDRESS_INVALID,
                                                    PIFS_PAGE_ADDRESS_INVALID,
                                                    TRUE, a_func_data);
-            /* Jump to the next map page */
-            ba = a_file->map_header.next_map_address.block_address;
-            pa = a_file->map_header.next_map_address.page_address;
-            po = PIFS_MAP_HEADER_SIZE_BYTE;
+            if (!pifs_is_buffer_erased(&a_file->map_header.next_map_address, PIFS_ADDRESS_SIZE_BYTE))
+            {
+                checksum = pifs_calc_checksum(&a_file->map_header.next_map_address,
+                                              PIFS_ADDRESS_SIZE_BYTE - PIFS_CHECKSUM_SIZE_BYTE);
+                if (checksum == a_file->map_header.next_map_checksum)
+                {
+                    /* Jump to the next map page */
+                    ba = a_file->map_header.next_map_address.block_address;
+                    pa = a_file->map_header.next_map_address.page_address;
+                    po = PIFS_MAP_HEADER_SIZE_BYTE;
+                }
+                else
+                {
+                    a_file->status = PIFS_ERROR_CHECKSUM;
+                }
+            }
+            else
+            {
+                end = TRUE;
+            }
         }
-    } while (ba < PIFS_BLOCK_ADDRESS_INVALID && pa < PIFS_PAGE_ADDRESS_INVALID && a_file->status == PIFS_SUCCESS);
+    } while (!end && a_file->status == PIFS_SUCCESS);
 
     return a_file->status;
 }

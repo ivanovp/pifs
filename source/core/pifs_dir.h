@@ -54,7 +54,7 @@ pifs_dirent_t *pifs_internal_readdir(pifs_dir_t * a_dirp);
 int pifs_internal_closedir(pifs_dir_t * const a_dirp);
 pifs_status_t pifs_walk_dir(const pifs_char_t * const a_path, bool_t a_recursive, bool_t a_stop_at_error,
                             pifs_dir_walker_func_t a_dir_walker_func, void * a_func_data);
-pifs_status_t pifs_internal_mkdir(const pifs_char_t * const a_filename);
+pifs_status_t pifs_internal_mkdir(const pifs_char_t * const a_filename, bool_t a_is_merge_allowed);
 pifs_status_t pifs_internal_chdir(pifs_char_t * const a_filename);
 
 #ifdef __cplusplus

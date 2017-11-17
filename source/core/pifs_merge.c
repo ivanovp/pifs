@@ -39,7 +39,7 @@
 #include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 5
+#define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
 
 /**
@@ -389,7 +389,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
                         if (!PIFS_IS_DOT_DIR(entry.name))
                         {
                             /* Copy directory */
-                            ret = pifs_internal_mkdir(entry.name);
+                            ret = pifs_internal_mkdir(entry.name, FALSE);
                             if (ret == PIFS_SUCCESS)
                             {
                                 current_entry_list_address = *pifs_get_task_current_entry_list_address();
@@ -667,7 +667,6 @@ pifs_status_t pifs_merge(void)
         }
     }
     pifs.is_merging = FALSE;
-    printf("ret: %i\r\n", ret);
     PIFS_ASSERT(ret == PIFS_SUCCESS);
     PIFS_WARNING_MSG("stop\r\n");
 

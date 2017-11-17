@@ -376,7 +376,7 @@ pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_minimum,
         {
             /* No success, try to find page anywhere */
             find.start_block_address = PIFS_FLASH_BLOCK_RESERVED_NUM;
-            find.end_block_address = PIFS_FLASH_BLOCK_NUM_ALL;
+            find.end_block_address = PIFS_FLASH_BLOCK_NUM_ALL - 1;
             ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
         }
 

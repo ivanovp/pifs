@@ -226,11 +226,6 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
                     a_file->is_opened = TRUE;
                 }
             }
-            else
-            {
-                PIFS_DEBUG_MSG("No free page found!\r\n");
-                PIFS_SET_ERRNO(PIFS_ERROR_NO_MORE_SPACE);
-            }
         }
         if (a_file->is_opened)
         {

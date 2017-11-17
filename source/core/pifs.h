@@ -329,6 +329,8 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_page_address_t     page_address;
 } pifs_address_t;
 
+#define PIFS_ADDRESS_SIZE_BYTE      (sizeof(pifs_address_t))
+
 /**
  * Type to store least weared blocks in the file system's header.
  * It is used to speed up finding least weared blocks.
