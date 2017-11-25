@@ -627,6 +627,7 @@ pifs_status_t pifs_init(void)
     memset(pifs.dmw_page_buf, 0, sizeof(pifs.dmw_page_buf));
     memset(pifs.sc_page_buf, 0, sizeof(pifs.sc_page_buf));
     pifs.error_cntr = 0;
+    pifs.last_static_wear_block_idx = 0;
 #if PIFS_ENABLE_DIRECTORIES
     for (i = 0; i < PIFS_TASK_COUNT_MAX; i++)
     {

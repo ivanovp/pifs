@@ -162,7 +162,7 @@ pifs_status_t pifs_resolve_dir(pifs_char_t * const a_path,
     pifs_char_t       * curr_path_pos = a_path;
     pifs_char_t       * curr_separator_pos = NULL;
     pifs_address_t      entry_list_address = a_current_entry_list_address;
-    pifs_char_t         name[PIFS_FILENAME_LEN_MAX]; /* TODO try to avoid stack use */
+    pifs_char_t         name[PIFS_FILENAME_LEN_MAX];
     pifs_entry_t      * entry = &pifs.entry;
     pifs_size_t         len;
     bool_t              end = FALSE;
@@ -236,7 +236,7 @@ pifs_status_t pifs_resolve_path(const pifs_char_t * a_path,
     const pifs_char_t * curr_path_pos = a_path;
     pifs_char_t       * curr_separator_pos = NULL;
     pifs_address_t      entry_list_address = a_current_entry_list_address;
-    pifs_char_t         name[PIFS_FILENAME_LEN_MAX]; /* TODO try to avoid stack use */
+    pifs_char_t         name[PIFS_FILENAME_LEN_MAX];
     pifs_entry_t      * entry = &pifs.entry;
     pifs_size_t         len;
 

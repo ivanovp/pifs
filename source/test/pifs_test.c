@@ -259,7 +259,7 @@ pifs_status_t pifs_test_full_w(const char * a_filename)
     file = pifs_fopen(filename, "w");
     if (file)
     {
-        printf("File opened for writing\r\n");
+        printf("File opened for writing %s\r\n", filename);
         for (i = 0; i < TEST_FULL_PAGE_NUM; i++)
         {
             printf("full_w: %i\r\n", i);
@@ -383,7 +383,7 @@ pifs_status_t pifs_test_basic_w(const char * a_filename)
     file = pifs_fopen(filename, "w");
     if (file)
     {
-        printf("File opened for writing\r\n");
+        printf("File opened for writing %s\r\n", filename);
 #if PIFS_ENABLE_USER_DATA
         fill_buffer(&user_data, sizeof(user_data), FILL_TYPE_SEQUENCE_BYTE, 42);
         ret = pifs_fsetuserdata(file, &user_data);
@@ -628,7 +628,7 @@ pifs_status_t pifs_test_wfragment_w(size_t a_fragment_size)
     file = pifs_fopen(filename, "w");
     if (file)
     {
-        printf("File opened for writing\r\n");
+        printf("File opened for writing %s\r\n", filename);
         generate_buffer(2, filename);
         written_size = 0;
         for (i = 0; i < sizeof(test_buf_w) && ret == PIFS_SUCCESS; i += a_fragment_size)
@@ -669,7 +669,7 @@ pifs_status_t pifs_test_wfragment_w(size_t a_fragment_size)
         file = pifs_fopen(filename2, "a");
         if (file)
         {
-            printf("File opened for writing\r\n");
+            printf("File opened for writing %s\r\n", filename2);
             written_size = 0;
             written_size = pifs_fwrite(&test_buf_w[i % sizeof(test_buf_w)], 1, a_fragment_size, file);
             if (written_size != a_fragment_size)
@@ -945,7 +945,7 @@ pifs_status_t pifs_test_wseek_w(void)
     file = pifs_fopen(filename, "w");
     if (file)
     {
-        printf("File opened for writing\r\n");
+        printf("File opened for writing %s\r\n", filename);
         generate_buffer(8, filename);
         pifs_fseek(file, SEEK_TEST_POS, PIFS_SEEK_SET);
         written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);
@@ -1089,7 +1089,7 @@ pifs_status_t pifs_test_delta_w(const char * a_filename)
     file = pifs_fopen(filename, "w");
     if (file)
     {
-        printf("File opened for writing\r\n");
+        printf("File opened for writing %s\r\n", filename);
         generate_buffer(33, filename);
         //print_buffer(test_buf_w, sizeof(test_buf_w), 0);
         written_size = pifs_fwrite(test_buf_w, 1, sizeof(test_buf_w), file);

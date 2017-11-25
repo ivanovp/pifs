@@ -138,7 +138,7 @@ pifs_status_t pifs_append_entry(pifs_entry_t * const a_entry,
     pifs_page_address_t  pa = a_entry_list_page_address;
     bool_t               created = FALSE;
     bool_t               is_erased = FALSE;
-    pifs_entry_t         entry; /* TODO do not store on stack, it can be large! */
+    pifs_entry_t         entry;
     pifs_size_t          i;
     pifs_size_t          j;
     pifs_size_t          free_entry_count;
@@ -217,7 +217,7 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
     pifs_page_address_t  pa = a_entry_list_page_address;
     bool_t               found = FALSE;
     bool_t               is_erased = FALSE;
-    pifs_entry_t         entry; /* TODO do not store on stack, it can be large! */
+    pifs_entry_t         entry;
     pifs_size_t          i;
     pifs_size_t          j;
 
@@ -408,7 +408,7 @@ pifs_status_t pifs_count_entries(pifs_size_t * a_free_entry_count, pifs_size_t *
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_block_address_t ba = a_entry_list_block_address;
     pifs_page_address_t  pa = a_entry_list_page_address;
-    pifs_entry_t         entry; /* TODO do not store on stack! */
+    pifs_entry_t         entry;
     pifs_size_t          i;
     pifs_size_t          j;
     pifs_size_t          free_entry_count = 0;

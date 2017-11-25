@@ -43,6 +43,15 @@
 #include "pifs_debug.h"
 
 /**
+ * Structure used during emptying blocks.
+ */
+typedef struct
+{
+    pifs_block_address_t block_address;
+    bool_t               is_block_emptied;
+} pifs_empty_block_t;
+
+/**
  * @brief pifs_wear_level_list_init Write initial wear level list with all
  * zeros.
  *
@@ -518,12 +527,6 @@ pifs_status_t pifs_check_block(pifs_char_t * a_filename,
     return ret;
 }
 
-typedef struct
-{
-    pifs_block_address_t block_address;
-    bool_t               is_block_emptied;
-} pifs_empty_block_t;
-
 /**
  * @brief pifs_dir_walker_empty Callback function used during block emptying.
  * Not only pages found in the specified block are copied, but the whole file
@@ -616,7 +619,7 @@ pifs_status_t pifs_empty_block(pifs_block_address_t a_block_address,
 pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
 {
     pifs_status_t           ret = PIFS_SUCCESS;
-    pifs_size_t             i;
+    pifs_size_t             cntr = PIFS_LEAST_WEARED_BLOCK_NUM;
     pifs_size_t             free_data_pages;
     pifs_size_t             free_management_pages;
     pifs_block_address_t    ba;
@@ -628,6 +631,8 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
 
     if (!pifs.is_wear_leveling)
     {
+        PIFS_WARNING_MSG("Static wear leveling started\r\n");
+
         pifs.is_wear_leveling = TRUE;
 
         PIFS_NOTICE_MSG("Wear level counter maximum: %i\r\n",
@@ -635,11 +640,10 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
         PIFS_NOTICE_MSG("Static wear level limit:    %i\r\n",
                         PIFS_STATIC_WEAR_LEVEL_LIMIT);
 
-        for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_SUCCESS
-             && a_max_block_num; i++)
+        do
         {
-            ba = pifs.header.least_weared_blocks[i].block_address;
-            diff = pifs.header.wear_level_cntr_max - pifs.header.least_weared_blocks[i].wear_level_cntr;
+            ba = pifs.header.least_weared_blocks[pifs.last_static_wear_block_idx].block_address;
+            diff = pifs.header.wear_level_cntr_max - pifs.header.least_weared_blocks[pifs.last_static_wear_block_idx].wear_level_cntr;
             ret = pifs_get_pages(TRUE, ba,
                                  1, &free_management_pages, &free_data_pages);
             is_data_block = pifs_is_block_type(ba, PIFS_BLOCK_TYPE_DATA, &pifs.header);
@@ -673,9 +677,15 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
                     a_max_block_num--;
                 }
             }
-        }
+            pifs.last_static_wear_block_idx++;
+            if (pifs.last_static_wear_block_idx == PIFS_LEAST_WEARED_BLOCK_NUM)
+            {
+                pifs.last_static_wear_block_idx = 0;
+            }
+        } while (ret == PIFS_SUCCESS && a_max_block_num && cntr--);
 
         pifs.is_wear_leveling = FALSE;
+        PIFS_WARNING_MSG("Static wear leveling exiting\r\n");
     }
 
     PIFS_PUT_MUTEX();

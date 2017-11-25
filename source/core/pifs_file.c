@@ -252,6 +252,11 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
     pifs_file_t  * file = NULL;
     pifs_status_t  ret;
 
+#if PIFS_ENABLE_AUTO_STATIC_WEAR
+    /* Do wear leveling outside of mutex protection */
+    (void)pifs_static_wear_leveling(PIFS_STATIC_WEAR_LEVEL_BLOCKS);
+#endif
+
     PIFS_GET_MUTEX();
 
     PIFS_NOTICE_MSG("filename: '%s' modes: %s\r\n", a_filename, a_modes);
@@ -276,18 +281,7 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
 
     PIFS_SET_ERRNO(ret);
 
-#if PIFS_ENABLE_AUTO_STATIC_WEAR
-    /* Do wear leveling outside of mutex protection */
-    if (file && file->mode_write && !pifs.is_merging)
-    {
-        PIFS_PUT_MUTEX();
-        (void)pifs_static_wear_leveling(PIFS_STATIC_WEAR_LEVEL_BLOCKS);
-    }
-    else
-#endif
-    {
-        PIFS_PUT_MUTEX();
-    }
+    PIFS_PUT_MUTEX();
 
     return (P_FILE*) file;
 }
@@ -1294,12 +1288,6 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
 
     PIFS_GET_MUTEX();
 
-#if PIFS_ENABLE_DIRECTORIES
-    entry_list_address = *pifs_get_task_current_entry_list_address();
-#else
-    entry_list_address = pifs.header.root_entry_list_address;
-#endif
-
     PIFS_NOTICE_MSG("filename: '%s' -> '%s'\r\n", a_oldname, a_newname);
     ret = pifs_check_filename(a_oldname);
     if (ret == PIFS_SUCCESS)
@@ -1314,6 +1302,16 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
     {
         ret = pifs_merge_check(NULL, 1);
     }
+    if (ret == PIFS_SUCCESS)
+    {
+        /* Get entry list's address AFTER merge as it can change during merge! */
+#if PIFS_ENABLE_DIRECTORIES
+        entry_list_address = *pifs_get_task_current_entry_list_address();
+#else
+        entry_list_address = pifs.header.root_entry_list_address;
+#endif
+    }
+
 #if PIFS_ENABLE_DIRECTORIES
     if (ret == PIFS_SUCCESS)
     {
