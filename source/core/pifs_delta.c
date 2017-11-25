@@ -121,6 +121,7 @@ pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
     pifs_delta_entry_t * delta_entry;
     pifs_block_address_t ba = a_block_address;
     pifs_page_address_t  pa = a_page_address;
+    pifs_checksum_t      checksum;
 
     PIFS_ASSERT(a_block_address < PIFS_BLOCK_ADDRESS_INVALID);
     PIFS_ASSERT(a_page_address < PIFS_PAGE_ADDRESS_INVALID);
@@ -141,7 +142,9 @@ pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
             delta_entry = (pifs_delta_entry_t*) &pifs.delta_map_page_buf[i];
             for (j = 0; j < PIFS_DELTA_ENTRY_PER_PAGE; j++)
             {
-                if (delta_entry[j].orig_address.block_address == a_block_address
+                checksum = pifs_calc_checksum(&delta_entry[j], PIFS_DELTA_ENTRY_SIZE_BYTE - PIFS_CHECKSUM_SIZE_BYTE);
+                if (checksum == delta_entry[j].checksum
+                        && delta_entry[j].orig_address.block_address == a_block_address
                         && delta_entry[j].orig_address.page_address == a_page_address)
                 {
                     ba = delta_entry[j].delta_address.block_address;
@@ -314,6 +317,7 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
                 delta_entry.orig_address.page_address = a_page_address;
                 delta_entry.delta_address.block_address = fba;
                 delta_entry.delta_address.page_address = fpa;
+                delta_entry.checksum = pifs_calc_checksum(&delta_entry, PIFS_DELTA_ENTRY_SIZE_BYTE - PIFS_CHECKSUM_SIZE_BYTE);
                 PIFS_DEBUG_MSG("delta page %s -> ",
                                pifs_ba_pa2str(a_block_address, a_page_address));
                 PIFS_DEBUG_MSG("%s\r\n",
@@ -357,6 +361,9 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
     return ret;
 }
 
+/**
+ * @brief pifs_reset_delta Reset buffer of delta map.
+ */
 void pifs_reset_delta(void)
 {
     memset(pifs.delta_map_page_buf, PIFS_FLASH_ERASED_BYTE_VALUE,

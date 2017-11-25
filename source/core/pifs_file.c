@@ -1310,6 +1310,10 @@ int pifs_rename(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
             ret = pifs_internal_remove(a_newname, TRUE);
         }
     }
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_merge_check(NULL, 1);
+    }
 #if PIFS_ENABLE_DIRECTORIES
     if (ret == PIFS_SUCCESS)
     {
