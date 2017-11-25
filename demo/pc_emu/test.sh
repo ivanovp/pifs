@@ -8,7 +8,7 @@ make
 # Create a file
 ./pifs tb staticwear.tst >>$LOG
 #for i in `seq --format="%02.0f" 100`; do
-for i in `seq --format="%02.0f" 13`; do
+for i in `seq --format="%02.0f" 49`; do
     echo "##############################################################################"|tee -a $LOG
     echo "### TEST $i"|tee -a $LOG
     echo "##############################################################################"|tee -a $LOG

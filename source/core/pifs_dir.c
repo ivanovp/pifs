@@ -744,14 +744,22 @@ pifs_status_t pifs_internal_mkdir(const pifs_char_t * const a_filename, bool_t a
     pifs_block_address_t ba;
     pifs_page_address_t  pa;
     pifs_page_count_t    page_count_found;
-    pifs_address_t       entry_list_address = *pifs_get_task_current_entry_list_address();
+    pifs_address_t       entry_list_address;
     pifs_char_t          filename[PIFS_FILENAME_LEN_MAX];
 
-    /* Resolve a_filename's relative/absolute file path and update
-     * entry_list_address regarding that */
-    ret = pifs_resolve_path(a_filename, entry_list_address,
-                            filename, &entry_list_address);
-
+    if (a_is_merge_allowed)
+    {
+        ret = pifs_merge_check(NULL, 1);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        /* Get entry list's address AFTER merge as it can change during merge! */
+        entry_list_address = *pifs_get_task_current_entry_list_address();
+        /* Resolve a_filename's relative/absolute file path and update
+         * entry_list_address regarding that */
+        ret = pifs_resolve_path(a_filename, entry_list_address,
+                                filename, &entry_list_address);
+    }
     if (ret == PIFS_SUCCESS)
     {
         ret = pifs_find_entry(PIFS_FIND_ENTRY, filename, entry,
@@ -764,18 +772,18 @@ pifs_status_t pifs_internal_mkdir(const pifs_char_t * const a_filename, bool_t a
     }
     else if (ret == PIFS_ERROR_FILE_NOT_FOUND)
     {
-        if (a_is_merge_allowed)
-        {
-            ret = pifs_merge_check(NULL, 1);
-        }
+        ret = PIFS_SUCCESS;
         /* Order of steps to create a directory: */
         /* #1 Find free pages for entry list */
         /* #2 Create entry of a_file, which contains the entry list's address */
         /* #3 Mark entry list page */
         /* #4 Create "." and ".." entries */
-        ret = pifs_find_free_page_wl(PIFS_ENTRY_LIST_SIZE_PAGE, PIFS_ENTRY_LIST_SIZE_PAGE,
-                                     PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT,
-                                     &ba, &pa, &page_count_found);
+        if (ret == PIFS_SUCCESS)
+        {
+            ret = pifs_find_free_page_wl(PIFS_ENTRY_LIST_SIZE_PAGE, PIFS_ENTRY_LIST_SIZE_PAGE,
+                                         PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT,
+                                         &ba, &pa, &page_count_found);
+        }
         if (ret == PIFS_SUCCESS)
         {
             PIFS_DEBUG_MSG("Entry list: %u free page found %s\r\n", page_count_found, pifs_ba_pa2str(ba, pa));

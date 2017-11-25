@@ -168,8 +168,8 @@ pifs_status_t pifs_append_entry(pifs_entry_t * const a_entry,
         for (i = 0; i < PIFS_ENTRY_PER_PAGE && !created && ret == PIFS_SUCCESS; i++)
         {
             is_erased = FALSE;
-            (void)pifs_read_entry(ba, pa, i, &entry, &is_erased);
-            if (is_erased)
+            ret = pifs_read_entry(ba, pa, i, &entry, &is_erased);
+            if (ret == PIFS_SUCCESS && is_erased)
             {
                 /* Empty entry found */
                 ret = pifs_write_entry(ba, pa, i, TRUE, a_entry);
