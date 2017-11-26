@@ -743,3 +743,54 @@ pifs_status_t pifs_get_file(pifs_file_t * * a_file)
     return ret;
 }
 
+#if 0
+pifs_status_t pifs_get_file_blocks(pifs_char_t * a_filename,
+                                   pifs_block_address_t * a_blocks,
+                                   pifs_size_t a_blocks_size)
+{
+    pifs_file_t        * file;
+    pifs_address_t       map_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID };
+    pifs_address_t       rw_address;
+    pifs_block_address_t dba;
+    pifs_page_address_t  dpa;
+    bool_t               is_map_full;
+    pifs_status_t        ret = PIFS_SUCCESS;
+
+    file = pifs_fopen(a_filename, "r");
+    if (file)
+    {
+        do
+        {
+            if ((map_address.block_address != file->actual_map_address.block_address)
+                    && (map_address.page_address != file->actual_map_address.page_address))
+            {
+                map_address = file->actual_map_address;
+            }
+            /* Save R/W address before it changes due to reading */
+            rw_address = file->rw_address;
+            read = pifs_fread(buf_r, 1, sizeof(buf_r), file);
+            if (read > 0)
+            {
+                /* Read was successfull print info */
+                printf("Data page's address: %s ", pifs_address2str(&rw_address));
+                ret = pifs_find_delta_page(rw_address.block_address,
+                                           rw_address.page_address,
+                                           &dba, &dpa, &is_map_full,
+                                           &pifs.header);
+                if (ret == PIFS_SUCCESS &&
+                        (rw_address.block_address != dba
+                         || rw_address.page_address != dpa))
+                {
+                    printf("-> %s", pifs_ba_pa2str(dba, dpa));
+                }
+                printf("\r\n");
+            }
+        } while (read > 0);
+        pifs_fclose(file);
+    }
+    else
+    {
+        printf("ERROR: Cannot open file!\r\n");
+    }
+}
+#endif

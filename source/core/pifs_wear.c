@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define PIFS_DEBUG_LEVEL 5
+#define PIFS_DEBUG_LEVEL 2
 #include "pifs_debug.h"
 
 #include "api_pifs.h"
