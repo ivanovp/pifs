@@ -536,7 +536,8 @@ typedef struct
     uint8_t                 sc_page_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];
     uint32_t                error_cntr;         /**< File system's integrity check uses it */
     pifs_size_t             free_data_page_num;
-    pifs_size_t             last_static_wear_block_idx;
+    pifs_size_t             last_static_wear_block_idx; /**< Block index used for last static wear leveling. */
+    uint32_t                auto_static_wear_cntr;      /**< Counter to call less often static wear leveling */
 #if PIFS_ENABLE_DIRECTORIES
     pifs_char_t             cwd[PIFS_TASK_COUNT_MAX][PIFS_PATH_LEN_MAX];  /**< Current working directory */
     /* TODO current_entry_list_address shall be removed and cwd shall be used instead! */

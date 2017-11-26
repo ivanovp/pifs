@@ -252,10 +252,8 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
     pifs_file_t  * file = NULL;
     pifs_status_t  ret;
 
-#if PIFS_ENABLE_AUTO_STATIC_WEAR
     /* Do wear leveling outside of mutex protection */
-    (void)pifs_static_wear_leveling(PIFS_STATIC_WEAR_LEVEL_BLOCKS);
-#endif
+    (void)pifs_auto_static_wear_leveling();
 
     PIFS_GET_MUTEX();
 
@@ -391,6 +389,9 @@ pifs_status_t pifs_inc_rw_address(pifs_file_t * a_file, bool_t a_is_read)
 size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * a_file)
 {
     size_t ret;
+
+    /* TODO where to run automatic wear leveling? */
+//    (void)pifs_auto_static_wear_leveling();
 
     PIFS_GET_MUTEX();
 
@@ -1162,14 +1163,26 @@ int pifs_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data)
 int pifs_internal_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_data,
                                bool_t a_is_merge_allowed)
 {
-    pifs_file_t  * file = (pifs_file_t*) a_file;
-    pifs_status_t  ret;
+    pifs_file_t   * file = (pifs_file_t*) a_file;
+    pifs_status_t   ret;
+    pifs_address_t  entry_list_address;
 
     (void) a_is_merge_allowed;
 
     if (file->is_opened)
     {
         memcpy(&file->entry.user_data, a_user_data, sizeof(pifs_user_data_t));
+#if 0
+#if PIFS_ENABLE_DIRECTORIES
+        entry_list_address = *pifs_get_task_current_entry_list_address();
+#else
+        entry_list_address = pifs.header.root_entry_list_address;
+#endif
+        ret = pifs_update_entry(file->entry.name, &file->entry,
+                                entry_list_address.block_address,
+                                entry_list_address.page_address,
+                                a_is_merge_allowed);
+#endif
     }
 
     ret = file->status;
@@ -1365,6 +1378,9 @@ int pifs_copy(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
     pifs_file_t    * file2 = NULL;
     pifs_size_t      read_bytes;
     pifs_size_t      written_bytes;
+#if PIFS_ENABLE_USER_DATA
+    pifs_user_data_t user_data;
+#endif
 
     PIFS_NOTICE_MSG("oldname: '%s', newname: '%s'\r\n", a_oldname, a_newname);
 
@@ -1374,22 +1390,32 @@ int pifs_copy(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
         file2 = pifs_fopen(a_newname, "w");
         if (file2)
         {
-            do
+#if PIFS_ENABLE_USER_DATA
+            ret = pifs_fgetuserdata(file, &user_data);
+            if (ret == PIFS_SUCCESS)
             {
-                read_bytes = pifs_fread(pifs.sc_page_buf, 1,
-                                        PIFS_LOGICAL_PAGE_SIZE_BYTE, file);
-                if (read_bytes > 0)
+                ret = pifs_fsetuserdata(file, &user_data);
+            }
+            if (ret == PIFS_SUCCESS)
+#endif
+            {
+                do
                 {
-                    written_bytes = pifs_fwrite(pifs.sc_page_buf, 1,
-                                                read_bytes, file2);
-                    if (read_bytes != written_bytes)
+                    read_bytes = pifs_fread(pifs.sc_page_buf, 1,
+                                            PIFS_LOGICAL_PAGE_SIZE_BYTE, file);
+                    if (read_bytes > 0)
                     {
-                        PIFS_ERROR_MSG("Cannot write: %i! Read bytes: %i, written bytes: %i\r\n",
-                                       file2->status, read_bytes, written_bytes);
-                        ret = file2->status;
+                        written_bytes = pifs_fwrite(pifs.sc_page_buf, 1,
+                                                    read_bytes, file2);
+                        if (read_bytes != written_bytes)
+                        {
+                            PIFS_ERROR_MSG("Cannot write: %i! Read bytes: %i, written bytes: %i\r\n",
+                                           file2->status, read_bytes, written_bytes);
+                            ret = file2->status;
+                        }
                     }
-                }
-            } while (read_bytes > 0 && read_bytes == written_bytes);
+                } while (read_bytes > 0 && read_bytes == written_bytes);
+            }
             ret = pifs_fclose(file2);
         }
         else

@@ -285,6 +285,7 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
         /* Read to page buffer */
         ret = pifs_read(ba, pa, 0, &pifs.dmw_page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
     }
+    /* TODO more safe to write ALWAYS delta page! */
     if (ret == PIFS_SUCCESS)
     {
         delta_needed = !pifs_is_buffer_programmable(&pifs.dmw_page_buf[a_page_offset],

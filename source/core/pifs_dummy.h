@@ -20,8 +20,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _INCLUDE_PIFS_MAP_H_
-#define _INCLUDE_PIFS_MAP_H_
+#ifndef _INCLUDE_PIFS_DUMMY_H_
+#define _INCLUDE_PIFS_DUMMY_H_
 
 #include <stdint.h>
 
@@ -30,4 +30,4 @@
 #include "pifs_config.h"
 #include "pifs.h"
 
-#endif /* _INCLUDE_PIFS_MAP_H_ */
+#endif /* _INCLUDE_PIFS_DUMMY_H_ */

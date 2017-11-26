@@ -640,9 +640,20 @@ pifs_status_t pifs_find_block_wl(pifs_size_t a_block_count,
     return ret;
 }
 
+/**
+ * @brief pifs_find_to_be_released_block Find block
+ *
+ * @param[in] a_block_count         Number of blocks. Example: PIFS_FLASH_BLOCK_NUM_FS
+ * @param[in] a_block_type          Block type to find.
+ * @param[in] a_start_block_address Start block address. Example: PIFS_FLASH_BLOCK_RESERVED_NUM
+ * @param[in] a_header              Pointer to file system header.
+ * @param[out] a_block_address      Block address of page to be released if found.
+ * @return PIFS_SUCCESS if block found.
+ */
 pifs_status_t pifs_find_to_be_released_block(pifs_size_t a_block_count,
                                              pifs_block_type_t a_block_type,
                                              pifs_block_address_t a_start_block_address,
+                                             pifs_block_address_t a_end_block_address,
                                              pifs_header_t * a_header,
                                              pifs_block_address_t * a_block_address)
 {
@@ -658,7 +669,7 @@ pifs_status_t pifs_find_to_be_released_block(pifs_size_t a_block_count,
     find.is_free = FALSE;
     find.is_same_block = TRUE;
     find.start_block_address = a_start_block_address;
-    find.end_block_address = PIFS_FLASH_BLOCK_NUM_ALL;
+    find.end_block_address = a_end_block_address;
     find.header = a_header;
 
     ret = pifs_find_page_adv(&find, &ba, &pa, &page_count);

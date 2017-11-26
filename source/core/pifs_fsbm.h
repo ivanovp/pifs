@@ -90,6 +90,7 @@ pifs_status_t pifs_find_block_wl(pifs_size_t a_block_count,
 pifs_status_t pifs_find_to_be_released_block(pifs_size_t a_block_count,
                                              pifs_block_type_t a_block_type,
                                              pifs_block_address_t a_start_block_address,
+                                             pifs_block_address_t a_end_block_address,
                                              pifs_header_t * a_header,
                                              pifs_block_address_t * a_block_address);
 pifs_status_t pifs_get_pages(bool_t a_is_free,
