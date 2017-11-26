@@ -375,11 +375,11 @@ void cmdLeastWearedBlocks(char* command, char* params)
         ret = pifs_get_wear_level(pifs.header.least_weared_blocks[i].block_address, &pifs.header, &wear_level);
         if (ret == PIFS_SUCCESS)
         {
-            ret = pifs_get_pages(TRUE, i, 1, &management_page_count, &data_page_count);
+            ret = pifs_get_pages(TRUE, pifs.header.least_weared_blocks[i].block_address, 1, &management_page_count, &data_page_count);
         }
         if (ret == PIFS_SUCCESS)
         {
-            printf("%5i | %10i | %i\r\n", 
+            printf("%5i | %11i | %i\r\n",
                     pifs.header.least_weared_blocks[i].block_address, 
                     wear_level.wear_level_cntr,
                     data_page_count);
@@ -409,11 +409,11 @@ void cmdMostWearedBlocks(char* command, char* params)
         ret = pifs_get_wear_level(pifs.header.most_weared_blocks[i].block_address, &pifs.header, &wear_level);
         if (ret == PIFS_SUCCESS)
         {
-            ret = pifs_get_pages(TRUE, i, 1, &management_page_count, &data_page_count);
+            ret = pifs_get_pages(TRUE, pifs.header.most_weared_blocks[i].block_address, 1, &management_page_count, &data_page_count);
         }
         if (ret == PIFS_SUCCESS)
         {
-            printf("%5i | %10i | %i\r\n", 
+            printf("%5i | %11i | %i\r\n",
                     pifs.header.most_weared_blocks[i].block_address, 
                     wear_level.wear_level_cntr,
                     data_page_count);
