@@ -58,6 +58,7 @@ pifs_status_t pifs_check_block(pifs_char_t * a_filename,
 pifs_status_t pifs_empty_block(pifs_block_address_t a_block_address,
                                bool_t * a_is_emptied);
 pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num);
+pifs_status_t pifs_auto_static_wear_leveling(void);
 
 #ifdef __cplusplus
 }

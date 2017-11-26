@@ -24,6 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define PIFS_DEBUG_LEVEL 5
+#include "pifs_debug.h"
+
 #include "api_pifs.h"
 #include "flash.h"
 #include "flash_config.h"
@@ -38,9 +41,6 @@
 #include "pifs_file.h"
 #include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
-
-#define PIFS_DEBUG_LEVEL 2
-#include "pifs_debug.h"
 
 /**
  * Structure used during emptying blocks.
@@ -611,7 +611,7 @@ pifs_status_t pifs_empty_block(pifs_block_address_t a_block_address,
 
 /**
  * @brief pifs_static_wear_leveling Do static wear leveling by moving files
- * from least weared blocks.
+ * from least weared blocks to most weared blocks.
  *
  * @param[in] a_max_block_num Maximum number of blocks to process.
  * @return PIFS_SUCCESS if blocks were processed successfully.
@@ -689,6 +689,34 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
     }
 
     PIFS_PUT_MUTEX();
+
+    return ret;
+}
+
+/**
+ * @brief pifs_auto_static_wear_leveling Automatic static wear leveling.
+ *
+ * @return PIFS_SUCCESS if blocks were processed successfully.
+ */
+pifs_status_t pifs_auto_static_wear_leveling(void)
+{
+    pifs_status_t ret = PIFS_SUCCESS;
+
+#if PIFS_ENABLE_AUTO_STATIC_WEAR
+    PIFS_GET_MUTEX();
+    if (pifs.auto_static_wear_cntr == 0)
+    {
+        PIFS_PUT_MUTEX();
+        ret = pifs_static_wear_leveling(PIFS_STATIC_WEAR_LEVEL_BLOCKS);
+        PIFS_GET_MUTEX();
+        pifs.auto_static_wear_cntr = 100; /* TODO move this number to pifs_config.h */
+    }
+    else
+    {
+        pifs.auto_static_wear_cntr--;
+    }
+    PIFS_PUT_MUTEX();
+#endif
 
     return ret;
 }
