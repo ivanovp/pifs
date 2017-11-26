@@ -390,8 +390,7 @@ size_t pifs_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * 
 {
     size_t ret;
 
-    /* TODO where to run automatic wear leveling? */
-//    (void)pifs_auto_static_wear_leveling();
+    (void)pifs_auto_static_wear_leveling();
 
     PIFS_GET_MUTEX();
 
