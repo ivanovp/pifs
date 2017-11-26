@@ -111,7 +111,7 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
     a_file->rw_pos = 0;
     a_file->actual_map_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
     a_file->actual_map_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
-    a_file->is_size_changed = FALSE;
+    a_file->is_entry_changed = FALSE;
     if (a_modes)
     {
         pifs_parse_open_mode(a_file, a_modes);
@@ -178,7 +178,7 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
                 {
                     /* Mark allocated pages to be released */
                     a_file->status = pifs_release_file_pages(a_file);
-                    a_file->is_size_changed = TRUE;
+                    a_file->is_entry_changed = TRUE;
                 }
             }
             else
@@ -602,7 +602,7 @@ size_t pifs_internal_fwrite(const void * a_data, size_t a_size, size_t a_count, 
             if (file->rw_pos > file->entry.file_size
                     || file->entry.file_size == PIFS_FILE_SIZE_ERASED)
             {
-                file->is_size_changed = TRUE;
+                file->is_entry_changed = TRUE;
                 file->entry.file_size = file->rw_pos;
                 PIFS_DEBUG_MSG("File size increased to %i bytes\r\n", file->entry.file_size);
             }
@@ -747,10 +747,10 @@ int pifs_internal_fflush(P_FILE * a_file, bool_t a_is_merge_allowed)
     if (pifs.is_header_found && file && file->is_opened)
     {
 
-        PIFS_DEBUG_MSG("mode_write: %i, is_size_changed: %i, file_size: %i\r\n",
-                       file->mode_write, file->is_size_changed,
+        PIFS_DEBUG_MSG("mode_write: %i, is_entry_changed: %i, file_size: %i\r\n",
+                       file->mode_write, file->is_entry_changed,
                        file->entry.file_size);
-        if (file->mode_write && (file->is_size_changed || !file->entry.file_size))
+        if (file->mode_write && (file->is_entry_changed || !file->entry.file_size))
         {
             file->status = pifs_update_entry(file->entry.name, &file->entry,
                                              file->entry_list_address.block_address,
@@ -816,7 +816,7 @@ int pifs_internal_fclose(P_FILE * a_file, bool_t a_is_merge_allowed)
         if (ret == PIFS_SUCCESS)
         {
             /* File entry will be updated */
-            file->is_size_changed = TRUE;
+            file->is_entry_changed = TRUE;
         }
     }
 #endif
@@ -1165,13 +1165,14 @@ int pifs_internal_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_
 {
     pifs_file_t   * file = (pifs_file_t*) a_file;
     pifs_status_t   ret;
-    pifs_address_t  entry_list_address;
+//    pifs_address_t  entry_list_address;
 
     (void) a_is_merge_allowed;
 
     if (file->is_opened)
     {
         memcpy(&file->entry.user_data, a_user_data, sizeof(pifs_user_data_t));
+        file->is_entry_changed = TRUE;
 #if 0
 #if PIFS_ENABLE_DIRECTORIES
         entry_list_address = *pifs_get_task_current_entry_list_address();
@@ -1394,7 +1395,7 @@ int pifs_copy(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
             ret = pifs_fgetuserdata(file, &user_data);
             if (ret == PIFS_SUCCESS)
             {
-                ret = pifs_fsetuserdata(file, &user_data);
+                ret = pifs_fsetuserdata(file2, &user_data);
             }
             if (ret == PIFS_SUCCESS)
 #endif
@@ -1414,7 +1415,7 @@ int pifs_copy(const pifs_char_t * a_oldname, const pifs_char_t * a_newname)
                             ret = file2->status;
                         }
                     }
-                } while (read_bytes > 0 && read_bytes == written_bytes);
+                } while (read_bytes > 0 && read_bytes == written_bytes && ret == PIFS_SUCCESS);
             }
             ret = pifs_fclose(file2);
         }
