@@ -103,7 +103,7 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
                             /* Block erased, it can be marked as free */
                             mark_block_free = TRUE;
 #endif
-                            PIFS_NOTICE_MSG("Block %i erased\r\n", fba);
+                            PIFS_WARNING_MSG("Block %i erased\r\n", fba);
                         }
                         else
                         {
@@ -222,7 +222,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
 #endif
     if (pifs.internal_file.entry.file_size != PIFS_FILE_SIZE_ERASED)
     {
-        pifs.internal_file.is_size_changed = TRUE;
+        pifs.internal_file.is_entry_changed = TRUE;
     }
     if (ret == PIFS_SUCCESS)
     {

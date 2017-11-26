@@ -467,7 +467,7 @@ typedef struct
 {
     bool_t                  is_used PIFS_BOOL_SIZE;
     bool_t                  is_opened PIFS_BOOL_SIZE;
-    bool_t                  is_size_changed PIFS_BOOL_SIZE;
+    bool_t                  is_entry_changed PIFS_BOOL_SIZE;
     bool_t                  mode_create_new_file PIFS_BOOL_SIZE;
     bool_t                  mode_read PIFS_BOOL_SIZE;
     bool_t                  mode_write PIFS_BOOL_SIZE;
