@@ -128,6 +128,9 @@ pifs_status_t pifs_create_file(const char * a_filename,
     P_FILE      * file;
     size_t        written_size = 0;
     size_t        i = 0;
+#if PIFS_ENABLE_USER_DATA
+    pifs_user_data_t user_data;
+#endif
 
     file = pifs_fopen(a_filename, "w");
     if (file)
@@ -144,6 +147,19 @@ pifs_status_t pifs_create_file(const char * a_filename,
                 ret = PIFS_ERROR_GENERAL;
             }
         }
+#if PIFS_ENABLE_USER_DATA
+        fill_buffer(&user_data, sizeof(user_data), FILL_TYPE_SEQUENCE_BYTE, a_sequence_start);
+        ret = pifs_fsetuserdata(file, &user_data);
+        if (ret == PIFS_SUCCESS)
+        {
+            printf("User data set\r\n");
+        }
+        else
+        {
+            PIFS_TEST_ERROR_MSG("Cannot set user data!\r\n");
+            ret = PIFS_ERROR_GENERAL;
+        }
+#endif
         if (pifs_fclose(file))
         {
             PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
@@ -167,6 +183,10 @@ pifs_status_t pifs_check_file(const char * a_filename,
     P_FILE      * file;
     size_t        read_size = 0;
     size_t        i;
+#if PIFS_ENABLE_USER_DATA
+    pifs_user_data_t user_data_w;
+    pifs_user_data_t user_data_r;
+#endif
 
     file = pifs_fopen(a_filename, "r");
     if (file)
@@ -187,6 +207,19 @@ pifs_status_t pifs_check_file(const char * a_filename,
                 ret = check_buffers();
             }
         }
+#if PIFS_ENABLE_USER_DATA
+        fill_buffer(&user_data_w, sizeof(user_data_w), FILL_TYPE_SEQUENCE_BYTE, a_sequence_start);
+        ret = pifs_fgetuserdata(file, &user_data_r);
+        if (compare_buffer(&user_data_w, sizeof(user_data_w), &user_data_r) == PIFS_SUCCESS)
+        {
+            printf("User data OK\r\n");
+        }
+        else
+        {
+            PIFS_TEST_ERROR_MSG("User data mismatch!\r\n");
+            ret = PIFS_ERROR_GENERAL;
+        }
+#endif
         if (pifs_fclose(file))
         {
             PIFS_TEST_ERROR_MSG("Cannot close file!\r\n");
