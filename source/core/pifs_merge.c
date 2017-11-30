@@ -772,7 +772,7 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
                     /* Otherwise merging will be unmeaning. */
                     ret = pifs_find_to_be_released_block(1, PIFS_BLOCK_TYPE_DATA,
                                                          PIFS_FLASH_BLOCK_RESERVED_NUM,
-                                                         PIFS_FLASH_BLOCK_NUM_FS,
+                                                         PIFS_FLASH_BLOCK_NUM_ALL - 1,
                                                          &pifs.header,
                                                          &to_be_released_ba);
                     if (ret == PIFS_SUCCESS)

@@ -356,7 +356,7 @@ pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_minimum,
             {
                 /* Try to find free pages in the least weared block */
                 find.start_block_address = pifs.header.least_weared_blocks[i].block_address;
-                find.end_block_address = find.start_block_address + 1;
+                find.end_block_address = find.start_block_address;
                 ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
             }
         }
@@ -368,7 +368,7 @@ pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_minimum,
             {
                 /* Try to find free pages in the most weared block */
                 find.start_block_address = pifs.header.most_weared_blocks[i].block_address;
-                find.end_block_address = find.start_block_address + 1;
+                find.end_block_address = find.start_block_address;
                 ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
             }
         }
@@ -428,7 +428,7 @@ pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
     find.is_to_be_released = !a_is_free;
     find.is_same_block = a_is_same_block;
     find.start_block_address = a_start_block_address;
-    find.end_block_address = PIFS_FLASH_BLOCK_NUM_ALL;
+    find.end_block_address = PIFS_FLASH_BLOCK_NUM_ALL - 1;
     find.header = &pifs.header;
 
     return pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
@@ -551,7 +551,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                             {
                                 page_count_found = 0;
                             }
-                            if ((fba >= PIFS_FLASH_BLOCK_NUM_ALL || fba >= a_find->end_block_address) && !(*a_page_count_found))
+                            if ((fba >= PIFS_FLASH_BLOCK_NUM_ALL || fba > a_find->end_block_address) && !(*a_page_count_found))
                             {
                                 ret = PIFS_ERROR_NO_MORE_SPACE;
                             }
@@ -621,14 +621,14 @@ pifs_status_t pifs_find_block_wl(pifs_size_t a_block_count,
     {
         /* Try to find free pages in the least weared block */
         find.start_block_address = a_header->least_weared_blocks[i].block_address;
-        find.end_block_address = find.start_block_address + 1;
+        find.end_block_address = find.start_block_address;
         ret = pifs_find_page_adv(&find, &ba, &pa, &page_count);
     }
     if (ret != PIFS_SUCCESS)
     {
         /* Not found, try to find anywhere */
         find.start_block_address = PIFS_FLASH_BLOCK_RESERVED_NUM;
-        find.end_block_address = PIFS_FLASH_BLOCK_NUM_ALL;
+        find.end_block_address = PIFS_FLASH_BLOCK_NUM_ALL - 1;
         ret = pifs_find_page_adv(&find, &ba, &pa, &page_count);
     }
 
