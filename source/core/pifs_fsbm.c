@@ -314,7 +314,8 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
 
 /**
  * @brief pifs_find_free_page Find free page(s) in free space memory bitmap.
- * It tries to find 'a_page_count_desired' pages, but at least one page.
+ * It tries to find 'a_page_count_desired' pages, but at least
+ * 'a_page_count_minimum' pages.
  *
  * @param[in] a_page_count_minimum Number of pages needed at least.
  * @param[in] a_page_count_desired Number of pages needed.
@@ -498,7 +499,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                             && pifs_is_block_type(fba, a_find->block_type, a_find->header))
                     {
 #if PIFS_CHECK_IF_PAGE_IS_ERASED
-                        if (!a_find->is_free || pifs_is_page_erased(fba, fpa))
+                        if (a_find->is_to_be_released || pifs_is_page_erased(fba, fpa))
 #endif
                         {
                             PIFS_DEBUG_MSG("Free page %s\r\n", pifs_ba_pa2str(fba, fpa));
@@ -612,7 +613,7 @@ pifs_status_t pifs_find_block_wl(pifs_size_t a_block_count,
     find.page_count_desired = a_block_count * PIFS_LOGICAL_PAGE_PER_BLOCK;
     find.block_type = a_block_type;
     find.is_free = a_is_free;
-    find.is_to_be_released = !a_is_free;
+    find.is_to_be_released = TRUE;
     find.is_same_block = TRUE;
     find.header = a_header;
 
@@ -671,7 +672,7 @@ pifs_status_t pifs_find_to_be_released_block(pifs_size_t a_block_count,
     find.page_count_minimum = a_block_count * PIFS_LOGICAL_PAGE_PER_BLOCK;
     find.page_count_desired = a_block_count * PIFS_LOGICAL_PAGE_PER_BLOCK;
     find.block_type = a_block_type;
-    find.is_free = FALSE;
+    find.is_free = TRUE;
     find.is_to_be_released = TRUE;
     find.is_same_block = TRUE;
     find.start_block_address = a_start_block_address;
@@ -679,6 +680,7 @@ pifs_status_t pifs_find_to_be_released_block(pifs_size_t a_block_count,
     find.header = a_header;
 
     ret = pifs_find_page_adv(&find, &ba, &pa, &page_count);
+
 
     *a_block_address = ba;
 

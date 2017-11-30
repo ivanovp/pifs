@@ -95,25 +95,18 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
                 if (ret == PIFS_SUCCESS)
                 {
                     /* Check if the found block is the actual block */
-                    if (to_be_released_ba == fba)
+                    if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA, a_old_header))
                     {
-                        if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA, a_old_header))
-                        {
-                            ret = pifs_erase(fba, a_old_header, a_new_header);
+                        ret = pifs_erase(fba, a_old_header, a_new_header);
 #if PIFS_COPY_FSBM
-                            /* Block erased, it can be marked as free */
-                            mark_block_free = TRUE;
+                        /* Block erased, it can be marked as free */
+                        mark_block_free = TRUE;
 #endif
-                            PIFS_WARNING_MSG("Block %i erased\r\n", fba);
-                        }
-                        else
-                        {
-                            PIFS_NOTICE_MSG("Block %i not erased, not data block\r\n", fba);
-                        }
+                        PIFS_WARNING_MSG("Block %i erased\r\n", fba);
                     }
                     else
                     {
-                        PIFS_ERROR_MSG("Internal error! Wrong block: %i\r\n", to_be_released_ba);
+                        PIFS_NOTICE_MSG("Block %i not erased, not data block\r\n", fba);
                     }
                 }
                 else
