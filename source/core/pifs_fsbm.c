@@ -106,29 +106,28 @@ void pifs_calc_address(pifs_bit_pos_t a_bit_pos,
  * Bit 0 shows if page is free or allocated.
  * Bit 1 shows if page shall be released or not.
  *
- * @param[in] is_free   TRUE: check if page is free, FALSE: check if page is to be released or free.
+ * @param[in] is_free           TRUE: check if page is free.
+ * @param[in] is_to_be_released TRUE: check if page is to be released or free.
  * @param[in] value     Value to be checked.
  * @return TRUE: page is free or to be released.
  */
-static inline bool_t pifs_check_bits(bool_t a_is_free, uint8_t a_bits)
+static inline bool_t pifs_check_bits(bool_t a_is_free, bool_t a_is_to_be_released, uint8_t a_bits)
 {
-    bool_t        ret;
+    bool_t        ret = FALSE;
     const uint8_t mask_free = 1;              /**< Mask for finding free page */
     const uint8_t value_free = 1;             /**< Value for finding free page */
     const uint8_t mask_to_be_released = 2;    /**< Mask for finding to be released page */
     const uint8_t value_to_be_released = 0;   /**< Value for finding to be released page */
 
-    if (a_is_free)
+    /* Looking for free page */
+    if (a_is_free && (a_bits & mask_free) == value_free)
     {
-        /* Looking for free page */
-        ret = (a_bits & mask_free) == value_free;
+        ret = TRUE;
     }
-    else
+    /* Looking to be released page */
+    if (a_is_to_be_released && (a_bits & mask_to_be_released) == value_to_be_released)
     {
-        /* Looking to be released page, but free pages are also considered */
-        /* as to be released pages */
-        ret = (a_bits & mask_to_be_released) == value_to_be_released
-                ||  (a_bits & mask_free) == value_free;
+        ret = TRUE;
     }
 
     return ret;
@@ -344,6 +343,7 @@ pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_minimum,
         find.page_count_desired = a_page_count_desired;
         find.block_type = a_block_type;
         find.is_free = TRUE;
+        find.is_to_be_released = FALSE;
         find.is_same_block = FALSE;
         find.header = &pifs.header;
 
@@ -425,6 +425,7 @@ pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
     find.page_count_desired = a_page_count_desired;
     find.block_type = a_block_type;
     find.is_free = a_is_free;
+    find.is_to_be_released = !a_is_free;
     find.is_same_block = a_is_same_block;
     find.start_block_address = a_start_block_address;
     find.end_block_address = PIFS_FLASH_BLOCK_NUM_ALL;
@@ -493,7 +494,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                 //PIFS_DEBUG_MSG("%s %i 0x%X\r\n", pifs_ba_pa2str(ba, pa), po, free_space_bitmap);
                 for (i = 0; i < (PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE) && !found; i++)
                 {
-                    if (pifs_check_bits(a_find->is_free, free_space_bitmap)
+                    if (pifs_check_bits(a_find->is_free, a_find->is_to_be_released, free_space_bitmap)
                             && pifs_is_block_type(fba, a_find->block_type, a_find->header))
                     {
 #if PIFS_CHECK_IF_PAGE_IS_ERASED
@@ -611,6 +612,7 @@ pifs_status_t pifs_find_block_wl(pifs_size_t a_block_count,
     find.page_count_desired = a_block_count * PIFS_LOGICAL_PAGE_PER_BLOCK;
     find.block_type = a_block_type;
     find.is_free = a_is_free;
+    find.is_to_be_released = !a_is_free;
     find.is_same_block = TRUE;
     find.header = a_header;
 
@@ -670,6 +672,7 @@ pifs_status_t pifs_find_to_be_released_block(pifs_size_t a_block_count,
     find.page_count_desired = a_block_count * PIFS_LOGICAL_PAGE_PER_BLOCK;
     find.block_type = a_block_type;
     find.is_free = FALSE;
+    find.is_to_be_released = TRUE;
     find.is_same_block = TRUE;
     find.start_block_address = a_start_block_address;
     find.end_block_address = a_end_block_address;

@@ -39,8 +39,8 @@ typedef struct
     pifs_page_count_t    page_count_minimum;  /**< Number of pages needed at least. */
     pifs_page_count_t    page_count_desired;  /**< Number of pages needed. */
     pifs_block_type_t    block_type;          /**< Block type to find. */
-    bool_t               is_free;             /**< TRUE: find free page,
-                                                   FALSE: find to be released page. */
+    bool_t               is_free;             /**< TRUE: find free page. */
+    bool_t               is_to_be_released;   /**< TRUE: find to be released page. */
     bool_t               is_same_block;       /**< TRUE: find pages in same block,
                                                    FALSE: pages can be in different block. */
     pifs_block_address_t start_block_address; /**< Start address of search. */
