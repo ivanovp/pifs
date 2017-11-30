@@ -24,6 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define PIFS_DEBUG_LEVEL 3
+#include "pifs_debug.h"
+
 #include "api_pifs.h"
 #include "flash.h"
 #include "flash_config.h"
@@ -38,9 +41,6 @@
 #include "pifs_dir.h"
 #include "pifs_os.h"
 #include "buffer.h" /* DEBUG */
-
-#define PIFS_DEBUG_LEVEL 3
-#include "pifs_debug.h"
 
 bool_t pifs_initialized = FALSE;
 pifs_t pifs;
@@ -252,7 +252,7 @@ pifs_status_t pifs_erase(pifs_block_address_t a_block_address, pifs_header_t * a
 
     (void) a_old_header;
 
-    PIFS_DEBUG_MSG("Erasing block %i\r\n", a_block_address)
+    PIFS_WARNING_MSG("Erasing block %i\r\n", a_block_address)
     ret = pifs_flash_erase(a_block_address);
 
     if (a_block_address == pifs.cache_page_buf_address.block_address)

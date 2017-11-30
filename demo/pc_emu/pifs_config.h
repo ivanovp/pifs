@@ -42,7 +42,7 @@
 #define PIFS_UPDATE_USER_DATA_ON_FCLOSE 1u   /**< 1: Get user data (pifs_user_data_t) when file is closed, 0: don't get user data */
 #define PIFS_ENABLE_DIRECTORIES         1u   /**< 1: Support directories, 0: only support root directory */
 #define PIFS_PATH_SEPARATOR_CHAR        '/'  /**< Character to separate directories in path, '/' or '\' */
-#define PIFS_MANAGEMENT_BLOCK_NUM       2u   /**< Number of management blocks. Minimum: 1 (Allocated area is twice of this number.) */
+#define PIFS_MANAGEMENT_BLOCK_NUM       4u   /**< Number of management blocks. Minimum: 1 (Allocated area is twice of this number.) */
 #define PIFS_LEAST_WEARED_BLOCK_NUM     15u  /**< Number of stored least weared blocks */
 #define PIFS_MOST_WEARED_BLOCK_NUM      15u  /**< Number of stored most weared blocks */
 #define PIFS_DELTA_MAP_PAGE_NUM         2u   /**< Number of delta page maps */

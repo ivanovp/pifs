@@ -46,6 +46,7 @@
 #define PIFS_LEAST_WEARED_BLOCK_NUM     6u   //(PIFS_FLASH_BLOCK_NUM_ALL - PIFS_FLASH_BLOCK_RESERVED_NUM - PIFS_MANAGEMENT_BLOCK_NUM * 2)   /**< Number of stored least weared blocks */
 #define PIFS_MOST_WEARED_BLOCK_NUM      6u   /**< Number of stored most weared blocks */
 #define PIFS_DELTA_MAP_PAGE_NUM         2u   /**< Number of delta page maps */
+#define PIFS_ENABLE_CRC                 1u   /**< Use CRC for headers and entries. */
 #define PIFS_CHECKSUM_SIZE              4u   /**< Size of checksum variable in bytes. Valid values are 1, 2 and 4. */
 #define PIFS_MAP_PAGE_COUNT_SIZE        1u   /**< Size of page count variable of map entry in bytes. Valid values are 1, 2 and 4. */
 #define PIFS_ENABLE_CONFIG_IN_FLASH     1u   /**< 1: Store file system's configuration in flash memory */

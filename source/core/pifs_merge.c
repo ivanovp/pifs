@@ -24,6 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define PIFS_DEBUG_LEVEL 2
+#include "pifs_debug.h"
+
 #include "api_pifs.h"
 #include "flash.h"
 #include "flash_config.h"
@@ -39,10 +42,7 @@
 #include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_DEBUG_LEVEL 2
-#include "pifs_debug.h"
-
-#define PIFS_COPY_FSBM   0
+#define PIFS_COPY_FSBM   1
 
 /**
  * @brief pifs_copy_fsbm Copy free space bitmap and process to be released pages.
@@ -54,7 +54,7 @@
  */
 static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t * a_new_header)
 {
-    pifs_status_t        ret = PIFS_ERROR_GENERAL;
+    pifs_status_t        ret = PIFS_SUCCESS;
     pifs_block_address_t fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
     pifs_page_address_t  fpa = 0;
     pifs_block_address_t old_fsbm_ba = a_old_header->free_space_bitmap_address.block_address;
@@ -72,6 +72,7 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
 
     do
     {
+#if PIFS_COPY_FSBM
         /* Read free space bitmap */
         ret = pifs_read(old_fsbm_ba, old_fsbm_pa, 0, &pifs.dmw_page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
 
@@ -80,7 +81,7 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
         print_buffer(pifs.dmw_page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE,
                      old_fsbm_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + old_fsbm_pa * PIFS_LOGICAL_PAGE_SIZE_BYTE);
 #endif
-
+#endif
         for (i = 0; i < PIFS_LOGICAL_PAGE_SIZE_BYTE && ret == PIFS_SUCCESS; i++)
         {
             if (ret == PIFS_SUCCESS && find)
@@ -109,6 +110,10 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
                         {
                             PIFS_NOTICE_MSG("Block %i not erased, not data block\r\n", fba);
                         }
+                    }
+                    else
+                    {
+                        PIFS_ERROR_MSG("Internal error! Wrong block: %i\r\n", to_be_released_ba);
                     }
                 }
                 else

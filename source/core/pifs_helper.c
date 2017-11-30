@@ -24,6 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define PIFS_DEBUG_LEVEL 2
+#include "pifs_debug.h"
+
 #include "api_pifs.h"
 #include "flash.h"
 #include "flash_config.h"
@@ -33,9 +36,6 @@
 #include "pifs_helper.h"
 #include "pifs_crc8.h"
 #include "buffer.h"
-
-#define PIFS_DEBUG_LEVEL 2
-#include "pifs_debug.h"
 
 /**
  * @brief pifs_calc_checksum Calculate checksum or CRC of a buffer.
@@ -767,9 +767,9 @@ static pifs_status_t pifs_block_walker(pifs_file_t * a_file,
     (void) a_page_address;
     (void) a_delta_page_address;
 
-    printf("%i: %i/%i -> %i/%i\r\n", a_map_page,
-            a_block_address, a_page_address,
-            a_delta_block_address, a_delta_page_address);
+//    printf("%i: %i/%i -> %i/%i\r\n", a_map_page,
+//            a_block_address, a_page_address,
+//            a_delta_block_address, a_delta_page_address);
     if (!a_map_page)
     {
         for (i = 0; i < params->blocks_size && !end; i++)
@@ -811,7 +811,7 @@ pifs_status_t pifs_get_file_blocks(pifs_char_t * a_filename,
     bool_t               end = FALSE;
 
     *a_blocks_num = 0;
-        printf("Opened %s\r\n", a_filename);
+//    printf("Opened %s\r\n", a_filename);
     file = pifs_fopen(a_filename, "r");
     if (file)
     {

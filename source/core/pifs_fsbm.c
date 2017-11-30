@@ -24,6 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define PIFS_DEBUG_LEVEL 2
+#include "pifs_debug.h"
+
 #include "api_pifs.h"
 #include "flash.h"
 #include "flash_config.h"
@@ -31,9 +34,6 @@
 #include "pifs_fsbm.h"
 #include "pifs_helper.h"
 #include "pifs_wear.h"
-
-#define PIFS_DEBUG_LEVEL 2
-#include "pifs_debug.h"
 
 /**
  * @brief pifs_calc_free_space_pos Calculate position of a page in free space

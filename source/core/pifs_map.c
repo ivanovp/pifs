@@ -24,6 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define PIFS_DEBUG_LEVEL 2
+#include "pifs_debug.h"
+
 #include "api_pifs.h"
 #include "flash.h"
 #include "flash_config.h"
@@ -32,9 +35,6 @@
 #include "pifs_helper.h"
 #include "pifs_delta.h"
 #include "pifs_map.h"
-
-#define PIFS_DEBUG_LEVEL 2
-#include "pifs_debug.h"
 
 /**
  * @brief pifs_read_first_map_entry Read first map's first map entry.

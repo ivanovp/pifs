@@ -633,7 +633,7 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
 
     if (!pifs.is_wear_leveling)
     {
-        PIFS_WARNING_MSG("Static wear leveling started\r\n");
+//        PIFS_WARNING_MSG("Static wear leveling started\r\n");
 
         pifs.is_wear_leveling = TRUE;
 
@@ -687,7 +687,7 @@ pifs_status_t pifs_static_wear_leveling(pifs_size_t a_max_block_num)
         } while (ret == PIFS_SUCCESS && a_max_block_num && cntr--);
 
         pifs.is_wear_leveling = FALSE;
-        PIFS_WARNING_MSG("Static wear leveling exiting\r\n");
+//        PIFS_WARNING_MSG("Static wear leveling exiting\r\n");
     }
 
     PIFS_PUT_MUTEX();

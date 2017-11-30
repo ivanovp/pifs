@@ -890,14 +890,18 @@ void cmdListDir (char* command, char* params)
                 ret = pifs_get_file_blocks(dirent->d_name, blocks, BLOCKS_SIZE, &block_num);
                 if (ret == PIFS_SUCCESS)
                 {
-                    printf("Block num: %i/%i\r\n", block_num, BLOCKS_SIZE);
-                    for (i = 0; i < block_num; i++)
+//                    printf("Block num: %i/%i\r\n", block_num, BLOCKS_SIZE);
+                    if (block_num > 0)
                     {
-                        if (i)
+                        printf("B: ");
+                        for (i = 0; i < block_num; i++)
                         {
-                            printf(", ");
+                            if (i)
+                            {
+                                printf(", ");
+                            }
+                            printf("%i", blocks[i]);
                         }
-                        printf("%i", blocks[i]);
                     }
                 }
             }

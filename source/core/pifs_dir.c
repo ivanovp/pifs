@@ -24,6 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define PIFS_DEBUG_LEVEL 2
+#include "pifs_debug.h"
+
 #include "api_pifs.h"
 #include "flash.h"
 #include "flash_config.h"
@@ -36,9 +39,6 @@
 #include "pifs_merge.h"
 #include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
-
-#define PIFS_DEBUG_LEVEL 5
-#include "pifs_debug.h"
 
 #if PIFS_ENABLE_DIRECTORIES
 /**
@@ -462,7 +462,7 @@ pifs_dir_t * pifs_internal_opendir(const pifs_char_t * a_name)
 #else
                 dir->entry_list_address = pifs.header.root_entry_list_address;
 #endif
-                PIFS_WARNING_MSG("Opening directory at %s\r\n",
+                PIFS_DEBUG_MSG("Opening directory at %s\r\n",
                                  pifs_address2str(&dir->entry_list_address));
                 dir->entry_list_index = 0;
             }

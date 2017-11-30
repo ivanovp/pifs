@@ -24,6 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define PIFS_DEBUG_LEVEL 2
+#include "pifs_debug.h"
+
 #include "api_pifs.h"
 #include "flash.h"
 #include "flash_config.h"
@@ -31,9 +34,6 @@
 #include "pifs_fsbm.h"
 #include "pifs_helper.h"
 #include "pifs_delta.h"
-
-#define PIFS_DEBUG_LEVEL 2
-#include "pifs_debug.h"
 
 /**
  * @brief pifs_read_delta_map_page Read delta map pages to memory buffer.

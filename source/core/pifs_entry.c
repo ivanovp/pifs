@@ -24,6 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define PIFS_DEBUG_LEVEL 2
+#include "pifs_debug.h"
+
 #include "api_pifs.h"
 #include "flash.h"
 #include "flash_config.h"
@@ -34,9 +37,6 @@
 #include "pifs_entry.h"
 #include "pifs_merge.h"
 #include "buffer.h" /* DEBUG */
-
-#define PIFS_DEBUG_LEVEL 2
-#include "pifs_debug.h"
 
 /**
  * @brief pifs_read_entry Read one file or directory entry from entry list.

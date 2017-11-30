@@ -24,6 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define PIFS_DEBUG_LEVEL 2
+#include "pifs_debug.h"
+
 #include "api_pifs.h"
 #include "flash.h"
 #include "flash_config.h"
@@ -38,9 +41,6 @@
 #include "pifs_dir.h"
 #include "pifs_file.h"
 #include "buffer.h" /* DEBUG */
-
-#define PIFS_DEBUG_LEVEL 2
-#include "pifs_debug.h"
 
 /**
  * @brief pifs_check_open_mode Check if file was opened for writing and the
