@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-10-11 18:21:09 ivanovp {Time-stamp}
+ * Last modify: 2017-11-30 17:43:32 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -801,6 +801,8 @@ void cmdCheckFilesystem (char* command, char* params)
     pifs_check();
 }
 
+#define BLOCKS_SIZE     32
+
 void cmdListDir (char* command, char* params)
 {
     char               * path = ".";
@@ -809,7 +811,12 @@ void cmdListDir (char* command, char* params)
     char               * param;
     bool_t               long_list = FALSE;
     bool_t               examine = FALSE;
+    bool_t               show_blocks = FALSE;
     bool_t               find_deleted = FALSE;
+    pifs_size_t          i;
+    pifs_size_t          block_num;
+    static pifs_block_address_t blocks[BLOCKS_SIZE];
+    pifs_status_t        ret;
 
     (void) params;
 
@@ -831,6 +838,9 @@ void cmdListDir (char* command, char* params)
                     break;
                 case 'e':
                     examine = TRUE;
+                    break;
+                case 'b':
+                    show_blocks = TRUE;
                     break;
                 case 'd':
                     find_deleted = TRUE;
@@ -874,6 +884,22 @@ void cmdListDir (char* command, char* params)
             if (PIFS_IS_DELETED(dirent->d_attrib))
             {
                 printf(" DELETED");
+            }
+            if (show_blocks)
+            {
+                ret = pifs_get_file_blocks(dirent->d_name, blocks, BLOCKS_SIZE, &block_num);
+                if (ret == PIFS_SUCCESS)
+                {
+                    printf("Block num: %i/%i\r\n", block_num, BLOCKS_SIZE);
+                    for (i = 0; i < block_num; i++)
+                    {
+                        if (i)
+                        {
+                            printf(", ");
+                        }
+                        printf("%i", blocks[i]);
+                    }
+                }
             }
             printf("\r\n");
         }
@@ -1383,6 +1409,7 @@ void cmdFileInfo (char* command, char* params)
         file = pifs_fopen(params, "r");
         if (file)
         {
+            /* TODO Use pifs_walk_file_pages() instead of the following code! */
             do
             {
                 if ((map_address.block_address != file->actual_map_address.block_address)

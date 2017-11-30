@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-08-04 14:28:25 ivanovp {Time-stamp}
+ * Last modify: 2017-11-30 17:43:15 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -39,7 +39,7 @@
 /**
  * @brief pifs_read_first_map_entry Read first map's first map entry.
  *
- * @param a_file[in] Pointer to opened file.
+ * @param[in] a_file Pointer to opened file.
  * @return PIFS_SUCCESS if entry is read and valid.
  */
 pifs_status_t pifs_read_first_map_entry(pifs_file_t * a_file)
@@ -88,7 +88,7 @@ pifs_status_t pifs_read_first_map_entry(pifs_file_t * a_file)
  * @brief pifs_read_next_map_entry Read next map entry.
  * pifs_read_first_map_entry() shall be called before calling this function!
  *
- * @param a_file[in] Pointer to opened file.
+ * @param[in] a_file Pointer to opened file.
  * @return PIFS_SUCCESS if entry is read and valid.
  * PIFS_ERROR_END_OF_FILE if end of file reached.
  */
@@ -161,7 +161,8 @@ pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
  * @brief pifs_is_free_map_entry Check if free map entry exists in the actual
  * map.
  *
- * @param a_file[in]            Pointer to file to use.
+ * @param[in] a_file               Pointer to file to use.
+ * @param[out] a_is_free_map_entry TRUE: free map entry exists.
  * @return PIFS_SUCCESS if entry was successfully written.
  */
 pifs_status_t pifs_is_free_map_entry(pifs_file_t * a_file,
@@ -194,10 +195,10 @@ pifs_status_t pifs_is_free_map_entry(pifs_file_t * a_file,
  * @brief pifs_append_map_entry Add an entry to the file's map.
  * This function is called when file is growing and new space is needed.
  *
- * @param a_file[in]            Pointer to file to use.
- * @param a_block_address[in]   Block address of new file pages to added.
- * @param a_page_address[in]    Page address of new file pages to added.
- * @param a_page_count[in]      Number of new file pages.
+ * @param[in] a_file            Pointer to file to use.
+ * @param[in] a_block_address   Block address of new file pages to added.
+ * @param[in] a_page_address    Page address of new file pages to added.
+ * @param[in] a_page_count      Number of new file pages.
  * @return PIFS_SUCCESS if entry was successfully written.
  */
 pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
@@ -310,7 +311,9 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
 /**
  * @brief pifs_release_file_pages Mark file map and file's pages to be released.
  *
- * @param[in] a_file Pointer of file structure.
+ * @param[in] a_file             Pointer of file structure.
+ * @param[in] a_file_walker_func Function to call when map or page found.
+ * @param[in] a_func_data        User-data to pass to a_file_walker_func.
  * @return TRUE: if all pages were succesfully marked to be released.
  */
 pifs_status_t pifs_walk_file_pages(pifs_file_t * a_file, 
@@ -431,14 +434,18 @@ pifs_status_t pifs_walk_file_pages(pifs_file_t * a_file,
 
 /**
  * @brief pifs_release_file_page Mark page as to be released.
+ * Callback function for pifs_walk_file_pages().
+ * If delta block and page are equal to original block address, no delta
+ * page is used.
  *
  * @param[in] a_file                 Pointer to file.
  * @param[in] a_block_address        Original block address.
  * @param[in] a_page_address         Original block address.
  * @param[in] a_delta_block_address  Delta block address.
  * @param[in] a_delta_page_address   Delta page address.
- * If delta block and page are equal to original block address, no delta
- * page is used.
+ * @param[in] a_map_page             TRUE: the page is map page.
+ *                                   FALSE: data page.
+ * @param[in] a_func_data            User-data, which is unused.
  *
  * @return PIFS_SUCCESS if page marked successfully.
  */

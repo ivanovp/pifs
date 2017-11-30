@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-11-16 19:08:52 ivanovp {Time-stamp}
+ * Last modify: 2017-11-30 17:43:02 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -339,7 +339,8 @@ pifs_char_t * pifs_tmpnamn(pifs_char_t * a_str, size_t a_size)
 /**
  * @brief pifs_inc_rw_address Increment read/write address for file.
  *
- * @param[in] a_file Pointer to the internal file structure.
+ * @param[in] a_file    Pointer to the internal file structure.
+ * @param[in] a_is_read rw_address is used for reading.
  */
 pifs_status_t pifs_inc_rw_address(pifs_file_t * a_file, bool_t a_is_read)
 {

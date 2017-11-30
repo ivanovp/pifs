@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-11-15 12:28:13 ivanovp {Time-stamp}
+ * Last modify: 2017-11-27 08:28:35 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -65,6 +65,10 @@ pifs_status_t pifs_add_ba_pa(pifs_block_address_t * a_block_address,
                              pifs_size_t a_page_count);
 pifs_status_t pifs_check_filename(const pifs_char_t *a_filename);
 pifs_status_t pifs_get_file(pifs_file_t **a_file);
+pifs_status_t pifs_get_file_blocks(pifs_char_t * a_filename,
+                                   pifs_block_address_t * a_blocks,
+                                   pifs_size_t a_blocks_size, 
+                                   pifs_size_t * a_blocks_num);
 
 #ifdef __cplusplus
 }

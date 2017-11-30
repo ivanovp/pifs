@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-10-11 18:20:57 ivanovp {Time-stamp}
+ * Last modify: 2017-11-30 17:43:22 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -532,7 +532,8 @@ pifs_status_t pifs_check_block(pifs_char_t * a_filename,
  * Not only pages found in the specified block are copied, but the whole file
  * in hope that it will be in one block.
  *
- * @param[in] a_dirent Pointer to directory entry.
+ * @param[in] a_dirent    Pointer to directory entry.
+ * @param[in] a_func_data Internal data of function. @see pifs_empty_block_t
  *
  * @return PIFS_SUCCESS when file opened successfully.
  */
@@ -589,6 +590,7 @@ pifs_status_t pifs_dir_walker_empty(pifs_dirent_t * a_dirent, void * a_func_data
  * This function is used for static wear leveling.
  *
  * @param[in] a_block_address Block address to find.
+ * @param[out] a_is_emptied   TRUE: the files were moved from the block.
  * @return PIFS_SUCCESS if block was succuessfuly released.
  */
 pifs_status_t pifs_empty_block(pifs_block_address_t a_block_address,

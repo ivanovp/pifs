@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-11-16 19:08:50 ivanovp {Time-stamp}
+ * Last modify: 2017-11-30 17:42:56 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -124,7 +124,9 @@ pifs_status_t pifs_write_entry(pifs_block_address_t a_entry_list_block_address,
 /**
  * @brief pifs_append_entry Add an item to the entry list.
  *
- * @param a_entry[in] Pointer to the entry to be added.
+ * @param[in] a_entry Pointer to the entry to be added.
+ * @param[in] a_entry_list_block_address Block address of entry list.
+ * @param[in] a_entry_list_page_address  Page address of entry list.
  * @return PIFS_SUCCESS if entry successfully added.
  * PIFS_ERROR_NO_MORE_ENTRY if entry list is full.
  * PIFS_ERROR_FLASH_WRITE if flash write failed.
@@ -198,11 +200,11 @@ pifs_status_t pifs_append_entry(pifs_entry_t * const a_entry,
 /**
  * @brief pifs_update_entry Find entry in entry list and update its content.
  *
- * @param[in] a_name[in]    Pointer to name to find.
- * @param[in] a_entry[in]   Pointer to entry to update. NULL: clear entry.
+ * @param[in] a_name                     Pointer to name to find.
+ * @param[in] a_entry                    Pointer to entry to update. NULL: clear entry.
  * @param[in] a_entry_list_block_address Block address of entry list.
  * @param[in] a_entry_list_page_address  Page address of entry list.
- * @param[in] a_is_merge_allowed TRUE: merge is allowed when not enough space. FALSE: merge is not allowed.
+ * @param[in] a_is_merge_allowed         TRUE: merge is allowed when not enough space. FALSE: merge is not allowed.
  *
  * @return PIFS_SUCCESS if entry found.
  * PIFS_ERROR_FILE_NOT_FOUND if entry not found.
@@ -283,8 +285,6 @@ pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const
  * @brief pifs_is_entry_deleted Check if entry is deleted.
  *
  * @param[in] a_entry           Entry to be checked.
- * @param[in] a_is_raw_entry    TRUE: entry was read with pifs_read(),
- *                              FALSE: entry was read with pifs_read_entry().
  *
  * @return TRUE: entry is deleted, FALSE: entry exist.
  */
@@ -379,7 +379,9 @@ pifs_status_t pifs_find_entry(pifs_entry_cmd_t a_entry_cmd,
  * @brief pifs_delete_entry Find entry in entry list and zero all bytes of it.
  * This function should be used only when a file is removed.
  *
- * @param a_name[in]    Pointer to name to find.
+ * @param[in] a_name                     Pointer to name to find.
+ * @param[in] a_entry_list_block_address Block address of entry list.
+ * @param[in] a_entry_list_page_address  Page address of entry list.
  * @return PIFS_SUCCESS if entry found and deleted.
  * PIFS_ERROR_FILE_NOT_FOUND if entry not found.
  */
@@ -396,7 +398,11 @@ pifs_status_t pifs_delete_entry(const pifs_char_t * a_name,
 /**
  * @brief pifs_count_entries Count free items in the entry list.
  *
- * @param a_entry[in] Pointer to the entry to be added.
+ * @param[out] a_free_entry_count           Number of free entries.
+ * @param[out] a_to_be_released_entry_count Number of to-be-released entries.
+ * @param[in] a_entry_list_block_address    Block address of entry list.
+ * @param[in] a_entry_list_page_address     Page address of entry list.
+ *
  * @return PIFS_SUCCESS if entry successfully added.
  * PIFS_ERROR_NO_MORE_ENTRY if entry list is full.
  * PIFS_ERROR_FLASH_WRITE if flash write failed.

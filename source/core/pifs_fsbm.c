@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-07-06 19:12:58 ivanovp {Time-stamp}
+ * Last modify: 2017-11-30 17:43:09 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -210,7 +210,7 @@ bool_t pifs_is_page_to_be_released(pifs_block_address_t a_block_address,
  * @param[in] a_block_address   Block address of page(s).
  * @param[in] a_page_address    Page address of page(s).
  * @param[in] a_page_count      Number of pages.
- * @param[in] mark_used         TRUE: Mark page used, FALSE: mark page to be released.
+ * @param[in] a_mark_used       TRUE: Mark page used, FALSE: mark page to be released.
  * @return PIFS_SUCCESS: if page was successfully marked.
  */
 pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
@@ -317,6 +317,7 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
  * @brief pifs_find_free_page Find free page(s) in free space memory bitmap.
  * It tries to find 'a_page_count_desired' pages, but at least one page.
  *
+ * @param[in] a_page_count_minimum Number of pages needed at least.
  * @param[in] a_page_count_desired Number of pages needed.
  * @param[in] a_block_type         Block type to find.
  * @param[out] a_block_address     Block address of page(s).
@@ -402,6 +403,7 @@ pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_minimum,
  *                                 FALSE: find to be released page.
  * @param[in] a_is_same_block      TRUE: find pages in same block,
  *                                 FALSE: pages can be in different block.
+ * @param[in] a_start_block_address Start block address. Example: PIFS_FLASH_BLOCK_RESERVED_NUM
  * @param[out] a_block_address     Block address of page(s).
  * @param[out] a_page_address      Page address of page(s).
  * @param[out] a_page_count_found  Number of free pages found.
@@ -646,6 +648,7 @@ pifs_status_t pifs_find_block_wl(pifs_size_t a_block_count,
  * @param[in] a_block_count         Number of blocks. Example: PIFS_FLASH_BLOCK_NUM_FS
  * @param[in] a_block_type          Block type to find.
  * @param[in] a_start_block_address Start block address. Example: PIFS_FLASH_BLOCK_RESERVED_NUM
+ * @param[in] a_end_block_address   End address of search. Example: PIFS_FLASH_BLOCK_NUM_ALL
  * @param[in] a_header              Pointer to file system header.
  * @param[out] a_block_address      Block address of page to be released if found.
  * @return PIFS_SUCCESS if block found.
@@ -790,8 +793,8 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
 /**
  * @brief pifs_get_pages Find to be released page(s) in free space memory bitmap.
  *
- * @param[out] a_management_page_count  Number of management pages found.
- * @param[out] a_data_page_count        Number of data pages found.
+ * @param[out] a_free_management_page_count  Number of management pages found.
+ * @param[out] a_free_data_page_count        Number of data pages found.
  *
  * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_NO_MORE_SPACE: if no free pages found.
  */
@@ -807,8 +810,8 @@ pifs_status_t pifs_get_to_be_released_pages(pifs_size_t * a_free_management_page
 /**
  * @brief pifs_get_pages Find free page(s) in free space memory bitmap.
  *
- * @param[out] a_management_page_count  Number of management pages found.
- * @param[out] a_data_page_count        Number of data pages found.
+ * @param[out] a_free_management_page_count  Number of management pages found.
+ * @param[out] a_free_data_page_count        Number of data pages found.
  *
  * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_NO_MORE_SPACE: if no free pages found.
  */

@@ -1,10 +1,10 @@
 /**
- * @file        pifs_config.h
- * @brief       Pi file system's configuration
+ * @file        pifs_config_template.h
+ * @brief       Pi file system's default configuration
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-11-15 12:24:21 ivanovp {Time-stamp}
+ * Last modify: 2017-11-30 17:42:31 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify

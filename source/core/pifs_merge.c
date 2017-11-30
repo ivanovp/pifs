@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-11-15 13:41:17 ivanovp {Time-stamp}
+ * Last modify: 2017-11-30 17:43:19 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -711,7 +711,8 @@ pifs_status_t pifs_merge(void)
 /**
  * @brief pifs_merge_check Check if data merge is needed and perform it.
  *
- * @param[in] a_file Pointer to actual file or NULL.
+ * @param[in] a_file                    Pointer to actual file or NULL.
+ * @param[in] a_data_page_count_minimum Number of data pages needed by caller.
  * @return PIFS_SUCCESS if merge was not necessary or merge was successfull.
  */
 pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_count_minimum)

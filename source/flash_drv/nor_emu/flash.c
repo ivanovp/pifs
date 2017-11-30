@@ -1,10 +1,10 @@
 /**
- * @file        flash.c
+ * @file        flash_drv/nor_emu/flash.c
  * @brief       NOR flash emulator for PC
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-08-18 06:29:08 ivanovp {Time-stamp}
+ * Last modify: 2017-11-30 17:43:27 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify

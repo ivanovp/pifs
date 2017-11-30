@@ -1,10 +1,10 @@
 /**
- * @file        flash.c
+ * @file        flash_drv/stm32_spi_dma/flash.c
  * @brief       NOR flash driver for STM32
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-10-11 18:21:06 ivanovp {Time-stamp}
+ * Last modify: 2017-11-30 12:44:28 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify

@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-11-16 19:08:51 ivanovp {Time-stamp}
+ * Last modify: 2017-11-30 17:42:26 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -242,6 +242,8 @@ pifs_status_t pifs_write(pifs_block_address_t a_block_address,
  * @brief pifs_erase  Cached erase.
  *
  * @param[in] a_block_address   Block address of page to erase.
+ * @param[in] a_old_header      Old file system's header.
+ * @param[in] a_new_header      New (not yet used) file system's header.
  * @return PIFS_SUCCESS if data erased successfully.
  */
 pifs_status_t pifs_erase(pifs_block_address_t a_block_address, pifs_header_t * a_old_header, pifs_header_t * a_new_header)
@@ -273,9 +275,10 @@ pifs_status_t pifs_erase(pifs_block_address_t a_block_address, pifs_header_t * a
 /**
  * @brief pifs_header_init Initialize file system's header.
  *
- * @param[in] a_block_address   Block address of header.
- * @param[in] a_page_address    Page address of header.
- * @param[out] a_header         Pointer to the header to be initialized.
+ * @param[in] a_block_address           Block address of header.
+ * @param[in] a_page_address            Page address of header.
+ * @param[in] a_next_mgmt_block_address Index of next management block to use.
+ * @param[out] a_header                 Pointer to the header to be initialized.
  */
 pifs_status_t pifs_header_init(pifs_block_address_t a_block_address,
                                pifs_page_address_t a_page_address,
@@ -852,10 +855,11 @@ pifs_status_t pifs_delete(void)
  * @brief pifs_mark_page_check Used during file system check. Mark page
  * as used.
  *
- * @param[in] a_file            File to write.
+ * @param[out] a_free_page_buf  Bitmap of free pages.
  * @param[in] a_block_address   Block address to mark.
  * @param[in] a_page_address    Page address to mark.
- * @return
+ * @param[in] a_page_count      Number of pages to mark.
+ * @return PIFS_SUCCESS if all pages marked successfully.
  */
 pifs_status_t pifs_mark_page_check(uint8_t * a_free_page_buf,
                                    pifs_block_address_t a_block_address,
@@ -893,8 +897,9 @@ pifs_status_t pifs_mark_page_check(uint8_t * a_free_page_buf,
  * @brief pifs_is_page_free_check Used during file system check.
  * Check if page is used.
  *
- * @param[in] a_block_address   Block address of page(s).
- * @param[in] a_page_address    Page address of page(s).
+ * @param[in] a_free_page_buf Pointer to free page buffer.
+ * @param[in] a_block_address Block address of page(s).
+ * @param[in] a_page_address  Page address of page(s).
  * @return TRUE: page is free. FALSE: page is used.
  */
 bool_t pifs_is_page_free_check(uint8_t * a_free_page_buf,
@@ -1067,7 +1072,8 @@ pifs_status_t pifs_check_file_page(pifs_file_t * a_file,
 /**
  * @brief pifs_dir_walker_check Callback function used during file system check.
  *
- * @param[in] a_dirent Pointer to directory entry.
+ * @param[in] a_dirent    Pointer to directory entry.
+ * @param[in] a_func_data User data.
  *
  * @return PIFS_SUCCESS when file opened successfully.
  */

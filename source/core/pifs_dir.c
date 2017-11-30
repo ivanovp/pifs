@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-08-15 16:25:54 ivanovp {Time-stamp}
+ * Last modify: 2017-11-30 17:42:49 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -642,6 +642,7 @@ int pifs_internal_closedir(pifs_dir_t * const a_dirp)
  * @param[in] a_recursive       Enter directories and walk them too.
  * @param[in] a_stop_at_error   TRUE: Stop at first error.
  * @param[in] a_dir_walker_func Pointer to callback function.
+ * @param[in] a_func_data       User-data to pass to callback function.
  * @return PIFS_SUCCESS if successfully walked.
  */
 pifs_status_t pifs_walk_dir(const pifs_char_t * const a_path, bool_t a_recursive, bool_t a_stop_at_error,

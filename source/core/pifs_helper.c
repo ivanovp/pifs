@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-11-15 12:28:02 ivanovp {Time-stamp}
+ * Last modify: 2017-11-30 17:43:12 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,6 +29,7 @@
 #include "flash_config.h"
 #include "pifs.h"
 #include "pifs_fsbm.h"
+#include "pifs_map.h"
 #include "pifs_helper.h"
 #include "pifs_crc8.h"
 #include "buffer.h"
@@ -376,8 +377,8 @@ bool_t pifs_is_block_type(pifs_block_address_t a_block_address,
  * @brief pifs_is_buffer_erased Check if buffer is erased or contains
  * programmed bytes.
  *
- * @param[in] a_buf[in]         Pointer to buffer.
- * @param[in] a_buf_size[in]    Size of buffer.
+ * @param[in] a_buf         Pointer to buffer.
+ * @param[in] a_buf_size    Size of buffer.
  * @return TRUE: if buffer is erased.
  * FALSE: if buffer contains at least one programmed bit.
  */
@@ -422,9 +423,9 @@ bool_t pifs_is_page_erased(pifs_block_address_t a_block_address,
  * @brief pifs_is_buffer_programmable Check if buffer is programmable or erase
  * is needed.
  *
- * @param[in] a_orig_buf[in]    Pointer to original buffer.
- * @param[in] a_new_buf[in]     Pointer to new buffer.
- * @param[in] a_buf_size[in]    Size of buffer.
+ * @param[in] a_orig_buf    Pointer to original buffer.
+ * @param[in] a_new_buf     Pointer to new buffer.
+ * @param[in] a_buf_size    Size of buffer.
  * @return TRUE: if buffer is programmable.
  * FALSE: if buffer contains at least one programmed bit.
  */
@@ -462,8 +463,8 @@ bool_t pifs_is_buffer_programmable(const void * a_orig_buf, const void * a_new_b
 /**
  * @brief pifs_is_buffer_programmed Check if buffer's all bits are programmed.
  *
- * @param[in] a_buf[in]         Pointer to buffer.
- * @param[in] a_buf_size[in]    Size of buffer.
+ * @param[in] a_buf         Pointer to buffer.
+ * @param[in] a_buf_size    Size of buffer.
  * @return TRUE: if buffer is programmed.
  * FALSE: if buffer contains at least one programmed bit.
  */
@@ -488,8 +489,8 @@ bool_t pifs_is_buffer_programmed(const void * a_buf, pifs_size_t a_buf_size)
 /**
  * @brief pifs_parse_open_mode Parse string of open mode.
  *
- * @param a_file[in]    Pointer to file's internal structure.
- * @param a_modes[in]   String of mode.
+ * @param[in] a_file    Pointer to file's internal structure.
+ * @param[in] a_modes   String of mode.
  */
 void pifs_parse_open_mode(pifs_file_t * a_file, const pifs_char_t * a_modes)
 {
@@ -743,54 +744,105 @@ pifs_status_t pifs_get_file(pifs_file_t * * a_file)
     return ret;
 }
 
-#if 0
+typedef struct
+{
+    pifs_block_address_t * blocks;
+    pifs_size_t            blocks_size;
+} pifs_block_walker_t;
+
+static pifs_status_t pifs_block_walker(pifs_file_t * a_file,
+                                       pifs_block_address_t a_block_address,
+                                       pifs_page_address_t a_page_address,
+                                       pifs_block_address_t a_delta_block_address,
+                                       pifs_page_address_t a_delta_page_address,
+                                       bool_t a_map_page,
+                                       void * a_func_data)
+{
+    pifs_block_walker_t * params = (pifs_block_walker_t*) a_func_data;
+    pifs_size_t           i;
+    bool_t                end = FALSE;
+
+    (void) a_file;
+    (void) a_block_address;
+    (void) a_page_address;
+    (void) a_delta_page_address;
+
+    printf("%i: %i/%i -> %i/%i\r\n", a_map_page,
+            a_block_address, a_page_address,
+            a_delta_block_address, a_delta_page_address);
+    if (!a_map_page)
+    {
+        for (i = 0; i < params->blocks_size && !end; i++)
+        {
+            if (params->blocks[i] == a_delta_block_address)
+            {
+                end = TRUE;
+            }
+            else if (params->blocks[i] == PIFS_BLOCK_ADDRESS_INVALID)
+            {
+                params->blocks[i] = a_delta_block_address;
+                end = TRUE;
+            }
+        }
+    }
+
+    return PIFS_SUCCESS;
+}
+
+/**
+ * @brief pifs_get_file_blocks Get list of blocks which holds file's
+ * content. 
+ * Note: This function is used for debugging.
+ *
+ * @param[in] a_filename    File name to check.
+ * @param[out] a_blocks     List of used blocks.
+ * @param[in] a_blocks_size Size of a_blocks.
+ * @param[out] a_blocks_num Number of blocks found and written to list.
+ */
 pifs_status_t pifs_get_file_blocks(pifs_char_t * a_filename,
                                    pifs_block_address_t * a_blocks,
-                                   pifs_size_t a_blocks_size)
+                                   pifs_size_t a_blocks_size,
+                                   pifs_size_t * a_blocks_num)
 {
     pifs_file_t        * file;
-    pifs_address_t       map_address = { PIFS_BLOCK_ADDRESS_INVALID, PIFS_PAGE_ADDRESS_INVALID };
-    pifs_address_t       rw_address;
-    pifs_block_address_t dba;
-    pifs_page_address_t  dpa;
-    bool_t               is_map_full;
-    pifs_status_t        ret = PIFS_SUCCESS;
+    pifs_status_t        ret = PIFS_ERROR_GENERAL;
+    pifs_block_walker_t  block_walker;
+    pifs_size_t          i;
+    bool_t               end = FALSE;
 
+    *a_blocks_num = 0;
+        printf("Opened %s\r\n", a_filename);
     file = pifs_fopen(a_filename, "r");
     if (file)
     {
-        do
+        block_walker.blocks = a_blocks;
+        block_walker.blocks_size = a_blocks_size;
+        for (i = 0; i < a_blocks_size; i++)
         {
-            if ((map_address.block_address != file->actual_map_address.block_address)
-                    && (map_address.page_address != file->actual_map_address.page_address))
+            a_blocks[i] = PIFS_BLOCK_ADDRESS_INVALID;
+        }
+        ret = pifs_walk_file_pages(file, pifs_block_walker, &block_walker);
+        if (ret == PIFS_SUCCESS)
+        {
+            for (i = 0; i < a_blocks_size && !end; i++)
             {
-                map_address = file->actual_map_address;
-            }
-            /* Save R/W address before it changes due to reading */
-            rw_address = file->rw_address;
-            read = pifs_fread(buf_r, 1, sizeof(buf_r), file);
-            if (read > 0)
-            {
-                /* Read was successfull print info */
-                printf("Data page's address: %s ", pifs_address2str(&rw_address));
-                ret = pifs_find_delta_page(rw_address.block_address,
-                                           rw_address.page_address,
-                                           &dba, &dpa, &is_map_full,
-                                           &pifs.header);
-                if (ret == PIFS_SUCCESS &&
-                        (rw_address.block_address != dba
-                         || rw_address.page_address != dpa))
+                if (a_blocks[i] != PIFS_BLOCK_ADDRESS_INVALID)
                 {
-                    printf("-> %s", pifs_ba_pa2str(dba, dpa));
+                    (*a_blocks_num)++;
                 }
-                printf("\r\n");
+                else
+                {
+                    end = TRUE;
+                }
             }
-        } while (read > 0);
+        }
         pifs_fclose(file);
     }
     else
     {
-        printf("ERROR: Cannot open file!\r\n");
+        ret = PIFS_ERROR_FILE_NOT_FOUND;
+        //ret = pifs_errno;
     }
+
+    return ret;
 }
-#endif

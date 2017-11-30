@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-11-16 19:08:53 ivanovp {Time-stamp}
+ * Last modify: 2017-11-30 17:42:41 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -37,6 +37,8 @@
 
 /**
  * @brief pifs_read_delta_map_page Read delta map pages to memory buffer.
+ *
+ * @param[in] a_header          File system's header to use.
  *
  * @return PIFS_SUCCESS if read successfully.
  */
@@ -100,12 +102,13 @@ static pifs_status_t pifs_write_delta_map_page(pifs_size_t a_delta_map_page_idx,
  * be read again. It should be as fast as possible to find the corresponding
  * delta map page...
  *
- * @param[in] a_block_address           Block address to search.
- * @param[in] a_page_address            Page address to search.
- * @param[out] a_delta_block_address    Pointer to block address to fill.
- * @param[out] a_delta_page_address     Pointer to page address to fill.
- * @param[out] a_is_map_full            TRUE: if delta map is full.
- *                                      FALSE: there is space in delta map.
+ * @param[in] a_block_address        Block address to search.
+ * @param[in] a_page_address         Page address to search.
+ * @param[out] a_delta_block_address Pointer to block address to fill.
+ * @param[out] a_delta_page_address  Pointer to page address to fill.
+ * @param[out] a_is_map_full         TRUE: if delta map is full.
+ *                                   FALSE: there is space in delta map.
+ * @param[in] a_header               File system's header to use.
  * @return PIFS_SUCCESS: if delta map read successfully.
  */
 pifs_status_t pifs_find_delta_page(pifs_block_address_t a_block_address,
@@ -252,13 +255,14 @@ pifs_status_t pifs_read_delta(pifs_block_address_t a_block_address,
  * @brief pifs_write  Cached write with delta page handling.
  * Note: marks written page as used!
  *
- * @param[in]a_block_address   Block address of page to write.
- * @param[in]a_page_address    Page address of page to write.
- * @param[in]a_page_offset     Offset in page.
- * @param[in]a_buf             Pointer to buffer to write or NULL if
- *                             pifs.cache_page_buf is directly written.
- * @param[in]a_buf_size        Size of buffer. Ignored if a_buf is NULL.
- * @param[out]a_is_delta       TRUE: Delta page was written. FALSE: Normal page was written.
+ * @param[in] a_block_address   Block address of page to write.
+ * @param[in] a_page_address    Page address of page to write.
+ * @param[in] a_page_offset     Offset in page.
+ * @param[in] a_buf             Pointer to buffer to write or NULL if
+ *                              pifs.cache_page_buf is directly written.
+ * @param[in] a_buf_size        Size of buffer. Ignored if a_buf is NULL.
+ * @param[out] a_is_delta       TRUE: Delta page was written. FALSE: Normal page was written.
+ * @param[in] a_header          File system's header to use.
  * @return PIFS_SUCCESS if data write successfully.
  */
 pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
