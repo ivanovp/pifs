@@ -107,7 +107,7 @@ void pifs_calc_address(pifs_bit_pos_t a_bit_pos,
  * Bit 1 shows if page shall be released or not.
  *
  * @param[in] is_free           TRUE: check if page is free.
- * @param[in] is_to_be_released TRUE: check if page is to be released or free.
+ * @param[in] is_to_be_released TRUE: check if page is to-be-released or free.
  * @param[in] value     Value to be checked.
  * @return TRUE: page is free or to be released.
  */
@@ -124,7 +124,7 @@ static inline bool_t pifs_check_bits(bool_t a_is_free, bool_t a_is_to_be_release
     {
         ret = TRUE;
     }
-    /* Looking to be released page */
+    /* Looking for to-be-released page */
     if (!ret && a_is_to_be_released && (a_bits & mask_to_be_released) == value_to_be_released)
     {
         ret = TRUE;
@@ -690,7 +690,9 @@ pifs_status_t pifs_find_to_be_released_block(pifs_size_t a_block_count,
     find.header = a_header;
 
     ret = pifs_find_page_adv(&find, &ba, &pa, &page_count);
-
+    PIFS_WARNING_MSG("%i..%i ret: %i, page_count: %i\r\n",
+                     a_start_block_address, a_end_block_address,
+                     ret, page_count);
 
     *a_block_address = ba;
 

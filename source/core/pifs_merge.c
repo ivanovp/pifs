@@ -42,7 +42,7 @@
 #include "pifs_dir.h"
 #include "buffer.h" /* DEBUG */
 
-#define PIFS_COPY_FSBM   1
+#define PIFS_COPY_FSBM   0
 
 /**
  * @brief pifs_copy_fsbm Copy free space bitmap and process to be released pages.

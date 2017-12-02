@@ -483,16 +483,19 @@ void cmdDebug (char* command, char* params)
 #if ENABLE_DHT
     ftest();
 #endif
-#if 0
+#if 1
     pifs_status_t ret;
     pifs_block_address_t ba;
+    pifs_block_address_t ba2;
 
     printf("Find to be released block...\r\n");
-    ba = PIFS_BLOCK_ADDRESS_INVALID;
-    ret = pifs_find_to_be_released_block(1, PIFS_BLOCK_TYPE_DATA, PIFS_FLASH_BLOCK_RESERVED_NUM,
-                                         &pifs.header, &ba);
-    printf("ret: %i, ba: %i\r\n", ret, ba);
+    for (ba = PIFS_FLASH_BLOCK_RESERVED_NUM; ba < PIFS_FLASH_BLOCK_NUM_ALL; ba++)
+    {
+        ret = pifs_find_to_be_released_block(1, PIFS_BLOCK_TYPE_DATA, ba, ba,
+                                             &pifs.header, &ba2);
+//        printf("ret: %i, ba: %i\r\n", ret, ba2);
 
+    }
     printf("Find to free block...\r\n");
     ret = pifs_find_block_wl(PIFS_MANAGEMENT_BLOCK_NUM,
                              PIFS_BLOCK_TYPE_PRIMARY_MANAGEMENT | PIFS_BLOCK_TYPE_DATA,

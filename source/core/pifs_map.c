@@ -465,13 +465,15 @@ pifs_status_t pifs_release_file_page(pifs_file_t * a_file,
     if (a_map_page)
     {
         PIFS_DEBUG_MSG("Release map page %s\r\n",
-                       pifs_ba_pa2str(a_delta_block_address, a_delta_page_address));
+                       pifs_ba_pa2str(a_block_address, a_page_address));
         ret = pifs_mark_page(a_block_address, a_page_address, PIFS_MAP_PAGE_NUM, FALSE);
     }
     else
     {
         PIFS_DEBUG_MSG("Release map entry %s\r\n",
                        pifs_ba_pa2str(a_delta_block_address, a_delta_page_address));
+        /* Only delta page shall be released as the original is released *
+         * when delta page is added. */
         ret = pifs_mark_page(a_delta_block_address, a_delta_page_address, 1, FALSE);
     }
 
