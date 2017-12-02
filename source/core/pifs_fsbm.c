@@ -125,7 +125,7 @@ static inline bool_t pifs_check_bits(bool_t a_is_free, bool_t a_is_to_be_release
         ret = TRUE;
     }
     /* Looking to be released page */
-    if (a_is_to_be_released && (a_bits & mask_to_be_released) == value_to_be_released)
+    if (!ret && a_is_to_be_released && (a_bits & mask_to_be_released) == value_to_be_released)
     {
         ret = TRUE;
     }
@@ -358,6 +358,11 @@ pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_minimum,
                 /* Try to find free pages in the least weared block */
                 find.start_block_address = pifs.header.least_weared_blocks[i].block_address;
                 find.end_block_address = find.start_block_address;
+                if (find.start_block_address >= PIFS_FLASH_BLOCK_NUM_ALL)
+                {
+                    PIFS_WARNING_MSG("Invalid block %i in least weared blocks at %i\r\n",
+                                     find.start_block_address, i);
+                }
                 ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
             }
         }
@@ -369,6 +374,11 @@ pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_minimum,
             {
                 /* Try to find free pages in the most weared block */
                 find.start_block_address = pifs.header.most_weared_blocks[i].block_address;
+                if (find.start_block_address >= PIFS_FLASH_BLOCK_NUM_ALL)
+                {
+                    PIFS_WARNING_MSG("Invalid block %i in least weared blocks at %i\r\n",
+                                     find.start_block_address, i);
+                }
                 find.end_block_address = find.start_block_address;
                 ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
             }
@@ -445,14 +455,14 @@ pifs_status_t pifs_find_page(pifs_page_count_t a_page_count_minimum,
  * @param[out] a_block_address     Block address of page(s).
  * @param[out] a_page_address      Page address of page(s).
  * @param[out] a_page_count_found  Number of free pages found.
- * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_GENERAL: if no free pages found.
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_NO_MORE_SPACE: if no free pages found.
  */
 pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                                  pifs_block_address_t * a_block_address,
                                  pifs_page_address_t * a_page_address,
                                  pifs_page_count_t * a_page_count_found)
 {
-    pifs_status_t           ret = PIFS_ERROR_GENERAL;
+    pifs_status_t           ret = PIFS_ERROR_NO_MORE_SPACE;
     pifs_block_address_t    fba = a_find->start_block_address;
     pifs_page_address_t     fpa = 0;
     pifs_block_address_t    fba_start = PIFS_BLOCK_ADDRESS_INVALID;
@@ -499,7 +509,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                             && pifs_is_block_type(fba, a_find->block_type, a_find->header))
                     {
 #if PIFS_CHECK_IF_PAGE_IS_ERASED
-                        if (a_find->is_to_be_released || pifs_is_page_erased(fba, fpa))
+                        if (a_find->is_to_be_released || (a_find->is_free && pifs_is_page_erased(fba, fpa)))
 #endif
                         {
                             PIFS_DEBUG_MSG("Free page %s\r\n", pifs_ba_pa2str(fba, fpa));
@@ -697,7 +707,7 @@ pifs_status_t pifs_find_to_be_released_block(pifs_size_t a_block_count,
  * @param[out] a_management_page_count  Number of management pages found.
  * @param[out] a_data_page_count        Number of data pages found.
  *
- * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_GENERAL: if no free pages found.
+ * @return PIFS_SUCCESS: if free pages found. PIFS_ERROR_NO_MORE_SPACE: if no free pages found.
  */
 pifs_status_t pifs_get_pages(bool_t a_is_free,
                              pifs_block_address_t a_start_block_address,
@@ -705,7 +715,7 @@ pifs_status_t pifs_get_pages(bool_t a_is_free,
                              pifs_size_t * a_management_page_count,
                              pifs_size_t * a_data_page_count)
 {
-    pifs_status_t           ret = PIFS_ERROR_GENERAL;
+    pifs_status_t           ret = PIFS_ERROR_NO_MORE_SPACE;
     pifs_block_address_t    fba = a_start_block_address;
     pifs_page_address_t     fpa = 0;
     pifs_block_address_t    fsbm_ba = pifs.header.free_space_bitmap_address.block_address;
