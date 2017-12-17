@@ -358,12 +358,15 @@ pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_minimum,
                 /* Try to find free pages in the least weared block */
                 find.start_block_address = pifs.header.least_weared_blocks[i].block_address;
                 find.end_block_address = find.start_block_address;
-                if (find.start_block_address >= PIFS_FLASH_BLOCK_NUM_ALL)
+                if (find.start_block_address < PIFS_FLASH_BLOCK_NUM_ALL)
+                {
+                    ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
+                }
+                else
                 {
                     PIFS_WARNING_MSG("Invalid block %i in least weared blocks at %i\r\n",
                                      find.start_block_address, i);
                 }
-                ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
             }
         }
         else
@@ -374,7 +377,11 @@ pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_minimum,
             {
                 /* Try to find free pages in the most weared block */
                 find.start_block_address = pifs.header.most_weared_blocks[i].block_address;
-                if (find.start_block_address >= PIFS_FLASH_BLOCK_NUM_ALL)
+                if (find.start_block_address < PIFS_FLASH_BLOCK_NUM_ALL)
+                {
+                    ret = pifs_find_page_adv(&find, a_block_address, a_page_address, a_page_count_found);
+                }
+                else
                 {
                     PIFS_WARNING_MSG("Invalid block %i in least weared blocks at %i\r\n",
                                      find.start_block_address, i);

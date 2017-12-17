@@ -594,6 +594,21 @@ pifs_status_t pifs_merge(void)
     /* #6 */
     if (ret == PIFS_SUCCESS)
     {
+        ret = pifs_generate_least_weared_blocks(&pifs.header);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_generate_most_weared_blocks(&pifs.header);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        memcpy(new_header.least_weared_blocks,
+               pifs.header.least_weared_blocks,
+               sizeof(pifs.header.least_weared_blocks));
+        memcpy(new_header.most_weared_blocks,
+               pifs.header.most_weared_blocks,
+               sizeof(pifs.header.most_weared_blocks));
+
         /* Copy file entry list and process delta pages */
         /* This should be before resetting delta pages! */
 #if PIFS_ENABLE_DIRECTORIES
@@ -632,14 +647,6 @@ pifs_status_t pifs_merge(void)
         }
     }
     /* #9 */
-    if (ret == PIFS_SUCCESS)
-    {
-        ret = pifs_generate_least_weared_blocks(&pifs.header);
-    }
-    if (ret == PIFS_SUCCESS)
-    {
-        ret = pifs_generate_most_weared_blocks(&pifs.header);
-    }
     if (ret == PIFS_SUCCESS)
     {
         PIFS_NOTICE_MSG("Next management block: %i, ret: %i\r\n", next_mgmt_ba, ret);
