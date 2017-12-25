@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-11-15 10:50:02 ivanovp {Time-stamp}
+ * Last modify: 2017-12-25 08:46:38 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -61,7 +61,7 @@
                                                   0: Manual static wear leveling */
 #define PIFS_STATIC_WEAR_LEVEL_BLOCKS   1u   /**< Number flash blocks that will be copied during wear leveling at the same time */
 /** If number of erase count is greater than limit, file resides in the block will be moved */
-#define PIFS_STATIC_WEAR_LEVEL_LIMIT  500u
+#define PIFS_STATIC_WEAR_LEVEL_LIMIT  250u
 #define PIFS_CALC_TBR_IN_FREE_SPACE     0u   /**< 1: Free pages and to be released pages are counted, 0: only free pages counted */
 #define PIFS_FSCHECK_USE_STATIC_MEMORY  1u   /**< 1: Use static memory for file system check, 0: Use dynamic (malloc) for file system check */
 

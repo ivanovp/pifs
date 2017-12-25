@@ -83,6 +83,12 @@ pifs_status_t pifs_wear_level_list_init(void)
         }
     }
 
+    for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_SUCCESS; i++)
+    {
+        pifs.header.least_weared_blocks[i].block_address = i;
+        pifs.header.least_weared_blocks[i].wear_level_cntr = 0;
+    }
+
     return ret;
 }
 
@@ -400,6 +406,12 @@ pifs_status_t pifs_generate_least_weared_blocks(pifs_header_t * a_header)
         wear_level_cntr_min = last_wear_level_cntr;
     }
 #endif
+    PIFS_WARNING_MSG("List: ");
+    for (i = 0; i < PIFS_LEAST_WEARED_BLOCK_NUM && ret == PIFS_SUCCESS; i++)
+    {
+        printf("%i ", a_header->least_weared_blocks[i].block_address);
+    }
+    printf("\r\n");
 
     return ret;
 }

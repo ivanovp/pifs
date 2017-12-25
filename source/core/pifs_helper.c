@@ -735,6 +735,7 @@ pifs_status_t pifs_get_file(pifs_file_t * * a_file)
         if (!pifs.file[i].is_used)
         {
             file = &pifs.file[i];
+            PIFS_ASSERT(!file->is_opened);
             file->is_used = TRUE;
             ret = PIFS_SUCCESS;
         }

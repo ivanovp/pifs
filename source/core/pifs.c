@@ -1100,6 +1100,7 @@ pifs_status_t pifs_dir_walker_check(pifs_dirent_t * a_dirent, void * a_func_data
             ret = pifs_walk_file_pages(file, pifs_check_file_page, a_func_data);
             /* Release file structure */
             file->is_used = FALSE;
+            file->is_opened = FALSE;
         }
         else
         {

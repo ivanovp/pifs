@@ -102,11 +102,11 @@ pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
     {
         a_file->map_entry_idx = 0;
         checksum = pifs_calc_checksum(&a_file->map_header.next_map_address,
-                                      PIFS_ADDRESS_SIZE_BYTE - PIFS_CHECKSUM_SIZE_BYTE);
-        if (checksum == a_file->map_header.next_map_checksum)
+                                      PIFS_ADDRESS_SIZE_BYTE);
+        if (a_file->map_header.next_map_address.block_address < PIFS_BLOCK_ADDRESS_INVALID
+                && a_file->map_header.next_map_address.page_address < PIFS_PAGE_ADDRESS_INVALID)
         {
-            if (a_file->map_header.next_map_address.block_address < PIFS_BLOCK_ADDRESS_INVALID
-                    && a_file->map_header.next_map_address.page_address < PIFS_PAGE_ADDRESS_INVALID)
+            if (checksum == a_file->map_header.next_map_checksum)
             {
                 a_file->actual_map_address = a_file->map_header.next_map_address;
                 //            PIFS_DEBUG_MSG("Next map address %s\r\n",
@@ -117,12 +117,12 @@ pifs_status_t pifs_read_next_map_entry(pifs_file_t * a_file)
             }
             else
             {
-                a_file->status = PIFS_ERROR_END_OF_FILE;
+                a_file->status = PIFS_ERROR_CHECKSUM;
             }
         }
         else
         {
-            a_file->status = PIFS_ERROR_CHECKSUM;
+            a_file->status = PIFS_ERROR_END_OF_FILE;
         }
     }
     if (a_file->status == PIFS_SUCCESS)
@@ -225,7 +225,7 @@ pifs_status_t pifs_append_map_entry(pifs_file_t * a_file,
             a_file->status = pifs_read_next_map_entry(a_file);
         }
     } while (!empty_entry_found && a_file->status == PIFS_SUCCESS);
-    if (a_file->status == PIFS_ERROR_END_OF_FILE)
+    if (a_file->status == PIFS_ERROR_END_OF_FILE) // || a_file->status == PIFS_ERROR_CHECKSUM)
     {
         PIFS_DEBUG_MSG("End of map, new map will be created\r\n");
         a_file->status = pifs_find_free_page_wl(PIFS_MAP_PAGE_NUM, PIFS_MAP_PAGE_NUM,
@@ -409,7 +409,7 @@ pifs_status_t pifs_walk_file_pages(pifs_file_t * a_file,
             if (!pifs_is_buffer_erased(&a_file->map_header.next_map_address, PIFS_ADDRESS_SIZE_BYTE))
             {
                 checksum = pifs_calc_checksum(&a_file->map_header.next_map_address,
-                                              PIFS_ADDRESS_SIZE_BYTE - PIFS_CHECKSUM_SIZE_BYTE);
+                                              PIFS_ADDRESS_SIZE_BYTE);
                 if (checksum == a_file->map_header.next_map_checksum)
                 {
                     /* Jump to the next map page */

@@ -362,7 +362,7 @@ pifs_status_t pifs_test_full_r(const char * a_filename)
             read_size = pifs_fread(test_buf_r, 1, sizeof(test_buf_r), file);
             if (read_size != sizeof(test_buf_r))
             {
-                PIFS_TEST_ERROR_MSG("Read size differs!\r\n");
+                PIFS_TEST_ERROR_MSG("Read size differs! Error: %i\r\n", pifs_errno);
                 ret = PIFS_ERROR_GENERAL;
             }
             //print_buffer(test_buf_r, sizeof(test_buf_r), 0);

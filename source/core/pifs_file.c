@@ -235,6 +235,10 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
             a_file->rw_page_count = a_file->map_entry.page_count;
         }
     }
+    if (a_file && !a_file->is_opened)
+    {
+        a_file->is_used = FALSE;
+    }
 
     return a_file->status;
 }
