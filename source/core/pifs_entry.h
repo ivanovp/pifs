@@ -33,8 +33,7 @@
 typedef enum
 {
     PIFS_FIND_ENTRY,
-    PIFS_DELETE_ENTRY,  /**< Set deleted attribute or zero first character of name */
-    PIFS_CLEAR_ENTRY    /**< Zero all bytes of entry */
+    PIFS_DELETE_ENTRY  /**< Zero all bytes of entry */
 } pifs_entry_cmd_t;
 
 #ifdef __cplusplus

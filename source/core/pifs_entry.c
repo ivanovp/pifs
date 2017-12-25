@@ -307,7 +307,7 @@ bool_t pifs_is_entry_deleted(pifs_entry_t * a_entry)
 /**
  * @brief pifs_find_entry Find entry in entry list.
  *
- * @param[in] a_entry_cmd   Command to run. @see PIFS_FIND_ENTRY, PIFS_DELETE_ENTRY, PIFS_CLEAR_ENTRY
+ * @param[in] a_entry_cmd   Command to run. @see PIFS_FIND_ENTRY, PIFS_DELETE_ENTRY
  * @param[in] a_name        Pointer to name to find.
  * @param[out] a_entry      Pointer to entry to fill. NULL: clear entry.
  * @param[in] a_entry_list_block_address Current list entry's address.
@@ -353,7 +353,7 @@ pifs_status_t pifs_find_entry(pifs_entry_cmd_t a_entry_cmd,
                 {
                     /* Already copied */
                 }
-                else if (a_entry_cmd == PIFS_DELETE_ENTRY || a_entry_cmd == PIFS_CLEAR_ENTRY)
+                else if (a_entry_cmd == PIFS_DELETE_ENTRY)
                 {
                     memset(&entry, PIFS_FLASH_PROGRAMMED_BYTE_VALUE, PIFS_ENTRY_SIZE_BYTE);
                     ret = pifs_write_entry(ba, pa, i, FALSE, &entry);
