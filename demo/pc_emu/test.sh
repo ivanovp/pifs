@@ -7,8 +7,8 @@ make clean
 make DEBUG=1
 # Create a file
 ./pifs tb staticwear.tst >>$LOG
-#for i in `seq --format="%02.0f" 100`; do
-for i in `seq --format="%02.0f" 13`; do
+for i in `seq --format="%02.0f" 100`; do
+#for i in `seq --format="%02.0f" 13`; do
     echo "##############################################################################"|tee -a $LOG
     echo "### TEST $i"|tee -a $LOG
     echo "##############################################################################"|tee -a $LOG
@@ -22,6 +22,7 @@ for i in `seq --format="%02.0f" 13`; do
         echo "Error $RC occured during test $i, exiting..."
         exit $RC;
     fi
+    ./pifs ls -b>>$LOG
 #    hexdump -Cn 32768 flash.bin >$i
 done
 ./pifs bi>>$LOG

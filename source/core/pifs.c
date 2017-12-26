@@ -31,6 +31,7 @@
 #include "flash.h"
 #include "flash_config.h"
 #include "pifs.h"
+#include "pifs_file.h"
 #include "pifs_fsbm.h"
 #include "pifs_helper.h"
 #include "pifs_delta.h"
@@ -1086,21 +1087,11 @@ pifs_status_t pifs_dir_walker_check(pifs_dirent_t * a_dirent, void * a_func_data
     if (a_dirent->d_name[0] != PIFS_FLASH_PROGRAMMED_BYTE_VALUE)
     {
         PIFS_PRINT_MSG("Checking file '%s'...\r\n", a_dirent->d_name);
-        /* pifs_fopen() would not work if deleted file is opened. */
-        /* Therefore we get only a pifs_file_t structure and fill the */
-        /* map information only. */
-        ret = pifs_get_file(&file);
-        if (ret == PIFS_SUCCESS && file)
+        file = pifs_fopen(a_dirent->d_name, "r");
+        if (file)
         {
-            strncpy(file->entry.name, a_dirent->d_name, PIFS_FILENAME_LEN_MAX);
-            file->entry.file_size = a_dirent->d_filesize;
-            file->entry.attrib = a_dirent->d_attrib;
-            file->entry.first_map_address.block_address = a_dirent->d_first_map_block_address;
-            file->entry.first_map_address.page_address = a_dirent->d_first_map_page_address;
             ret = pifs_walk_file_pages(file, pifs_check_file_page, a_func_data);
-            /* Release file structure */
-            file->is_used = FALSE;
-            file->is_opened = FALSE;
+            ret = pifs_fclose(file);
         }
         else
         {

@@ -52,6 +52,50 @@
  * @param[in] a_new_header Pointer to previous file system's header.
  * @return PIFS_SUCCESS if erase was successful.
  */
+#if PIFS_COPY_FSBM == 0
+static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t * a_new_header)
+{
+    pifs_status_t        ret = PIFS_SUCCESS;
+    pifs_block_address_t fba = PIFS_FLASH_BLOCK_RESERVED_NUM;
+    pifs_block_address_t to_be_released_ba;
+
+    for (fba = PIFS_FLASH_BLOCK_RESERVED_NUM; fba < PIFS_FLASH_BLOCK_NUM_ALL && ret == PIFS_SUCCESS; fba++)
+    {
+        /* Find to be released pages for whole block */
+        ret = pifs_find_to_be_released_block(1, PIFS_BLOCK_TYPE_DATA,
+                                             fba, fba,
+                                             a_old_header,
+                                             &to_be_released_ba);
+        if (ret == PIFS_SUCCESS)
+        {
+            /* Check if the found block is the actual block */
+            if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA, a_old_header))
+            {
+                ret = pifs_erase(fba, a_old_header, a_new_header);
+                if (ret == PIFS_SUCCESS)
+                {
+                    PIFS_WARNING_MSG("Block %i erased\r\n", fba);
+                }
+                else
+                {
+                    PIFS_ERROR_MSG("Block %i cannot be erased!\r\n", fba)
+                }
+            }
+            else
+            {
+                PIFS_NOTICE_MSG("Block %i not erased, not data block\r\n", fba);
+            }
+        }
+        else if (ret == PIFS_ERROR_NO_MORE_SPACE)
+        {
+            /* It's not an error */
+            ret = PIFS_SUCCESS;
+        }
+    }
+
+    return ret;
+}
+#else
 static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t * a_new_header)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
@@ -59,20 +103,15 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
     pifs_page_address_t  fpa = 0;
     pifs_block_address_t old_fsbm_ba = a_old_header->free_space_bitmap_address.block_address;
     pifs_page_address_t  old_fsbm_pa = a_old_header->free_space_bitmap_address.page_address;
-#if PIFS_COPY_FSBM
     pifs_block_address_t new_fsbm_ba = a_new_header->free_space_bitmap_address.block_address;
     pifs_page_address_t  new_fsbm_pa = a_new_header->free_space_bitmap_address.page_address;
-#endif
     pifs_size_t          i;
     bool_t               find = TRUE;
-#if PIFS_COPY_FSBM
     bool_t               mark_block_free = FALSE;
-#endif
     pifs_block_address_t to_be_released_ba;
 
     do
     {
-#if PIFS_COPY_FSBM
         /* Read free space bitmap */
         ret = pifs_read(old_fsbm_ba, old_fsbm_pa, 0, &pifs.dmw_page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
 
@@ -80,7 +119,6 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
 #if PIFS_DEBUG_LEVEL >= 5
         print_buffer(pifs.dmw_page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE,
                      old_fsbm_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + old_fsbm_pa * PIFS_LOGICAL_PAGE_SIZE_BYTE);
-#endif
 #endif
         for (i = 0; i < PIFS_LOGICAL_PAGE_SIZE_BYTE && ret == PIFS_SUCCESS; i++)
         {
@@ -98,10 +136,8 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
                     if (pifs_is_block_type(fba, PIFS_BLOCK_TYPE_DATA, a_old_header))
                     {
                         ret = pifs_erase(fba, a_old_header, a_new_header);
-#if PIFS_COPY_FSBM
                         /* Block erased, it can be marked as free */
                         mark_block_free = TRUE;
-#endif
                         PIFS_WARNING_MSG("Block %i erased\r\n", fba);
                     }
                     else
@@ -114,7 +150,6 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
                     /* If no blocks found, it is not an error */
                     ret = PIFS_SUCCESS;
                 }
-#if PIFS_COPY_FSBM
                 /* Mark management block as free because */
                 /* #1 The old management blocks (primary) will be erased, */
                 /*    at the end of merge. */
@@ -128,15 +163,12 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
                     /* marked as free */
                     mark_block_free = TRUE;
                 }
-#endif
             }
 
-#if PIFS_COPY_FSBM
             if (mark_block_free)
             {
                 pifs.dmw_page_buf[i] = PIFS_FLASH_ERASED_BYTE_VALUE;
             }
-#endif
 
             fpa += PIFS_BYTE_BITS / PIFS_FSBM_BITS_PER_PAGE;
             if (fpa == PIFS_LOGICAL_PAGE_PER_BLOCK)
@@ -144,13 +176,10 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
                 fpa = 0;
                 fba++;
                 find = TRUE;
-#if PIFS_COPY_FSBM
                 mark_block_free = FALSE;
-#endif
             }
         }
 
-#if PIFS_COPY_FSBM
         if (ret == PIFS_SUCCESS)
         {
             ret = pifs_write(new_fsbm_ba, new_fsbm_pa, 0, &pifs.dmw_page_buf, PIFS_LOGICAL_PAGE_SIZE_BYTE);
@@ -160,7 +189,6 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
                          new_fsbm_ba * PIFS_FLASH_BLOCK_SIZE_BYTE + new_fsbm_pa * PIFS_LOGICAL_PAGE_SIZE_BYTE);
 #endif
         }
-#endif
 
         if (fba < PIFS_FLASH_BLOCK_NUM_ALL)
         {
@@ -168,17 +196,16 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
             {
                 ret = pifs_inc_ba_pa(&old_fsbm_ba, &old_fsbm_pa);
             }
-#if PIFS_COPY_FSBM
             if (ret == PIFS_SUCCESS)
             {
                 ret = pifs_inc_ba_pa(&new_fsbm_ba, &new_fsbm_pa);
             }
-#endif
         }
     } while (ret == PIFS_SUCCESS && fba < PIFS_FLASH_BLOCK_NUM_ALL);
 
     return ret;
 }
+#endif
 
 /**
  * @brief pifs_copy_map Copy map of a file.
@@ -787,6 +814,7 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
                         /* TODO When no blocks can be released, static wear leveling */
                         /* may be useful, but some space shall be reserved as */
                         /* at this point there is no free space! */
+                        PIFS_WARNING_MSG("Cannot merge, no blocks found!\r\n");
                         ret = PIFS_SUCCESS;
                     }
                 }

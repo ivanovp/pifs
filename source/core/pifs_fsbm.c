@@ -554,6 +554,22 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                         else
                         {
                             PIFS_WARNING_MSG("Flash page should be erased, but it is not! %s\r\n", pifs_ba_pa2str(fba, fpa));
+#if DEBUG
+                            /* FIXME debug code, remove! */
+                            {
+                                uint8_t buf_r[PIFS_LOGICAL_PAGE_SIZE_BYTE];
+                                ret = pifs_flash_read(fba, fpa, 0, buf_r, sizeof(buf_r));
+                                if (ret == PIFS_SUCCESS)
+                                {
+                                    print_buffer(buf_r, sizeof(buf_r), fba * PIFS_FLASH_BLOCK_SIZE_BYTE
+                                                 + fpa * PIFS_LOGICAL_PAGE_SIZE_BYTE);
+                                }
+                                else
+                                {
+                                    printf("ERROR: Cannot read from flash memory, error code: %i!\r\n", ret);
+                                }
+                            }
+#endif
                             /* TODO this two operation shall be in one function call */
                             /* Mark page as used */
                             (void)pifs_mark_page(fba, fpa, 1, TRUE);
