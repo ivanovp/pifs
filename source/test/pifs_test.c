@@ -53,6 +53,7 @@
 #if ENABLE_SMALL_FILES_TEST
 #define ENABLE_LIST_DIRECTORY_TEST    1
 #endif
+#define PIFS_REMOVE_TEST_FILES        1
 
 #define TEST_FULL_PAGE_NUM            (PIFS_LOGICAL_PAGE_NUM_FS / 2)
 #define TEST_BUF_SIZE                 (PIFS_LOGICAL_PAGE_SIZE_BYTE * 2)
@@ -175,6 +176,24 @@ pifs_status_t pifs_create_file(const char * a_filename,
     return ret;
 }
 
+pifs_status_t pifs_test_remove(const char * a_filename)
+{
+    pifs_status_t ret;
+
+    printf("Removing file %s... ", a_filename);
+    ret = pifs_remove(a_filename);
+    if (ret == PIFS_SUCCESS)
+    {
+        printf("Done.\r\n");
+    }
+    else
+    {
+        PIFS_TEST_ERROR_MSG("Cannot remove file!\r\n");
+    }
+
+    return ret;
+}
+
 pifs_status_t pifs_check_file(const char * a_filename,
                                const uint32_t a_sequence_start,
                                const size_t a_read_count)
@@ -267,6 +286,23 @@ pifs_status_t pifs_test_small_r(void)
         snprintf(filename, sizeof(filename), "small%lu.tst", i);
         ret = pifs_check_file(filename, i, 1);
     }
+
+    return ret;
+}
+
+pifs_status_t pifs_test_small_remove(void)
+{
+    pifs_status_t ret = PIFS_SUCCESS;
+#if PIFS_REMOVE_TEST_FILES
+    char     filename[32];
+    size_t   i;
+
+    for (i = 0; i < PIFS_ENTRY_NUM_MAX / 2 && ret == PIFS_SUCCESS; i++)
+    {
+        snprintf(filename, sizeof(filename), "small%lu.tst", i);
+        ret = pifs_test_remove(filename);
+    }
+#endif
 
     return ret;
 }
@@ -457,6 +493,15 @@ pifs_status_t pifs_test_basic_w(const char * a_filename)
     }
 
     return ret;
+}
+
+pifs_status_t pifs_test_basic_remove(void)
+{
+#if ENABLE_RENAME_TEST
+    return pifs_test_remove("basic2.tst");
+#else
+    return pifs_test_remove("basic.tst");
+#endif
 }
 
 pifs_status_t pifs_test_basic_r(const char * a_filename)
@@ -726,6 +771,20 @@ pifs_status_t pifs_test_wfragment_w(size_t a_fragment_size)
     return ret;
 }
 
+pifs_status_t pifs_test_wfragment_remove(void)
+{
+    pifs_status_t ret = PIFS_SUCCESS;
+
+    ret = pifs_test_remove("fragwr.tst");
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_test_remove("fragwr2.tst");
+    }
+
+    return ret;
+}
+
 pifs_status_t pifs_test_wfragment_r(void)
 {
     pifs_status_t ret = PIFS_SUCCESS;
@@ -816,6 +875,11 @@ pifs_status_t pifs_test_rfragment_w(void)
     return ret;
 }
 
+pifs_status_t pifs_test_rfragment_remove(void)
+{
+    return pifs_test_remove("fragrd.tst");
+}
+
 pifs_status_t pifs_test_rfragment_r(size_t a_fragment_size)
 {
     pifs_status_t ret = PIFS_SUCCESS;
@@ -876,6 +940,11 @@ pifs_status_t pifs_test_rseek_w(void)
     ret = pifs_create_file(filename, 7, 2);
 
     return ret;
+}
+
+pifs_status_t pifs_test_rseek_remove(void)
+{
+    return pifs_test_remove("seekrd.tst");
 }
 
 pifs_status_t pifs_test_rseek_r(void)
@@ -1000,6 +1069,15 @@ pifs_status_t pifs_test_wseek_w(void)
     }
 #endif
 
+    return ret;
+}
+
+pifs_status_t pifs_test_wseek_remove(void)
+{
+    pifs_status_t ret = PIFS_SUCCESS;
+#if PIFS_ENABLE_FSEEK_BEYOND_FILE
+    ret = pifs_test_remove("seekwr.tst");
+#endif
     return ret;
 }
 
@@ -1191,6 +1269,11 @@ pifs_status_t pifs_test_delta_w(const char * a_filename)
     }
 
     return ret;
+}
+
+pifs_status_t pifs_test_delta_remove(void)
+{
+    return pifs_test_remove("delta.tst");
 }
 
 pifs_status_t pifs_test_delta_r(const char * a_filename)
@@ -1672,12 +1755,20 @@ pifs_status_t pifs_test(void)
     {
         ret = pifs_test_basic_r(NULL);
     }
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_test_basic_remove();
+    }
 #endif
 
 #if ENABLE_WRITE_FRAGMENT_TEST
     if (ret == PIFS_SUCCESS)
     {
         ret = pifs_test_wfragment_r();
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_test_wfragment_remove();
     }
 #endif
 
@@ -1686,12 +1777,20 @@ pifs_status_t pifs_test(void)
     {
         ret = pifs_test_rfragment_r(fragment_size);
     }
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_test_rfragment_remove();
+    }
 #endif
 
 #if ENABLE_SEEK_READ_TEST
     if (ret == PIFS_SUCCESS)
     {
         ret = pifs_test_rseek_r();
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_test_rseek_remove();
     }
 #endif
 
@@ -1700,12 +1799,20 @@ pifs_status_t pifs_test(void)
     {
         ret = pifs_test_wseek_r();
     }
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_test_wseek_remove();
+    }
 #endif
 
 #if ENABLE_DELTA_TEST
     if (ret == PIFS_SUCCESS)
     {
         ret = pifs_test_delta_r(NULL);
+    }
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_test_delta_remove();
     }
 #endif
 
@@ -1722,6 +1829,20 @@ pifs_status_t pifs_test(void)
         ret = pifs_test_list_dir();
     }
 #endif
+
+#if ENABLE_SMALL_FILES_TEST
+    /* Check small files again */
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_test_small_r();
+    }
+
+    if (ret == PIFS_SUCCESS)
+    {
+        ret = pifs_test_small_remove();
+    }
+#endif
+
 
     if (ret == PIFS_SUCCESS)
     {
