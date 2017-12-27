@@ -228,6 +228,8 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
     bool_t               end = FALSE;
     pifs_address_t       delta_address;
     pifs_address_t       test_address;
+    pifs_checksum_t      checksum;
+    bool_t               is_erased;
 
     (void) a_new_header;
 
@@ -266,93 +268,101 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
                                 &old_map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
                 if (ret == PIFS_SUCCESS)
                 {
-                    if (!pifs_is_buffer_erased(&old_map_entry, PIFS_MAP_ENTRY_SIZE_BYTE))
+                    is_erased = pifs_is_buffer_erased(&old_map_entry, PIFS_MAP_ENTRY_SIZE_BYTE);
+                    if (!is_erased)
                     {
-                        PIFS_DEBUG_MSG("old map entry %s, page_count: %i\r\n",
-                                       pifs_ba_pa2str(old_map_entry.address.block_address,
-                                                      old_map_entry.address.page_address),
-                                       old_map_entry.page_count);
-                        /* Map entry is valid */
-                        /* Check if original page was overwritten and */
-                        /* delta page was used */
-                        /* If map entries are sequential pages then page_count */
-                        /* is increased. */
-                        for (j = 0; j < old_map_entry.page_count && ret == PIFS_SUCCESS; j++)
+                        checksum = pifs_calc_checksum(&old_map_entry,
+                                                      PIFS_MAP_ENTRY_SIZE_BYTE - PIFS_CHECKSUM_SIZE_BYTE);
+                        if (checksum == old_map_entry.checksum)
                         {
-                            ret = pifs_find_delta_page(old_map_entry.address.block_address,
-                                                       old_map_entry.address.page_address,
-                                                       &delta_address.block_address,
-                                                       &delta_address.page_address, NULL,
-                                                       a_old_header);
-                            if (ret == PIFS_SUCCESS)
+                            PIFS_DEBUG_MSG("old map entry %s, page_count: %i\r\n",
+                                           pifs_ba_pa2str(old_map_entry.address.block_address,
+                                                          old_map_entry.address.page_address),
+                                           old_map_entry.page_count);
+
+                            /* TODO check checksum! */
+                            /* Map entry is valid */
+                            /* Check if original page was overwritten and */
+                            /* delta page was used */
+                            /* If map entries are sequential pages then page_count */
+                            /* is increased. */
+                            for (j = 0; j < old_map_entry.page_count && ret == PIFS_SUCCESS; j++)
                             {
+                                ret = pifs_find_delta_page(old_map_entry.address.block_address,
+                                                           old_map_entry.address.page_address,
+                                                           &delta_address.block_address,
+                                                           &delta_address.page_address, NULL,
+                                                           a_old_header);
+                                if (ret == PIFS_SUCCESS)
+                                {
 #if 1
-                                if (old_map_entry.address.block_address != delta_address.block_address
-                                        || old_map_entry.address.page_address != delta_address.page_address)
-                                {
-                                    PIFS_WARNING_MSG("delta %s -> %s\r\n",
-                                                     pifs_address2str(&old_map_entry.address),
-                                                     pifs_ba_pa2str(delta_address.block_address,
-                                                                    delta_address.page_address));
-                                }
-#endif
-                                if (!new_map_entry.page_count)
-                                {
-                                    new_map_entry.address = delta_address;
-                                    new_map_entry.page_count = 1;
-                                    test_address = delta_address;
-                                }
-                                else
-                                {
-                                    ret2 = pifs_inc_address(&test_address);
-                                    /* Check if map page shall be written: */
-                                    /* #1 End of flash reached */
-                                    /* #2 Delta page was used */
-                                    /* #3 Too much pages in page entry */
-                                    if (ret2 != PIFS_SUCCESS /* End of flash reached! */
-                                            || test_address.block_address != delta_address.block_address
-                                            || test_address.page_address != delta_address.page_address
-                                            || new_map_entry.page_count == PIFS_MAP_PAGE_COUNT_INVALID - 1)
+                                    if (old_map_entry.address.block_address != delta_address.block_address
+                                            || old_map_entry.address.page_address != delta_address.page_address)
                                     {
-                                        PIFS_DEBUG_MSG("===> new map entry %s, page_count: %i\r\n",
-                                                       pifs_ba_pa2str(new_map_entry.address.block_address,
-                                                                      new_map_entry.address.page_address),
-                                                       new_map_entry.page_count);
-                                        ret = pifs_append_map_entry(&pifs.internal_file,
-                                                                    new_map_entry.address.block_address,
-                                                                    new_map_entry.address.page_address,
-                                                                    new_map_entry.page_count);
-#if PIFS_COPY_FSBM == 0
-                                        if (ret == PIFS_SUCCESS)
-                                        {
-                                            ret = pifs_mark_page(new_map_entry.address.block_address,
-                                                                 new_map_entry.address.page_address,
-                                                                 new_map_entry.page_count, TRUE);
-                                        }
+                                        PIFS_WARNING_MSG("delta %s -> %s\r\n",
+                                                         pifs_address2str(&old_map_entry.address),
+                                                         pifs_ba_pa2str(delta_address.block_address,
+                                                                        delta_address.page_address));
+                                    }
 #endif
+                                    if (!new_map_entry.page_count)
+                                    {
                                         new_map_entry.address = delta_address;
                                         new_map_entry.page_count = 1;
                                         test_address = delta_address;
                                     }
                                     else
                                     {
-                                        new_map_entry.page_count++;
+                                        ret2 = pifs_inc_address(&test_address);
+                                        /* Check if map page shall be written: */
+                                        /* #1 End of flash reached */
+                                        /* #2 Delta page was used */
+                                        /* #3 Too much pages in page entry */
+                                        if (ret2 != PIFS_SUCCESS /* End of flash reached! */
+                                                || test_address.block_address != delta_address.block_address
+                                                || test_address.page_address != delta_address.page_address
+                                                || new_map_entry.page_count == PIFS_MAP_PAGE_COUNT_INVALID - 1)
+                                        {
+                                            PIFS_DEBUG_MSG("===> new map entry %s, page_count: %i\r\n",
+                                                           pifs_ba_pa2str(new_map_entry.address.block_address,
+                                                                          new_map_entry.address.page_address),
+                                                           new_map_entry.page_count);
+                                            ret = pifs_append_map_entry(&pifs.internal_file,
+                                                                        new_map_entry.address.block_address,
+                                                                        new_map_entry.address.page_address,
+                                                                        new_map_entry.page_count);
+#if PIFS_COPY_FSBM == 0
+                                            if (ret == PIFS_SUCCESS)
+                                            {
+                                                ret = pifs_mark_page(new_map_entry.address.block_address,
+                                                                     new_map_entry.address.page_address,
+                                                                     new_map_entry.page_count, TRUE);
+                                            }
+#endif
+                                            new_map_entry.address = delta_address;
+                                            new_map_entry.page_count = 1;
+                                            test_address = delta_address;
+                                        }
+                                        else
+                                        {
+                                            new_map_entry.page_count++;
+                                        }
                                     }
                                 }
-                            }
-                            if (ret == PIFS_SUCCESS && j < old_map_entry.page_count)
-                            {
-                                /* Deliberately avoiding return code: */
-                                /* it is not an error if we reach the end of */
-                                /* flash memory */
-                                (void)pifs_inc_address(&old_map_entry.address);
+                                if (ret == PIFS_SUCCESS && j < old_map_entry.page_count)
+                                {
+                                    /* Deliberately avoiding return code: */
+                                    /* it is not an error if we reach the end of */
+                                    /* flash memory */
+                                    (void)pifs_inc_address(&old_map_entry.address);
+                                }
                             }
                         }
-                    }
-                    else
-                    {
-                        /* Map entry is unused */
-                        end = TRUE;
+                        else
+                        {
+                            /* Map entry is unused */
+                            end = TRUE;
+                        }
                     }
                 }
             }
@@ -722,6 +732,8 @@ pifs_status_t pifs_merge(void)
                 ret = pifs_internal_open(file, file->entry.name, NULL, FALSE);
                 if (ret == PIFS_SUCCESS && file_pos[i])
                 {
+                    file->is_used = TRUE;
+                    PIFS_ASSERT(file->is_opened);
                     PIFS_WARNING_MSG("Seeking to %i\r\n", file_pos[i]);
                     /* Seek to the stored position */
                     ret = pifs_internal_fseek(file, file_pos[i], PIFS_SEEK_SET);

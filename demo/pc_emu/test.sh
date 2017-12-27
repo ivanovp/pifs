@@ -4,7 +4,8 @@ rm flash.bin
 rm flash.stt
 rm $LOG
 make clean
-make DEBUG=1
+#make DEBUG=1
+make
 # Create a file
 ./pifs tb staticwear.tst >>$LOG
 for i in `seq --format="%02.0f" 100`; do
