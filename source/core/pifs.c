@@ -748,7 +748,7 @@ pifs_status_t pifs_init(void)
                                 && header.map_page_count_size == PIFS_MAP_PAGE_COUNT_SIZE
                                 && header.use_delta_for_entries == PIFS_USE_DELTA_FOR_ENTRIES
                                 && header.enable_directories == PIFS_ENABLE_DIRECTORIES
-                                && header.enable_directories == PIFS_ENABLE_CRC)
+                                && header.enable_crc == PIFS_ENABLE_CRC)
 #endif
                         {
                             pifs.is_header_found = TRUE;
