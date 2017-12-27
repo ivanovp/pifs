@@ -542,16 +542,17 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
  *    erase to be released blocks. New free space bitmap will be updated.
  * #5 Write new management blocks. Address of next management blocks and
  *    checksum shall not be written.
- * #6 Copy file entries from old to new management blocks. Maps are also copied,
+ * #6 Generate list of most and least weared blocks.
+ * #7 Copy file entries from old to new management blocks. Maps are also copied,
  *    so map blocks are allocated from new management area (FSBM is needed).
- * #7 Erase delta page mirror in RAM.
- * #8 Find free blocks for next management block in the new file system header.
- * #9 Add next management block's address to the new file system header and
+ * #8 Erase delta page mirror in RAM.
+ * #9 Find free blocks for next management block in the new file system header.
+ * #10 Add next management block's address to the new file system header and
  *    calculate checksum.
- * #10 Update page of new file system header. Checksum is written, so the new
+ * #11 Update page of new file system header. Checksum is written, so the new
  *    file system header is valid from this point.
- * #11 Erase old management blocks.
- * #12 Re-open files and seek to the stored position.
+ * #12 Erase old management blocks.
+ * #13 Re-open files and seek to the stored position.
  *     Therefore actual_map_address, map_header, etc. will be updated.
  *
  * @return PIFS_SUCCESS when merge was successful.
@@ -637,6 +638,7 @@ pifs_status_t pifs_merge(void)
     {
         ret = pifs_generate_most_weared_blocks(&pifs.header);
     }
+    /* #7 */
     if (ret == PIFS_SUCCESS)
     {
         memcpy(new_header.least_weared_blocks,
