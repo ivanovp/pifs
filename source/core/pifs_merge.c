@@ -74,7 +74,7 @@ static pifs_status_t pifs_copy_fsbm(pifs_header_t * a_old_header, pifs_header_t 
                 ret = pifs_erase(fba, a_old_header, a_new_header);
                 if (ret == PIFS_SUCCESS)
                 {
-                    PIFS_WARNING_MSG("Block %i erased\r\n", fba);
+                    PIFS_NOTICE_MSG("Block %i erased\r\n", fba);
                 }
                 else
                 {
@@ -295,16 +295,14 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
                                                            a_old_header);
                                 if (ret == PIFS_SUCCESS)
                                 {
-#if 1
                                     if (old_map_entry.address.block_address != delta_address.block_address
                                             || old_map_entry.address.page_address != delta_address.page_address)
                                     {
-                                        PIFS_WARNING_MSG("delta %s -> %s\r\n",
+                                        PIFS_INFO_MSG("delta %s -> %s\r\n",
                                                          pifs_address2str(&old_map_entry.address),
                                                          pifs_ba_pa2str(delta_address.block_address,
                                                                         delta_address.page_address));
                                     }
-#endif
                                     if (!new_map_entry.page_count)
                                     {
                                         new_map_entry.address = delta_address;
@@ -570,7 +568,7 @@ pifs_status_t pifs_merge(void)
     bool_t               file_is_opened[PIFS_OPEN_FILE_NUM_MAX] = { 0 };
     pifs_size_t          file_pos[PIFS_OPEN_FILE_NUM_MAX] = { 0 };
 
-    PIFS_WARNING_MSG("start\r\n");
+    PIFS_INFO_MSG("start\r\n");
     PIFS_ASSERT(!pifs.is_merging);
     pifs.is_merging = TRUE;
     /* #0 */
@@ -581,7 +579,7 @@ pifs_status_t pifs_merge(void)
         if (file_is_opened[i])
         {
             /* Store position in file */
-            PIFS_WARNING_MSG("rw_pos: %i\r\n", file->rw_pos);
+            PIFS_NOTICE_MSG("rw_pos: %i\r\n", file->rw_pos);
             file_pos[i] = file->rw_pos;
             /* This will never cause data loss. There shall be enough free
              * entries in the entry list. */
@@ -660,13 +658,13 @@ pifs_status_t pifs_merge(void)
                                    &old_header.root_entry_list_address,
                                    &new_header.root_entry_list_address);
     }
-    /* #7 */
+    /* #8 */
     if (ret == PIFS_SUCCESS)
     {
         /* Reset delta map after processing delta pages */
         pifs_reset_delta();
     }
-    /* #8 */
+    /* #9 */
     if (ret == PIFS_SUCCESS)
     {
         /* Find next management blocks address */
@@ -685,7 +683,7 @@ pifs_status_t pifs_merge(void)
             ret = PIFS_SUCCESS;
         }
     }
-    /* #9 */
+    /* #10 */
     if (ret == PIFS_SUCCESS)
     {
         PIFS_NOTICE_MSG("Next management block: %i, ret: %i\r\n", next_mgmt_ba, ret);
@@ -708,7 +706,7 @@ pifs_status_t pifs_merge(void)
         /* Erase old management area */
         for (i = 0; i < PIFS_MANAGEMENT_BLOCK_NUM && ret == PIFS_SUCCESS; i++)
         {
-            PIFS_WARNING_MSG("Erasing old management block %i\r\n", old_header.management_block_address + i);
+            PIFS_NOTICE_MSG("Erasing old management block %i\r\n", old_header.management_block_address + i);
             ret = pifs_erase(old_header.management_block_address + i, &old_header, &new_header);
         }
     }
@@ -736,7 +734,7 @@ pifs_status_t pifs_merge(void)
                 {
                     file->is_used = TRUE;
                     PIFS_ASSERT(file->is_opened);
-                    PIFS_WARNING_MSG("Seeking to %i\r\n", file_pos[i]);
+                    PIFS_NOTICE_MSG("Seeking to %i\r\n", file_pos[i]);
                     /* Seek to the stored position */
                     ret = pifs_internal_fseek(file, file_pos[i], PIFS_SEEK_SET);
                     if (ret != 0)
@@ -749,7 +747,7 @@ pifs_status_t pifs_merge(void)
     }
     pifs.is_merging = FALSE;
     PIFS_ASSERT(ret == PIFS_SUCCESS);
-    PIFS_WARNING_MSG("stop\r\n");
+    PIFS_INFO_MSG("stop\r\n");
 
     return ret;
 }
