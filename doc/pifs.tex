@@ -79,7 +79,7 @@ hope that it will be useful for someone else as well.
 
 NOR flash ICs have very low price nowadays (2017) and can be used
 to store files. But there are few problems to consider when designing a file
-system as they are not working like magnetic devices (hard drives or floppy
+system as they are not working like magnetic devices (hard disk drives or floppy
 disks):
 \begin{itemize}
 \item NOR flashes can be programmed (set bits to zero) by pages, but only 
@@ -95,8 +95,8 @@ is called wear leveling.
 \pifs{} can be scaled from 4 Mbit (512 KiB), 256 Mbit (32 MiB), 
 theoretically up to 1 Gbit (128 MiB) memory sizes.
 
-The code is not MISRA compatible, but I've written MISRA code earlier and I 
-tend to use the rules.
+The code is not fully MISRA compatible, but I've written MISRA code earlier 
+and I tend to use the rules.
 So I tried to use '\code{return}' only at the end of functions, use 
 '\code{break}' once in '\code{while}' cycles or not use it at all and call one
 function from expressions (or not call functions at all from expressions). 
@@ -201,12 +201,14 @@ disabled, only root entry list exist.
 \item[Entry] One file or directory in the directory.
 
 \item[TBR] To be released. A page which was used, but now it can erased then 
-allocated. If all pages in a block marked TBR, the block can be erased.
+allocated. If all pages in a block marked TBR, the block can be erased during
+next merge.
 
-\item[Merge] During merge management area is written, blocks are erased, delta
-pages are resolved and entry list is compacted. The data is copied from 
-primary to secondary management area and the next secondary management area 
-is selected.
+\item[Merge] During merge management area is written, blocks can be erased, 
+delta pages are resolved and entry list is compacted. The data is copied from
+primary to secondary management area (secondary management are became primary
+management area), old primary management area is erased and the next secondary
+management area is selected.
 \end{labeling}
 
 \begin{figure}[!ht]
@@ -528,8 +530,8 @@ To be released entries:             4
 
 \section{Using the file system}
 The API of file system is very similar to standard C API defined in 
-\fname{stdio.h}. The difference is that instead of \code{fopen()}
-\code{pifs\_fopen()} should be called and before opening a file 
+\fname{stdio.h}. The difference is that \code{pifs\_fopen()} should 
+be called instead of \code{fopen()} and before opening a file 
 calling of \code{pifs\_init()} is necessary. Furthermore only
 binary mode is supported, opening file in mode "r" is always "rb".
 
@@ -568,7 +570,7 @@ int main(void)
 
 \section{Porting flash driver}
 Defined types used by the flash driver:
-\begin{labeling}{pifs\_block\_address\_t} 
+\begin{labeling}{pifs\_block\_address\_t} % <--- here goes the longest definition to measure the necessary space
 \item[pifs\_block\_address\_t] Unsigned integer type to address
 a block in the flash memory. 
 %Its type is \code{uint8\_t} when \code{PIFS\_FLASH\_BLOCK\_NUM\_ALL} is less than 255.
@@ -601,7 +603,7 @@ pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address,
 \end{verbatim}
 Read from flash memory. See \autoref{fig:flashaddr} how addressing works.
 Arguments:
-\begin{labeling}{a\_block\_address}
+\begin{labeling}{a\_block\_address} % <--- here goes the longest definition to measure the necessary space
 \item[a\_block\_address]    Address of block. Input.
 \item[a\_page\_address]     Address of the page in block. Input.
 \item[a\_page\_offset]      Offset in page. Input.
@@ -618,7 +620,7 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address,
 \end{verbatim}
 Write to flash memory. See \autoref{fig:flashaddr} how addressing works. 
 Arguments:
-\begin{labeling}{a\_block\_address}
+\begin{labeling}{a\_block\_address} % <--- here goes the longest definition to measure the necessary space
 \item[a\_block\_address] Address of block. Input.
 \item[a\_page\_address]  Address of the page in block. Input.
 \item[a\_page\_offset]   Offset in page. Input.
@@ -633,7 +635,7 @@ pifs_status_t pifs_flash_erase(pifs_block_address_t a_block_address);
 \end{verbatim}
 Erase a block. See \autoref{fig:flashaddr} how addressing works. 
 Arguments:
-\begin{labeling}{a\_block\_address}
+\begin{labeling}{a\_block\_address} % <--- here goes the longest definition to measure the necessary space
 \item[a\_block\_address] Address of block. Input.
 \end{labeling}
 It shall return \code{PIFS\_SUCCESS} if block was erased successfully.
