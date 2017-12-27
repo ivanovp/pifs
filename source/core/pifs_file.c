@@ -995,7 +995,6 @@ int pifs_internal_fseek(P_FILE * a_file, long int a_offset, int a_origin)
                 }
             }
             file->rw_pos += seek_size;
-            file->rw_address = file->rw_address;
             /* Check if we are at end of file and data needs to be written to reach */
             /* target position */
             if (target_pos > file->rw_pos)
