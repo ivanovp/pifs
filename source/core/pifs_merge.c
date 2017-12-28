@@ -334,7 +334,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
                                             {
                                                 ret = pifs_mark_page(new_map_entry.address.block_address,
                                                                      new_map_entry.address.page_address,
-                                                                     new_map_entry.page_count, TRUE);
+                                                                     new_map_entry.page_count, TRUE, FALSE);
                                             }
 #endif
                                             new_map_entry.address = delta_address;
@@ -391,7 +391,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
             {
                 ret = pifs_mark_page(new_map_entry.address.block_address,
                                      new_map_entry.address.page_address,
-                                     new_map_entry.page_count, TRUE);
+                                     new_map_entry.page_count, TRUE, FALSE);
             }
 #endif
             new_map_entry.page_count = 0;

@@ -799,7 +799,7 @@ pifs_status_t pifs_internal_mkdir(const pifs_char_t * const a_filename, bool_t a
             if (ret == PIFS_SUCCESS)
             {
                 PIFS_DEBUG_MSG("Entry created\r\n");
-                ret = pifs_mark_page(ba, pa, PIFS_ENTRY_LIST_SIZE_PAGE, TRUE);
+                ret = pifs_mark_page(ba, pa, PIFS_ENTRY_LIST_SIZE_PAGE, TRUE, FALSE);
                 if (ret == PIFS_SUCCESS)
                 {
                     /* Add current directory's entry "." */

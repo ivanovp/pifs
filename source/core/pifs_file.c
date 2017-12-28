@@ -220,7 +220,7 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
 #endif
                 a_file->entry.first_map_address.block_address = ba;
                 a_file->entry.first_map_address.page_address = pa;
-                a_file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, TRUE);
+                a_file->status = pifs_mark_page(ba, pa, PIFS_MAP_PAGE_NUM, TRUE, FALSE);
                 if (a_file->status == PIFS_SUCCESS)
                 {
                     a_file->is_opened = TRUE;

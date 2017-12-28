@@ -335,14 +335,14 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
                 if (ret == PIFS_SUCCESS)
                 {
                     /* Mark new page as used */
-                    ret = pifs_mark_page(fba, fpa, 1, TRUE);
+                    ret = pifs_mark_page(fba, fpa, 1, TRUE, FALSE);
                     PIFS_DEBUG_MSG("Mark page %s as used: %i\r\n", pifs_ba_pa2str(fba, fpa), ret);
                 }
                 if (ret == PIFS_SUCCESS)
                 {
                     /* Mark old page (original or previous delta)
                      * as to be released */
-                    ret = pifs_mark_page(ba, pa, 1, FALSE);
+                    ret = pifs_mark_page(ba, pa, 1, FALSE, TRUE);
                     PIFS_DEBUG_MSG("Mark page %s as to be released: %i\r\n", pifs_ba_pa2str(a_block_address, a_page_address), ret);
                 }
             }
@@ -358,7 +358,7 @@ pifs_status_t pifs_write_delta(pifs_block_address_t a_block_address,
             if (ret == PIFS_SUCCESS && pifs_is_page_free(ba, pa))
             {
                 /* Mark new page as used */
-                ret = pifs_mark_page(ba, pa, 1, TRUE);
+                ret = pifs_mark_page(ba, pa, 1, TRUE, FALSE);
             }
         }
     }

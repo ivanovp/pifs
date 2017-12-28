@@ -210,12 +210,15 @@ bool_t pifs_is_page_to_be_released(pifs_block_address_t a_block_address,
  * @param[in] a_block_address   Block address of page(s).
  * @param[in] a_page_address    Page address of page(s).
  * @param[in] a_page_count      Number of pages.
- * @param[in] a_mark_used       TRUE: Mark page used, FALSE: mark page to be released.
+ * @param[in] a_mark_used       TRUE: Mark page used
+ * @param[in] a_mark_to_be_released TRUE: Mark page to be released
  * @return PIFS_SUCCESS: if page was successfully marked.
  */
 pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                              pifs_page_address_t a_page_address,
-                             pifs_page_count_t a_page_count, bool_t a_mark_used)
+                             pifs_page_count_t a_page_count,
+                             bool_t a_mark_used,
+                             bool_t a_mark_to_be_released)
 {
     pifs_status_t        ret = PIFS_SUCCESS;
     pifs_bit_pos_t       bit_pos;
@@ -245,7 +248,6 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
             //print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf), 0);
             //PIFS_DEBUG_MSG("-Free space byte:    0x%02X\r\n", pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS]);
             is_free_space = pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << (bit_pos % PIFS_BYTE_BITS));
-            is_not_to_be_released = pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << ((bit_pos % PIFS_BYTE_BITS) + 1));
             //PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", is_free_space);
             //PIFS_DEBUG_MSG("-Release space bit:  %i\r\n", is_not_to_be_released);
             //PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", (pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] >> (bit_pos % PIFS_BYTE_BITS)) & 1);
@@ -258,6 +260,7 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                     //PIFS_NOTICE_MSG("MARK %s\r\n", pifs_ba_pa2str(a_block_address, a_page_address));
                     /* Clear free bit */
                     pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] &= ~(1u << (bit_pos % PIFS_BYTE_BITS));
+                    is_free_space = FALSE;
                 }
                 else
                 {
@@ -267,7 +270,8 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                     ret = PIFS_ERROR_INTERNAL_ALLOCATION;
                 }
             }
-            else
+            is_not_to_be_released = pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << ((bit_pos % PIFS_BYTE_BITS) + 1));
+            if (a_mark_to_be_released)
             {
                 /* Mark page to be released */
                 if (!is_free_space)
@@ -569,9 +573,8 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
 #endif
                             /* TODO this two operation shall be in one function call */
                             /* Mark page as used */
-                            (void)pifs_mark_page(fba, fpa, 1, TRUE);
                             /* Mark page as to be released as this page should erased */
-                            (void)pifs_mark_page(fba, fpa, 1, FALSE);
+                            (void)pifs_mark_page(fba, fpa, 1, TRUE, TRUE);
                         }
 #endif
                     }

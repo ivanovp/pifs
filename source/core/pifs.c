@@ -403,7 +403,7 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
             /* Mark file system header as used */
             ret = pifs_mark_page(a_block_address,
                                  a_page_address,
-                                 PIFS_HEADER_SIZE_PAGE, TRUE);
+                                 PIFS_HEADER_SIZE_PAGE, TRUE, FALSE);
         }
         if (ret == PIFS_SUCCESS)
         {
@@ -413,28 +413,28 @@ pifs_status_t pifs_header_write(pifs_block_address_t a_block_address,
             /* Mark entry list as used */
             ret = pifs_mark_page(a_header->root_entry_list_address.block_address,
                                  a_header->root_entry_list_address.page_address,
-                                 PIFS_ENTRY_LIST_SIZE_PAGE, TRUE);
+                                 PIFS_ENTRY_LIST_SIZE_PAGE, TRUE, FALSE);
         }
         if (ret == PIFS_SUCCESS)
         {
             /* Mark free space bitmap as used */
             ret = pifs_mark_page(a_header->free_space_bitmap_address.block_address,
                                  a_header->free_space_bitmap_address.page_address,
-                                 PIFS_FREE_SPACE_BITMAP_SIZE_PAGE, TRUE);
+                                 PIFS_FREE_SPACE_BITMAP_SIZE_PAGE, TRUE, FALSE);
         }
         if (ret == PIFS_SUCCESS)
         {
             /* Mark delta page map as used */
             ret = pifs_mark_page(a_header->delta_map_address.block_address,
                                  a_header->delta_map_address.page_address,
-                                 PIFS_DELTA_MAP_PAGE_NUM, TRUE);
+                                 PIFS_DELTA_MAP_PAGE_NUM, TRUE, FALSE);
         }
         if (ret == PIFS_SUCCESS)
         {
             /* Mark wear level list as used */
             ret = pifs_mark_page(a_header->wear_level_list_address.block_address,
                                  a_header->wear_level_list_address.page_address,
-                                 PIFS_WEAR_LEVEL_LIST_SIZE_PAGE, TRUE);
+                                 PIFS_WEAR_LEVEL_LIST_SIZE_PAGE, TRUE, FALSE);
         }
     }
     PIFS_INFO_MSG("Counter: %i\r\n",
@@ -1132,7 +1132,7 @@ pifs_status_t pifs_check_free_page_buf(uint8_t * a_free_page_buf)
         {
             PIFS_DEBUG_MSG("Found lost page %s\r\n",
                            pifs_address2str(&address));
-            ret = pifs_mark_page(address.block_address, address.page_address, 1, FALSE);
+            ret = pifs_mark_page(address.block_address, address.page_address, 1, FALSE, TRUE);
             if (ret == PIFS_SUCCESS)
             {
                 PIFS_NOTICE_MSG("Lost page %s marked to be released\r\n",
