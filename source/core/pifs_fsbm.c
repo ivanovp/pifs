@@ -34,6 +34,7 @@
 #include "pifs_fsbm.h"
 #include "pifs_helper.h"
 #include "pifs_wear.h"
+#include "buffer.h"
 
 /**
  * @brief pifs_calc_free_space_pos Calculate position of a page in free space
@@ -410,10 +411,6 @@ pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_minimum,
         {
             pifs.free_data_page_num -= *a_page_count_found;
         }
-    }
-    else
-    {
-        PIFS_ERROR_MSG("Internal error. Invalid parameters!\r\n");
     }
 
     return ret;
@@ -898,6 +895,7 @@ pifs_status_t pifs_get_free_space(size_t * a_free_management_bytes,
     *a_free_management_page_count = 0;
     *a_free_data_page_count = 0;
     ret = pifs_get_free_pages(a_free_management_page_count, a_free_data_page_count);
+    pifs.free_data_page_num = *a_free_data_page_count;
 
 #if PIFS_CALC_TBR_IN_FREE_SPACE
     if (ret == PIFS_SUCCESS || ret == PIFS_ERROR_NO_MORE_SPACE)

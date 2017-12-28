@@ -776,6 +776,7 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
                    a_file ? a_file->entry.name : "NULL", a_data_page_count_minimum);
     /* Get number of free management and data pages */
     ret = pifs_get_free_pages(&free_management_pages, &free_data_pages);
+    pifs.free_data_page_num = free_data_pages;
     PIFS_NOTICE_MSG("free_data_pages: %lu, free_management_pages: %lu\r\n",
                     free_data_pages, free_management_pages);
     if (ret == PIFS_SUCCESS)
@@ -786,8 +787,9 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
 //        PIFS_NOTICE_MSG("free_entries: %lu, to_be_released_entries: %lu\r\n",
 //                        free_entries, to_be_released_entries);
     }
-    if (ret == PIFS_SUCCESS && (free_data_pages < a_data_page_count_minimum
-                                || free_management_pages == 0 || free_entries <= PIFS_OPEN_FILE_NUM_MAX))
+    if (ret == PIFS_SUCCESS &&
+            (free_data_pages < (a_data_page_count_minimum + PIFS_STATIC_WEAR_RSV_BLOCK_NUM * PIFS_FLASH_PAGE_PER_BLOCK)
+             || free_management_pages == 0 || free_entries <= PIFS_OPEN_FILE_NUM_MAX))
     {
         /* PIFS_OPEN_FILE_NUM_MAX is checked because there should be enough space */
         /* to close all opened files during merge! */
@@ -804,7 +806,7 @@ pifs_status_t pifs_merge_check(pifs_file_t * a_file, pifs_size_t a_data_page_cou
                             to_be_released_data_pages, to_be_released_management_pages);
             if (ret == PIFS_SUCCESS)
             {
-                if (free_data_pages < a_data_page_count_minimum
+                if (free_data_pages < (a_data_page_count_minimum + PIFS_STATIC_WEAR_RSV_BLOCK_NUM * PIFS_FLASH_PAGE_PER_BLOCK)
                         && to_be_released_data_pages >= a_data_page_count_minimum)
                 {
                     /* Check if at least one data block can be erased! */
