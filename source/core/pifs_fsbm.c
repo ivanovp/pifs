@@ -231,9 +231,10 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
 
     while (a_page_count > 0 && ret == PIFS_SUCCESS)
     {
-        PIFS_DEBUG_MSG("Mark page %s as %s\r\n",
+        PIFS_DEBUG_MSG("Mark page %s as%s%s\r\n",
                         pifs_ba_pa2str(a_block_address, a_page_address),
-                        a_mark_used ? "used" : "to be released");
+                        a_mark_used ? " used" : "",
+                        a_mark_to_be_released ? " to be released" : "");
         ret = pifs_calc_free_space_pos(&pifs.header.free_space_bitmap_address,
                                        a_block_address, a_page_address, &ba, &pa, &bit_pos);
         //        PIFS_DEBUG_MSG("BA%i/PA%i/BITPOS%i\r\n", ba, pa, bit_pos);
@@ -248,6 +249,7 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
             //print_buffer(pifs.cache_page_buf, sizeof(pifs.cache_page_buf), 0);
             //PIFS_DEBUG_MSG("-Free space byte:    0x%02X\r\n", pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS]);
             is_free_space = pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << (bit_pos % PIFS_BYTE_BITS));
+            is_not_to_be_released = pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << ((bit_pos % PIFS_BYTE_BITS) + 1));
             //PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", is_free_space);
             //PIFS_DEBUG_MSG("-Release space bit:  %i\r\n", is_not_to_be_released);
             //PIFS_DEBUG_MSG("-Free space bit:     %i\r\n", (pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] >> (bit_pos % PIFS_BYTE_BITS)) & 1);
@@ -270,7 +272,6 @@ pifs_status_t pifs_mark_page(pifs_block_address_t a_block_address,
                     ret = PIFS_ERROR_INTERNAL_ALLOCATION;
                 }
             }
-            is_not_to_be_released = pifs.cache_page_buf[bit_pos / PIFS_BYTE_BITS] & (1u << ((bit_pos % PIFS_BYTE_BITS) + 1));
             if (a_mark_to_be_released)
             {
                 /* Mark page to be released */
@@ -378,8 +379,8 @@ pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_minimum,
             }
             else
             {
-                /* Static wear leveling is copying static file from a lesser weared
-             * block to most weared block */
+                /* Static wear leveling is copying static file from a lesser weared */
+                /* block to most weared block */
                 for (i = 0; i < PIFS_MOST_WEARED_BLOCK_NUM && ret == PIFS_ERROR_NO_MORE_SPACE; i++)
                 {
                     /* Try to find free pages in the most weared block */
@@ -413,6 +414,7 @@ pifs_status_t pifs_find_free_page_wl(pifs_page_count_t a_page_count_minimum,
 
         if (ret == PIFS_SUCCESS && a_block_type == PIFS_BLOCK_TYPE_DATA)
         {
+            /* TODO is this page surely used? */
             pifs.free_data_page_num -= *a_page_count_found;
         }
     }
