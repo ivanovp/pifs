@@ -42,7 +42,7 @@
 #define ENABLE_WRITE_FRAGMENT_TEST    1
 #define ENABLE_READ_FRAGMENT_TEST     1
 #define ENABLE_SEEK_READ_TEST         1
-#define ENABLE_SEEK_WRITE_TEST        0
+#define ENABLE_SEEK_WRITE_TEST        1
 #define ENABLE_DELTA_TEST             1
 #if ENABLE_BASIC_TEST
 #define ENABLE_RENAME_TEST            1

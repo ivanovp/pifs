@@ -245,7 +245,7 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
 
 /**
  * @brief pifs_fopen Open file, works like fopen().
- * TODO check if file has not opened already for writing!
+ * It will return NULL pointer if file has already opened for writing!
  *
  * @param[in] a_filename    File name to open.
  * @param[in] a_modes       Open mode: "r", "r+", "w", "w+", "a" or "a+".
