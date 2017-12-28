@@ -455,7 +455,6 @@ pifs_dir_t * pifs_internal_opendir(const pifs_char_t * a_name)
             if (!dir->is_used)
             {
                 dir->is_used = TRUE;
-                dir->find_deleted = !a_name;
                 dir->entry_page_index = 0;
 #if PIFS_ENABLE_DIRECTORIES
                 dir->entry_list_address = entry_list_address;
@@ -554,7 +553,7 @@ pifs_dirent_t * pifs_internal_readdir(pifs_dir_t * a_dirp)
                         PIFS_ENTRY_SIZE_BYTE);
         if (ret == PIFS_SUCCESS)
         {
-            if (dir->find_deleted || !pifs_is_entry_deleted(entry))
+            if (!pifs_is_entry_deleted(entry))
             {
                 entry_found = TRUE;
             }

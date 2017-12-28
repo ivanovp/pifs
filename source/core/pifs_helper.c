@@ -502,7 +502,6 @@ void pifs_parse_open_mode(pifs_file_t * a_file, const pifs_char_t * a_modes)
     a_file->mode_write = FALSE;
     a_file->mode_append = FALSE;
     a_file->mode_file_shall_exist = FALSE;
-    a_file->mode_deleted = FALSE;
     for (i = 0; a_modes[i] && i < 4; i++)
     {
         switch (a_modes[i])
@@ -542,10 +541,6 @@ void pifs_parse_open_mode(pifs_file_t * a_file, const pifs_char_t * a_modes)
                 break;
             case 'b':
                 /* Binary, all operations are binary! */
-                break;
-            case 'd':
-                /* Non-standard mode, open deleted file */
-                a_file->mode_deleted = TRUE;
                 break;
             default:
                 a_file->status = PIFS_ERROR_INVALID_OPEN_MODE;

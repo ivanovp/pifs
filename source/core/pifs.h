@@ -380,7 +380,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
     pifs_address_t          free_space_bitmap_address;      /**< Address of free space bitmap (FSBM) */
     pifs_address_t          root_entry_list_address;        /**< Root directory */
     pifs_address_t          delta_map_address;              /**< Address of delta map */
-    pifs_address_t          wear_level_list_address;        /**< Adress of wear level list */
+    pifs_address_t          wear_level_list_address;        /**< Address of wear level list */
     /** Data blocks with lowest erase counter value */
     pifs_wear_level_t       least_weared_blocks[PIFS_LEAST_WEARED_BLOCK_NUM];   /**< List of least weared blocks */
     pifs_wear_level_t       most_weared_blocks[PIFS_MOST_WEARED_BLOCK_NUM];     /**< List of most weared blocks */
@@ -444,7 +444,7 @@ typedef struct PIFS_PACKED_ATTRIBUTE
      * the real wear level count */
     pifs_wear_level_bits_t wear_level_bits;
     /** Checksum shall be the last element! */
-    pifs_checksum_t         checksum;
+    pifs_checksum_t        checksum;
 } pifs_wear_level_entry_t;
 
 /**
@@ -473,7 +473,6 @@ typedef struct
     bool_t                  mode_write PIFS_BOOL_SIZE;
     bool_t                  mode_append PIFS_BOOL_SIZE;
     bool_t                  mode_file_shall_exist PIFS_BOOL_SIZE;
-    bool_t                  mode_deleted PIFS_BOOL_SIZE;
     /* TODO entry_list_address shall be updated for every opened file after pifs_merge() */
     pifs_address_t          entry_list_address; /**< Entry list (directory) where the file belongs to */
     pifs_entry_t            entry;              /**< File's entry, one element of entry list */
@@ -494,7 +493,6 @@ typedef struct
 typedef struct
 {
     bool_t         is_used PIFS_BOOL_SIZE;      /**< TRUE: directory structure is opened, FALSE: directory structure is available */
-    bool_t         find_deleted PIFS_BOOL_SIZE; /**< For internal use. TRUE: find deleted entries as well */
     pifs_size_t    entry_page_index;            /**< Actual index of entry page */
     pifs_address_t entry_list_address;          /**< Address of entry list */
     pifs_size_t    entry_list_index;            /**< */

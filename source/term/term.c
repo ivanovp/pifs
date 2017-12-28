@@ -815,7 +815,6 @@ void cmdListDir (char* command, char* params)
     bool_t               long_list = FALSE;
     bool_t               examine = FALSE;
     bool_t               show_blocks = FALSE;
-    bool_t               find_deleted = FALSE;
     pifs_size_t          i;
     pifs_size_t          block_num;
     static pifs_block_address_t blocks[BLOCKS_SIZE];
@@ -845,9 +844,6 @@ void cmdListDir (char* command, char* params)
                 case 'b':
                     show_blocks = TRUE;
                     break;
-                case 'd':
-                    find_deleted = TRUE;
-                    break;
                 default:
                     printf("Unknown switch: %c\r\n", param[1]);
                     break;
@@ -862,8 +858,6 @@ void cmdListDir (char* command, char* params)
     dir = pifs_opendir(path);
     if (dir != NULL)
     {
-        /* Changing internal variable of pifs_dir_t */
-        ((pifs_dir_t*) dir)->find_deleted = find_deleted;
         while ((dirent = pifs_readdir(dir)))
         {
             printf("%-32s", dirent->d_name);
