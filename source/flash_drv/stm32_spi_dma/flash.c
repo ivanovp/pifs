@@ -87,20 +87,19 @@ extern SPI_HandleTypeDef hspi1;
 
 static SPI_HandleTypeDef *spi = &hspi1;
 static bool_t flash_initialized = FALSE;
-static uint8_t cmd_read_id[1]          = { 0x9F };
-static uint8_t cmd_read_status_reg[1]  = { 0x05 };
+static const uint8_t cmd_read_id[1]          = { 0x9F };
+static const uint8_t cmd_read_status_reg[1]  = { 0x05 };
 #if PIFS_FLASH_4BYTE_ADDRESS
-static uint8_t cmd_enter_4byte_mode[1] = { 0xB7 };
-static uint8_t cmd_erase[5]            = { 0xD8 };
-//static uint8_t cmd_read_data[5]        = { 0x03 }; /* 0x13 for Cypress??? */
-static uint8_t cmd_read_data[5]        = { 0x13 };
-static uint8_t cmd_page_program[5]     = { 0x02 };
+static const uint8_t cmd_enter_4byte_mode[1] = { 0xB7 };
+static uint8_t cmd_erase[5]                  = { 0xD8 };
+static uint8_t cmd_read_data[5]              = { 0x13 };
+static uint8_t cmd_page_program[5]           = { 0x02 };
 #else
-static uint8_t cmd_erase[4]            = { 0xD8 };
-static uint8_t cmd_read_data[4]        = { 0x03 };
-static uint8_t cmd_page_program[4]     = { 0x02 };
+static uint8_t cmd_erase[4]                  = { 0xD8 };
+static uint8_t cmd_read_data[4]              = { 0x03 };
+static uint8_t cmd_page_program[4]           = { 0x02 };
 #endif
-static uint8_t cmd_write_enable[1]     = { 0x06 };
+static const uint8_t cmd_write_enable[1]     = { 0x06 };
 static uint8_t answer[3];
 #if FLASH_ENABLE_DMA
 static osSemaphoreId dma_finished;
