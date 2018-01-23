@@ -67,6 +67,19 @@ pifs_status_t flash_test_erase_program(void)
     PIFS_ASSERT(ret == PIFS_SUCCESS);
 
     printf("Block %i ", ba + 1);
+    fill_buffer(test_buf_w, sizeof(test_buf_w), FILL_TYPE_SIMPLE_BYTE, 0xFF);
+    for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
+    {
+        putchar('.');
+        /* Check if page is erased */
+        ret = pifs_flash_read(ba, pa, 0, test_buf_r, sizeof(test_buf_r));
+        PIFS_ASSERT(ret == PIFS_SUCCESS);
+
+        ret = compare_buffer(test_buf_w, sizeof(test_buf_w), test_buf_r);
+        PIFS_ASSERT(ret == PIFS_SUCCESS);
+    }
+    printf("\r\nDone.\r\n");
+    printf("Block %i ", ba + 1);
     for (pa = 0; pa < PIFS_FLASH_PAGE_PER_BLOCK; pa++)
     {
         putchar('.');
