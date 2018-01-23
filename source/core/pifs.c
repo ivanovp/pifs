@@ -253,7 +253,7 @@ pifs_status_t pifs_erase(pifs_block_address_t a_block_address, pifs_header_t * a
 
     (void) a_old_header;
 
-    PIFS_WARNING_MSG("Erasing block %i\r\n", a_block_address)
+    PIFS_DEBUG_MSG("Erasing block %i\r\n", a_block_address)
     ret = pifs_flash_erase(a_block_address);
 
     if (a_block_address == pifs.cache_page_buf_address.block_address)

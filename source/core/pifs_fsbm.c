@@ -727,7 +727,7 @@ pifs_status_t pifs_find_to_be_released_block(pifs_size_t a_block_count,
     find.header = a_header;
 
     ret = pifs_find_page_adv(&find, &ba, &pa, &page_count);
-    PIFS_WARNING_MSG("%i..%i ret: %i, page_count: %i\r\n",
+    PIFS_DEBUG_MSG("%i..%i ret: %i, page_count: %i\r\n",
                      a_start_block_address, a_end_block_address,
                      ret, page_count);
 

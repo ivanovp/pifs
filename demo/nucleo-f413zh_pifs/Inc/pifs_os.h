@@ -32,6 +32,7 @@
 #include "backtrace.h"
 #include "pifs_config.h"
 #include "pifs.h"
+#include "uart.h"
 
 /** Task delay is used when flash initialization fails. */
 #define PIFS_OS_DELAY_MS(ms)               osDelay(ms)
