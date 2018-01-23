@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-10-10 20:53:34 ivanovp {Time-stamp}
+ * Last modify: 2018-01-23 11:03:12 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,6 +24,8 @@
 #define _INCLUDE_PIFS_CONFIG_H_
 
 #include "cmsis_os.h"
+#define PIFS_ENABLE_OS                  1u  /**< 1: OS is used, 0: no OS or FS is used from one task */
+#define PIFS_TASK_COUNT_MAX             4u  /**< Maximum number of tasks which use FS */
 
 /** PIFS_LOGICAL_PAGE_SIZE_BYTE
  * Allocation unit of file system.
@@ -36,7 +38,7 @@
 #define PIFS_OPEN_FILE_NUM_MAX          4u   /**< Maximum number of opened file */
 #define PIFS_OPEN_DIR_NUM_MAX           2u   /**< Maximum number of opened directories */
 #define PIFS_FILENAME_LEN_MAX           32u  /**< Maximum length of file name */
-#define PIFS_PATH_LEN_MAX               128u /**< Maximum length of path. Only relevent if PIFS_ENABLE_DIRECTORIES is 1. */
+#define PIFS_PATH_LEN_MAX               128u /**< Maximum length of path. Only relevant if PIFS_ENABLE_DIRECTORIES is 1. */
 #define PIFS_ENTRY_NUM_MAX              32u  /**< Maximum number of files and directories in a directory */
 #define PIFS_ENABLE_USER_DATA           1u   /**< 1: Add user data (pifs_user_data_t) to every file, 0: don't add user data */
 #define PIFS_UPDATE_USER_DATA_ON_FCLOSE 1u   /**< 1: Get user data (pifs_user_data_t) when file is closed, 0: don't get user data */

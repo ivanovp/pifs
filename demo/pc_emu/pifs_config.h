@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2017-12-25 08:46:38 ivanovp {Time-stamp}
+ * Last modify: 2018-01-23 11:03:07 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -36,7 +36,7 @@
 #define PIFS_OPEN_FILE_NUM_MAX          4u   /**< Maximum number of opened file */
 #define PIFS_OPEN_DIR_NUM_MAX           2u   /**< Maximum number of opened directories */
 #define PIFS_FILENAME_LEN_MAX           32u  /**< Maximum length of file name */
-#define PIFS_PATH_LEN_MAX               128u /**< Maximum length of path. Only relevent if PIFS_ENABLE_DIRECTORIES is 1. */
+#define PIFS_PATH_LEN_MAX               128u /**< Maximum length of path. Only relevant if PIFS_ENABLE_DIRECTORIES is 1. */
 #define PIFS_ENTRY_NUM_MAX              128u /**< Maximum number of files and directories in a directory. Number PIFS_OPEN_FILE_NUM_MAX entries are reserved for the FS. */
 #define PIFS_ENABLE_USER_DATA           1u   /**< 1: Add user data (pifs_user_data_t) to every file, 0: don't add user data */
 #define PIFS_UPDATE_USER_DATA_ON_FCLOSE 1u   /**< 1: Get user data (pifs_user_data_t) when file is closed, 0: don't get user data */

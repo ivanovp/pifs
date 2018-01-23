@@ -13,7 +13,7 @@ OBJCOPY = $(CROSS)objcopy
 endif
 
 INCLUDE =
-INCLUDE = -I../../source/core
+INCLUDE += -I../../source/core
 INCLUDE += -I../../source/flash_drv/stm32_spi_dma
 INCLUDE += -I../../source/term
 INCLUDE += -I../../source/test

@@ -250,9 +250,9 @@ pifs_status_t flash_test(void)
     pifs_status_t ret = PIFS_ERROR_FLASH_INIT;
 
     printf("Size of flash memory (full):        %i bytes\r\n", PIFS_FLASH_SIZE_BYTE_ALL);
-    printf("Size of flash memory (used by FS):  %i bytes\r\n", PIFS_FLASH_SIZE_BYTE_ALL);
+    printf("Size of flash memory (used by FS):  %i bytes\r\n", PIFS_FLASH_SIZE_BYTE_FS);
     printf("Number of blocks (full):            %i\r\n", PIFS_FLASH_BLOCK_NUM_ALL);
-    printf("Number of blocks (used by FS)):     %i\r\n", PIFS_FLASH_BLOCK_NUM_ALL - PIFS_FLASH_BLOCK_RESERVED_NUM);
+    printf("Number of blocks (used by FS)):     %i\r\n", PIFS_FLASH_BLOCK_NUM_FS);
     printf("Number of pages/block:              %i\r\n", PIFS_FLASH_PAGE_PER_BLOCK);
     printf("Size of page:                       %i byte\r\n", PIFS_FLASH_PAGE_SIZE_BYTE);
 
