@@ -1158,11 +1158,13 @@ pifs_status_t pifs_test_list_dir(void)
     {
         while ((dirent = pifs_readdir(dir)))
         {
+#if PIFS_ENABLE_DIRECTORIES
             if (PIFS_IS_DIR(dirent->d_attrib))
             {
                 printf("%-32s  <DIR>\r\n", dirent->d_name);
             }
             else
+#endif
             {
                 printf("%-32s  %i\r\n", dirent->d_name, dirent->d_filesize);
             }

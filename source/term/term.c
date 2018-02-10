@@ -975,7 +975,9 @@ void cmdRemove (char* command, char* params)
             {
                 while ((dirent = pifs_readdir(dir)))
                 {
+#if PIFS_ENABLE_DIRECTORIES
                     if (!PIFS_IS_DIR(dirent->d_attrib))
+#endif
                     {
                         printf("Remove file '%s'... ", dirent->d_name);
                         if (pifs_remove(dirent->d_name) == PIFS_SUCCESS)
