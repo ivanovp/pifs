@@ -331,14 +331,15 @@ bool_t pifs_is_directory_empty(const pifs_char_t * a_path)
  */
 pifs_char_t * pifs_get_task_cwd(void)
 {
-    PIFS_OS_TASK_ID_TYPE task_id;
-    pifs_char_t        * cwd = pifs.cwd[0];
+    pifs_status_t ret;
+    uint32_t      task_idx;
+    pifs_char_t * cwd = pifs.cwd[0];
 
-    task_id = PIFS_OS_GET_TASK_ID();
+    ret = pifs_get_task_idx(&task_idx);
 
-    if (task_id < PIFS_TASK_COUNT_MAX)
+    if (ret == PIFS_SUCCESS && task_idx < PIFS_TASK_COUNT_MAX)
     {
-        cwd = pifs.cwd[task_id];
+        cwd = pifs.cwd[task_idx];
     }
 
     return cwd;
@@ -352,24 +353,25 @@ pifs_char_t * pifs_get_task_cwd(void)
  */
 pifs_address_t * pifs_get_task_current_entry_list_address(void)
 {
-    PIFS_OS_TASK_ID_TYPE task_id;
-    pifs_address_t     * current_entry_list_address = &pifs.current_entry_list_address[0];
+    pifs_status_t    ret;
+    uint32_t         task_idx;
+    pifs_address_t * current_entry_list_address = &pifs.current_entry_list_address[0];
 
-    task_id = PIFS_OS_GET_TASK_ID();
+    ret = pifs_get_task_idx(&task_idx);
 
-    if (task_id < PIFS_TASK_COUNT_MAX)
+    if (ret == PIFS_SUCCESS && task_idx < PIFS_TASK_COUNT_MAX)
     {
-        current_entry_list_address = &pifs.current_entry_list_address[task_id];
+        current_entry_list_address = &pifs.current_entry_list_address[task_idx];
     }
     else
     {
-        task_id = 0;
+        task_idx = 0;
     }
 
     if (current_entry_list_address->block_address == PIFS_BLOCK_ADDRESS_INVALID
             || current_entry_list_address->page_address == PIFS_PAGE_ADDRESS_INVALID)
     {
-        pifs_resolve_dir(pifs.cwd[task_id], pifs.header.root_entry_list_address,
+        pifs_resolve_dir(pifs.cwd[task_idx], pifs.header.root_entry_list_address,
                          current_entry_list_address);
     }
 

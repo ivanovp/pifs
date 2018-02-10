@@ -638,6 +638,9 @@ pifs_status_t pifs_init(void)
     {
         pifs.cwd[i][0] = PIFS_ROOT_CHAR;
         pifs.cwd[i][1] = PIFS_EOS;
+#if PIFS_OS_TASK_ID_IS_SEQUENTIAL == 0 && PIFS_SEPARATE_WORKDIR_FOR_TASKS
+        pifs.task_ids[i] = PIFS_OS_TASK_ID_NULL;
+#endif
     }
 #endif
 

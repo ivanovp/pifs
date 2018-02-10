@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-08-26 07:10:19
- * Last modify: 2017-08-26 08:34:03 ivanovp {Time-stamp}
+ * Last modify: 2018-02-10 07:42:53 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -46,7 +46,9 @@
       mutex = FALSE; \
     } while (0)
 #define PIFS_OS_MUTEX_TYPE                 bool_t
+#define PIFS_OS_TASK_ID_NULL               0
 #define PIFS_OS_TASK_ID_TYPE               uint8_t
 #define PIFS_OS_GET_TASK_ID()              0
+#define PIFS_OS_TASK_ID_IS_SEQUENTIAL      0u  /**< 1: Task ID is sequential, 0: task ID is random */
 
 #endif /* _INCLUDE_PIFS_OS_H_ */

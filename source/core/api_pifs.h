@@ -63,6 +63,7 @@ typedef enum
     PIFS_ERROR_DIRECTORY_NOT_EMPTY = 24,
     PIFS_ERROR_INTEGRITY = 25,
     PIFS_ERROR_CHECKSUM = 26,
+    PIFS_ERROR_TASK = 27,
 } pifs_status_t;
 
 #define PIFS_EACCES     PIFS_ERROR_FILE_NOT_FOUND
@@ -97,8 +98,10 @@ typedef enum
 #define PIFS_IS_HIDDEN(attrib)          (!((attrib) & PIFS_ATTRIB_HIDDEN))
 /** Macro to check if file is system file */
 #define PIFS_IS_SYSTEM(attrib)          (!((attrib) & PIFS_ATTRIB_SYSTEM))
+#if PIFS_ENABLE_DIRECTORIES
 /** Macro to check if file is directory */
 #define PIFS_IS_DIR(attrib)             (!((attrib) & PIFS_ATTRIB_DIR))
+#endif
 /** Macro to check if file should be archived */
 #define PIFS_IS_ARCHIVE(attrib)         (!((attrib) & PIFS_ATTRIB_ARCHIVE))
 /** Macro to check if file is deleted */
@@ -118,8 +121,10 @@ typedef enum
 #define PIFS_IS_HIDDEN(attrib)          ((attrib) & PIFS_ATTRIB_HIDDEN)
 /** Macro to check if file is system file */
 #define PIFS_IS_SYSTEM(attrib)          ((attrib) & PIFS_ATTRIB_SYSTEM)
+#if PIFS_ENABLE_DIRECTORIES
 /** Macro to check if file is directory */
 #define PIFS_IS_DIR(attrib)             ((attrib) & PIFS_ATTRIB_DIR)
+#endif
 /** Macro to check if file should be archived */
 #define PIFS_IS_ARCHIVE(attrib)         ((attrib) & PIFS_ATTRIB_ARCHIVE)
 /** Macro to check if file is deleted */

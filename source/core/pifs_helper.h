@@ -69,6 +69,7 @@ pifs_status_t pifs_get_file_blocks(pifs_char_t * a_filename,
                                    pifs_block_address_t * a_blocks,
                                    pifs_size_t a_blocks_size, 
                                    pifs_size_t * a_blocks_num);
+pifs_status_t pifs_get_task_idx(uint32_t * a_task_idx);
 
 #ifdef __cplusplus
 }

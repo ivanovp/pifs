@@ -18,13 +18,12 @@ Features:
  * At the beginning of flash memory reserved blocks can be defined, which 
 are not used by the file system
  * File names are case-sensitive
+ * OS support: file system can be used from multiple tasks, separate working directory for tasks
 
 Limitations:
  * Only one flash chip can be used (one volume is supported)
  * Memory and file system configuration cannot be changed during run-time
  * One directory can only store pre-defined number of files or directories
- * Partial OS support: file system can be used from multiple tasks, but
-there is only one working directory for all tasks
  * Incompatible with FAT file system, therefore cannot be used for USB mass
 storage devices
 

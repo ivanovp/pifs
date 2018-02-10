@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created:     2017-06-11 09:10:19
- * Last modify: 2018-01-23 11:03:02 ivanovp {Time-stamp}
+ * Last modify: 2018-02-10 08:22:17 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,6 +25,7 @@
 
 #define PIFS_ENABLE_OS                  1u  /**< 1: OS is used, 0: no OS or FS is used from one task */
 #define PIFS_TASK_COUNT_MAX             4u  /**< Maximum number of tasks which use FS */
+#define PIFS_SEPARATE_WORKDIR_FOR_TASKS 1u  /**< 1: Each task has its own working directory, 0: common working directory */
 
 /** PIFS_LOGICAL_PAGE_SIZE_BYTE
  * Allocation unit of file system.

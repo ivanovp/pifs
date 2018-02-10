@@ -842,3 +842,51 @@ pifs_status_t pifs_get_file_blocks(pifs_char_t * a_filename,
 
     return ret;
 }
+
+#if PIFS_ENABLE_DIRECTORIES
+pifs_status_t pifs_get_task_idx(uint32_t * a_task_idx)
+{
+#if PIFS_SEPARATE_WORKDIR_FOR_TASKS
+#if PIFS_OS_TASK_ID_IS_SEQUENTIAL
+    pifs_status_t   ret = PIFS_SUCCESS;
+
+    *a_task_idx = PIFS_OS_GET_TASK_ID();
+#else
+    pifs_status_t        ret = PIFS_SUCCESS;
+    bool_t               found = FALSE;
+    uint32_t             task_idx;
+    PIFS_OS_TASK_ID_TYPE task_id = PIFS_OS_GET_TASK_ID();
+
+    for (task_idx = 0; task_idx < PIFS_TASK_COUNT_MAX && !found; task_idx++)
+    {
+        if (pifs.task_ids[task_idx] != PIFS_OS_TASK_ID_NULL)
+        {
+            if (task_id == pifs.task_ids[task_idx])
+            {
+                *a_task_idx = task_idx;
+                found = TRUE;
+            }
+        }
+        else
+        {
+            /* End of valid data reached, add new task's ID to the array */
+            pifs.task_ids[task_idx] = task_id;
+            *a_task_idx = task_idx;
+            found = TRUE;
+        }
+    }
+
+    if (!found)
+    {
+        ret = PIFS_ERROR_TASK;
+    }
+#endif
+#else
+    pifs_status_t   ret = PIFS_SUCCESS;
+
+    *a_task_idx = 0;
+#endif
+
+    return ret;
+}
+#endif

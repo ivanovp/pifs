@@ -537,6 +537,9 @@ typedef struct
     pifs_size_t             last_static_wear_block_idx; /**< Block index used for last static wear leveling. */
     uint32_t                auto_static_wear_cntr;      /**< Counter to call less often static wear leveling */
 #if PIFS_ENABLE_DIRECTORIES
+#if PIFS_OS_TASK_ID_IS_SEQUENTIAL == 0 && PIFS_SEPARATE_WORKDIR_FOR_TASKS
+    PIFS_OS_TASK_ID_TYPE    task_ids[PIFS_TASK_COUNT_MAX];
+#endif
     pifs_char_t             cwd[PIFS_TASK_COUNT_MAX][PIFS_PATH_LEN_MAX];  /**< Current working directory */
     /* TODO current_entry_list_address shall be removed and cwd shall be used instead! */
     pifs_address_t          current_entry_list_address[PIFS_TASK_COUNT_MAX]; /**< Entry list of current working directory */

@@ -290,8 +290,11 @@ pifs_status_t pifs_flash_read(pifs_block_address_t a_block_address, pifs_page_ad
     if (flash_initialized)
     {
         ret = PIFS_ERROR_FLASH_READ;
-        if (offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
-                && (offset + a_buf_size) <= PIFS_FLASH_SIZE_BYTE_ALL)
+        if ((offset + a_buf_size) <= PIFS_FLASH_SIZE_BYTE_ALL
+#if PIFS_FLASH_BLOCK_RESERVED_NUM > 0
+                && offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
+#endif
+                )
         {
             SET_CS_LOW();
             WRITE_ADDRESS(&cmd_read_data[1], a_block_address, a_page_address, a_page_offset);
@@ -348,8 +351,11 @@ pifs_status_t pifs_flash_write(pifs_block_address_t a_block_address, pifs_page_a
     if (flash_initialized)
     {
         ret = PIFS_ERROR_FLASH_WRITE;
-        if (offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
-                && (offset + a_buf_size) <= PIFS_FLASH_SIZE_BYTE_ALL)
+        if ((offset + a_buf_size) <= PIFS_FLASH_SIZE_BYTE_ALL
+#if PIFS_FLASH_BLOCK_RESERVED_NUM > 0
+                && offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
+#endif
+                )
         {
             ret = pifs_flash_write_enable();
             if (ret == PIFS_SUCCESS)
@@ -409,8 +415,11 @@ pifs_status_t pifs_flash_erase(pifs_block_address_t a_block_address)
     if (flash_initialized)
     {
         ret = PIFS_ERROR_FLASH_ERASE;
-        if (offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
-                && (offset + PIFS_FLASH_BLOCK_SIZE_BYTE) <= PIFS_FLASH_SIZE_BYTE_ALL)
+        if ((offset + PIFS_FLASH_BLOCK_SIZE_BYTE) <= PIFS_FLASH_SIZE_BYTE_ALL
+#if PIFS_FLASH_BLOCK_RESERVED_NUM > 0
+                && offset >= (PIFS_FLASH_BLOCK_RESERVED_NUM * PIFS_FLASH_BLOCK_SIZE_BYTE)
+#endif
+            )
         {
             ret = pifs_flash_write_enable();
             if (ret == PIFS_SUCCESS)
