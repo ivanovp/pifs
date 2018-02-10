@@ -39,7 +39,7 @@
 #define PIFS_OPEN_DIR_NUM_MAX           2u   /**< Maximum number of opened directories */
 #define PIFS_FILENAME_LEN_MAX           32u  /**< Maximum length of file name */
 #define PIFS_PATH_LEN_MAX               128u /**< Maximum length of path. Only relevant if PIFS_ENABLE_DIRECTORIES is 1. */
-#define PIFS_ENTRY_NUM_MAX              32u  /**< Maximum number of files and directories in a directory */
+#define PIFS_ENTRY_NUM_MAX              64u  /**< Maximum number of files and directories in a directory */
 #define PIFS_ENABLE_USER_DATA           1u   /**< 1: Add user data (pifs_user_data_t) to every file, 0: don't add user data */
 #define PIFS_UPDATE_USER_DATA_ON_FCLOSE 1u   /**< 1: Get user data (pifs_user_data_t) when file is closed, 0: don't get user data */
 #define PIFS_ENABLE_DIRECTORIES         1u   /**< 1: Support directories, 0: only support root directory */

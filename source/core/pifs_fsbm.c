@@ -557,7 +557,7 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                         else
                         {
                             PIFS_WARNING_MSG("Flash page should be erased, but it is not! %s\r\n", pifs_ba_pa2str(fba, fpa));
-#if DEBUG
+#if 0
                             /* FIXME debug code, remove! */
                             {
                                 uint8_t buf_r[PIFS_LOGICAL_PAGE_SIZE_BYTE];
@@ -573,7 +573,6 @@ pifs_status_t pifs_find_page_adv(pifs_find_t * a_find,
                                 }
                             }
 #endif
-                            /* TODO this two operation shall be in one function call */
                             /* Mark page as used */
                             /* Mark page as to be released as this page should erased */
                             (void)pifs_mark_page(fba, fpa, 1, TRUE, TRUE);
