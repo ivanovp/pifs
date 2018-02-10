@@ -269,7 +269,7 @@ float DHT_getTempCelsius (void)
 }
 
 /**
- * Read realative humidity from DHT.
+ * Read relative humidity from DHT.
  * Before using this function the data should be read using DHT_read() function.
  * @see DHT_read()
  *

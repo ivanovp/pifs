@@ -510,10 +510,24 @@ extern void save_measurement(void);
 
 void cmdDht (char* command, char* params)
 {
+	bool_t  ok = FALSE;
+	uint8_t cntr = 0;
+	float   hum = 0;
+
     (void) command;
     (void) params;
 
-    if (DHT_read())
+    do
+    {
+    	ok = DHT_read();
+        if (ok)
+        {
+            hum = DHT_getHumPercent();
+        }
+    	cntr++;
+    } while (cntr < 5 && (!ok || hum > 100.0f));
+
+    if (ok && hum <= 100.0f)
     {
         save_measurement();
     }
