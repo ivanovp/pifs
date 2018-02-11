@@ -672,7 +672,7 @@ pifs_status_t pifs_find_block_wl(pifs_size_t a_block_count,
     }
     if (ret != PIFS_SUCCESS)
     {
-        PIFS_WARNING_MSG("Dynamic wear leveling failed!\r\n");
+        PIFS_DEBUG_MSG("Dynamic wear leveling failed!\r\n");
         /* Not found, try to find anywhere */
         find.start_block_address = PIFS_FLASH_BLOCK_RESERVED_NUM;
         find.end_block_address = PIFS_FLASH_BLOCK_NUM_ALL - 1;

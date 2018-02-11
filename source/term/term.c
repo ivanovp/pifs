@@ -68,6 +68,16 @@ static uint8_t copy_buf[PIFS_LOGICAL_PAGE_SIZE_BYTE];
 
 bool_t getLine(uint8_t * a_buf, size_t a_buf_size);
 
+#if 0
+/* TODO test this callback! */
+int pifs_update_userdata_cb(bool_t a_is_mode_write, pifs_user_data_t * a_user_data)
+{
+    printf("Userdata callback! a_is_mode_write: %i\r\n", a_is_mode_write);
+
+    return PIFS_EOF;
+}
+#endif
+
 void cmdErase (char* command, char* params)
 {
     unsigned long int    addr = 0;

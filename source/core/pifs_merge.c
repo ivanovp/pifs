@@ -397,7 +397,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
             new_map_entry.page_count = 0;
         }
         /* Close internal file */
-        ret = pifs_internal_fclose(&pifs.internal_file, FALSE);
+        ret = pifs_internal_fclose(&pifs.internal_file, FALSE, TRUE);
         PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
 
@@ -583,7 +583,7 @@ pifs_status_t pifs_merge(void)
             file_pos[i] = file->rw_pos;
             /* This will never cause data loss. There shall be enough free
              * entries in the entry list. */
-            (void)pifs_internal_fclose(file, FALSE);
+            (void)pifs_internal_fclose(file, FALSE, TRUE);
         }
     }
     /* #1 */

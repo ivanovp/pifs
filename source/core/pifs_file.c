@@ -727,7 +727,7 @@ int pifs_fflush(P_FILE * a_file)
 
     PIFS_GET_MUTEX();
 
-    ret = pifs_internal_fflush(a_file, TRUE);
+    ret = pifs_internal_fflush(a_file, TRUE, TRUE);
 
     PIFS_PUT_MUTEX();
 
@@ -740,9 +740,10 @@ int pifs_fflush(P_FILE * a_file)
  *
  * @param[in] a_file          File to flush.
  * @param[in] a_is_merge_allowed TRUE: merge is allowed when not enough space. FALSE: merge is not allowed.
+ * @param[in] a_is_entry_update_allowed TRUE: file entry can be updated. FALSE: update is not allowed.
  * @return 0 if file close, PIFS_EOF if error occurred.
  */
-int pifs_internal_fflush(P_FILE * a_file, bool_t a_is_merge_allowed)
+int pifs_internal_fflush(P_FILE * a_file, bool_t a_is_merge_allowed, bool_t a_is_entry_update_allowed)
 {
     int             ret = PIFS_EOF;
     pifs_file_t   * file = (pifs_file_t*) a_file;
@@ -754,7 +755,11 @@ int pifs_internal_fflush(P_FILE * a_file, bool_t a_is_merge_allowed)
         PIFS_DEBUG_MSG("mode_write: %i, is_entry_changed: %i, file_size: %i\r\n",
                        file->mode_write, file->is_entry_changed,
                        file->entry.file_size);
-        if (file->mode_write && (file->is_entry_changed || !file->entry.file_size))
+        /* TODO if file->mode_write is not taken into account, user data
+         * may store access time as well!
+         */
+        if (a_is_entry_update_allowed && file->mode_write
+                && (file->is_entry_changed || !file->entry.file_size))
         {
             file->status = pifs_update_entry(file->entry.name, &file->entry,
                                              file->entry_list_address.block_address,
@@ -789,7 +794,7 @@ int pifs_fclose(P_FILE * a_file)
 
     PIFS_GET_MUTEX();
 
-    ret = pifs_internal_fclose(file, TRUE);
+    ret = pifs_internal_fclose(file, TRUE, TRUE);
 
     PIFS_PUT_MUTEX();
 
@@ -802,9 +807,10 @@ int pifs_fclose(P_FILE * a_file)
  *
  * @param[in] a_file File to close.
  * @param[in] a_is_merge_allowed TRUE: merge is allowed when not enough space. FALSE: merge is not allowed.
+ * @param[in] a_is_entry_update_allowed TRUE: file entry can be updated. FALSE: update is not allowed.
  * @return 0 if file close, PIFS_EOF if error occurred.
  */
-int pifs_internal_fclose(P_FILE * a_file, bool_t a_is_merge_allowed)
+int pifs_internal_fclose(P_FILE * a_file, bool_t a_is_merge_allowed, bool_t a_is_entry_update_allowed)
 {
     int ret = PIFS_EOF;
     pifs_file_t * file = (pifs_file_t*) a_file;
@@ -814,7 +820,7 @@ int pifs_internal_fclose(P_FILE * a_file, bool_t a_is_merge_allowed)
     /* Not checking file->mode_write, callback function should decide if it
      * is necessary to update user-data or not.
      */
-    if (!pifs.is_merging)
+    if (!pifs.is_merging && a_is_entry_update_allowed)
     {
         ret = pifs_update_userdata_cb(file->mode_write, &file->entry.user_data);
         if (ret == PIFS_SUCCESS)
@@ -826,7 +832,7 @@ int pifs_internal_fclose(P_FILE * a_file, bool_t a_is_merge_allowed)
 #endif
     if (ret == PIFS_EOF || ret == PIFS_SUCCESS)
     {
-        ret = pifs_internal_fflush(a_file, a_is_merge_allowed);
+        ret = pifs_internal_fflush(a_file, a_is_merge_allowed, a_is_entry_update_allowed);
     }
     if (ret == 0)
     {
@@ -1274,7 +1280,7 @@ int pifs_internal_remove(const pifs_char_t * a_filename, bool_t a_is_merge_allow
                 /* Mark allocated pages to be released */
                 ret = pifs_release_file_pages(&pifs.internal_file);
             }
-            ret = pifs_internal_fclose(&pifs.internal_file, a_is_merge_allowed);
+            ret = pifs_internal_fclose(&pifs.internal_file, a_is_merge_allowed, FALSE);
         }
     }
 

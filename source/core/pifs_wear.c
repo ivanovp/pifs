@@ -530,7 +530,7 @@ pifs_status_t pifs_check_block(pifs_char_t * a_filename,
             /* Reaching end of file is not an error */
             ret = PIFS_SUCCESS;
         }
-        ret = pifs_internal_fclose(&pifs.internal_file, FALSE);
+        ret = pifs_internal_fclose(&pifs.internal_file, FALSE, TRUE);
     }
     *a_is_block_used = is_block_used;
 
