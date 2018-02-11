@@ -70,9 +70,10 @@ bool_t getLine(uint8_t * a_buf, size_t a_buf_size);
 
 #if 0
 /* TODO test this callback! */
-int pifs_update_userdata_cb(bool_t a_is_mode_write, pifs_user_data_t * a_user_data)
+int pifs_update_userdata_cb(bool_t a_is_mode_create_new_file, bool_t a_is_mode_write, pifs_user_data_t * a_user_data)
 {
-    printf("Userdata callback! a_is_mode_write: %i\r\n", a_is_mode_write);
+    printf("Userdata callback! new: %i, write: %i\r\n",
+           a_is_mode_create_new_file, a_is_mode_write);
 
     return PIFS_EOF;
 }

@@ -208,6 +208,7 @@ pifs_status_t pifs_append_entry(pifs_entry_t * const a_entry,
  *
  * @return PIFS_SUCCESS if entry found.
  * PIFS_ERROR_FILE_NOT_FOUND if entry not found.
+ * PIFS_ERROR_NO_MORE_ENTRY if entry cannot be added.
  */
 pifs_status_t pifs_update_entry(const pifs_char_t * a_name, pifs_entry_t * const a_entry,
                                 pifs_block_address_t a_entry_list_block_address,

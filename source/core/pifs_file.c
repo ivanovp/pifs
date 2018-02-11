@@ -755,10 +755,7 @@ int pifs_internal_fflush(P_FILE * a_file, bool_t a_is_merge_allowed, bool_t a_is
         PIFS_DEBUG_MSG("mode_write: %i, is_entry_changed: %i, file_size: %i\r\n",
                        file->mode_write, file->is_entry_changed,
                        file->entry.file_size);
-        /* TODO if file->mode_write is not taken into account, user data
-         * may store access time as well!
-         */
-        if (a_is_entry_update_allowed && file->mode_write
+        if (a_is_entry_update_allowed
                 && (file->is_entry_changed || !file->entry.file_size))
         {
             file->status = pifs_update_entry(file->entry.name, &file->entry,
@@ -822,7 +819,9 @@ int pifs_internal_fclose(P_FILE * a_file, bool_t a_is_merge_allowed, bool_t a_is
      */
     if (!pifs.is_merging && a_is_entry_update_allowed)
     {
-        ret = pifs_update_userdata_cb(file->mode_write, &file->entry.user_data);
+        ret = pifs_update_userdata_cb(file->mode_create_new_file,
+                                      file->mode_write,
+                                      &file->entry.user_data);
         if (ret == PIFS_SUCCESS)
         {
             /* File entry will be updated */
@@ -1205,13 +1204,15 @@ int pifs_internal_fsetuserdata(P_FILE * a_file, const pifs_user_data_t * a_user_
  * @brief pifs_update_userdata User call-back function which is called when
  * pifs_fclose() is used.
  *
+ * @param[in]    a_is_mode_create_new_file TRUE: new file is created.
  * @param[in]    a_is_mode_write  TRUE: file is opened for writing.
  * @param[inout] a_user_data      User data to be updated.
  * @return 0: if user-data was updated successfully. -1 (PIFS_EOF) user-data
  * was not updated.
  */
-__weak int pifs_update_userdata_cb(bool_t a_is_mode_write, pifs_user_data_t * a_user_data)
+__weak int pifs_update_userdata_cb(bool_t a_is_mode_create_new_file, bool_t a_is_mode_write, pifs_user_data_t * a_user_data)
 {
+    (void) a_is_mode_create_new_file;
     (void) a_is_mode_write;
     (void) a_user_data;
 
