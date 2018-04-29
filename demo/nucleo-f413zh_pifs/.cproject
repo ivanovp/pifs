@@ -26,7 +26,7 @@
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="fr.ac6.managedbuild.targetPlatform.gnu.cross.617643436" isAbstract="false" osList="all" superClass="fr.ac6.managedbuild.targetPlatform.gnu.cross" />
 							<builder buildPath="${workspace_loc:/nucleo-f413zh_pifs}" id="fr.ac6.managedbuild.builder.gnu.cross.1672297324" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="fr.ac6.managedbuild.builder.gnu.cross" />
 							<tool id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.478791459" name="MCU GCC Compiler" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler">
-								<option defaultValue="gnu.c.optimization.level.none" id="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level.1781193207" name="Optimization Level" superClass="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="fr.ac6.managedbuild.gnu.c.optimization.level.debug" valueType="enumerated" />
+								<option defaultValue="gnu.c.optimization.level.none" id="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level.1781193207" name="Optimization Level" superClass="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="fr.ac6.managedbuild.gnu.c.optimization.level.more" valueType="enumerated" />
 								<option id="gnu.c.compiler.option.debugging.level.1458287944" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.max" valueType="enumerated" />
 								<option id="gnu.c.compiler.option.include.paths.1005340365" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../Inc" />
@@ -51,7 +51,7 @@
 								<inputType id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.s.1069973682" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.s" />
 							</tool>
 							<tool id="fr.ac6.managedbuild.tool.gnu.cross.cpp.compiler.2074972941" name="MCU G++ Compiler" superClass="fr.ac6.managedbuild.tool.gnu.cross.cpp.compiler">
-								<option id="gnu.cpp.compiler.option.optimization.level.14429561" name="Optimization Level" superClass="gnu.cpp.compiler.option.optimization.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated" />
+								<option id="gnu.cpp.compiler.option.optimization.level.14429561" name="Optimization Level" superClass="gnu.cpp.compiler.option.optimization.level" useByScannerDiscovery="false" value="fr.ac6.managedbuild.gnu.cpp.optimization.level.more" valueType="enumerated" />
 								<option id="gnu.cpp.compiler.option.debugging.level.1238664336" name="Debug Level" superClass="gnu.cpp.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated" />
 							</tool>
 							<tool id="fr.ac6.managedbuild.tool.gnu.cross.c.linker.52162788" name="MCU GCC Linker" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.linker">
@@ -113,7 +113,7 @@
 								</outputEntries>
 							</builder>
 							<tool id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.478791459" name="MCU GCC Compiler" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler">
-								<option defaultValue="gnu.c.optimization.level.none" id="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level.1781193207" name="Optimization Level" superClass="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="fr.ac6.managedbuild.gnu.c.optimization.level.debug" valueType="enumerated" />
+								<option defaultValue="gnu.c.optimization.level.none" id="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level.1781193207" name="Optimization Level" superClass="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="fr.ac6.managedbuild.gnu.c.optimization.level.more" valueType="enumerated" />
 								<option id="gnu.c.compiler.option.debugging.level.1458287944" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.max" valueType="enumerated" />
 								<option id="gnu.c.compiler.option.include.paths.1005340365" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../Inc" />
@@ -137,7 +137,7 @@
 								<inputType id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.s.1069973682" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.s" />
 							</tool>
 							<tool id="fr.ac6.managedbuild.tool.gnu.cross.cpp.compiler.2074972941" name="MCU G++ Compiler" superClass="fr.ac6.managedbuild.tool.gnu.cross.cpp.compiler">
-								<option id="gnu.cpp.compiler.option.optimization.level.14429561" name="Optimization Level" superClass="gnu.cpp.compiler.option.optimization.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated" />
+								<option id="gnu.cpp.compiler.option.optimization.level.14429561" name="Optimization Level" superClass="gnu.cpp.compiler.option.optimization.level" useByScannerDiscovery="false" value="fr.ac6.managedbuild.gnu.cpp.optimization.level.more" valueType="enumerated" />
 								<option id="gnu.cpp.compiler.option.debugging.level.1238664336" name="Debug Level" superClass="gnu.cpp.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated" />
 							</tool>
 							<tool id="fr.ac6.managedbuild.tool.gnu.cross.c.linker.52162788" name="MCU GCC Linker" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.linker">
