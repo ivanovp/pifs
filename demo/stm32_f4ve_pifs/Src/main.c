@@ -399,7 +399,7 @@ int main(void)
       printf("Error: %i\r\n", stat);
   }
 
-  ftest();
+  //ftest();
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
