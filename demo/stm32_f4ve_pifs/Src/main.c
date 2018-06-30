@@ -165,6 +165,7 @@ static inline void LED_toggle(int number)
 }
 
 uint8_t nand_buf[512];
+uint8_t nand_buf2[512];
 
 /**
  * @brief ftest Testing NAND flash wired to TFT connector.
@@ -216,22 +217,23 @@ void ftest(void)
     if (stat == HAL_OK)
     {
         printf("Ok.\r\n");
+        print_buffer(nand_buf, sizeof(nand_buf), 0);
     }
     else
     {
         printf("Error: %i\r\n", stat);
     }
 
-    memset(nand_buf, 0, sizeof(nand_buf));
+    memset(nand_buf2, 0, sizeof(nand_buf2));
 
     printf("Reading %i pages at BA%i/PA%i/PL%i...",
            sizeof(nand_buf) / hnand1.Config.PageSize,
            address.Block, address.Page, address.Plane);
-    stat = HAL_NAND_Read_Page_8b(&hnand1, &address, &nand_buf, sizeof(nand_buf) / hnand1.Config.PageSize);
+    stat = HAL_NAND_Read_Page_8b(&hnand1, &address, &nand_buf2, sizeof(nand_buf2) / hnand1.Config.PageSize);
     if (stat == HAL_OK)
     {
         printf("Ok.\r\n");
-        print_buffer(nand_buf, sizeof(nand_buf), 0);
+        print_buffer(nand_buf2, sizeof(nand_buf2), 0);
     }
     else
     {
@@ -399,7 +401,7 @@ int main(void)
       printf("Error: %i\r\n", stat);
   }
 
-  //ftest();
+  ftest();
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -476,7 +478,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 60;
+  RCC_OscInitStruct.PLL.PLLN = 72;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 3;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -489,11 +491,11 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV4;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
@@ -769,15 +771,15 @@ static void MX_FSMC_Init(void)
   hnand1.Config.PlaneSize = 2048;
   hnand1.Config.ExtraCommandEnable = ENABLE;
   /* ComSpaceTiming */
-  ComSpaceTiming.SetupTime = 2;
-  ComSpaceTiming.WaitSetupTime = 4;
-  ComSpaceTiming.HoldSetupTime = 4;
-  ComSpaceTiming.HiZSetupTime = 6;
+  ComSpaceTiming.SetupTime = 9;
+  ComSpaceTiming.WaitSetupTime = 9;
+  ComSpaceTiming.HoldSetupTime = 10;
+  ComSpaceTiming.HiZSetupTime = 9;
   /* AttSpaceTiming */
-  AttSpaceTiming.SetupTime = 2;
-  AttSpaceTiming.WaitSetupTime = 4;
-  AttSpaceTiming.HoldSetupTime = 4;
-  AttSpaceTiming.HiZSetupTime = 6;
+  AttSpaceTiming.SetupTime = 9;
+  AttSpaceTiming.WaitSetupTime = 9;
+  AttSpaceTiming.HoldSetupTime = 10;
+  AttSpaceTiming.HiZSetupTime = 9;
 
   if (HAL_NAND_Init(&hnand1, &ComSpaceTiming, &AttSpaceTiming) != HAL_OK)
   {
