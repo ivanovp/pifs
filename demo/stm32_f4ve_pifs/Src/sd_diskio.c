@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    sd_diskio.c (based on sd_diskio_dma_rtos_template.c v2.0.2)
+  * @file    sd_diskio.c (based on sd_diskio_dma_rtos_template.c v2.0.2 as FreeRTOS is enabled)
   * @brief   SD Disk I/O driver
   ******************************************************************************
   * This notice applies to any and all portions of this file

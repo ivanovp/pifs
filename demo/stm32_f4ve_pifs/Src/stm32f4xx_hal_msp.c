@@ -66,6 +66,9 @@ void HAL_MspInit(void)
 
   /* USER CODE END MspInit 0 */
 
+  __HAL_RCC_SYSCFG_CLK_ENABLE();
+  __HAL_RCC_PWR_CLK_ENABLE();
+
   HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
 
   /* System interrupt init*/
@@ -380,10 +383,12 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 
 }
 
-/* USER CODE BEGIN 1 */
 static uint32_t FSMC_Initialized = 0;
 
 static void HAL_FSMC_MspInit(void){
+  /* USER CODE BEGIN FSMC_MspInit 0 */
+
+  /* USER CODE END FSMC_MspInit 0 */
   GPIO_InitTypeDef GPIO_InitStruct;
   if (FSMC_Initialized) {
     return;
@@ -430,15 +435,28 @@ static void HAL_FSMC_MspInit(void){
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF12_FSMC;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /* USER CODE BEGIN FSMC_MspInit 1 */
+
+  /* USER CODE END FSMC_MspInit 1 */
 }
 
 void HAL_NAND_MspInit(NAND_HandleTypeDef* hnand){
+  /* USER CODE BEGIN NAND_MspInit 0 */
+
+  /* USER CODE END NAND_MspInit 0 */
   HAL_FSMC_MspInit();
+  /* USER CODE BEGIN NAND_MspInit 1 */
+
+  /* USER CODE END NAND_MspInit 1 */
 }
 
 static uint32_t FSMC_DeInitialized = 0;
 
 static void HAL_FSMC_MspDeInit(void){
+  /* USER CODE BEGIN FSMC_MspDeInit 0 */
+
+  /* USER CODE END FSMC_MspDeInit 0 */
   if (FSMC_DeInitialized) {
     return;
   }
@@ -467,11 +485,24 @@ static void HAL_FSMC_MspDeInit(void){
   HAL_GPIO_DeInit(GPIOD, GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_14|GPIO_PIN_15 
                           |GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_5 
                           |GPIO_PIN_6|GPIO_PIN_7);
+
+  /* USER CODE BEGIN FSMC_MspDeInit 1 */
+
+  /* USER CODE END FSMC_MspDeInit 1 */
 }
 
 void HAL_NAND_MspDeInit(NAND_HandleTypeDef* hnand){
+  /* USER CODE BEGIN NAND_MspDeInit 0 */
+
+  /* USER CODE END NAND_MspDeInit 0 */
   HAL_FSMC_MspDeInit();
+  /* USER CODE BEGIN NAND_MspDeInit 1 */
+
+  /* USER CODE END NAND_MspDeInit 1 */
 }
+
+/* USER CODE BEGIN 1 */
+
 /* USER CODE END 1 */
 
 /**
