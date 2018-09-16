@@ -172,10 +172,14 @@ uint8_t nand_buf2[512];
  */
 void ftest(void)
 {
-    static uint32_t cntr = 0;
+    uint32_t blk_idx = 0;
+    uint32_t page_idx = 0;
+    pifs_status_t pifs_status = PIFS_SUCCESS;
     NAND_IDTypeDef nand_id;
-    HAL_StatusTypeDef stat;
+    HAL_StatusTypeDef stat = HAL_OK;
     NAND_AddressTypeDef address;
+    uint32_t page_per_block_num;
+    uint32_t block_num;
 
 #if 1
     printf("Reading NAND ID... ");
@@ -194,50 +198,72 @@ void ftest(void)
         printf("Error: %i\r\n", stat);
     }
 #endif
-    address.Block = cntr;
-    address.Page = cntr++;
-    address.Plane = 0;
-    printf("Erase block %i...", address.Block);
-    stat = HAL_NAND_Erase_Block(&hnand1, &address);
-    if (stat == HAL_OK)
+//    page_per_block_num = 32; //hnand1.Config.BlockSize / hnand1.Config.PageSize;
+    page_per_block_num = 16; //hnand1.Config.BlockSize / hnand1.Config.PageSize;
+    block_num = 128;
+    printf("Pages/block: %i\r\n", page_per_block_num);
+    for (blk_idx = 0; blk_idx < block_num && pifs_status == PIFS_SUCCESS && stat == HAL_OK; blk_idx++)
     {
-        printf("Ok.\r\n");
-    }
-    else
-    {
-        printf("Error: %i\r\n", stat);
-    }
+        address.Plane = 0;
+        address.Block = blk_idx;
+        printf("Erase block %i...", address.Block);
+        stat = HAL_NAND_Erase_Block(&hnand1, &address);
+        if (stat == HAL_OK)
+        {
+            printf("Ok.\r\n");
+        }
+        else
+        {
+            printf("Error: %i\r\n", stat);
+        }
 
-    fill_buffer(nand_buf, sizeof(nand_buf), FILL_TYPE_SEQUENCE_WORD, 1);
+        for (page_idx = 0; page_idx < page_per_block_num  && pifs_status == PIFS_SUCCESS && stat == HAL_OK; page_idx++)
+        {
+            address.Page = page_idx;
 
-    printf("Writing %i pages at BA%i/PA%i/PL%i...",
-           sizeof(nand_buf) / hnand1.Config.PageSize,
-           address.Block, address.Page, address.Plane);
-    stat = HAL_NAND_Write_Page_8b(&hnand1, &address, &nand_buf, sizeof(nand_buf) / hnand1.Config.PageSize);
-    if (stat == HAL_OK)
-    {
-        printf("Ok.\r\n");
-        print_buffer(nand_buf, sizeof(nand_buf), 0);
-    }
-    else
-    {
-        printf("Error: %i\r\n", stat);
-    }
+            fill_buffer(nand_buf, sizeof(nand_buf), FILL_TYPE_SEQUENCE_WORD, (blk_idx << 6) | page_idx);
 
-    memset(nand_buf2, 0, sizeof(nand_buf2));
+            printf("Writing %i pages at BA%i/PA%i/PL%i...",
+                   sizeof(nand_buf) / hnand1.Config.PageSize,
+                   address.Block, address.Page, address.Plane);
+            stat = HAL_NAND_Write_Page_8b(&hnand1, &address, &nand_buf, sizeof(nand_buf) / hnand1.Config.PageSize);
+            if (stat == HAL_OK)
+            {
+                printf("Ok.\r\n");
+                //print_buffer(nand_buf, sizeof(nand_buf), 0);
+            }
+            else
+            {
+                printf("Error: %i\r\n", stat);
+            }
 
-    printf("Reading %i pages at BA%i/PA%i/PL%i...",
-           sizeof(nand_buf) / hnand1.Config.PageSize,
-           address.Block, address.Page, address.Plane);
-    stat = HAL_NAND_Read_Page_8b(&hnand1, &address, &nand_buf2, sizeof(nand_buf2) / hnand1.Config.PageSize);
-    if (stat == HAL_OK)
-    {
-        printf("Ok.\r\n");
-        print_buffer(nand_buf2, sizeof(nand_buf2), 0);
-    }
-    else
-    {
-        printf("Error: %i\r\n", stat);
+            memset(nand_buf2, 0, sizeof(nand_buf2));
+
+            printf("Reading %i pages at BA%i/PA%i/PL%i...",
+                   sizeof(nand_buf) / hnand1.Config.PageSize,
+                   address.Block, address.Page, address.Plane);
+            stat = HAL_NAND_Read_Page_8b(&hnand1, &address, &nand_buf2, sizeof(nand_buf2) / hnand1.Config.PageSize);
+            if (stat == HAL_OK)
+            {
+                printf("Ok.\r\n");
+//                print_buffer(nand_buf2, sizeof(nand_buf2), 0);
+            }
+            else
+            {
+                printf("Error: %i\r\n", stat);
+            }
+
+            pifs_status = compare_buffer(nand_buf, sizeof(nand_buf), nand_buf2);
+#if 0
+            if (pifs_status != PIFS_SUCCESS)
+            {
+                printf("WRITTEN\r\n");
+                print_buffer(nand_buf, sizeof(nand_buf), 0);
+                printf("READ\r\n");
+                print_buffer(nand_buf2, sizeof(nand_buf2), 0);
+            }
+#endif
+        }
     }
 }
 
@@ -401,7 +427,7 @@ int main(void)
       printf("Error: %i\r\n", stat);
   }
 
-  ftest();
+//  ftest();
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -954,7 +980,13 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 }
 /* USER CODE END 4 */
 
-/* StartDefaultTask function */
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used 
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument)
 {
   /* init code for FATFS */

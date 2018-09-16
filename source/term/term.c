@@ -494,7 +494,7 @@ void cmdDebug (char* command, char* params)
 #if ENABLE_DHT
     ftest();
 #endif
-#if 1
+#if 0
     pifs_status_t ret;
     pifs_block_address_t ba;
     pifs_block_address_t ba2;
