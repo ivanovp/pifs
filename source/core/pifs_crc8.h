@@ -2,11 +2,11 @@
  * \file
  * Functions and types for CRC checks.
  *
- * Generated on Wed Nov 15 11:55:58 2017
+ * Generated on Wed Apr 17 11:41:10 2019
  * by pycrc v0.9.1, https://pycrc.org
  * using the configuration:
  *  - Width         = 8
- *  - Poly          = 0x2f
+ *  - Poly          = 0xe7
  *  - XorIn         = 0x00
  *  - ReflectIn     = False
  *  - XorOut        = 0x00
