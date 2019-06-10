@@ -84,11 +84,13 @@ pifs_status_t pifs_check_open_mode(pifs_file_t * a_file)
  * @param[in] a_filename            Pointer to file name.
  * @param[in] a_modes               Pointer to open mode. NULL: open with existing modes.
  * @param[in] a_is_merge_allowed    TRUE: merge can be started.
+ * @param[in] a_update_entry_list_address TRUE: resolve path
  */
 pifs_status_t pifs_internal_open(pifs_file_t * a_file,
                                  const pifs_char_t * a_filename,
                                  const pifs_char_t * a_modes,
-                                 bool_t a_is_merge_allowed)
+                                 bool_t a_is_merge_allowed,
+                                 bool_t a_update_entry_list_address)
 {
     pifs_block_address_t ba = PIFS_BLOCK_ADDRESS_INVALID;
     pifs_page_address_t  pa = PIFS_PAGE_ADDRESS_INVALID;
@@ -100,11 +102,14 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
 #endif
 
     PIFS_ASSERT(!a_file->is_opened);
+    if (a_update_entry_list_address)
+    {
 #if PIFS_ENABLE_DIRECTORIES
-    a_file->entry_list_address = *pifs_get_task_current_entry_list_address();
+        a_file->entry_list_address = *pifs_get_task_current_entry_list_address();
 #else
-    a_file->entry_list_address = pifs.header.root_entry_list_address;
+        a_file->entry_list_address = pifs.header.root_entry_list_address;
 #endif
+    }
     a_file->status = PIFS_SUCCESS;
     a_file->rw_address.block_address = PIFS_BLOCK_ADDRESS_INVALID;
     a_file->rw_address.page_address = PIFS_PAGE_ADDRESS_INVALID;
@@ -121,8 +126,15 @@ pifs_status_t pifs_internal_open(pifs_file_t * a_file,
 #if PIFS_ENABLE_DIRECTORIES
         if (a_file->status == PIFS_SUCCESS)
         {
-            a_file->status = pifs_resolve_path(a_filename, *pifs_get_task_current_entry_list_address(),
-                                               filename, &a_file->entry_list_address);
+            if (a_update_entry_list_address)
+            {
+                a_file->status = pifs_resolve_path(a_filename, *pifs_get_task_current_entry_list_address(),
+                                                   filename, &a_file->entry_list_address);
+            }
+            else
+            {
+                strncpy(filename, a_filename, PIFS_FILENAME_LEN_MAX);
+            }
         }
 #endif
         if (a_file->status == PIFS_SUCCESS)
@@ -269,7 +281,7 @@ P_FILE * pifs_fopen(const pifs_char_t * a_filename, const pifs_char_t * a_modes)
     }
     if (ret == PIFS_SUCCESS)
     {
-        (void)pifs_internal_open(file, a_filename, a_modes, TRUE);
+        (void)pifs_internal_open(file, a_filename, a_modes, TRUE, TRUE);
         PIFS_NOTICE_MSG("status: %i is_opened: %i\r\n", file->status, file->is_opened);
         if (file->status == PIFS_SUCCESS && file->is_opened)
         {
@@ -1261,7 +1273,7 @@ int pifs_internal_remove(const pifs_char_t * a_filename, bool_t a_is_merge_allow
     ret = pifs_check_filename(a_filename);
     if (ret == PIFS_SUCCESS)
     {
-        ret = pifs_internal_open(&pifs.internal_file, a_filename, "r", FALSE);
+        ret = pifs_internal_open(&pifs.internal_file, a_filename, "r", FALSE, TRUE);
         if (ret == PIFS_SUCCESS)
         {
 #if PIFS_ENABLE_DIRECTORIES

@@ -36,7 +36,9 @@ extern "C" {
 
 pifs_status_t pifs_internal_open(pifs_file_t * a_file,
                                  const pifs_char_t * a_filename,
-                                 const pifs_char_t * a_modes, bool_t a_is_merge_allowed);
+                                 const pifs_char_t * a_modes,
+                                 bool_t a_is_merge_allowed,
+                                 bool_t a_update_entry_list_address);
 pifs_status_t pifs_inc_rw_address(pifs_file_t * a_file, bool_t a_is_read);
 size_t pifs_internal_fwrite(const void * a_data, size_t a_size, size_t a_count, P_FILE * a_file);
 int pifs_internal_fflush(P_FILE * a_file, bool_t a_is_merge_allowed, bool_t a_is_entry_update_allowed);

@@ -45,7 +45,7 @@
  * @param[in] a_entry_list_page_address  Page address of entry list.
  * @param[in] a_entry_idx                Index of entry in the entry list.
  * @param[out] a_entry                   Pointer to entry to fill.
- * @param[out] a_is_erased               TRUE: entry is erased (emptry),
+ * @param[out] a_is_erased               TRUE: entry is erased (empty),
  *                                       FALSE: entry is written.
  * @return PIFS_SUCCESS if entry was read successfully.
  */

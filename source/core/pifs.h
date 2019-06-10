@@ -468,6 +468,7 @@ typedef struct
     bool_t                  is_used PIFS_BOOL_SIZE;
     bool_t                  is_opened PIFS_BOOL_SIZE;
     bool_t                  is_entry_changed PIFS_BOOL_SIZE;
+    bool_t                  is_entry_list_address_updated PIFS_BOOL_SIZE;
     bool_t                  mode_create_new_file PIFS_BOOL_SIZE;
     bool_t                  mode_read PIFS_BOOL_SIZE;
     bool_t                  mode_write PIFS_BOOL_SIZE;
@@ -495,7 +496,7 @@ typedef struct
     bool_t         is_used PIFS_BOOL_SIZE;      /**< TRUE: directory structure is opened, FALSE: directory structure is available */
     pifs_size_t    entry_page_index;            /**< Actual index of entry page */
     pifs_address_t entry_list_address;          /**< Address of entry list */
-    pifs_size_t    entry_list_index;            /**< */
+    pifs_size_t    entry_list_index;            /**< Index in entry list */
     pifs_dirent_t  directory_entry;
     pifs_entry_t   entry; /**< Can be large, to avoid storing on stack */
 } pifs_dir_t;

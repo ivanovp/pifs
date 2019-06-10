@@ -1,7 +1,7 @@
 APP_NAME = pifs
 
 ENABLE_CROSS_COMPILE = 0
-DEBUG = 0
+DEBUG = 1
 
 # Tool chain settings
 ifeq ($(ENABLE_CROSS_COMPILE),1)

@@ -514,7 +514,7 @@ pifs_status_t pifs_check_block(pifs_char_t * a_filename,
 
     PIFS_GET_MUTEX();
 
-    ret = pifs_internal_open(&pifs.internal_file, a_filename, "r", FALSE);
+    ret = pifs_internal_open(&pifs.internal_file, a_filename, "r", FALSE, TRUE);
     if (ret == PIFS_SUCCESS)
     {
         do

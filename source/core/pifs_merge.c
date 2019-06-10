@@ -236,7 +236,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
     PIFS_NOTICE_MSG("start\r\n");
 
     /* Re-create file in the new management block */
-    ret = pifs_internal_open(&pifs.internal_file, a_old_entry->name, "w", FALSE);
+    ret = pifs_internal_open(&pifs.internal_file, a_old_entry->name, "w", FALSE, TRUE);
     pifs.internal_file.entry.file_size = a_old_entry->file_size;
 #if PIFS_ENABLE_ATTRIBUTES
     pifs.internal_file.entry.attrib = a_old_entry->attrib;
@@ -400,6 +400,7 @@ static pifs_status_t pifs_copy_map(pifs_entry_t * a_old_entry,
         ret = pifs_internal_fclose(&pifs.internal_file, FALSE, TRUE);
         PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
+    PIFS_NOTICE_MSG("end: %i\r\n", ret);
 
     return ret;
 }
@@ -431,6 +432,7 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
     pifs_block_address_t old_entry_list_ba = a_old_entry_list_address->block_address;
     pifs_page_address_t  old_entry_list_pa = a_old_entry_list_address->page_address;
     pifs_entry_t         entry;
+    pifs_file_t        * file;
 #if PIFS_ENABLE_DIRECTORIES
     /* TODO save cwd and restore? */
     pifs_address_t       current_entry_list_address;
@@ -438,6 +440,22 @@ static pifs_status_t pifs_copy_entry_list(pifs_header_t * a_old_header,
 #endif
 
     PIFS_NOTICE_MSG("start\r\n");
+    for (i = 0; i < PIFS_OPEN_FILE_NUM_MAX; i++)
+    {
+        file = &pifs.file[i];
+        /* Update file's entry list address to the new entry list address
+         * File has already closed by pifs_merge(), so we won't check
+         * is_opened.
+         */
+        if (!file->is_entry_list_address_updated
+                && file->entry_list_address.block_address == a_old_entry_list_address->block_address
+                && file->entry_list_address.page_address == a_old_entry_list_address->page_address)
+        {
+            file->entry_list_address.block_address = a_new_entry_list_address->block_address;
+            file->entry_list_address.page_address = a_new_entry_list_address->page_address;
+            file->is_entry_list_address_updated = TRUE;
+        }
+    }
     for (j = 0; j < PIFS_ENTRY_LIST_SIZE_PAGE && ret == PIFS_SUCCESS && !end; j++)
     {
         for (i = 0; i < PIFS_ENTRY_PER_PAGE && ret == PIFS_SUCCESS && !end; i++)
@@ -567,6 +585,8 @@ pifs_status_t pifs_merge(void)
     pifs_file_t        * file;
     bool_t               file_is_opened[PIFS_OPEN_FILE_NUM_MAX] = { 0 };
     pifs_size_t          file_pos[PIFS_OPEN_FILE_NUM_MAX] = { 0 };
+    bool_t               mode_create_new_file;
+    bool_t               mode_file_shall_exist;
 
     PIFS_INFO_MSG("start\r\n");
     PIFS_ASSERT(!pifs.is_merging);
@@ -584,12 +604,14 @@ pifs_status_t pifs_merge(void)
             /* This will never cause data loss. There shall be enough free
              * entries in the entry list. */
             (void)pifs_internal_fclose(file, FALSE, TRUE);
+            file->is_entry_list_address_updated = FALSE;
         }
     }
     /* #1 */
     for (i = 0; i < PIFS_MANAGEMENT_BLOCK_NUM && ret == PIFS_SUCCESS; i++)
     {
         ret = pifs_erase(old_header.next_management_block_address + i, NULL, NULL);
+        PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
     /* #2 */
     if (ret == PIFS_SUCCESS)
@@ -598,16 +620,19 @@ pifs_status_t pifs_merge(void)
         new_header_ba = old_header.next_management_block_address;
         new_header_pa = 0;
         ret = pifs_header_init(new_header_ba, new_header_pa, PIFS_BLOCK_ADDRESS_ERASED, &new_header);
+        PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
     /* #3 */
     if (ret == PIFS_SUCCESS)
     {
         /* Copy wear level list */
         ret = pifs_copy_wear_level_list(&old_header, &new_header);
+        PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
     for (i = 0; i < PIFS_MANAGEMENT_BLOCK_NUM && ret == PIFS_SUCCESS; i++)
     {
         ret = pifs_inc_wear_level(new_header.management_block_address + i, &new_header);
+        PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
     /* #4 */
     if (ret == PIFS_SUCCESS)
@@ -617,6 +642,7 @@ pifs_status_t pifs_merge(void)
         /* because that call will mark management area in the free space */
         /* bitmap as used space. */
         ret = pifs_copy_fsbm(&old_header, &new_header);
+        PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
     /* #5 */
     if (ret == PIFS_SUCCESS)
@@ -626,15 +652,18 @@ pifs_status_t pifs_merge(void)
         /* Write new management area's header and mark header, entry list, */
         /* free space bitmap, delta pages, wear level list as used space. */
         ret = pifs_header_write(new_header_ba, new_header_pa, &pifs.header, TRUE);
+        PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
     /* #6 */
     if (ret == PIFS_SUCCESS)
     {
         ret = pifs_generate_least_weared_blocks(&pifs.header);
+        PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
     if (ret == PIFS_SUCCESS)
     {
         ret = pifs_generate_most_weared_blocks(&pifs.header);
+        PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
     /* #7 */
     if (ret == PIFS_SUCCESS)
@@ -657,6 +686,7 @@ pifs_status_t pifs_merge(void)
         ret = pifs_copy_entry_list(&old_header, &new_header,
                                    &old_header.root_entry_list_address,
                                    &new_header.root_entry_list_address);
+        PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
     /* #8 */
     if (ret == PIFS_SUCCESS)
@@ -690,6 +720,7 @@ pifs_status_t pifs_merge(void)
         /* Add next management block's address to the current header */
         /* and calculate checksum */
         ret = pifs_header_init(new_header_ba, new_header_pa, next_mgmt_ba, &pifs.header);
+        PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
     /* #10 */
     if (ret == PIFS_SUCCESS)
@@ -698,6 +729,7 @@ pifs_status_t pifs_merge(void)
         /* and write checksum */
         ret = pifs_header_write(new_header_ba, new_header_pa, &pifs.header, FALSE);
         /* At this point new header is valid */
+        PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
     /* #11 */
     if (ret == PIFS_SUCCESS)
@@ -708,12 +740,14 @@ pifs_status_t pifs_merge(void)
         {
             PIFS_NOTICE_MSG("Erasing old management block %i\r\n", old_header.management_block_address + i);
             ret = pifs_erase(old_header.management_block_address + i, &old_header, &new_header);
+            PIFS_ASSERT(ret == PIFS_SUCCESS);
         }
     }
     /* #12 */
     if (ret == PIFS_SUCCESS)
     {
         ret = pifs_get_free_pages(&i, &pifs.free_data_page_num);
+        PIFS_ASSERT(ret == PIFS_SUCCESS);
     }
     if (ret == PIFS_SUCCESS)
     {
@@ -723,20 +757,32 @@ pifs_status_t pifs_merge(void)
             file = &pifs.file[i];
             if (file_is_opened[i])
             {
-                /* Do not create new file, as it has already done */
-                /* TODO save and restore mode_create_new_file and mode_file_shall_exist?
-                 * to their original value? */
-                file->mode_create_new_file = FALSE;
+                mode_create_new_file = file->mode_create_new_file;
+                mode_file_shall_exist = file->mode_file_shall_exist;
+                /* Check if file needs to be created or already exists */
+                if (file->entry.file_size != PIFS_FILE_SIZE_ERASED)
+                {
+                    /* Do not create new file, as it has already done */
+                    file->mode_create_new_file = FALSE;
+                }
                 file->mode_file_shall_exist = TRUE;
-                /* TODO file->entry.name is not enough, full path should be stored!? */
-                ret = pifs_internal_open(file, file->entry.name, NULL, FALSE);
+                PIFS_NOTICE_MSG("Reopen file %s @ %i\r\n", file->entry.name, file_pos[i]);
+                /* file->entry.name is enough, full path should not be stored,
+                 * because file->entry_list_address is updated in
+                 * pifs_copy_entry_list()
+                 */
+                ret = pifs_internal_open(file, file->entry.name, NULL, FALSE, FALSE);
+                PIFS_ASSERT(ret == PIFS_SUCCESS);
                 if (ret == PIFS_SUCCESS && file_pos[i])
                 {
+                    /* Restore original values */
+                    file->mode_create_new_file = mode_create_new_file;
+                    file->mode_file_shall_exist = mode_file_shall_exist;
                     file->is_used = TRUE;
                     PIFS_ASSERT(file->is_opened);
                     PIFS_NOTICE_MSG("Seeking to %i\r\n", file_pos[i]);
                     /* Seek to the stored position */
-                    ret = pifs_internal_fseek(file, file_pos[i], PIFS_SEEK_SET);
+                    ret = pifs_internal_fseek(file, (long int)file_pos[i], PIFS_SEEK_SET);
                     if (ret != 0)
                     {
                         PIFS_ERROR_MSG("Seek error: %i\r\n", ret);
