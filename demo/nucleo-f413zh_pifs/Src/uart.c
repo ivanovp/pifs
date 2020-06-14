@@ -4,7 +4,7 @@
  * @author      Copyright (C) Peter Ivanov, 2017
  *
  * Created      2017-06-13 11:48:53
- * Last modify: 2017-06-16 19:07:42 ivanovp {Time-stamp}
+ * Last modify: 2020-06-14 10:16:56 ivanovp {Time-stamp}
  * Licence:     GPL
  *
  * This program is free software: you can redistribute it and/or modify
@@ -114,10 +114,13 @@ size_t UART_getLine(uint8_t * a_buf, size_t a_buf_size)
         if (HAL_UART_Receive(&huart3, &ch, 1, 0) == HAL_OK)
         {
             (void)HAL_UART_Transmit(&huart3, &ch, 1, HAL_MAX_DELAY);
-            a_buf[idx] = ch;
-            idx++;
+            if (ch != ASCII_CR && ch != ASCII_LF)
+            {
+                a_buf[idx] = ch;
+                idx++;
+            }
         }
-    } while (ch != ASCII_LF && idx < a_buf_size);
+    } while (ch != ASCII_LF && ch != ASCII_CR && idx < a_buf_size);
 
     a_buf[idx] = 0;
 
